@@ -1,0 +1,17 @@
+group 'com.netflix.nebula'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'groovy'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'org.codehaus.groovy:groovy:latest.release'
+    compile 'org.codenarc:CodeNarc:latest.release'
+    compile 'com.google.guava:guava:18.0'
+    testCompile('org.spockframework:spock-core:latest.release') {
+        exclude module: 'groovy-all'
+    }
+}
