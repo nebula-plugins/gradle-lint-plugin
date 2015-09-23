@@ -1,8 +1,5 @@
 package com.netflix.nebula.lint.rule
 
-import com.netflix.nebula.lint.GradleNamedClosureAstVisitor
-import org.codehaus.groovy.ast.ClassCodeVisitorSupport
-import org.codehaus.groovy.ast.expr.ArgumentListExpression
 import org.codehaus.groovy.ast.expr.ClosureExpression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.codenarc.rule.AbstractAstVisitor
@@ -14,22 +11,27 @@ class UnnecessaryParenthesesInDependencyRule extends AbstractAstVisitorRule {
     Class astVisitorClass = UnnecessaryParenthesesInDependencyAstVisitor
 }
 
-class UnnecessaryParenthesesInDependencyAstVisitor extends GradleNamedClosureAstVisitor {
-    static ClassCodeVisitorSupport dependenciesVisitor = new AbstractAstVisitor() {
-        @Override
-        void visitMethodCallExpression(MethodCallExpression call) {
-            def args = (call.arguments as ArgumentListExpression).expressions
-            if(!args.isEmpty() && !(args[-1] instanceof ClosureExpression)) {
+class UnnecessaryParenthesesInDependencyAstVisitor extends AbstractAstVisitor {
+    boolean inDependenciesBlock = false
+
+    @Override
+    void visitMethodCallExpression(MethodCallExpression call) {
+        if(inDependenciesBlock) {
+            def args = call.arguments.expressions as List
+            if(!args.empty && !(args[-1] instanceof ClosureExpression)) {
                 def callSource = getSourceCode().line(call.lineNumber-1)
                 if(callSource =~ "^${call.methodAsString}\\s*\\(") {
                     addViolation(call, "Parentheses are unnecessary for dependency $callSource")
                 }
             }
-            super.visitMethodCallExpression(call)
         }
-    }
 
-    UnnecessaryParenthesesInDependencyAstVisitor() {
-        super('dependencies', dependenciesVisitor)
+        if(call.methodAsString == 'dependencies')
+            inDependenciesBlock = true
+
+        super.visitMethodCallExpression(call)
+
+        if(call.methodAsString == 'dependencies')
+            inDependenciesBlock = false
     }
 }
