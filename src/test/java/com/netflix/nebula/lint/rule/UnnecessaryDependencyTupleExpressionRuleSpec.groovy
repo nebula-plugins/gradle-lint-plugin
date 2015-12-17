@@ -13,11 +13,27 @@ class UnnecessaryDependencyTupleExpressionRuleSpec extends AbstractRuleSpec {
         results.violates(UnnecessaryDependencyTupleExpressionRule)
     }
 
+    def 'violations are corrected'() {
+        when:
+        def results = correct("""
+            dependencies {
+               compile group: 'junit', name: 'junit', version: '4.11'
+            }
+        """, new UnnecessaryDependencyTupleExpressionRule())
+
+        then:
+        results == """
+            dependencies {
+               compile 'junit:junit:4.11'
+            }
+        """
+    }
+
     def 'dependency does not violate rule if it contains a secondary method call'() {
         when:
         def results = runRulesAgainst("""
             dependencies {
-               compile dep('junit:junit')
+               compile dep('junit:jun
             }
         """, new UnnecessaryDependencyTupleExpressionRule())
 
