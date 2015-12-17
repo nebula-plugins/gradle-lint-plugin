@@ -17,7 +17,9 @@ class UnnecessaryDependencyTupleExpressionRuleSpec extends AbstractRuleSpec {
         when:
         def results = correct("""
             dependencies {
-               compile group: 'junit', name: 'junit', version: '4.11'
+               compile group: 'junit',
+                    name: 'junit',
+                    version: '4.11'
             }
         """, new UnnecessaryDependencyTupleExpressionRule())
 
@@ -33,7 +35,7 @@ class UnnecessaryDependencyTupleExpressionRuleSpec extends AbstractRuleSpec {
         when:
         def results = runRulesAgainst("""
             dependencies {
-               compile dep('junit:jun
+               compile dep('junit:junit')
             }
         """, new UnnecessaryDependencyTupleExpressionRule())
 

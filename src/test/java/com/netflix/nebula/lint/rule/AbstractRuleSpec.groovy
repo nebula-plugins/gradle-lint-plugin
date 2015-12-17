@@ -26,7 +26,11 @@ abstract class AbstractRuleSpec extends Specification {
     }
 
     Results runRulesAgainst(String source, Rule... rules) {
-        new StringSourceAnalyzer(source).analyze(configureRuleSet(rules))
+        def results = new StringSourceAnalyzer(source).analyze(configureRuleSet(rules))
+//        results.violations.each {
+//            println it
+//        }
+        results
     }
 
     String correct(String source, Rule... rules) {

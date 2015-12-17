@@ -13,17 +13,25 @@ class CorrectableStringSource extends AbstractSourceCode {
         setSuppressionAnalyzer(new SuppressionAnalyzer(this))
     }
 
-    /**
-     * Only suitable for replacements that do not span more than one line
-     * @param node
-     * @param replacement
-     */
     void inlineReplace(ASTNode node, String replacement) {
         // note that node line and column numbers are both 1 based
-        def line = lines.get(node.lineNumber-1)
-        lines.set(node.lineNumber-1, line.substring(0, node.getColumnNumber()-1) +
-            replacement +
-            line.substring(node.getLastColumnNumber()-1, line.length()))
+        def linesToReplace = lines.subList(node.lineNumber-1, node.lastLineNumber)
+
+        def lastColumn = node.lastColumnNumber-1
+        if(linesToReplace)
+            lastColumn += linesToReplace[0..-2].sum { it.length()+1 } // +1 for the extra newline character we are going to add
+
+        def allLines = linesToReplace.join('\n')
+
+        // delete all the lines to be replaced
+        ((node.lastLineNumber-1)..(node.lineNumber-1)).each { Integer i ->
+            lines.removeAt(i)
+        }
+
+        // perform replacement
+        // TODO what if the replacement itself is multiline?  split the line and add them one at a time...
+        lines.add(node.lineNumber-1, allLines.substring(0, node.columnNumber-1) +
+            replacement + allLines.substring(lastColumn))
     }
 
     @Override
