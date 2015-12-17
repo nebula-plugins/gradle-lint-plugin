@@ -7,31 +7,55 @@ import org.codenarc.source.AbstractSourceCode
 class CorrectableStringSource extends AbstractSourceCode {
     List<String> lines
 
+    Map<ASTNode, String> replacements = [:]
+    List<ASTNode> deletions = []
+
     CorrectableStringSource(String source) {
         assert source != null
         this.lines = new StringReader(source).readLines()
         setSuppressionAnalyzer(new SuppressionAnalyzer(this))
     }
 
-    void inlineReplace(ASTNode node, String replacement) {
+    String getCorrectedSource() {
+        def corrections = new StringBuffer()
+        for(int i = 0; i < lines.size(); i++) {
+            if(i > 0)
+                corrections.append('\n')
+
+            def replacement = replacements.find { it.key.lineNumber-1 == i }
+            def deletion = deletions.find { it.lineNumber-1 == i }
+
+            if(replacement) {
+                corrections.append(doReplacement(replacement.key, replacement.value))
+                i += replacement.key.lastLineNumber-replacement.key.lineNumber
+            } else if(deletion) {
+                i += deletion.lastLineNumber-deletion.lineNumber
+            } else {
+                corrections.append(lines[i])
+            }
+        }
+        corrections.toString()
+    }
+
+    private String doReplacement(ASTNode node, String replacement) {
         // note that node line and column numbers are both 1 based
         def linesToReplace = lines.subList(node.lineNumber-1, node.lastLineNumber)
 
         def lastColumn = node.lastColumnNumber-1
-        if(linesToReplace)
+        if(linesToReplace.size() > 1)
             lastColumn += linesToReplace[0..-2].sum { it.length()+1 } // +1 for the extra newline character we are going to add
 
         def allLines = linesToReplace.join('\n')
 
-        // delete all the lines to be replaced
-        ((node.lastLineNumber-1)..(node.lineNumber-1)).each { Integer i ->
-            lines.removeAt(i)
-        }
+        allLines.substring(0, node.columnNumber-1) + replacement + allLines.substring(lastColumn)
+    }
 
-        // perform replacement
-        // TODO what if the replacement itself is multiline?  split the line and add them one at a time...
-        lines.add(node.lineNumber-1, allLines.substring(0, node.columnNumber-1) +
-            replacement + allLines.substring(lastColumn))
+    void replace(ASTNode node, String replacement) {
+        this.replacements[node] = replacement
+    }
+
+    void delete(ASTNode node) {
+        this.deletions += node
     }
 
     @Override

@@ -71,6 +71,6 @@ class UnnecessaryDependencyTupleExpressionAstVisitor extends AbstractLintRule {
                 version = val; break
             }
         }
-        correctableSourceCode.inlineReplace(m, "${m.method.text} '$group:$artifact:$version'")
+        correctableSourceCode.replace(m, "${m.method.text} '$group:$artifact${version ? ":$version" : ''}'")
     }
 }

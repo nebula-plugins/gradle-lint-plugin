@@ -24,6 +24,6 @@ class CorrectableStringSourceAnalyzer extends AbstractSourceAnalyzer {
     }
 
     String getCorrected() {
-        source.text
+        source.correctedSource
     }
 }

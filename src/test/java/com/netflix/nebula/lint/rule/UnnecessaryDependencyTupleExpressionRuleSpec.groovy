@@ -20,6 +20,7 @@ class UnnecessaryDependencyTupleExpressionRuleSpec extends AbstractRuleSpec {
                compile group: 'junit',
                     name: 'junit',
                     version: '4.11'
+               compile group: 'netflix', name: 'platform'
             }
         """, new UnnecessaryDependencyTupleExpressionRule())
 
@@ -27,6 +28,7 @@ class UnnecessaryDependencyTupleExpressionRuleSpec extends AbstractRuleSpec {
         results == """
             dependencies {
                compile 'junit:junit:4.11'
+               compile 'netflix:platform'
             }
         """
     }
