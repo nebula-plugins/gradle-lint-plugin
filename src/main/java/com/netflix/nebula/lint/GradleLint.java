@@ -1,9 +1,5 @@
 package com.netflix.nebula.lint;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-
 import org.codenarc.analyzer.SourceAnalyzer;
 import org.codenarc.analyzer.StringSourceAnalyzer;
 import org.codenarc.results.Results;
@@ -11,6 +7,10 @@ import org.codenarc.ruleregistry.RuleRegistryInitializer;
 import org.codenarc.ruleset.CompositeRuleSet;
 import org.codenarc.ruleset.PropertiesFileRuleSetConfigurer;
 import org.codenarc.ruleset.RuleSetUtil;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 
 public class GradleLint {
     public static void main(String[] args) throws IOException {
@@ -28,6 +28,8 @@ public class GradleLint {
         SourceAnalyzer sourceAnalyzer = new StringSourceAnalyzer(source);
         Results results = sourceAnalyzer.analyze(ruleSet);
 
-        results.getViolations().forEach(System.out::println);
+        for (Object v : results.getViolations()) {
+            System.out.println(v);
+        }
     }
 }

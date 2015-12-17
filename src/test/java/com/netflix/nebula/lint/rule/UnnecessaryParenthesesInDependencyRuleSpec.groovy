@@ -6,7 +6,7 @@ class UnnecessaryParenthesesInDependencyRuleSpec extends AbstractRuleSpec {
         def results = runRulesAgainst("""
             dependencies {
                compile 'junit:junit:4.11'
-               compile('a:a:1') { }
+               compile ('a:a:1') { }
             }
         """, new UnnecessaryParenthesesInDependencyRule())
 

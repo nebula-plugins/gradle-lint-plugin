@@ -6,7 +6,7 @@ import org.codenarc.rule.AbstractAstVisitor
 import org.codenarc.rule.AbstractAstVisitorRule
 
 class UnnecessaryParenthesesInDependencyRule extends AbstractAstVisitorRule {
-    String name = 'UnnecessaryParentheses'
+    String name = 'UnnecessaryParenthesesInDependency'
     int priority = 3
     Class astVisitorClass = UnnecessaryParenthesesInDependencyAstVisitor
 }
