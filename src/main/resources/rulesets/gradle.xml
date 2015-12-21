@@ -8,5 +8,5 @@
         These rules check for canonical use of the Gradle DSL.
     </description>
 
-    <rule class='com.netflix.nebula.lint.rule.UnnecessaryParenthesesInDependencyRule'/>
+    <rule class='com.netflix.nebula.lint.rule.ParenthesesInDependencyRule'/>
 </ruleset>

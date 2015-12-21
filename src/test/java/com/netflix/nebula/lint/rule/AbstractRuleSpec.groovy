@@ -1,6 +1,5 @@
 package com.netflix.nebula.lint.rule
 
-import com.netflix.nebula.lint.CorrectableViolation
 import com.netflix.nebula.lint.analyzer.CorrectableStringSourceAnalyzer
 import org.codenarc.analyzer.StringSourceAnalyzer
 import org.codenarc.results.Results
@@ -26,11 +25,7 @@ abstract class AbstractRuleSpec extends Specification {
     }
 
     Results runRulesAgainst(String source, Rule... rules) {
-        def results = new StringSourceAnalyzer(source).analyze(configureRuleSet(rules))
-//        results.violations.each {
-//            println it
-//        }
-        results
+        new StringSourceAnalyzer(source).analyze(configureRuleSet(rules))
     }
 
     String correct(String source, Rule... rules) {

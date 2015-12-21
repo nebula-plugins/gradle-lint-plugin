@@ -1,16 +1,16 @@
 package com.netflix.nebula.lint.rule
 
-class UnnecessaryDependencyTupleExpressionRuleSpec extends AbstractRuleSpec {
+class DependencyTupleExpressionRuleSpec extends AbstractRuleSpec {
     def 'dependency tuples violate rule'() {
         when:
         def results = runRulesAgainst("""
             dependencies {
                compile group: 'junit', name: 'junit', version: '4.11'
             }
-        """, new UnnecessaryDependencyTupleExpressionRule())
+        """, new DependencyTupleExpressionRule())
 
         then:
-        results.violates(UnnecessaryDependencyTupleExpressionRule)
+        results.violates(DependencyTupleExpressionRule)
     }
 
     def 'violations are corrected'() {
@@ -22,7 +22,7 @@ class UnnecessaryDependencyTupleExpressionRuleSpec extends AbstractRuleSpec {
                     version: '4.11'
                compile group: 'netflix', name: 'platform'
             }
-        """, new UnnecessaryDependencyTupleExpressionRule())
+        """, new DependencyTupleExpressionRule())
 
         then:
         results == """
@@ -39,10 +39,10 @@ class UnnecessaryDependencyTupleExpressionRuleSpec extends AbstractRuleSpec {
             dependencies {
                compile dep('junit:junit')
             }
-        """, new UnnecessaryDependencyTupleExpressionRule())
+        """, new DependencyTupleExpressionRule())
 
         then:
-        results.doesNotViolate(UnnecessaryDependencyTupleExpressionRule)
+        results.doesNotViolate(DependencyTupleExpressionRule)
     }
 
     def 'dependency does not violate rule if configuration is present'() {
@@ -51,10 +51,10 @@ class UnnecessaryDependencyTupleExpressionRuleSpec extends AbstractRuleSpec {
             dependencies {
                compile group: 'junit', name: 'junit', version: '4.11', conf: 'conf'
             }
-        """, new UnnecessaryDependencyTupleExpressionRule())
+        """, new DependencyTupleExpressionRule())
 
         then:
-        results.doesNotViolate(UnnecessaryDependencyTupleExpressionRule)
+        results.doesNotViolate(DependencyTupleExpressionRule)
     }
 
     def 'exclude tuples do not violate rule'() {
@@ -65,9 +65,9 @@ class UnnecessaryDependencyTupleExpressionRuleSpec extends AbstractRuleSpec {
                  exclude group: 'a'
                }
             }
-        """, new UnnecessaryDependencyTupleExpressionRule())
+        """, new DependencyTupleExpressionRule())
 
         then:
-        results.doesNotViolate(UnnecessaryDependencyTupleExpressionRule)
+        results.doesNotViolate(DependencyTupleExpressionRule)
     }
 }

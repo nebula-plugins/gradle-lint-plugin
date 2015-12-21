@@ -8,7 +8,8 @@ repositories {
 }
 
 dependencies {
-    compile 'org.codehaus.groovy:groovy:latest.release'
+    compile gradleApi()
+    compile localGroovy()
     compile 'org.codenarc:CodeNarc:latest.release'
     compile 'com.google.guava:guava:18.0'
     testCompile('org.spockframework:spock-core:latest.release') {
