@@ -1,11 +1,13 @@
 package com.netflix.nebula.lint.rule
 
 import com.netflix.nebula.lint.analyzer.CorrectableStringSource
+import org.codehaus.groovy.ast.ASTNode
 import org.codehaus.groovy.ast.expr.ClosureExpression
 import org.codehaus.groovy.ast.expr.ConstantExpression
 import org.codehaus.groovy.ast.expr.MapExpression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.codenarc.rule.AbstractAstVisitor
+import org.codenarc.rule.Violation
 
 abstract class AbstractGradleLintVisitor extends AbstractAstVisitor {
     boolean isCorrectable() {
@@ -70,6 +72,23 @@ abstract class AbstractGradleLintVisitor extends AbstractAstVisitor {
         }
 
         visitMethodCallExpressionInternal(call)
+    }
+
+    @Override
+    protected void addViolation(ASTNode node, String message) {
+        def violatingLines = sourceCode.lines.subList(node.lineNumber-1, node.lastLineNumber)
+
+        violatingLines[0] = violatingLines[0][(node.columnNumber-1)..-1]
+        if(node.lineNumber != node.lastLineNumber) {
+            violatingLines[-1] = violatingLines[-1][0..(node.lastColumnNumber-2)]
+        }
+
+        violatingLines.eachWithIndex{ String line, Integer i ->
+            if(i > 0) violatingLines[i] = '  ' + line.stripIndent()
+        }
+
+        violations.add(new Violation(rule: rule, lineNumber: node.lineNumber,
+                sourceLine: violatingLines.join('\n').stripIndent(), message: message))
     }
 
     protected void visitMethodCallExpressionInternal(MethodCallExpression call) {}

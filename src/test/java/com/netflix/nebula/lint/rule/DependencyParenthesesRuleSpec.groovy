@@ -1,6 +1,6 @@
 package com.netflix.nebula.lint.rule
 
-class ParenthesesInDependencyRuleSpec extends AbstractRuleSpec {
+class DependencyParenthesesRuleSpec extends AbstractRuleSpec {
     def 'valid uses of parentheses pass'() {
         when:
         def results = runRulesAgainst("""
@@ -8,7 +8,7 @@ class ParenthesesInDependencyRuleSpec extends AbstractRuleSpec {
                compile 'junit:junit:4.11'
                compile ('a:a:1') { }
             }
-        """, new ParenthesesInDependencyRule())
+        """, new DependencyParenthesesRule())
 
         then:
         results.doesNotViolate(ParenthesesInDependencyRule)
@@ -20,7 +20,7 @@ class ParenthesesInDependencyRuleSpec extends AbstractRuleSpec {
             dependencies {
                compile('junit:junit:4.11')
             }
-        """, new ParenthesesInDependencyRule())
+        """, new DependencyParenthesesRule())
 
         then:
         results.violates(ParenthesesInDependencyRule)

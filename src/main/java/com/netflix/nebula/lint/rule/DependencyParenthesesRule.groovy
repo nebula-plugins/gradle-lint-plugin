@@ -4,13 +4,13 @@ import org.codehaus.groovy.ast.expr.ClosureExpression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.codenarc.rule.AbstractAstVisitorRule
 
-class ParenthesesInDependencyRule extends AbstractAstVisitorRule {
-    String name = 'UnnecessaryParenthesesInDependency'
+class DependencyParenthesesRule extends AbstractAstVisitorRule {
+    String name = 'dependency-parentheses'
     int priority = 3
-    Class astVisitorClass = ParenthesesInDependencyAstVisitor
+    Class astVisitorClass = DependencyParenthesesAstVisitor
 }
 
-class ParenthesesInDependencyAstVisitor extends AbstractGradleLintVisitor {
+class DependencyParenthesesAstVisitor extends AbstractGradleLintVisitor {
     boolean inDependenciesBlock = false
 
     @Override
@@ -19,7 +19,7 @@ class ParenthesesInDependencyAstVisitor extends AbstractGradleLintVisitor {
         if(!args.empty && !(args[-1] instanceof ClosureExpression)) {
             def callSource = getSourceCode().line(call.lineNumber-1)
             if(callSource =~ "^${call.methodAsString}\\s*\\(") {
-                addViolation(call, "Parentheses are unnecessary for dependency $callSource")
+                addViolation(call, "parentheses are unnecessary for dependencies")
 //                correctIfPossible(call)
             }
         }

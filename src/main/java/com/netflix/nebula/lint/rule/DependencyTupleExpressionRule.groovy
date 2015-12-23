@@ -5,7 +5,7 @@ import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.codenarc.rule.AbstractAstVisitorRule
 
 class DependencyTupleExpressionRule extends AbstractAstVisitorRule {
-    String name = 'UnnecessaryDependencyTupleExpression'
+    String name = 'dependency-tuple'
     int priority = 3
     Class astVisitorClass = DependencyTupleExpressionAstVisitor
 }
@@ -15,7 +15,7 @@ class DependencyTupleExpressionAstVisitor extends AbstractGradleLintVisitor {
     void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
         if(dep.conf == null && dep.syntax == GradleDependency.Syntax.MapNotation) {
             def callSource = getSourceCode().line(call.lineNumber - 1)
-            addViolation(call, "Use the shortcut form of the dependency $callSource")
+            addViolation(call, "use the shortcut form of the dependency")
             correctIfPossible(call)
         }
     }
