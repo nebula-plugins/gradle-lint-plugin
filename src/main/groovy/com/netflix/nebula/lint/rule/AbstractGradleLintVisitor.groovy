@@ -57,6 +57,8 @@ abstract class AbstractGradleLintVisitor extends AbstractAstVisitor {
             }
         }
 
+        visitMethodCallExpressionInternal(call)
+
         if(call.methodAsString == 'dependencies') {
             inDependenciesBlock = true
             super.visitMethodCallExpression(call)
@@ -70,8 +72,9 @@ abstract class AbstractGradleLintVisitor extends AbstractAstVisitor {
                 }
             }
         }
-
-        visitMethodCallExpressionInternal(call)
+        else {
+            super.visitMethodCallExpression(call)
+        }
     }
 
     @Override

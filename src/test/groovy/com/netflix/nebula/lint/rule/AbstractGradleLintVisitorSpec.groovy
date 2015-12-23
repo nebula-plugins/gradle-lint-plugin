@@ -22,6 +22,26 @@ class AbstractGradleLintVisitorSpec extends AbstractRuleSpec {
         visited.syntax == GradleDependency.Syntax.MapNotation
     }
 
+    def 'visit dependencies defined inside subprojects block'() {
+        when:
+        def rule = new SimpleLintRule()
+        runRulesAgainst("""
+            subprojects {
+                dependencies {
+                   compile 'junit:junit:4.11'
+                }
+            }
+        """, rule)
+
+        def visited = rule.visitor.visitedDeps[0]
+
+        then:
+        visited.group == 'junit'
+        visited.name == 'junit'
+        visited.version == '4.11'
+        visited.syntax == GradleDependency.Syntax.StringNotation
+    }
+
     def 'parse dependency string syntax'() {
         when:
         def rule = new SimpleLintRule()

@@ -8,5 +8,6 @@ class GradleLintPlugin implements Plugin<Project> {
     void apply(Project project) {
         project.extensions.create('lint', GradleLintExtension)
         project.tasks.create('lint', GradleLintTask)
+        project.tasks.create('autoCorrectLint', GradleLintCorrectionTask)
     }
 }
