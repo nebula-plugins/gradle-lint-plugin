@@ -48,6 +48,8 @@ Run `./gradlew lint` to execute the linting process.
 
 ![gradle-lint output](docs/images/lint-output.png)
 
+Run `./gradlew autoCorrectLint` to apply automatically fix your build scripts!
+
 ## License
 
 Copyright 2014-2015 Netflix, Inc.
