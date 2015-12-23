@@ -24,4 +24,33 @@ class GradleLintPluginSpec extends IntegrationSpec {
 
         println results.standardOutput
     }
+
+    def 'rules relative to each project'() {
+        when:
+        buildFile << """
+            allprojects {
+                apply plugin: ${GradleLintPlugin.name}
+            }
+
+            subprojects {
+                apply plugin: 'java'
+                dependencies {
+                    compile('com.google.guava:guava:18.0')
+                }
+            }
+        """
+
+        addSubproject('sub', """
+            dependencies {
+                testCompile group: 'junit',
+                    name: 'junit',
+                    version: '4.11'
+            }
+        """)
+
+        then:
+        def results = runTasksSuccessfully('lint')
+
+        println results.standardOutput
+    }
 }

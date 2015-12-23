@@ -11,7 +11,7 @@ class DependencyParenthesesRuleSpec extends AbstractRuleSpec {
         """, new DependencyParenthesesRule())
 
         then:
-        results.doesNotViolate(ParenthesesInDependencyRule)
+        results.doesNotViolate(DependencyParenthesesRule)
     }
 
     def 'parenthesized dependency violates'() {
@@ -23,6 +23,6 @@ class DependencyParenthesesRuleSpec extends AbstractRuleSpec {
         """, new DependencyParenthesesRule())
 
         then:
-        results.violates(ParenthesesInDependencyRule)
+        results.violates(DependencyParenthesesRule)
     }
 }

@@ -5,7 +5,6 @@ import org.codenarc.rule.Rule
 import org.codenarc.rule.Violation
 import org.codenarc.ruleregistry.RuleRegistryInitializer
 import org.codenarc.ruleset.CompositeRuleSet
-import org.codenarc.ruleset.PropertiesFileRuleSetConfigurer
 import org.codenarc.ruleset.RuleSet
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -46,7 +45,6 @@ class GradleLintPlugin implements Plugin<Project> {
 
         def ruleSet = new CompositeRuleSet()
         rules.each { ruleSet.addRule(it) }
-        new PropertiesFileRuleSetConfigurer().configure(ruleSet)
         ruleSet
     }
 }

@@ -76,7 +76,8 @@ abstract class AbstractGradleLintVisitor extends AbstractAstVisitor {
 
     @Override
     protected void addViolation(ASTNode node, String message) {
-        def violatingLines = sourceCode.lines.subList(node.lineNumber-1, node.lastLineNumber)
+        // make a copy of violating lines so they can be formatted for display in a report
+        def violatingLines = new ArrayList(sourceCode.lines.subList(node.lineNumber-1, node.lastLineNumber))
 
         violatingLines[0] = violatingLines[0][(node.columnNumber-1)..-1]
         if(node.lineNumber != node.lastLineNumber) {
