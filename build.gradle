@@ -1,9 +1,13 @@
 buildscript {
-    repositories { jcenter() }
+    repositories {
+        jcenter()
+        mavenLocal()
+    }
 
     dependencies {
         classpath 'com.netflix.nebula:nebula-project-plugin:3.+'
         classpath 'com.netflix.nebula:nebula-release-plugin:3.+'
+        classpath 'com.netflix.nebula:gradle-lint:0.1+'
     }
 }
 
@@ -12,6 +16,10 @@ group 'com.netflix.nebula'
 apply plugin: 'groovy'
 apply plugin: 'nebula.integtest'
 apply plugin: 'nebula.nebula-release'
+apply plugin: 'maven-publish'
+apply plugin: 'nebula.lint'
+
+lint.rules = ['dependency-parentheses', 'dependency-tuple']
 
 repositories {
     mavenCentral()
@@ -21,11 +29,19 @@ dependencies {
     compile gradleApi()
     compile localGroovy()
 
-    compile 'org.codenarc:CodeNarc:latest.release'
+    compile('org.codenarc:CodeNarc:latest.release')
 
     testCompile('org.spockframework:spock-core:latest.release') {
         exclude module: 'groovy-all'
     }
 
-    testCompile 'com.netflix.nebula:nebula-test:3.1.0'
+    testCompile('com.netflix.nebula:nebula-test:3.1.0')
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
 }

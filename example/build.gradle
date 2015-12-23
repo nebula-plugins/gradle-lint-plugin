@@ -1,0 +1,24 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        mavenLocal()
+    }
+
+    dependencies {
+        classpath 'com.netflix.nebula:gradle-lint:0.1+'
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'nebula.lint'
+
+lint.rules = ['dependency-parentheses', 'dependency-tuple']
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile('org.codenarc:CodeNarc:latest.release')
+    testCompile('com.netflix.nebula:nebula-test:3.1.0')
+}
