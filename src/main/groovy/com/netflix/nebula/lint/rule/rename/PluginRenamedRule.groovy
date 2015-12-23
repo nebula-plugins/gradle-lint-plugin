@@ -1,5 +1,6 @@
 package com.netflix.nebula.lint.rule.rename
 
+import com.netflix.nebula.lint.rule.AbstractGradleLintVisitor
 import groovy.transform.Canonical
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.codenarc.rule.AbstractAstVisitorRule

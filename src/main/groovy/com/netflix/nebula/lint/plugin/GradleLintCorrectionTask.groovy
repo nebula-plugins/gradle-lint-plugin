@@ -36,7 +36,7 @@ class GradleLintCorrectionTask extends DefaultTask {
             w << analyzer.corrected
         }
 
-        textOutput.style(StyledTextOutput.Style.Success).text("Corrected ${results.violations.size()} lint problems")
+        textOutput.style(StyledTextOutput.Style.Identifier).text("Corrected ${results.violations.size()} lint problems")
         textOutput.println()
     }
 
