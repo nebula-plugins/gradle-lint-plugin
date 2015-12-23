@@ -18,9 +18,14 @@ class DependencyParenthesesAstVisitor extends AbstractGradleLintVisitor {
         def args = call.arguments.expressions as List
         if(!args.empty && !(args[-1] instanceof ClosureExpression)) {
             def callSource = getSourceCode().line(call.lineNumber-1)
-            if(callSource =~ "^${call.methodAsString}\\s*\\(") {
+            def matcher = callSource =~ /^${call.methodAsString}\s*\((?<dep>[^\)]+)/
+            if(matcher.find()) {
                 addViolation(call, "parentheses are unnecessary for dependencies")
-//                correctIfPossible(call)
+
+                if(isCorrectable()) {
+                    correctableSourceCode.replace(call, "${call.methodAsString} ${matcher.group('dep')}")
+//                    correctableSourceCode.replace(m, "${m.method.text} '$group:$artifact${version ? ":$version" : ''}'")
+                }
             }
         }
     }

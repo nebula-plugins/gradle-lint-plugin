@@ -38,6 +38,6 @@ class DependencyTupleExpressionAstVisitor extends AbstractGradleLintVisitor {
         }
 
         // FIXME all properties except name are optional according to https://docs.gradle.org/current/javadoc/org/gradle/api/artifacts/dsl/DependencyHandler.html
-        correctableSourceCode.replace(m, "${m.method.text} '$group:$artifact${version ? ":$version" : ''}'")
+        correctableSourceCode.replace(m, "${m.methodAsString} '$group:$artifact${version ? ":$version" : ''}'")
     }
 }

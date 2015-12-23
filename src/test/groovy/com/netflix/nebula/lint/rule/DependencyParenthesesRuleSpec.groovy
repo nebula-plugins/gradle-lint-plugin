@@ -25,4 +25,20 @@ class DependencyParenthesesRuleSpec extends AbstractRuleSpec {
         then:
         results.violates(DependencyParenthesesRule)
     }
+
+    def 'parenthesized dependencies are corrected'() {
+        when:
+        def results = correct("""
+            dependencies {
+               compile('junit:junit:4.11')
+            }
+        """, new DependencyParenthesesRule())
+
+        then:
+        results == """
+            dependencies {
+               compile 'junit:junit:4.11'
+            }
+        """
+    }
 }
