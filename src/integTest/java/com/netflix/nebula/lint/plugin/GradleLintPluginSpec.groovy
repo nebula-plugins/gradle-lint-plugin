@@ -20,7 +20,7 @@ class GradleLintPluginSpec extends IntegrationSpec {
         """
 
         then:
-        def results = runTasksSuccessfully('lint')
+        def results = runTasksSuccessfully('help')
 
         when:
         def console = results.standardOutput.readLines()
@@ -84,8 +84,14 @@ class GradleLintPluginSpec extends IntegrationSpec {
         """)
 
         then:
-        def results = runTasksSuccessfully('lint')
+        def results = runTasksSuccessfully('help')
 
-        println results.standardOutput
+        when:
+        def console = results.standardOutput.readLines()
+
+        then:
+        console.findAll { it.startsWith('warning') }.size() == 2
+        console.any { it.contains('dependency-parentheses') }
+        console.any { it.contains('dependency-tuple') }
     }
 }

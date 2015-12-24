@@ -5,7 +5,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.netflix.nebula:gradle-lint:0.1+'
+        classpath 'com.netflix.nebula:gradle-lint-plugin:+'
     }
 }
 
