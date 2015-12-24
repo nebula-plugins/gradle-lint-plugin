@@ -45,7 +45,7 @@ class GradleLintPluginSpec extends IntegrationSpec {
         """
 
         then:
-        runTasksSuccessfully('autoCorrectLint')
+        runTasksSuccessfully('fixLint')
 
         buildFile.text.contains("""
             apply plugin: ${GradleLintPlugin.name}
@@ -88,6 +88,35 @@ class GradleLintPluginSpec extends IntegrationSpec {
 
         when:
         def console = results.standardOutput.readLines()
+
+        then:
+        console.findAll { it.startsWith('warning') }.size() == 2
+        console.any { it.contains('dependency-parentheses') }
+        console.any { it.contains('dependency-tuple') }
+    }
+
+    def 'generate a lint report for a single module project'() {
+        when:
+        buildFile << """
+            apply plugin: ${GradleLintPlugin.name}
+            apply plugin: 'java'
+
+            lint.rules = ['dependency-parentheses', 'dependency-tuple']
+
+            dependencies {
+                compile('com.google.guava:guava:18.0')
+                testCompile group: 'junit',
+                    name: 'junit',
+                    version: '4.11'
+            }
+        """
+
+        then:
+        def results = runTasksSuccessfully('lintReport')
+
+        when:
+        def console = results.standardOutput.readLines()
+        println results.standardOutput
 
         then:
         console.findAll { it.startsWith('warning') }.size() == 2

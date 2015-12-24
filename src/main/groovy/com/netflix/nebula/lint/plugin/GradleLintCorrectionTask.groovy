@@ -1,10 +1,6 @@
 package com.netflix.nebula.lint.plugin
 
 import com.netflix.nebula.lint.analyzer.CorrectableStringSourceAnalyzer
-import org.codenarc.rule.Rule
-import org.codenarc.ruleregistry.RuleRegistryInitializer
-import org.codenarc.ruleset.CompositeRuleSet
-import org.codenarc.ruleset.RuleSet
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 import org.gradle.logging.StyledTextOutput
@@ -21,7 +17,7 @@ class GradleLintCorrectionTask extends DefaultTask {
     @TaskAction
     void lintCorrections() {
         def registry = new LintRuleRegistry(getClass().classLoader)
-        def ruleSet = configureRuleSet(project.extensions
+        def ruleSet = RuleSetFactory.configureRuleSet(project.extensions
                 .getByType(GradleLintExtension)
                 .rules
                 .collect { registry.findRule(it) }
@@ -38,13 +34,5 @@ class GradleLintCorrectionTask extends DefaultTask {
 
         textOutput.style(StyledTextOutput.Style.Identifier).text("Corrected ${results.violations.size()} lint problems")
         textOutput.println()
-    }
-
-    protected static RuleSet configureRuleSet(List<Rule> rules) {
-        new RuleRegistryInitializer().initializeRuleRegistry()
-
-        def ruleSet = new CompositeRuleSet()
-        rules.each { ruleSet.addRule(it) }
-        ruleSet
     }
 }

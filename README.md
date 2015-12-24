@@ -45,11 +45,11 @@ For multimodule projects, we recommend applying the plugin in an allprojects blo
 
 ## Tasks
 
-Run `./gradlew lint` to execute the linting process.
+Build scripts are linted during the project after-evaluate phase.  Results are held until after the last task is ran, then reported in the console.  If linting results affect the overall success of the build, they do not do so until after the last task in the task graph has finished executing.
 
 ![gradle-lint output](docs/images/lint-output.png)
 
-Run `./gradlew autoCorrectLint` to apply automatically fix your build scripts!
+Run `./gradlew fixLint` to apply automatically fix your build scripts!
 
 ## License
 

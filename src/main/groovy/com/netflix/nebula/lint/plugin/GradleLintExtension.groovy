@@ -1,21 +1,16 @@
 package com.netflix.nebula.lint.plugin
 
-import org.gradle.api.reporting.Report
-import org.gradle.api.reporting.ReportContainer
+import org.gradle.api.InvalidUserDataException
 
-class GradleLintExtension /*implements Reporting<GradleLintReportContainer>*/ {
+class GradleLintExtension {
     List<String> rules = []
+    String reportFormat = 'html'
 
-//    @Override
-//    GradleLintReportContainer getReports() {
-//        return null
-//    }
-//
-//    @Override
-//    GradleLintReportContainer reports(Closure closure) {
-//        return null
-//    }
-}
-
-interface GradleLintReportContainer extends ReportContainer<Report> {
+    void setReportFormat(String reportFormat) {
+        if (reportFormat in ['xml', 'html', 'text']) {
+            this.reportFormat = reportFormat
+        } else {
+            throw new InvalidUserDataException("'$reportFormat' is not a valid codenarc report format")
+        }
+    }
 }
