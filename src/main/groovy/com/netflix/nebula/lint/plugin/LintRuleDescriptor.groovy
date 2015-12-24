@@ -10,4 +10,8 @@ class LintRuleDescriptor {
     String getImplementationClassName() {
         GUtil.loadProperties(propertiesFileUrl).getProperty('implementation-class')
     }
+
+    List<String> getIncludes() {
+        GUtil.loadProperties(propertiesFileUrl).getProperty('includes')?.split(',') ?: [] as List<String>
+    }
 }

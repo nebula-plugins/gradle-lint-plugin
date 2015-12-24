@@ -1,6 +1,7 @@
 package com.netflix.nebula.lint.plugin
 
 import com.netflix.nebula.lint.analyzer.CorrectableStringSourceAnalyzer
+import org.codenarc.rule.Rule
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 import org.gradle.logging.StyledTextOutput
@@ -21,7 +22,7 @@ class GradleLintCorrectionTask extends DefaultTask {
                 .getByType(GradleLintExtension)
                 .rules
                 .collect { registry.findRule(it) }
-                .findAll { it != null })
+                .flatten() as List<Rule>)
 
         def textOutput = textOutputFactory.create('lint')
 
