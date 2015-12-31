@@ -17,10 +17,12 @@ class GradleLintPluginSpec extends IntegrationSpec {
                     name: 'junit',
                     version: '4.11'
             }
+
+            task taskA{}
         """
 
         then:
-        def results = runTasksSuccessfully('help')
+        def results = runTasksSuccessfully('taskA')
 
         when:
         def console = results.standardOutput.readLines()
@@ -45,7 +47,7 @@ class GradleLintPluginSpec extends IntegrationSpec {
         """
 
         then:
-        runTasksSuccessfully('fixLint')
+        runTasksSuccessfully('fixBuildLint')
 
         buildFile.text.contains("""
             apply plugin: ${GradleLintPlugin.name}
@@ -81,10 +83,12 @@ class GradleLintPluginSpec extends IntegrationSpec {
                     name: 'junit',
                     version: '4.11'
             }
+
+            task taskA {}
         """)
 
         then:
-        def results = runTasksSuccessfully('help')
+        def results = runTasksSuccessfully('taskA')
 
         when:
         def console = results.standardOutput.readLines()
@@ -112,7 +116,7 @@ class GradleLintPluginSpec extends IntegrationSpec {
         """
 
         then:
-        def results = runTasksSuccessfully('lintReport')
+        def results = runTasksSuccessfully('generateBuildLintReport')
 
         when:
         def console = results.standardOutput.readLines()

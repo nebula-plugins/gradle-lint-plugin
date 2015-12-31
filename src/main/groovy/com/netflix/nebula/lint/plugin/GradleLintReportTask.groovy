@@ -6,6 +6,7 @@ import org.codenarc.report.HtmlReportWriter
 import org.codenarc.report.ReportWriter
 import org.codenarc.report.TextReportWriter
 import org.codenarc.report.XmlReportWriter
+import org.codenarc.rule.Rule
 import org.gradle.api.DefaultTask
 import org.gradle.api.plugins.quality.CodeNarcReports
 import org.gradle.api.plugins.quality.internal.CodeNarcReportsImpl
@@ -29,16 +30,15 @@ class GradleLintReportTask extends DefaultTask implements VerificationTask, Repo
 
     GradleLintReportTask() {
         reports = instantiator.newInstance(CodeNarcReportsImpl, this)
+        finalizedBy 'buildLint'
     }
 
     @TaskAction
     void generateReport() {
-        println("IS ENABLED? " + reports.enabled)
-
         if(reports.enabled) {
             def lintExt = project.extensions.getByType(GradleLintExtension)
             def registry = new LintRuleRegistry(getClass().classLoader)
-            def ruleSet = RuleSetFactory.configureRuleSet(lintExt.rules.collect { registry.findRule(it) }.findAll { it != null })
+            def ruleSet = RuleSetFactory.configureRuleSet(lintExt.rules.collect { registry.findRule(it) }.flatten() as List<Rule>)
             def results = new FilesystemSourceAnalyzer(baseDirectory: project.projectDir.absolutePath,
                     includes: project.buildFile.absolutePath).analyze(ruleSet)
 
