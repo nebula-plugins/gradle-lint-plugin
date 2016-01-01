@@ -27,7 +27,7 @@ class PluginRenamedAstVisitor extends AbstractGradleLintVisitor {
     @Override
     void visitApplyPlugin(MethodCallExpression call, String plugin) {
         if(plugin == deprecatedPluginName) {
-            addViolation(call, "plugin $deprecatedPluginName has been renamed to $pluginName")
+            addViolationWithReplacement(call, "plugin $deprecatedPluginName has been renamed to $pluginName")
             if(isCorrectable()) {
                 correctableSourceCode.replace(call, "apply plugin: '$pluginName'")
             }

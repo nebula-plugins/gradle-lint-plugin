@@ -14,14 +14,11 @@ class DependencyTupleExpressionAstVisitor extends AbstractGradleLintVisitor {
     @Override
     void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
         if(dep.conf == null && dep.syntax == GradleDependency.Syntax.MapNotation) {
-            addViolation(call, "use the shortcut form of the dependency")
-            correctIfPossible(call)
+            addViolationWithReplacement(call, "use the shortcut form of the dependency", correction(call))
         }
     }
 
-    void correctIfPossible(MethodCallExpression m) {
-        if(!isCorrectable()) return
-
+    static String correction(MethodCallExpression m) {
         def args = (m.arguments.expressions.find { it instanceof MapExpression } as MapExpression)
                 .mapEntryExpressions
         def group = '', artifact = '', version = ''
@@ -38,6 +35,6 @@ class DependencyTupleExpressionAstVisitor extends AbstractGradleLintVisitor {
         }
 
         // FIXME all properties except name are optional according to https://docs.gradle.org/current/javadoc/org/gradle/api/artifacts/dsl/DependencyHandler.html
-        correctableSourceCode.replace(m, "${m.methodAsString} '$group:$artifact${version ? ":$version" : ''}'")
+        "${m.methodAsString} '$group:$artifact${version ? ":$version" : ''}'"
     }
 }

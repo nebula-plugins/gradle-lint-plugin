@@ -9,13 +9,13 @@ class GradleLintPlugin implements Plugin<Project> {
 
     @Override
     void apply(Project project) {
-        def lintExt = project.extensions.create('lint', GradleLintExtension)
-        project.tasks.create('fixBuildLint', GradleLintCorrectionTask)
-        def lint = project.tasks.create('buildLint', GradleLintTask)
+        def lintExt = project.extensions.create('gradleLint', GradleLintExtension)
+        project.tasks.create('fixGradleLint', GradleLintCorrectionTask)
+        def lint = project.tasks.create('gradleLint', GradleLintTask)
         configureReportTask(project, lintExt)
 
         project.rootProject.apply plugin: GradleLintPlugin
-        def rootLint = project.rootProject.tasks.getByName('buildLint')
+        def rootLint = project.rootProject.tasks.getByName('gradleLint')
 
         // ensure that lint runs
         project.tasks.whenTaskAdded { task ->
@@ -31,13 +31,13 @@ class GradleLintPlugin implements Plugin<Project> {
     }
 
     private void configureReportTask(Project project, GradleLintExtension extension) {
-        def task = project.tasks.create('generateBuildLintReport', GradleLintReportTask)
+        def task = project.tasks.create('generateGradleLintReport', GradleLintReportTask)
         task.reports.all { report ->
             report.conventionMapping.with {
                 enabled = { report.name == extension.reportFormat }
                 destination = {
                     def fileSuffix = report.name == 'text' ? 'txt' : report.name
-                    new File(project.buildDir, "reports/lint/${project.name}.$fileSuffix")
+                    new File(project.buildDir, "reports/gradleLint/${project.name}.$fileSuffix")
                 }
             }
         }

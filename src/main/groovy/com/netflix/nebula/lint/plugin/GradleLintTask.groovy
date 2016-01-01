@@ -52,14 +52,12 @@ class GradleLintTask extends DefaultTask {
             textOutput.withStyle(StyledTextOutput.Style.Description).println(v.message)
 
             textOutput.withStyle(StyledTextOutput.Style.UserInput).println(buildFilePath + ':' + v.lineNumber)
-            textOutput.text(v.sourceLine)
-            textOutput.println('\n') // extra space between violations
+            textOutput.println("$v.sourceLine\n") // extra space between violations
         }
 
         if (!violations.isEmpty()) {
             textOutput.withStyle(StyledTextOutput.Style.Failure)
-                    .text("\u2716 ${buildFilePath}: ${violations.size()} problem${violations.isEmpty() ? '' : 's'} (${totalBySeverity.error ?: 0} errors, ${totalBySeverity.warning ?: 0} warnings)".toString())
-            textOutput.println()
+                    .println("\u2716 ${buildFilePath}: ${violations.size()} problem${violations.isEmpty() ? '' : 's'} (${totalBySeverity.error ?: 0} errors, ${totalBySeverity.warning ?: 0} warnings)".toString())
 
             if (totalBySeverity.error)
                 throw new LintCheckFailedException() // fail the whole build

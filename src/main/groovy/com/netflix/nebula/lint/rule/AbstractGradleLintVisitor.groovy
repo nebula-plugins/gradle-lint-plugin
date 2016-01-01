@@ -7,7 +7,6 @@ import org.codehaus.groovy.ast.expr.ConstantExpression
 import org.codehaus.groovy.ast.expr.MapExpression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.codenarc.rule.AbstractAstVisitor
-import org.codenarc.rule.Violation
 
 abstract class AbstractGradleLintVisitor extends AbstractAstVisitor {
     boolean isCorrectable() {
@@ -77,22 +76,40 @@ abstract class AbstractGradleLintVisitor extends AbstractAstVisitor {
         }
     }
 
-    @Override
-    protected void addViolation(ASTNode node, String message) {
+    void addViolationWithReplacement(ASTNode node, String message, String replacement = null) {
+        violations.add(new GradleViolation(rule: rule, lineNumber: node.lineNumber,
+                sourceLine: formattedViolation(node), message: message,
+                replacement: replacement))
+
+        if(replacement != null && isCorrectable()) {
+            correctableSourceCode.replace(node, replacement)
+        }
+    }
+
+    void addViolationToDelete(ASTNode node, String message) {
+        violations.add(new GradleViolation(rule: rule, lineNumber: node.lineNumber,
+                sourceLine: formattedViolation(node), message: message,
+                shouldDelete: true))
+
+        if(isCorrectable()) {
+            correctableSourceCode.delete(node)
+        }
+    }
+
+    private String formattedViolation(ASTNode node) {
         // make a copy of violating lines so they can be formatted for display in a report
-        def violatingLines = new ArrayList(sourceCode.lines.subList(node.lineNumber-1, node.lastLineNumber))
+        def violatingLines = new ArrayList(sourceCode.lines.subList(node.lineNumber - 1, node.lastLineNumber))
 
-        violatingLines[0] = violatingLines[0][(node.columnNumber-1)..-1]
-        if(node.lineNumber != node.lastLineNumber) {
-            violatingLines[-1] = violatingLines[-1][0..(node.lastColumnNumber-2)]
+        violatingLines[0] = violatingLines[0][(node.columnNumber - 1)..-1]
+        if (node.lineNumber != node.lastLineNumber) {
+            violatingLines[-1] = violatingLines[-1][0..(node.lastColumnNumber - 2)]
         }
 
-        violatingLines.eachWithIndex{ String line, Integer i ->
-            if(i > 0) violatingLines[i] = '  ' + line.stripIndent()
+        violatingLines.eachWithIndex { String line, Integer i ->
+            if (i > 0) violatingLines[i] = '  ' + line.stripIndent()
         }
 
-        violations.add(new Violation(rule: rule, lineNumber: node.lineNumber,
-                sourceLine: violatingLines.join('\n').stripIndent(), message: message))
+        violatingLines.join('\n').stripIndent()
     }
 
     protected void visitMethodCallExpressionInternal(MethodCallExpression call) {}

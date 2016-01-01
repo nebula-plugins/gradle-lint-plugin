@@ -32,7 +32,7 @@ Alternatively:
 
 Define which rules you would like to lint against:
 
-    lint.rules = ['dependency-parentheses', 'dependency-tuple', ...]
+    gradleLint.rules = ['dependency-parentheses', 'dependency-tuple', ...]
 
 For an enterprise build, we recommend defining the lint rules in a `init.gradle` script or in a gradle script that is included via the Gradle `apply from` mechanism.
 
@@ -40,7 +40,7 @@ For multimodule projects, we recommend applying the plugin in an allprojects blo
 
     allprojects {
       apply plugin: 'nebula.lint'
-      lint.rules = ['dependency-parentheses', 'dependency-tuple', ...]
+      gradleLint.rules = ['dependency-parentheses', 'dependency-tuple', ...]
     }
 
 ## Tasks
@@ -49,7 +49,7 @@ Build scripts are linted during the project after-evaluate phase.  Results are h
 
 ![gradle-lint output](docs/images/lint-output.png)
 
-Run `./gradlew fixLint` to apply automatically fix your build scripts!
+Run `./gradlew fixGradleLint` to apply automatically fix your build scripts!
 
 ## License
 

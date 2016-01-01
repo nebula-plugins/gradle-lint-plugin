@@ -6,10 +6,10 @@ class GradleLintPluginSpec extends IntegrationSpec {
     def 'run multiple rules on a single module project'() {
         when:
         buildFile << """
-            apply plugin: ${GradleLintPlugin.name}
             apply plugin: 'java'
+            apply plugin: ${GradleLintPlugin.name}
 
-            lint.rules = ['dependency-parentheses', 'dependency-tuple']
+            gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
 
             dependencies {
                 compile('com.google.guava:guava:18.0')
@@ -17,12 +17,10 @@ class GradleLintPluginSpec extends IntegrationSpec {
                     name: 'junit',
                     version: '4.11'
             }
-
-            task taskA{}
         """
 
         then:
-        def results = runTasksSuccessfully('taskA')
+        def results = runTasksSuccessfully('assemble')
 
         when:
         def console = results.standardOutput.readLines()
@@ -39,7 +37,7 @@ class GradleLintPluginSpec extends IntegrationSpec {
             apply plugin: ${GradleLintPlugin.name}
             apply plugin: 'java'
 
-            lint.rules = ['dependency-parentheses', 'dependency-tuple']
+            gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
 
             dependencies {
                 compile('com.google.guava:guava:18.0')
@@ -47,13 +45,14 @@ class GradleLintPluginSpec extends IntegrationSpec {
         """
 
         then:
-        runTasksSuccessfully('fixBuildLint')
+        def results = runTasksSuccessfully('fixGradleLint')
+        println results.standardOutput
 
         buildFile.text.contains("""
             apply plugin: ${GradleLintPlugin.name}
             apply plugin: 'java'
 
-            lint.rules = ['dependency-parentheses', 'dependency-tuple']
+            gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
 
             dependencies {
                 compile 'com.google.guava:guava:18.0'
@@ -66,7 +65,7 @@ class GradleLintPluginSpec extends IntegrationSpec {
         buildFile << """
             allprojects {
                 apply plugin: ${GradleLintPlugin.name}
-                lint.rules = ['dependency-parentheses', 'dependency-tuple']
+                gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
             }
 
             subprojects {
@@ -105,7 +104,7 @@ class GradleLintPluginSpec extends IntegrationSpec {
             apply plugin: ${GradleLintPlugin.name}
             apply plugin: 'java'
 
-            lint.rules = ['dependency-parentheses', 'dependency-tuple']
+            gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
 
             dependencies {
                 compile('com.google.guava:guava:18.0')
@@ -116,15 +115,15 @@ class GradleLintPluginSpec extends IntegrationSpec {
         """
 
         then:
-        def results = runTasksSuccessfully('generateBuildLintReport')
+        def results = runTasksSuccessfully('generateGradleLintReport')
 
         when:
         def console = results.standardOutput.readLines()
-        println results.standardOutput
 
         then:
         console.findAll { it.startsWith('warning') }.size() == 2
         console.any { it.contains('dependency-parentheses') }
         console.any { it.contains('dependency-tuple') }
+        new File(projectDir, "build/reports/gradleLint/${moduleName}.html").exists()
     }
 }
