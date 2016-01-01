@@ -1,20 +1,20 @@
 package com.netflix.nebula.lint.rule
 
 import com.netflix.nebula.lint.analyzer.CorrectableStringSourceAnalyzer
+import nebula.test.ProjectSpec
 import org.codenarc.analyzer.StringSourceAnalyzer
 import org.codenarc.results.Results
 import org.codenarc.rule.Rule
 import org.codenarc.ruleregistry.RuleRegistryInitializer
 import org.codenarc.ruleset.CompositeRuleSet
 import org.codenarc.ruleset.RuleSet
-import spock.lang.Specification
 
-abstract class AbstractRuleSpec extends Specification {
+abstract class AbstractRuleSpec extends ProjectSpec {
     def setupSpec() {
         Results.mixin ResultsAssert
     }
 
-    private RuleSet configureRuleSet(Rule... rules) {
+    private static RuleSet configureRuleSet(Rule... rules) {
         new RuleRegistryInitializer().initializeRuleRegistry()
 
         def ruleSet = new CompositeRuleSet()
@@ -22,12 +22,12 @@ abstract class AbstractRuleSpec extends Specification {
         ruleSet
     }
 
-    Results runRulesAgainst(String source, Rule... rules) {
-        new StringSourceAnalyzer(source).analyze(configureRuleSet(rules))
+    Results runRulesAgainst(Rule... rules) {
+        new StringSourceAnalyzer(project.buildFile.text).analyze(configureRuleSet(rules))
     }
 
-    String correct(String source, Rule... rules) {
-        def analyzer = new CorrectableStringSourceAnalyzer(source)
+    String correct(Rule... rules) {
+        def analyzer = new CorrectableStringSourceAnalyzer(project.buildFile.text)
         analyzer.analyze(configureRuleSet(rules))
         analyzer.corrected
     }

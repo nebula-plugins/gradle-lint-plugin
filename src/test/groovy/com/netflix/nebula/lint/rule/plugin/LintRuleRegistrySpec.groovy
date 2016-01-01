@@ -16,7 +16,7 @@ class LintRuleRegistrySpec extends Specification {
         singleRule << "implementation-class=${MockRule1.name}"
 
         when:
-        def rules = new LintRuleRegistry(ruleClassLoader()).findRule('single-rule')
+        def rules = new LintRuleRegistry(ruleClassLoader(), null).findRule('single-rule')
 
         then:
         rules.size() == 1
@@ -35,7 +35,7 @@ class LintRuleRegistrySpec extends Specification {
         composite << 'includes=rule1,rule2'
 
         when:
-        def rules = new LintRuleRegistry(ruleClassLoader()).findRule('composite')
+        def rules = new LintRuleRegistry(ruleClassLoader(), null).findRule('composite')
 
         then:
         rules.size() == 2

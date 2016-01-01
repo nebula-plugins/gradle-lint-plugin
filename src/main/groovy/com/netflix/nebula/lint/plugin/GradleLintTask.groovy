@@ -21,7 +21,7 @@ class GradleLintTask extends DefaultTask {
         def textOutput = textOutputFactory.create('lint')
         def buildFilePath = relPath(project.rootDir, project.buildFile).path
 
-        def registry = new LintRuleRegistry(getClass().classLoader)
+        def registry = new LintRuleRegistry(getClass().classLoader, project)
         def ruleSet = RuleSetFactory.configureRuleSet(project
                 .extensions
                 .getByType(GradleLintExtension)

@@ -14,7 +14,7 @@ class DependencyTupleExpressionAstVisitor extends AbstractGradleLintVisitor {
     @Override
     void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
         if(dep.conf == null && dep.syntax == GradleDependency.Syntax.MapNotation) {
-            addViolationWithReplacement(call, "use the shortcut form of the dependency", correction(call))
+            addViolationWithReplacement(call, 'use the shortcut form of the dependency', correction(call))
         }
     }
 

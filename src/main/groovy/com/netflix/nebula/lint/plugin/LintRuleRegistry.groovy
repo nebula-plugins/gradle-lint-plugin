@@ -1,12 +1,16 @@
 package com.netflix.nebula.lint.plugin
 
+import com.netflix.nebula.lint.rule.GradleModelAware
 import org.codenarc.rule.Rule
+import org.gradle.api.Project
 
 class LintRuleRegistry {
     private final ClassLoader classLoader
+    private final Project project
 
-    LintRuleRegistry(ClassLoader classLoader) {
+    LintRuleRegistry(ClassLoader classLoader, Project project) {
         this.classLoader = classLoader
+        this.project = project
     }
 
     private LintRuleDescriptor findRuleDescriptor(String ruleId) {
@@ -30,7 +34,11 @@ class LintRuleRegistry {
 
         if(implClassName) {
             try {
-                return included + [(Rule) classLoader.loadClass(implClassName).newInstance()]
+                Rule r = (Rule) classLoader.loadClass(implClassName).newInstance()
+                if(r instanceof GradleModelAware) {
+                    (r as GradleModelAware).project = project
+                }
+                return included + r
             } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
                 throw new InvalidRuleException(String.format(
                         "Could not find or load implementation class '%s' for rule '%s' specified in %s.", implClassName, ruleId, ruleDescriptor), e)
