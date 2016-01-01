@@ -71,6 +71,27 @@ class AbstractGradleLintVisitorSpec extends AbstractRuleSpec {
         plugins == ['nebula-dependency-lock']
     }
 
+    def 'add violation with deletion'() {
+        when:
+        def rule = new AbstractAstVisitorRule() {
+            String name = 'no-apply-plugin'
+            int priority = 2
+
+            @Override
+            AstVisitor getAstVisitor() {
+                return new AbstractGradleLintVisitor() {
+                    @Override
+                    void visitApplyPlugin(MethodCallExpression call, String plugin) {
+                        addViolationToDelete(call, "'apply plugin' syntax is not allowed")
+                    }
+                }
+            }
+        }
+
+        then:
+        correct("apply plugin: 'java'", rule) == ''
+    }
+
     static class SimpleLintVisitor extends AbstractGradleLintVisitor {
         List<GradleDependency> visitedDeps = []
         List<String> appliedPlugins = []
