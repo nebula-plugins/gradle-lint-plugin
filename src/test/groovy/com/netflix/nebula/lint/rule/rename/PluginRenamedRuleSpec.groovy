@@ -5,9 +5,11 @@ import com.netflix.nebula.lint.rule.AbstractRuleSpec
 class PluginRenamedRuleSpec extends AbstractRuleSpec {
     def 'deprecated plugin names are recorded as violations'() {
         when:
-        def results = runRulesAgainst("""
+        project.buildFile << """
             apply plugin: 'ye-olde-plugin'
-        """, new PluginRenamedRule('renamed', 'ye-olde-plugin', 'shiny-new-plugin'))
+        """
+
+        def results = runRulesAgainst(new PluginRenamedRule('renamed', 'ye-olde-plugin', 'shiny-new-plugin'))
 
         then:
         results.violations.size() == 1
@@ -15,9 +17,11 @@ class PluginRenamedRuleSpec extends AbstractRuleSpec {
 
     def 'deprecated plugin names are replaced with new names'() {
         when:
-        def corrected = correct("""
+        project.buildFile << """
             apply plugin: 'ye-olde-plugin'
-        """, new PluginRenamedRule('renamed', 'ye-olde-plugin', 'shiny-new-plugin'))
+        """
+
+        def corrected = correct(new PluginRenamedRule('renamed', 'ye-olde-plugin', 'shiny-new-plugin'))
 
         then:
         corrected == """
@@ -27,9 +31,11 @@ class PluginRenamedRuleSpec extends AbstractRuleSpec {
 
     def 'concrete implementation of PluginRenamedRule'() {
         when:
-        def results = runRulesAgainst("""
+        project.buildFile << """
             apply plugin: 'gradle-dependency-lock'
-        """, new RenameNebulaDependencyLockRule())
+        """
+
+        def results = runRulesAgainst(new RenameNebulaDependencyLockRule())
 
         then:
         results.violations.size() == 1

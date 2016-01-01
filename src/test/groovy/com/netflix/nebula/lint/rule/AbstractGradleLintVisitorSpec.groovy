@@ -7,12 +7,14 @@ import org.codenarc.rule.AstVisitor
 class AbstractGradleLintVisitorSpec extends AbstractRuleSpec {
     def 'parse dependency map syntax'() {
         when:
-        def rule = new SimpleLintRule()
-        runRulesAgainst("""
+        project.buildFile << """
             dependencies {
                compile group: 'junit', name: 'junit', version: '4.11'
             }
-        """, rule)
+        """
+
+        def rule = new SimpleLintRule()
+        runRulesAgainst(rule)
         def visited = rule.visitor.visitedDeps[0]
 
         then:
@@ -24,14 +26,16 @@ class AbstractGradleLintVisitorSpec extends AbstractRuleSpec {
 
     def 'visit dependencies defined inside subprojects block'() {
         when:
-        def rule = new SimpleLintRule()
-        runRulesAgainst("""
+        project.buildFile << """
             subprojects {
                 dependencies {
                    compile 'junit:junit:4.11'
                 }
             }
-        """, rule)
+        """
+
+        def rule = new SimpleLintRule()
+        runRulesAgainst(rule)
 
         def visited = rule.visitor.visitedDeps[0]
 
@@ -44,12 +48,14 @@ class AbstractGradleLintVisitorSpec extends AbstractRuleSpec {
 
     def 'parse dependency string syntax'() {
         when:
-        def rule = new SimpleLintRule()
-        runRulesAgainst("""
+        project.buildFile << """
             dependencies {
                compile 'junit:junit:4.11'
             }
-        """, rule)
+        """
+
+        def rule = new SimpleLintRule()
+        runRulesAgainst(rule)
         def visited = rule.visitor.visitedDeps[0]
 
         then:
@@ -61,10 +67,12 @@ class AbstractGradleLintVisitorSpec extends AbstractRuleSpec {
 
     def 'apply plugin'() {
         when:
-        def rule = new SimpleLintRule()
-        runRulesAgainst("""
+        project.buildFile << """
             apply plugin: 'nebula-dependency-lock'
-        """, rule)
+        """
+
+        def rule = new SimpleLintRule()
+        runRulesAgainst(rule)
         def plugins = rule.visitor.appliedPlugins
 
         then:
@@ -88,8 +96,10 @@ class AbstractGradleLintVisitorSpec extends AbstractRuleSpec {
             }
         }
 
+        project.buildFile << "apply plugin: 'java'"
+
         then:
-        correct("apply plugin: 'java'", rule) == ''
+        correct(rule) == ''
     }
 
     static class SimpleLintVisitor extends AbstractGradleLintVisitor {
