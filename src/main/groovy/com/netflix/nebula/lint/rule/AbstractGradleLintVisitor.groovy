@@ -2,7 +2,6 @@ package com.netflix.nebula.lint.rule
 
 import com.netflix.nebula.lint.analyzer.CorrectableStringSource
 import org.codehaus.groovy.ast.ASTNode
-import org.codehaus.groovy.ast.expr.ClosureExpression
 import org.codehaus.groovy.ast.expr.ConstantExpression
 import org.codehaus.groovy.ast.expr.MapExpression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
@@ -76,33 +75,31 @@ abstract class AbstractGradleLintVisitor extends AbstractAstVisitor {
         // https://docs.gradle.org/current/javadoc/org/gradle/api/artifacts/dsl/DependencyHandler.html
         def methodName = call.methodAsString
         def args = call.arguments.expressions as List
-        if (!args.empty && !(args[-1] instanceof ClosureExpression)) {
-            if (configurations.contains(methodName)) {
-                if (call.arguments.expressions.any { it instanceof MapExpression }) {
-                    def entries = collectEntryExpressions(call)
+        if (!args.empty && configurations.contains(methodName)) {
+            if (call.arguments.expressions.any { it instanceof MapExpression }) {
+                def entries = collectEntryExpressions(call)
+                visitGradleDependency(call, methodName, new GradleDependency(
+                        entries.group,
+                        entries.name,
+                        entries.version,
+                        entries.classifier,
+                        entries.ext,
+                        entries.conf,
+                        GradleDependency.Syntax.MapNotation))
+            } else if (call.arguments.expressions.any { it instanceof ConstantExpression }) {
+                def expr = call.arguments.expressions.findResult {
+                    it instanceof ConstantExpression ? it.value : null
+                }
+                def matcher = expr =~ /(?<group>[^:]+):(?<name>[^:]+):(?<version>[^@:]+)(?<classifier>:[^@]+)?(?<ext>@.+)?/
+                if (matcher.matches()) {
                     visitGradleDependency(call, methodName, new GradleDependency(
-                            entries.group,
-                            entries.name,
-                            entries.version,
-                            entries.classifier,
-                            entries.ext,
-                            entries.conf,
-                            GradleDependency.Syntax.MapNotation))
-                } else if (!call.arguments.expressions.find { !(it instanceof ConstantExpression) }) {
-                    def expr = call.arguments.expressions.findResult {
-                        it instanceof ConstantExpression ? it.value : null
-                    }
-                    def matcher = expr =~ /(?<group>[^:]+):(?<name>[^:]+):(?<version>[^@:]+)(?<classifier>:[^@]+)?(?<ext>@.+)?/
-                    if (matcher.matches()) {
-                        visitGradleDependency(call, methodName, new GradleDependency(
-                                matcher.group('group'),
-                                matcher.group('name'),
-                                matcher.group('version'),
-                                matcher.group('classifier'),
-                                matcher.group('ext'),
-                                null,
-                                GradleDependency.Syntax.StringNotation))
-                    }
+                            matcher.group('group'),
+                            matcher.group('name'),
+                            matcher.group('version'),
+                            matcher.group('classifier'),
+                            matcher.group('ext'),
+                            null,
+                            GradleDependency.Syntax.StringNotation))
                 }
             }
         }
@@ -164,7 +161,7 @@ abstract class AbstractGradleLintVisitor extends AbstractAstVisitor {
 
     void visitConfigurationExclude(MethodCallExpression call, String conf, GradleDependency exclude) {}
 
-    private static Map<String, String> collectEntryExpressions(MethodCallExpression call) {
+    protected static Map<String, String> collectEntryExpressions(MethodCallExpression call) {
         call.arguments.expressions
                 .findAll { it instanceof MapExpression }
                 .collect { it.mapEntryExpressions }
