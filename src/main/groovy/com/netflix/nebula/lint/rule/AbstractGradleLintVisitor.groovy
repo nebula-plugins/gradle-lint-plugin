@@ -76,24 +76,31 @@ abstract class AbstractGradleLintVisitor extends AbstractAstVisitor {
         }
     }
 
-    void addViolationWithReplacement(ASTNode node, String message, String replacement = null) {
-        violations.add(new GradleViolation(rule: rule, lineNumber: node.lineNumber,
+    GradleViolation addViolationWithReplacement(ASTNode node, String message, String replacement) {
+        def v = new GradleViolation(rule: rule, lineNumber: node.lineNumber,
                 sourceLine: formattedViolation(node), message: message,
-                replacement: replacement))
-
-        if(replacement != null && isCorrectable()) {
+                replacement: replacement)
+        violations.add(v)
+        if(replacement != null && isCorrectable())
             correctableSourceCode.replace(node, replacement)
-        }
+        v
     }
 
-    void addViolationToDelete(ASTNode node, String message) {
-        violations.add(new GradleViolation(rule: rule, lineNumber: node.lineNumber,
+    GradleViolation addViolationToDelete(ASTNode node, String message) {
+        def v = new GradleViolation(rule: rule, lineNumber: node.lineNumber,
                 sourceLine: formattedViolation(node), message: message,
-                shouldDelete: true))
-
-        if(isCorrectable()) {
+                shouldDelete: true)
+        violations.add(v)
+        if(isCorrectable())
             correctableSourceCode.delete(node)
-        }
+        v
+    }
+
+    GradleViolation addViolationNoCorrection(ASTNode node, String message) {
+        def v = new GradleViolation(rule: rule, lineNumber: node.lineNumber,
+                sourceLine: formattedViolation(node), message: message)
+        violations.add(v)
+        v
     }
 
     private String formattedViolation(ASTNode node) {
