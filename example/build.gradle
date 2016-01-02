@@ -19,6 +19,6 @@ repositories {
 }
 
 dependencies {
-    compile('org.codenarc:CodeNarc:latest.release')
-    testCompile('com.netflix.nebula:nebula-test:3.1.0')
+    compile 'org.codenarc:CodeNarc:latest.release'
+    testCompile 'com.netflix.nebula:nebula-test:3.1.0'
 }

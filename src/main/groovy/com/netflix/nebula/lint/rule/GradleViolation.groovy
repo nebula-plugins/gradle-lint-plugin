@@ -5,4 +5,8 @@ import org.codenarc.rule.Violation
 class GradleViolation extends Violation {
     String replacement
     boolean shouldDelete = false
+
+    boolean isFixable() {
+        replacement || shouldDelete
+    }
 }

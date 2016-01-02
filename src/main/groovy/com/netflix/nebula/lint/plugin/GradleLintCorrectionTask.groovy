@@ -48,25 +48,26 @@ class GradleLintCorrectionTask extends DefaultTask {
         violations.eachWithIndex { Violation v, Integer i ->
             def severity = v.rule.priority <= 3 ? 'warning' : 'error'
 
-            textOutput.withStyle(StyledTextOutput.Style.Failure).text(severity.padRight(10))
+            if(v instanceof GradleViolation && v.isFixable()) {
+                textOutput.withStyle(StyledTextOutput.Style.Identifier).text('fixed'.padRight(10))
+            } else {
+                textOutput.withStyle(StyledTextOutput.Style.Failure).text(severity.padRight(10))
+            }
+
             textOutput.text(v.rule.name.padRight(25))
             textOutput.withStyle(StyledTextOutput.Style.Description).println(v.message)
 
             textOutput.withStyle(StyledTextOutput.Style.UserInput).println(buildFilePath + ':' + v.lineNumber)
             textOutput.println("$v.sourceLine")
 
-            if(v instanceof GradleViolation) {
-                def gv = v as GradleViolation
-                if(gv.replacement) {
-                    textOutput.withStyle(StyledTextOutput.Style.Identifier).println('\u2713 replaced with:')
-                    textOutput.println(gv.replacement)
+            if(v instanceof GradleViolation && v.isFixable()) {
+                if(v.replacement) {
+                    textOutput.withStyle(StyledTextOutput.Style.UserInput).println('replaced with:')
+                    textOutput.println(v.replacement)
                     correctedViolations++
-                } else if(gv.shouldDelete) {
-                    textOutput.withStyle(StyledTextOutput.Style.Identifier).println('\u2713 deleted')
+                } else if(v.shouldDelete) {
+                    textOutput.withStyle(StyledTextOutput.Style.UserInput).println('deleted')
                     correctedViolations++
-                } else {
-                    textOutput.withStyle(StyledTextOutput.Style.Error).println('\u2716 no auto-correct available')
-                    uncorrectedViolations++
                 }
             } else {
                 textOutput.withStyle(StyledTextOutput.Style.Error).println('\u2716 no auto-correct available')
