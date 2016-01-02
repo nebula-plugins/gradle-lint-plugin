@@ -5,6 +5,26 @@
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/nebula-plugins/gradle-lint-plugin?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![Apache 2.0](https://img.shields.io/github/license/nebula-plugins/gradle-lint-plugin.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+## Table of Contents
+
+- [Gradle Lint Plugin](#gradle-lint-plugin)
+  - [Purpose](#purpose)
+  - [Usage](#usage)
+  - [Tasks](#tasks)
+    - [Running the linter](#running-the-linter)
+    - [Auto-fixing violations](#auto-fixing-violations)
+    - [Generating a lint report](#generating-a-lint-report)
+  - [Force the linter to ignore a piece of code](#force-the-linter-to-ignore-a-piece-of-code)
+  - [Building your own rules](#building-your-own-rules)
+    - [The `Rule` implementation](#the-rule-implementation)
+    - [The properties file](#the-properties-file)
+    - [Grouping rules](#grouping-rules)
+  - [License](#license)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 ## Purpose
 
 The Gradle Lint plugin is a pluggable and configurable linter tool for identifying and reporting on patterns of misuse or deprecations in Gradle scripts.  It is inspired by the excellent ESLint tool for Javascript and by the formatting in NPM's [eslint-friendly-formatter](https://www.npmjs.com/package/eslint-friendly-formatter) package.
@@ -55,7 +75,7 @@ So as not to interfere with common informational tasks, linting does not run if 
 
 ### Auto-fixing violations
 
-Run `./gradlew fixGradleLint` to apply automatically fix your build scripts!  The auto-fix process lists all violations and how they were fixed (when a fix was possible):
+Run `./gradlew fixGradleLint` to automatically fix your build scripts!  The auto-fix process lists all violations and how they were fixed (when a fix was possible):
 
 ![gradle-lint output](docs/images/lint-correction.png)
 
