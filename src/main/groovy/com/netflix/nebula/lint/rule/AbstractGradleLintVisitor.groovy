@@ -1,6 +1,7 @@
 package com.netflix.nebula.lint.rule
 
 import com.netflix.nebula.lint.analyzer.CorrectableStringSource
+import com.netflix.nebula.lint.plugin.LintRuleRegistry
 import org.codehaus.groovy.ast.ASTNode
 import org.codehaus.groovy.ast.expr.ConstantExpression
 import org.codehaus.groovy.ast.expr.MapExpression
@@ -21,6 +22,14 @@ abstract class AbstractGradleLintVisitor extends AbstractAstVisitor {
     boolean inDependenciesBlock = false
     boolean inConfigurationsBlock = false
 
+    boolean globalIgnoreOn = false
+    List<String> rulesToIgnore = []
+
+    boolean isIgnored() {
+        globalIgnoreOn || rulesToIgnore.collect { LintRuleRegistry.findVisitorClassNames(it) }
+                .flatten().contains(getClass())
+    }
+
     // fall back on some common configurations in case the rule is not GradleModelAware
     Collection<String> configurations = ['archives', 'default', 'compile', 'runtime', 'testCompile', 'testRuntime']
 
@@ -30,6 +39,21 @@ abstract class AbstractGradleLintVisitor extends AbstractAstVisitor {
 
         if(methodName == 'runScript' && project) {
             configurations = project.configurations.collect { it.name }
+        }
+
+        if(methodName == 'ignore' && call.objectExpression.text == 'gradleLint') {
+            rulesToIgnore = call.arguments.expressions
+                    .findAll { it instanceof ConstantExpression }
+                    .collect { it.text }
+            if(rulesToIgnore.isEmpty())
+                globalIgnoreOn = true
+
+            super.visitMethodCallExpression(call)
+
+            rulesToIgnore.clear()
+            globalIgnoreOn = false
+
+            return
         }
 
         if (inDependenciesBlock) {
@@ -105,31 +129,48 @@ abstract class AbstractGradleLintVisitor extends AbstractAstVisitor {
         }
     }
 
-    GradleViolation addViolationWithReplacement(ASTNode node, String message, String replacement) {
+    @SuppressWarnings("GrDeprecatedAPIUsage")
+    @Override
+    protected final void addViolation(ASTNode node) {
+        super.addViolation(node)
+    }
+
+    @Override
+    protected final void addViolation(ASTNode node, String message) {
+        super.addViolation(node, message)
+    }
+
+    void addViolationWithReplacement(ASTNode node, String message, String replacement) {
+        if(isIgnored())
+            return
+
         def v = new GradleViolation(rule: rule, lineNumber: node.lineNumber,
                 sourceLine: formattedViolation(node), message: message,
                 replacement: replacement)
         violations.add(v)
         if (replacement != null && isCorrectable())
             correctableSourceCode.replace(node, replacement)
-        v
     }
 
-    GradleViolation addViolationToDelete(ASTNode node, String message) {
+    void addViolationToDelete(ASTNode node, String message) {
+        if(isIgnored())
+            return
+
         def v = new GradleViolation(rule: rule, lineNumber: node.lineNumber,
                 sourceLine: formattedViolation(node), message: message,
                 shouldDelete: true)
         violations.add(v)
         if (isCorrectable())
             correctableSourceCode.delete(node)
-        v
     }
 
-    GradleViolation addViolationNoCorrection(ASTNode node, String message) {
+    void addViolationNoCorrection(ASTNode node, String message) {
+        if(isIgnored())
+            return
+
         def v = new GradleViolation(rule: rule, lineNumber: node.lineNumber,
                 sourceLine: formattedViolation(node), message: message)
         violations.add(v)
-        v
     }
 
     /**

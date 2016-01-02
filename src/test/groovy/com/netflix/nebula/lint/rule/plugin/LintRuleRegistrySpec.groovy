@@ -10,13 +10,17 @@ class LintRuleRegistrySpec extends Specification {
     @Rule
     TemporaryFolder temp
 
+    def setup() {
+        LintRuleRegistry.classLoader = new URLClassLoader([temp.root.toURI().toURL()] as URL[], getClass().getClassLoader())
+    }
+
     def 'load a rule with a single defined implementation class'() {
         setup:
         def singleRule = ruleFile('single-rule')
         singleRule << "implementation-class=${MockRule1.name}"
 
         when:
-        def rules = new LintRuleRegistry(ruleClassLoader(), null).findRule('single-rule')
+        def rules = new LintRuleRegistry(null).findRule('single-rule')
 
         then:
         rules.size() == 1
@@ -35,16 +39,12 @@ class LintRuleRegistrySpec extends Specification {
         composite << 'includes=rule1,rule2'
 
         when:
-        def rules = new LintRuleRegistry(ruleClassLoader(), null).findRule('composite')
+        def rules = new LintRuleRegistry(null).findRule('composite')
 
         then:
         rules.size() == 2
         rules[0] instanceof MockRule1
         rules[1] instanceof MockRule2
-    }
-
-    private ClassLoader ruleClassLoader() {
-        new URLClassLoader([temp.root.toURI().toURL()] as URL[], getClass().getClassLoader())
     }
 
     private File ruleFile(String ruleId) {

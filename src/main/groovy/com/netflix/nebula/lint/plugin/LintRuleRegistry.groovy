@@ -5,17 +5,27 @@ import org.codenarc.rule.Rule
 import org.gradle.api.Project
 
 class LintRuleRegistry {
-    private final ClassLoader classLoader
     private final Project project
+    static ClassLoader classLoader = LintRuleRegistry.class.classLoader
 
-    LintRuleRegistry(ClassLoader classLoader, Project project) {
-        this.classLoader = classLoader
+    LintRuleRegistry(Project project) {
         this.project = project
     }
 
-    private LintRuleDescriptor findRuleDescriptor(String ruleId) {
+    private static LintRuleDescriptor findRuleDescriptor(String ruleId) {
         URL resource = classLoader.getResource(String.format("META-INF/lint-rules/%s.properties", ruleId))
         return resource ? new LintRuleDescriptor(resource) : null
+    }
+
+    static List<Class> findVisitorClassNames(String ruleId) {
+        def ruleDescriptor = findRuleDescriptor(ruleId)
+        if (ruleDescriptor == null)
+            return []
+
+        if(ruleDescriptor.implementationClassName)
+            return [classLoader.loadClass(ruleDescriptor.implementationClassName).newInstance().astVisitor.class]
+        else
+            return (ruleDescriptor.includes?.collect { findVisitorClassNames(it as String) }?.flatten() ?: []) as List<Class>
     }
 
     List<Rule> findRule(String ruleId) {
@@ -23,8 +33,8 @@ class LintRuleRegistry {
         if (ruleDescriptor == null)
             return []
 
-        def implClassName = ruleDescriptor.getImplementationClassName()
-        def includes = ruleDescriptor.getIncludes()
+        def implClassName = ruleDescriptor.implementationClassName
+        def includes = ruleDescriptor.includes
 
         if (!implClassName && includes.isEmpty()) {
             throw new InvalidRuleException(String.format("No implementation class or includes specified for rule '%s' in %s.", ruleId, ruleDescriptor))

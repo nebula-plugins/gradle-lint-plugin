@@ -19,7 +19,7 @@ class GradleLintCorrectionTask extends DefaultTask {
 
     @TaskAction
     void lintCorrections() {
-        def registry = new LintRuleRegistry(getClass().classLoader, project)
+        def registry = new LintRuleRegistry(project)
         def ruleSet = RuleSetFactory.configureRuleSet(project.extensions
                 .getByType(GradleLintExtension)
                 .rules

@@ -1,10 +1,17 @@
 package com.netflix.nebula.lint.rule
 
+import com.netflix.nebula.lint.plugin.LintRuleRegistry
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.codenarc.rule.AbstractAstVisitorRule
 import org.codenarc.rule.AstVisitor
+import org.junit.Rule
+import org.junit.rules.TemporaryFolder
+import spock.lang.Unroll
 
 class AbstractGradleLintVisitorSpec extends AbstractRuleSpec {
+    @Rule
+    TemporaryFolder temp
+
     def 'parse dependency map syntax'() {
         when:
         project.buildFile << """
@@ -100,6 +107,47 @@ class AbstractGradleLintVisitorSpec extends AbstractRuleSpec {
 
         then:
         correct(rule) == ''
+    }
+
+    @Unroll
+    def 'violations are suppressed inside of ignore blocks when ignored rule(s) is `#rules`'() {
+        setup:
+        def rule = new AbstractAstVisitorRule() {
+            String name = 'no-plugins-allowed'
+            int priority = 2
+
+            @Override
+            AstVisitor getAstVisitor() {
+                return new AbstractGradleLintVisitor() {
+                    @Override
+                    void visitApplyPlugin(MethodCallExpression call, String plugin) {
+                        addViolationNoCorrection(call, 'no plugins allowed')
+                    }
+                }
+            }
+        }
+
+        new File(temp.root, 'META-INF/lint-rules').mkdirs()
+        def noPluginsProp = temp.newFile("META-INF/lint-rules/no-plugins-allowed.properties")
+        noPluginsProp << "implementation-class=${rule.class.name}"
+        LintRuleRegistry.classLoader = new URLClassLoader([temp.root.toURI().toURL()] as URL[], getClass().getClassLoader())
+
+        when:
+        project.buildFile << """
+            gradleLint.ignore($rules) { apply plugin: 'java' }
+        """
+
+        def result = runRulesAgainst(rule)
+
+        then:
+        result.violates(rule.class) == violates
+
+        where:
+        rules                               |  violates
+        ''                                  |  false
+        /'no-plugins-allowed'/              |  false
+        /'other-rule'/                      |  true
+        /'no-plugins-allowed','other-rule'/ |  false
     }
 
     static class SimpleLintVisitor extends AbstractGradleLintVisitor {

@@ -10,6 +10,7 @@ class GradleLintPlugin implements Plugin<Project> {
     @Override
     void apply(Project project) {
         def lintExt = project.extensions.create('gradleLint', GradleLintExtension)
+
         project.tasks.create('fixGradleLint', GradleLintCorrectionTask)
         def lint = project.tasks.create('gradleLint', GradleLintTask)
         configureReportTask(project, lintExt)
