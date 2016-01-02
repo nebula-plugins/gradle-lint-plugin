@@ -28,6 +28,7 @@ plugins {
     id 'nebula.source-jar' version '4.4.4'
     id 'nebula.maven-apache-license' version '4.2.2'
     id 'com.github.kt3k.coveralls' version '2.4.0'
+    id 'nebula.provided-base' version '3.0.3'
 }
 
 group 'com.netflix.nebula'
@@ -54,10 +55,14 @@ dependencies {
 
     compile 'org.codenarc:CodeNarc:latest.release'
 
-    testCompile('org.spockframework:spock-core:latest.release') {
+    provided ('org.spockframework:spock-core:latest.release') {
         exclude module: 'groovy-all'
     }
+    provided 'com.netflix.nebula:nebula-test:3.1.0'
 
+    testCompile ('org.spockframework:spock-core:latest.release') {
+        exclude module: 'groovy-all'
+    }
     testCompile 'com.netflix.nebula:nebula-test:3.1.0'
 }
 

@@ -1,5 +1,7 @@
 package com.netflix.nebula.lint.rule
 
+import com.netflix.nebula.lint.rule.test.AbstractRuleSpec
+
 class UnusedExcludeByConfigurationRuleSpec extends AbstractRuleSpec {
     def 'unused exclude violates'() {
         when:

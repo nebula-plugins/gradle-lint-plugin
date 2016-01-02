@@ -1,6 +1,6 @@
 package com.netflix.nebula.lint.rule.rename
 
-import com.netflix.nebula.lint.rule.AbstractRuleSpec
+import com.netflix.nebula.lint.rule.test.AbstractRuleSpec
 
 class PluginRenamedRuleSpec extends AbstractRuleSpec {
     def 'deprecated plugin names are recorded as violations'() {

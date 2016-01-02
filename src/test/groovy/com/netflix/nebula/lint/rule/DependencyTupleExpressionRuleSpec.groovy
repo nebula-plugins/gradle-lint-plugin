@@ -1,5 +1,7 @@
 package com.netflix.nebula.lint.rule
 
+import com.netflix.nebula.lint.rule.test.AbstractRuleSpec
+
 class DependencyTupleExpressionRuleSpec extends AbstractRuleSpec {
     def 'dependency tuples violate rule'() {
         when:

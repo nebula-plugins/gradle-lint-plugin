@@ -2,6 +2,7 @@ package com.netflix.nebula.lint.rule
 
 import com.netflix.nebula.lint.plugin.GradleLintPlugin
 import com.netflix.nebula.lint.plugin.LintRuleRegistry
+import com.netflix.nebula.lint.rule.test.AbstractRuleSpec
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.codenarc.rule.AbstractAstVisitorRule
 import org.codenarc.rule.AstVisitor

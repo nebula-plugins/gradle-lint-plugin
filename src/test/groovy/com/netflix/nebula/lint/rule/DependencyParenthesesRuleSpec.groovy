@@ -1,5 +1,7 @@
 package com.netflix.nebula.lint.rule
 
+import com.netflix.nebula.lint.rule.test.AbstractRuleSpec
+
 class DependencyParenthesesRuleSpec extends AbstractRuleSpec {
     def 'valid uses of parentheses pass'() {
         when:

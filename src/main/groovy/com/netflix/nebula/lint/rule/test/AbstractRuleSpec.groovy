@@ -1,4 +1,4 @@
-package com.netflix.nebula.lint.rule
+package com.netflix.nebula.lint.rule.test
 
 import com.netflix.nebula.lint.analyzer.CorrectableStringSourceAnalyzer
 import nebula.test.ProjectSpec
