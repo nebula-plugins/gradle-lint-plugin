@@ -1,23 +1,26 @@
 package com.netflix.nebula.lint.plugin
 
+import com.google.common.base.Preconditions
 import com.netflix.nebula.lint.rule.GradleModelAware
 import org.codenarc.rule.Rule
 import org.gradle.api.Project
 
 class LintRuleRegistry {
     private final Project project
-    static ClassLoader classLoader = LintRuleRegistry.class.classLoader
+    static ClassLoader classLoader = null
 
     LintRuleRegistry(Project project) {
         this.project = project
     }
 
     private static LintRuleDescriptor findRuleDescriptor(String ruleId) {
+        assert classLoader != null
         URL resource = classLoader.getResource(String.format("META-INF/lint-rules/%s.properties", ruleId))
         return resource ? new LintRuleDescriptor(resource) : null
     }
 
     static List<Class> findVisitorClassNames(String ruleId) {
+        assert classLoader != null
         def ruleDescriptor = findRuleDescriptor(ruleId)
         if (ruleDescriptor == null)
             return []
@@ -29,6 +32,7 @@ class LintRuleRegistry {
     }
 
     List<Rule> findRule(String ruleId) {
+        assert classLoader != null
         def ruleDescriptor = findRuleDescriptor(ruleId)
         if (ruleDescriptor == null)
             return []

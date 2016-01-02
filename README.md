@@ -16,7 +16,7 @@ It assists a centralized build tools team in gently introducing and maintaining 
 To apply this plugin:
 
     plugins {
-      id 'nebula.lint' version '0.1.0'
+      id 'nebula.lint' version '0.3.0'
     }
 
 Alternatively:
@@ -49,13 +49,15 @@ For multimodule projects, we recommend applying the plugin in an allprojects blo
 
 When `nebula.lint` is applied, build scripts will be automatically linted by a task called `gradleLint` after the last task in the task graph executes. Results are held until after the last task is ran, then reported in the console.
 
+![gradle-lint output](docs/images/lint-output.png)
+
 So as not to interfere with common informational tasks, linting does not run if the only tasks in the task graph are 'dependencies', 'dependencyInsight', 'help', 'components', 'projects', 'model', or 'properties'.
 
 ### Auto-fixing violations
 
-![gradle-lint output](docs/images/lint-output.png)
+Run `./gradlew fixGradleLint` to apply automatically fix your build scripts!  The auto-fix process lists all violations and how they were fixed (when a fix was possible):
 
-Run `./gradlew fixGradleLint` to apply automatically fix your build scripts!
+
 
 ### Generating a lint report
 

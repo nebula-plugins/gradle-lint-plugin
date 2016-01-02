@@ -9,6 +9,7 @@ class GradleLintPlugin implements Plugin<Project> {
 
     @Override
     void apply(Project project) {
+        LintRuleRegistry.classLoader = getClass().classLoader
         def lintExt = project.extensions.create('gradleLint', GradleLintExtension)
 
         project.tasks.create('fixGradleLint', GradleLintCorrectionTask)
