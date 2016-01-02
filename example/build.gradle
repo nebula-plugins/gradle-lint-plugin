@@ -20,6 +20,11 @@ repositories {
 
 dependencies {
     compile('org.codenarc:CodeNarc:latest.release')
+
+    gradleLint.ignore('dependency-parentheses') {
+        compile('com.google.guava:guava:latest.release')
+    }
+
     testCompile group: 'com.netflix.nebula', name: 'nebula-test',
             version: '+'
 }

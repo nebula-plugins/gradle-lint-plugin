@@ -1,9 +1,11 @@
 package com.netflix.nebula.lint.rule
 
+import com.netflix.nebula.lint.plugin.GradleLintPlugin
 import com.netflix.nebula.lint.plugin.LintRuleRegistry
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.codenarc.rule.AbstractAstVisitorRule
 import org.codenarc.rule.AstVisitor
+import org.gradle.api.plugins.JavaPlugin
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Unroll
@@ -148,6 +150,22 @@ class AbstractGradleLintVisitorSpec extends AbstractRuleSpec {
         /'no-plugins-allowed'/              |  false
         /'other-rule'/                      |  true
         /'no-plugins-allowed','other-rule'/ |  false
+    }
+
+    def 'ignore closure properly delegates'() {
+        when:
+        project.with {
+            plugins.apply(JavaPlugin)
+            plugins.apply(GradleLintPlugin)
+            dependencies {
+                gradleLint.ignore {
+                    compile 'com.google.guava:guava:19.0'
+                }
+            }
+        }
+
+        then:
+        project.configurations.compile.dependencies.any { it.name == 'guava' }
     }
 
     static class SimpleLintVisitor extends AbstractGradleLintVisitor {
