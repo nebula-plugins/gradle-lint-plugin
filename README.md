@@ -108,9 +108,9 @@ A lint rule consists of a `org.codenarc.rule.Rule` implementation plus a propert
 First, we will write a rule:
 
     class FixJerseyBundleRule extends AbstractAstVisitorRule implements GradleModelAware {
-      String name = 'nebula-old-plugin'
+      String name = 'fix-jersey-bundle'
       int priority = 2
-      Project Project
+      Project project
 
       @Override
       AstVisitor getAstVisitor() {
