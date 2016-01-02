@@ -10,7 +10,7 @@ class GradleLintExtension {
         if (reportFormat in ['xml', 'html', 'text']) {
             this.reportFormat = reportFormat
         } else {
-            throw new InvalidUserDataException("'$reportFormat' is not a valid codenarc report format")
+            throw new InvalidUserDataException("'$reportFormat' is not a valid CodeNarc report format")
         }
     }
 

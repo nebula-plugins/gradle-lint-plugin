@@ -45,11 +45,107 @@ For multimodule projects, we recommend applying the plugin in an allprojects blo
 
 ## Tasks
 
-Build scripts are linted during the project after-evaluate phase.  Results are held until after the last task is ran, then reported in the console.  If linting results affect the overall success of the build, they do not do so until after the last task in the task graph has finished executing.
+### Running the linter
+
+When `nebula.lint` is applied, build scripts will be automatically linted by a task called `gradleLint` after the last task in the task graph executes. Results are held until after the last task is ran, then reported in the console.
+
+So as not to interfere with common informational tasks, linting does not run if the only tasks in the task graph are 'dependencies', 'dependencyInsight', 'help', 'components', 'projects', 'model', or 'properties'.
+
+### Auto-fixing violations
 
 ![gradle-lint output](docs/images/lint-output.png)
 
 Run `./gradlew fixGradleLint` to apply automatically fix your build scripts!
+
+### Generating a lint report
+
+Run `./gradlew generateGradleLintReport` to generate a separate report.  By default, this task is configured to generate an HTML report.  You can change the default by setting:
+
+    gradleLint.reportFormat = 'xml' // or 'text' or the default of 'html'
+
+## Force the linter to ignore a piece of code
+
+When you wish to force the linter to ignore a block of build script code that it believes is in violation, you can surround the code with a block like:
+
+    gradleLint.ignore {
+      // my build script code that makes the linter suspicious...
+    }
+
+You can also be selective about which rules to ignore in the block by providing up to 5 arguments to `ignore`:
+
+    gradleLint.ignore('dependency-parentheses', 'dependency-tuple') {
+      // here I want to use a non-idiomatic dependency syntax, but lint for everything else
+    }
+
+## Building your own rules
+
+A lint rule consists of a `org.codenarc.rule.Rule` implementation plus a properties file.  Let's build a simple rule that blocks build scripts from applying an imaginary Gradle plugin `nebula.fix-jersey-bundle` that might do something like replace a jersey-bundle dependency with a more narrowly defined dependency.
+
+### The `Rule` implementation
+
+First, we will write a rule:
+
+    class FixJerseyBundleRule extends AbstractAstVisitorRule implements GradleModelAware {
+      String name = 'nebula-old-plugin'
+      int priority = 2
+      Project Project
+
+      @Override
+      AstVisitor getAstVisitor() {
+        new FixJerseyBundleVisitor(project: project)
+      }
+    }
+
+The vast majority of lint rules will be AST visiting rules, because the AST gives us the ingredients we need to form good auto-fixing strategies. This will become apparent momentarily. In this example, we are using the optional `GradleModelAware` feature to imbue our visitor with knowledge of the evaluated Gradle `Project` object. The combination of Groovy AST and the evaluated model allows us to write powerful rules.
+
+    class FixJerseyBundleVisitor extends AbstractGradleLintVisitor {
+      @Override
+      void visitApplyPlugin(MethodCallExpression call, String plugin) {
+          if(plugin == 'nebula.fix-jersey-bundle') {
+            def foundJerseyBundle = false
+            def deps = project.configurations*.resolvedConfiguration*.firstLevelModuleDependencies.flatten()
+            while(!deps.isEmpty() && !foundJerseyBundle) {
+                foundJerseyBundle = deps.any { it.name == 'jersey-bundle' }
+                deps = deps*.children.flatten()
+            }
+
+            if(!foundJerseyBundle)
+              addViolationToDelete(call, 'since there is no dependency on jersey-bundle this plugin has no effect')
+          }
+      }
+    }
+
+We use the AST to look for the specific piece of code where `nebula.fix-jersey-bundle` was applied. We could determine through the Gradle model that the plugin had been applied, but not how or where this had been accomplished. Then we transition to using the Gradle model to determine if `jersey-bundle` is in our transitive dependencies. We could not have determined this with the AST alone! Finally, we use `addViolationToDelete` to indicate to the lint plugin that this block of code applying `nebula.fix-jersey-bundle` violates the rule, and that the `fixGradleLint` can safely delete this code snippet.
+
+Currently, `addViolationWithReplacement` and `addViolationNoCorrection` are provided as helper functions to add violations as well.
+
+Finally, notice how we overrode the `visitApplyPlugin` method.  `AbstractGradleLintVisitor` has added several convenience hooks for Gradle specific constructs to the rich set of hooks already provided by CodeNarc's `AbstractAstVisitor`.
+
+### The properties file
+
+Lastly, provide a properties file that ties the `Rule` implementation to a short name that is used to apply the rule through the `gradleLint.rules` extension property.  For our example, add a properties file: `META-INF/lint-rules/fix-jersey-bundle.properties'.  Any jar that provides properties files in `META-INF/lint-rules` and is on the buildscript classpath effectively contributes usable rules to the plugin.
+
+Our properties file contains a single line:
+
+    implementation-class=org.example.gradle.lint.FixJerseyBundleRule
+
+### Grouping rules
+
+You may also group individual rules together with an additional properties file.  Suppose in addition to the `fix-jersey-bundle' rule we just created, we also provided a rule for `fix-something-else`.
+
+If we want to apply both rules to a build script, we could do something like:
+
+    gradleLint.rules = ['fix-jersey-bundle', 'fix-something-else']
+
+Alternatively, we could provide a properties file called `META-INF/lint-rules/fix-all.properties` with the contents:
+
+    includes=fix-jersey-bundle,fix-something-else
+
+Then we can apply both rules at once:
+
+    gradleLint.rules = ['fix-all']
+
+The includes list can refer to other rule groups as well, and in this way you can compose together larger and larger sets of rules incrementally.
 
 ## License
 
