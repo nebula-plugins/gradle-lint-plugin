@@ -4,6 +4,7 @@ import com.netflix.nebula.lint.plugin.GradleLintPlugin
 import com.netflix.nebula.lint.plugin.LintRuleRegistry
 import com.netflix.nebula.lint.rule.test.AbstractRuleSpec
 import org.codehaus.groovy.ast.expr.MethodCallExpression
+import org.codehaus.groovy.ast.stmt.ExpressionStatement
 import org.codenarc.rule.AbstractAstVisitorRule
 import org.codenarc.rule.AstVisitor
 import org.gradle.api.plugins.JavaPlugin
@@ -167,6 +168,51 @@ class AbstractGradleLintVisitorSpec extends AbstractRuleSpec {
 
         then:
         project.configurations.compile.dependencies.any { it.name == 'guava' }
+    }
+
+    def 'visit extension properties'() {
+        when:
+        project.buildFile << """
+            nebula {
+                moduleOwner = 'me'
+            }
+
+            nebula.moduleOwner = 'me'
+
+            subprojects {
+                nebula {
+                    moduleOwner = 'me'
+                }
+            }
+
+            allprojects {
+                nebula {
+                    moduleOwner 'me' // sometimes this shorthand syntax is provided, notice no '='
+                }
+            }
+        """
+
+        def rule = new AbstractAstVisitorRule() {
+            String name = 'nebula-module-owner'
+            int priority = 2
+
+            @Override
+            AstVisitor getAstVisitor() {
+                return new AbstractGradleLintVisitor() {
+                    @Override
+                    void visitExtensionProperty(ExpressionStatement expression, String extension, String prop) {
+                        if(extension == 'nebula' && prop == 'moduleOwner')
+                            addViolationToDelete(expression, 'moduleOwner is deprecated and should be removed')
+                    }
+                }
+            }
+        }
+
+        def results = runRulesAgainst(rule)
+
+        then:
+        results.violates(rule.class)
+        results.violations.size() == 4
     }
 
     static class SimpleLintVisitor extends AbstractGradleLintVisitor {

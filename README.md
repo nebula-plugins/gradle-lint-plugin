@@ -141,7 +141,13 @@ We use the AST to look for the specific piece of code where `nebula.fix-jersey-b
 
 Currently, `addViolationWithReplacement` and `addViolationNoCorrection` are provided as helper functions to add violations as well.
 
-Finally, notice how we overrode the `visitApplyPlugin` method.  `AbstractGradleLintVisitor` has added several convenience hooks for Gradle specific constructs to the rich set of hooks already provided by CodeNarc's `AbstractAstVisitor`.
+Finally, notice how we overrode the `visitApplyPlugin` method.  `AbstractGradleLintVisitor` has added several convenience hooks for Gradle specific constructs to the rich set of hooks already provided by CodeNarc's `AbstractAstVisitor`, including:
+
+* `visitApplyPlugin(MethodCallExpression call, String plugin)`
+* `visitExtensionProperty(ExpressionStatement expression, String extension, String prop, String value)`
+* `visitExtensionProperty(ExpressionStatement expression, String extension, String prop)`
+* `visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep)`
+* `visitConfigurationExclude(MethodCallExpression call, String conf, GradleDependency exclude)`
 
 ### The properties file
 

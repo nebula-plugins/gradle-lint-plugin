@@ -3,9 +3,8 @@ package com.netflix.nebula.lint.rule
 import com.netflix.nebula.lint.analyzer.CorrectableStringSource
 import com.netflix.nebula.lint.plugin.LintRuleRegistry
 import org.codehaus.groovy.ast.ASTNode
-import org.codehaus.groovy.ast.expr.ConstantExpression
-import org.codehaus.groovy.ast.expr.MapExpression
-import org.codehaus.groovy.ast.expr.MethodCallExpression
+import org.codehaus.groovy.ast.expr.*
+import org.codehaus.groovy.ast.stmt.ExpressionStatement
 import org.codenarc.rule.AbstractAstVisitor
 import org.gradle.api.Project
 
@@ -25,6 +24,8 @@ abstract class AbstractGradleLintVisitor extends AbstractAstVisitor {
     boolean globalIgnoreOn = false
     List<String> rulesToIgnore = []
 
+    Stack<String> closureStack = new Stack<String>()
+
     boolean isIgnored() {
         globalIgnoreOn || rulesToIgnore.collect { LintRuleRegistry.findVisitorClassNames(it) }
                 .flatten().contains(getClass())
@@ -37,15 +38,16 @@ abstract class AbstractGradleLintVisitor extends AbstractAstVisitor {
     final void visitMethodCallExpression(MethodCallExpression call) {
         def methodName = call.methodAsString
 
-        if(methodName == 'runScript' && project) {
+        if (methodName == 'runScript' && project) {
             configurations = project.configurations.collect { it.name }
         }
 
-        if(methodName == 'ignore' && call.objectExpression.text == 'gradleLint') {
-            rulesToIgnore = call.arguments.expressions
-                    .findAll { it instanceof ConstantExpression }
-                    .collect { it.text }
-            if(rulesToIgnore.isEmpty())
+        def expressions = call.arguments.expressions
+        def objectExpression = call.objectExpression.text
+
+        if (methodName == 'ignore' && objectExpression == 'gradleLint') {
+            rulesToIgnore = expressions.findAll { it instanceof ConstantExpression }.collect { it.text }
+            if (rulesToIgnore.isEmpty())
                 globalIgnoreOn = true
 
             super.visitMethodCallExpression(call)
@@ -58,7 +60,7 @@ abstract class AbstractGradleLintVisitor extends AbstractAstVisitor {
 
         if (inDependenciesBlock) {
             visitMethodCallInDependencies(call)
-        } else if(inConfigurationsBlock) {
+        } else if (inConfigurationsBlock) {
             visitMethodCallInConfigurations(call)
         }
 
@@ -73,15 +75,58 @@ abstract class AbstractGradleLintVisitor extends AbstractAstVisitor {
             super.visitMethodCallExpression(call)
             inConfigurationsBlock = false
         } else if (methodName == 'apply') {
-            if (call.arguments.expressions.any { it instanceof MapExpression }) {
+            if (expressions.any { it instanceof MapExpression }) {
                 def entries = collectEntryExpressions(call)
                 if (entries.plugin) {
                     visitApplyPlugin(call, entries.plugin)
                 }
             }
+        } else if (!expressions.isEmpty() && expressions.last() instanceof ClosureExpression) {
+            closureStack.push(methodName)
+            super.visitMethodCallExpression(call)
+            closureStack.pop()
         } else {
             super.visitMethodCallExpression(call)
         }
+    }
+
+    @Override
+    void visitExpressionStatement(ExpressionStatement statement) {
+        def expression = statement.expression
+        if (!closureStack.isEmpty()) {
+            if (expression instanceof BinaryExpression) {
+                if (expression.rightExpression instanceof ConstantExpression) { // STYLE: nebula { moduleOwner = 'me' }
+                    // if the right side isn't a constant expression, we won't be able to evaluate it through just the AST
+                    visitExtensionProperty(statement, closureStack.peek(), expression.leftExpression.text,
+                            expression.rightExpression.text)
+                }
+
+                // otherwise, still give a rule the opportunity to check the value of the extension property from a
+                // resolved Gradle model and react accordingly
+
+                // STYLE: nebula { moduleOwner = trim('me') }
+                visitExtensionProperty(statement, closureStack.peek(), expression.leftExpression.text)
+            } else if (expression instanceof MethodCallExpression) {
+                if (expression.arguments instanceof ArgumentListExpression) {
+                    def args = expression.arguments.expressions as List<Expression>
+                    if (args.size() == 1) {
+                        if (args[0] instanceof ConstantExpression) { // STYLE: nebula { moduleOwner 'me' }
+                            visitExtensionProperty(statement, closureStack.peek(), expression.methodAsString, args[0].text)
+                        }
+                        // STYLE: nebula { moduleOwner trim('me') }
+                        visitExtensionProperty(statement, closureStack.peek(), expression.methodAsString)
+                    }
+                }
+            }
+        } else if (expression instanceof BinaryExpression && expression.leftExpression instanceof PropertyExpression) {
+            def extension = expression.leftExpression.objectExpression.text
+            def prop = expression.leftExpression.property.text
+            if (expression.rightExpression instanceof ConstantExpression) {
+                visitExtensionProperty(statement, extension, prop, expression.rightExpression.text)
+            }
+            visitExtensionProperty(statement, extension, prop)
+        }
+        super.visitExpressionStatement(statement)
     }
 
     private void visitMethodCallInConfigurations(MethodCallExpression call) {
@@ -89,7 +134,7 @@ abstract class AbstractGradleLintVisitor extends AbstractAstVisitor {
         def conf = call.objectExpression.text
 
         // https://docs.gradle.org/current/javadoc/org/gradle/api/artifacts/ModuleDependency.html#exclude(java.util.Map)
-        if((configurations.contains(conf) || conf == 'all') && methodName == 'exclude') {
+        if ((configurations.contains(conf) || conf == 'all') && methodName == 'exclude') {
             def entries = collectEntryExpressions(call)
             visitConfigurationExclude(call, conf, new GradleDependency(entries.group, entries.module))
         }
@@ -141,7 +186,7 @@ abstract class AbstractGradleLintVisitor extends AbstractAstVisitor {
     }
 
     void addViolationWithReplacement(ASTNode node, String message, String replacement) {
-        if(isIgnored())
+        if (isIgnored())
             return
 
         def v = new GradleViolation(rule: rule, lineNumber: node.lineNumber,
@@ -153,7 +198,7 @@ abstract class AbstractGradleLintVisitor extends AbstractAstVisitor {
     }
 
     void addViolationToDelete(ASTNode node, String message) {
-        if(isIgnored())
+        if (isIgnored())
             return
 
         def v = new GradleViolation(rule: rule, lineNumber: node.lineNumber,
@@ -165,7 +210,7 @@ abstract class AbstractGradleLintVisitor extends AbstractAstVisitor {
     }
 
     void addViolationNoCorrection(ASTNode node, String message) {
-        if(isIgnored())
+        if (isIgnored())
             return
 
         def v = new GradleViolation(rule: rule, lineNumber: node.lineNumber,
@@ -201,6 +246,34 @@ abstract class AbstractGradleLintVisitor extends AbstractAstVisitor {
     void visitApplyPlugin(MethodCallExpression call, String plugin) {}
 
     void visitConfigurationExclude(MethodCallExpression call, String conf, GradleDependency exclude) {}
+
+    /**
+     * Visit potential extension properties.  Because of the ambiguity inherent in the shared DSL
+     * syntax for internal Gradle Handler objects (e.g. DependencyHandler) and extension objects,
+     * this method will be triggered for method calls and property assignments on Handlers as well.
+     * As long as you are overriding this visitor to look for a specific extension name and property,
+     * this ambiguity will not cause problems.
+     *
+     * @param expression - a MethodCallExpression or BinaryExpression
+     * @param extension - extension object name as rendered in the DSL
+     * @param prop - property target on the extension object
+     * @param value - value to assign to the extension property
+     */
+    void visitExtensionProperty(ExpressionStatement expression, String extension, String prop, String value) {}
+
+    /**
+     * Visit potential extension properties.  Because of the ambiguity inherent in the shared DSL
+     * syntax for internal Gradle Handler objects (e.g. DependencyHandler) and extension objects,
+     * this method will be triggered for method calls and property assignments on Handlers as well.
+     * As long as you are overriding this visitor to look for a specific extension name and property,
+     * this ambiguity will not cause problems.
+     *
+     * @param expression - a MethodCallExpression or BinaryExpression
+     * @param extension - extension object name as rendered in the DSL
+     * @param prop - property target on the extension object
+     * @param value - value to assign to the extension property
+     */
+    void visitExtensionProperty(ExpressionStatement expression, String extension, String prop) {}
 
     protected static Map<String, String> collectEntryExpressions(MethodCallExpression call) {
         call.arguments.expressions
