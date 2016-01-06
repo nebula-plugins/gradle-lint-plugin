@@ -9,6 +9,7 @@ class CorrectableStringSource extends AbstractSourceCode {
 
     Map<ASTNode, String> replacements = [:]
     List<ASTNode> deletions = []
+    Map<ASTNode, String> additions = [:]
 
     CorrectableStringSource(String source) {
         assert source != null
@@ -24,6 +25,7 @@ class CorrectableStringSource extends AbstractSourceCode {
 
             def replacement = replacements.find { it.key.lineNumber-1 == i }
             def deletion = deletions.find { it.lineNumber-1 == i }
+            def addition = additions.find { it.key.lineNumber-1 == i }
 
             if(replacement) {
                 corrections.append(doReplacement(replacement.key, replacement.value))
@@ -32,6 +34,10 @@ class CorrectableStringSource extends AbstractSourceCode {
                 i += deletion.lastLineNumber-deletion.lineNumber
             } else {
                 corrections.append(lines[i])
+            }
+
+            if(addition) {
+                corrections.append(addition.value)
             }
         }
         corrections.toString()
@@ -56,6 +62,10 @@ class CorrectableStringSource extends AbstractSourceCode {
 
     void delete(ASTNode node) {
         this.deletions += node
+    }
+
+    void add(ASTNode node, String addition) {
+        this.additions[node] = addition
     }
 
     @Override

@@ -113,6 +113,49 @@ class AbstractGradleLintVisitorSpec extends AbstractRuleSpec {
         correct(rule) == ''
     }
 
+    def 'add violation with insertion'() {
+        when:
+        def rule = new AbstractAstVisitorRule() {
+            String name = 'no-apply-plugin'
+            int priority = 2
+
+            @Override
+            AstVisitor getAstVisitor() {
+                return new AbstractGradleLintVisitor() {
+                    @Override
+                    void visitApplyPlugin(MethodCallExpression call, String plugin) {
+                        bookmark('lastApplyPlugin', call)
+                    }
+
+                    @Override
+                    void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
+                        if(bookmarks.lastApplyPlugin) {
+                            addViolationInsert(call, 'should generate source jar', "\napply plugin: 'nebula.source-jar'", bookmarks.lastApplyPlugin)
+                        }
+                    }
+                }
+            }
+        }
+
+        project.buildFile << """
+            apply plugin: 'java'
+
+            dependencies {
+                compile 'com.google.guava:guava:18.0'
+            }
+        """.stripIndent().trim()
+
+        then:
+        correct(rule) == """
+            apply plugin: 'java'
+            apply plugin: 'nebula.source-jar'
+
+            dependencies {
+                compile 'com.google.guava:guava:18.0'
+            }
+        """.stripIndent().trim()
+    }
+
     @Unroll
     def 'violations are suppressed inside of ignore blocks when ignored rule(s) is `#rules`'() {
         setup:

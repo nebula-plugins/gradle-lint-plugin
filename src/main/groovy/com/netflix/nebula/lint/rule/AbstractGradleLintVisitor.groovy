@@ -26,6 +26,12 @@ abstract class AbstractGradleLintVisitor extends AbstractAstVisitor {
 
     Stack<String> closureStack = new Stack<String>()
 
+    /**
+     * Used to preserve the location of a block of code so that it can be affected in some way
+     * later in the AST visit
+     */
+    Map<String, ASTNode> bookmarks = [:]
+
     boolean isIgnored() {
         globalIgnoreOn || rulesToIgnore.collect { LintRuleRegistry.findVisitorClassNames(it) }
                 .flatten().contains(getClass())
@@ -185,7 +191,7 @@ abstract class AbstractGradleLintVisitor extends AbstractAstVisitor {
         super.addViolation(node, message)
     }
 
-    void addViolationWithReplacement(ASTNode node, String message, String replacement) {
+    void addViolationWithReplacement(ASTNode node, String message, String replacement, ASTNode replaceAt = null) {
         if (isIgnored())
             return
 
@@ -194,19 +200,32 @@ abstract class AbstractGradleLintVisitor extends AbstractAstVisitor {
                 replacement: replacement)
         violations.add(v)
         if (replacement != null && isCorrectable())
-            correctableSourceCode.replace(node, replacement)
+            correctableSourceCode.replace(replaceAt ?: node, replacement)
     }
 
-    void addViolationToDelete(ASTNode node, String message) {
+    void addViolationToDelete(ASTNode node, String message, ASTNode deleteAt = null) {
         if (isIgnored())
             return
 
         def v = new GradleViolation(rule: rule, lineNumber: node.lineNumber,
                 sourceLine: formattedViolation(node), message: message,
-                shouldDelete: true)
+                deleteLine: true)
         violations.add(v)
         if (isCorrectable())
-            correctableSourceCode.delete(node)
+            correctableSourceCode.delete(deleteAt ?: node)
+    }
+
+    void addViolationInsert(ASTNode node, String message, String addition, ASTNode insertAt = null) {
+        if(isIgnored())
+            return
+
+        def v = new GradleViolation(rule: rule, lineNumber: node.lineNumber,
+                sourceLine: formattedViolation(node), message: message,
+                addition: addition)
+        violations.add(v)
+        if (isCorrectable()) {
+            correctableSourceCode.add(insertAt ?: node, addition)
+        }
     }
 
     void addViolationNoCorrection(ASTNode node, String message) {
@@ -274,6 +293,10 @@ abstract class AbstractGradleLintVisitor extends AbstractAstVisitor {
      * @param value - value to assign to the extension property
      */
     void visitExtensionProperty(ExpressionStatement expression, String extension, String prop) {}
+
+    void bookmark(String label, ASTNode node) {
+        bookmarks[label] = node
+    }
 
     protected static Map<String, String> collectEntryExpressions(MethodCallExpression call) {
         call.arguments.expressions

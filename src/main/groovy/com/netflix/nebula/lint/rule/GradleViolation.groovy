@@ -4,9 +4,10 @@ import org.codenarc.rule.Violation
 
 class GradleViolation extends Violation {
     String replacement
-    boolean shouldDelete = false
+    Integer deleteLine
+    String addition
 
     boolean isFixable() {
-        replacement || shouldDelete
+        replacement || deleteLine || addition
     }
 }

@@ -65,8 +65,12 @@ class GradleLintCorrectionTask extends DefaultTask {
                     textOutput.withStyle(StyledTextOutput.Style.UserInput).println('replaced with:')
                     textOutput.println(v.replacement)
                     correctedViolations++
-                } else if(v.shouldDelete) {
-                    textOutput.withStyle(StyledTextOutput.Style.UserInput).println('deleted')
+                } else if(v.deleteLine) {
+                    textOutput.withStyle(StyledTextOutput.Style.UserInput).println("deleted line $v.deleteLine")
+                    correctedViolations++
+                } else if(v.addition) {
+                    textOutput.withStyle(StyledTextOutput.Style.UserInput).println("adding:")
+                    textOutput.print(v.addition)
                     correctedViolations++
                 }
             } else {
