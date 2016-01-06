@@ -24,7 +24,7 @@ abstract class AbstractGradleLintVisitor extends AbstractAstVisitor {
     boolean globalIgnoreOn = false
     List<String> rulesToIgnore = []
 
-    Stack<String> closureStack = new Stack<String>()
+    Stack<MethodCallExpression> closureStack = new Stack<MethodCallExpression>()
 
     /**
      * Used to preserve the location of a block of code so that it can be affected in some way
@@ -88,7 +88,7 @@ abstract class AbstractGradleLintVisitor extends AbstractAstVisitor {
                 }
             }
         } else if (!expressions.isEmpty() && expressions.last() instanceof ClosureExpression) {
-            closureStack.push(methodName)
+            closureStack.push(call)
             super.visitMethodCallExpression(call)
             closureStack.pop()
         } else {
@@ -100,10 +100,12 @@ abstract class AbstractGradleLintVisitor extends AbstractAstVisitor {
     void visitExpressionStatement(ExpressionStatement statement) {
         def expression = statement.expression
         if (!closureStack.isEmpty()) {
+            def closureName = closureStack.peek().methodAsString
+
             if (expression instanceof BinaryExpression) {
                 if (expression.rightExpression instanceof ConstantExpression) { // STYLE: nebula { moduleOwner = 'me' }
                     // if the right side isn't a constant expression, we won't be able to evaluate it through just the AST
-                    visitExtensionProperty(statement, closureStack.peek(), expression.leftExpression.text,
+                    visitExtensionProperty(statement, closureName, expression.leftExpression.text,
                             expression.rightExpression.text)
                 }
 
@@ -111,16 +113,16 @@ abstract class AbstractGradleLintVisitor extends AbstractAstVisitor {
                 // resolved Gradle model and react accordingly
 
                 // STYLE: nebula { moduleOwner = trim('me') }
-                visitExtensionProperty(statement, closureStack.peek(), expression.leftExpression.text)
+                visitExtensionProperty(statement, closureName, expression.leftExpression.text)
             } else if (expression instanceof MethodCallExpression) {
                 if (expression.arguments instanceof ArgumentListExpression) {
                     def args = expression.arguments.expressions as List<Expression>
                     if (args.size() == 1) {
                         if (args[0] instanceof ConstantExpression) { // STYLE: nebula { moduleOwner 'me' }
-                            visitExtensionProperty(statement, closureStack.peek(), expression.methodAsString, args[0].text)
+                            visitExtensionProperty(statement, closureName, expression.methodAsString, args[0].text)
                         }
                         // STYLE: nebula { moduleOwner trim('me') }
-                        visitExtensionProperty(statement, closureStack.peek(), expression.methodAsString)
+                        visitExtensionProperty(statement, closureName, expression.methodAsString)
                     }
                 }
             }
@@ -296,6 +298,10 @@ abstract class AbstractGradleLintVisitor extends AbstractAstVisitor {
 
     void bookmark(String label, ASTNode node) {
         bookmarks[label] = node
+    }
+
+    MethodCallExpression parentClosure() {
+        closureStack.isEmpty() ? null : closureStack.peek()
     }
 
     protected static Map<String, String> collectEntryExpressions(MethodCallExpression call) {
