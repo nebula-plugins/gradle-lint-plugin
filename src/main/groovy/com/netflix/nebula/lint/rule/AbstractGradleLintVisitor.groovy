@@ -209,7 +209,7 @@ abstract class AbstractGradleLintVisitor extends AbstractAstVisitor {
 
         def v = new GradleViolation(rule: rule, lineNumber: node.lineNumber,
                 sourceLine: formattedViolation(node), message: message,
-                deleteLine: true)
+                deleteLine: (deleteAt ?: node).lineNumber)
         violations.add(v)
         if (isCorrectable())
             correctableSourceCode.delete(deleteAt ?: node)
