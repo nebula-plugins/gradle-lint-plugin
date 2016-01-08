@@ -9,7 +9,7 @@ class CorrectableStringSource extends AbstractSourceCode {
 
     Map<ASTNode, String> replacements = [:]
     List<ASTNode> deletions = []
-    Map<ASTNode, String> additions = [:]
+    Map<ASTNode, List<String>> additions = [:].withDefault {[]}
 
     CorrectableStringSource(String source) {
         assert source != null
@@ -25,19 +25,22 @@ class CorrectableStringSource extends AbstractSourceCode {
 
             def replacement = replacements.find { it.key.lineNumber-1 == i }
             def deletion = deletions.find { it.lineNumber-1 == i }
-            def addition = additions.find { it.key.lineNumber-1 == i }
+            def additions = additions.find { it.key.lineNumber-1 == i }
 
             if(replacement) {
+                // FIXME multiple replacements on the same line
                 corrections.append(doReplacement(replacement.key, replacement.value))
-                i += replacement.key.lastLineNumber-replacement.key.lineNumber
+                i += replacement.key.lastLineNumber - replacement.key.lineNumber
             } else if(deletion) {
                 i += deletion.lastLineNumber-deletion.lineNumber
             } else {
                 corrections.append(lines[i])
             }
 
-            if(addition) {
-                corrections.append(addition.value)
+            if(additions) {
+                additions.value.each {
+                    corrections.append(it)
+                }
             }
         }
         corrections.toString()
@@ -65,7 +68,7 @@ class CorrectableStringSource extends AbstractSourceCode {
     }
 
     void add(ASTNode node, String addition) {
-        this.additions[node] = addition
+        this.additions[node] += addition
     }
 
     @Override

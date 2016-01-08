@@ -86,7 +86,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         correct(rule) == ''
     }
 
-    def 'add violation with insertion'() {
+    def 'add violation with multiple insertions'() {
         when:
         project.buildFile << """
             apply plugin: 'java'
@@ -106,6 +106,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
             void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
                 if(bookmark('lastApplyPlugin')) {
                     addViolationInsert(call, 'should generate source jar', "\napply plugin: 'nebula.source-jar'", bookmark('lastApplyPlugin'))
+                    addViolationInsert(call, 'should generate javadoc jar', "\napply plugin: 'nebula.javadoc-jar'", bookmark('lastApplyPlugin'))
                 }
             }
         }
@@ -114,6 +115,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         correct(rule) == """
             apply plugin: 'java'
             apply plugin: 'nebula.source-jar'
+            apply plugin: 'nebula.javadoc-jar'
 
             dependencies {
                 compile 'com.google.guava:guava:18.0'
