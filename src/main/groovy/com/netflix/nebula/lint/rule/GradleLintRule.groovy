@@ -228,6 +228,7 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
                         globalIgnoreOn = true
 
                     super.visitMethodCallExpression(call)
+                    GradleLintRule.this.visitMethodCallExpression(call)
 
                     rulesToIgnore.clear()
                     globalIgnoreOn = false
@@ -259,6 +260,11 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
                 } else if (!expressions.isEmpty() && expressions.last() instanceof ClosureExpression) {
                     closureStack.push(call)
                     super.visitMethodCallExpression(call)
+
+                    // because closureStack is state that is shared with GradleLintRule, we need to pre-empt the composite
+                    // visitor and call out to the rule now before popping the stack
+                    GradleLintRule.this.visitMethodCallExpression(call)
+
                     closureStack.pop()
                 } else {
                     super.visitMethodCallExpression(call)
@@ -352,358 +358,358 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
             }
         }
 
+        @Override
+        AstVisitor getAstVisitor() { compositeVisitor }
+
         /**
          * AST visitor that delegates to both the gradleAstVisitor and the user-defined rule in that order.
          * Keeping them separate helps prevent user-defined visitors from inadvertently breaking the assumptions of
          * gradleAstVisitor
          */
-        @Override
-        AstVisitor getAstVisitor() {
-            return new AbstractAstVisitor() {
-                @Override
-                List<Violation> getViolations() {
-                    return GradleLintRule.this.gradleViolations
-                }
-
-                void both(Closure c) {
-                    c(gradleAstVisitor)
-                    c(GradleLintRule.this)
-                }
-    
-                @Override
-                protected void visitClassEx(ClassNode node) {
-                    both { it.visitClassEx(node) }
-                }
-
-                @Override
-                protected void visitClassComplete(ClassNode node) {
-                    both { it.visitClassComplete(node) }
-                }
-
-                @Override
-                protected void visitMethodComplete(MethodNode node) {
-                    both { it.visitMethodComplete(node) }
-                }
-
-                @Override
-                protected void visitMethodEx(MethodNode node) {
-                    both { it.visitMethodEx(node) }
-                }
-
-                @Override
-                protected void visitObjectInitializerStatements(ClassNode node) {
-                    both { it.visitObjectInitializerStatements(node) }
-                }
-
-                @Override
-                void visitPackage(PackageNode node) {
-                    both { it.visitPackage(node) }
-                }
-
-                @Override
-                void visitImports(ModuleNode node) {
-                    both { it.visitImports(node) }
-                }
-
-                @Override
-                void visitAnnotations(AnnotatedNode node) {
-                    both { it.visitAnnotations(node) }
-                }
-
-                @Override
-                protected void visitClassCodeContainer(Statement code) {
-                    both { it.visitClassCodeContainer(code) }
-                }
-
-                @Override
-                void visitDeclarationExpression(DeclarationExpression expression) {
-                    both { it.visitDeclarationExpression(expression) }
-                }
-
-                @Override
-                protected void visitConstructorOrMethod(MethodNode node, boolean isConstructor) {
-                    both { it.visitConstructorOrMethod(node, isConstructor) }
-                }
-
-                @Override
-                void visitConstructor(ConstructorNode node) {
-                    both { it.visitConstructor(node) }
-                }
-
-                @Override
-                void visitField(FieldNode node) {
-                    both { it.visitField(node) }
-                }
-
-                @Override
-                void visitProperty(PropertyNode node) {
-                    both { it.visitProperty(node) }
-                }
-
-                @Override
-                protected void visitStatement(Statement statement) {
-                    both { it.visitStatement(statement) }
-                }
-
-                @Override
-                void visitAssertStatement(AssertStatement statement) {
-                    both { it.visitAssertStatement(statement) }
-                }
-
-                @Override
-                void visitBlockStatement(BlockStatement block) {
-                    both { it.visitBlockStatement(block) }
-                }
-
-                @Override
-                void visitBreakStatement(BreakStatement statement) {
-                    both { it.visitBreakStatement(statement) }
-                }
-
-                @Override
-                void visitCaseStatement(CaseStatement statement) {
-                    both { it.visitCaseStatement(statement) }
-                }
-
-                @Override
-                void visitCatchStatement(CatchStatement statement) {
-                    both { it.visitCatchStatement(statement) }
-                }
-
-                @Override
-                void visitContinueStatement(ContinueStatement statement) {
-                    both { it.visitContinueStatement(statement) }
-                }
-
-                @Override
-                void visitDoWhileLoop(DoWhileStatement loop) {
-                    both { it.visitDoWhileLoop(loop) }
-                }
-
-                @Override
-                void visitExpressionStatement(ExpressionStatement statement) {
-                    both { it.visitExpressionStatement(statement) }
-                }
-
-                @Override
-                void visitForLoop(ForStatement forLoop) {
-                    both { it.visitForLoop(forLoop) }
-                }
-
-                @Override
-                void visitIfElse(IfStatement ifElse) {
-                    both { it.visitIfElse(ifElse) }
-                }
-
-                @Override
-                void visitReturnStatement(ReturnStatement statement) {
-                    both { it.visitReturnStatement(statement) }
-                }
-
-                @Override
-                void visitSwitch(SwitchStatement statement) {
-                    both { it.visitSwitch(statement) }
-                }
-
-                @Override
-                void visitSynchronizedStatement(SynchronizedStatement statement) {
-                    both { it.visitSynchronizedStatement(statement) }
-                }
-
-                @Override
-                void visitThrowStatement(ThrowStatement statement) {
-                    both { it.visitThrowStatement(statement) }
-                }
-
-                @Override
-                void visitTryCatchFinally(TryCatchStatement statement) {
-                    both { it.visitTryCatchFinally(statement) }
-                }
-
-                @Override
-                void visitWhileLoop(WhileStatement loop) {
-                    both { it.visitWhileLoop(loop) }
-                }
-
-                @Override
-                protected void visitEmptyStatement(EmptyStatement statement) {
-                    both { it.visitEmptyStatement(statement) }
-                }
-
-                @Override
-                void visitMethodCallExpression(MethodCallExpression call) {
-                    both { it.visitMethodCallExpression(call) }
-                }
-
-                @Override
-                void visitStaticMethodCallExpression(StaticMethodCallExpression call) {
-                    both { it.visitStaticMethodCallExpression(call) }
-                }
-
-                @Override
-                void visitConstructorCallExpression(ConstructorCallExpression call) {
-                    both { it.visitConstructorCallExpression(call) }
-                }
-
-                @Override
-                void visitBinaryExpression(BinaryExpression expression) {
-                    both { it.visitBinaryExpression(expression) }
-                }
-
-                @Override
-                void visitTernaryExpression(TernaryExpression expression) {
-                    both { it.visitTernaryExpression(expression) }
-                }
-
-                @Override
-                void visitShortTernaryExpression(ElvisOperatorExpression expression) {
-                    both { it.visitShortTernaryExpression(expression) }
-                }
-
-                @Override
-                void visitPostfixExpression(PostfixExpression expression) {
-                    both { it.visitPostfixExpression(expression) }
-                }
-
-                @Override
-                void visitPrefixExpression(PrefixExpression expression) {
-                    both { it.visitPrefixExpression(expression) }
-                }
-
-                @Override
-                void visitBooleanExpression(BooleanExpression expression) {
-                    both { it.visitBooleanExpression(expression) }
-                }
-
-                @Override
-                void visitNotExpression(NotExpression expression) {
-                    both { it.visitNotExpression(expression) }
-                }
-
-                @Override
-                void visitClosureExpression(ClosureExpression expression) {
-                    both { it.visitClosureExpression(expression) }
-                }
-
-                @Override
-                void visitTupleExpression(TupleExpression expression) {
-                    both { it.visitTupleExpression(expression) }
-                }
-
-                @Override
-                void visitListExpression(ListExpression expression) {
-                    both { it.visitListExpression(expression) }
-                }
-
-                @Override
-                void visitArrayExpression(ArrayExpression expression) {
-                    both { it.visitArrayExpression(expression) }
-                }
-
-                @Override
-                void visitMapExpression(MapExpression expression) {
-                    both { it.visitMapExpression(expression) }
-                }
-
-                @Override
-                void visitMapEntryExpression(MapEntryExpression expression) {
-                    both { it.visitMapEntryExpression(expression) }
-                }
-
-                @Override
-                void visitRangeExpression(RangeExpression expression) {
-                    both { it.visitRangeExpression(expression) }
-                }
-
-                @Override
-                void visitSpreadExpression(SpreadExpression expression) {
-                    both { it.visitSpreadExpression(expression) }
-                }
-
-                @Override
-                void visitSpreadMapExpression(SpreadMapExpression expression) {
-                    both { it.visitSpreadMapExpression(expression) }
-                }
-
-                @Override
-                void visitMethodPointerExpression(MethodPointerExpression expression) {
-                    both { it.visitMethodPointerExpression(expression) }
-                }
-
-                @Override
-                void visitUnaryMinusExpression(UnaryMinusExpression expression) {
-                    both { it.visitUnaryMinusExpression(expression) }
-                }
-
-                @Override
-                void visitUnaryPlusExpression(UnaryPlusExpression expression) {
-                    both { it.visitUnaryPlusExpression(expression) }
-                }
-
-                @Override
-                void visitBitwiseNegationExpression(BitwiseNegationExpression expression) {
-                    both { it.visitBitwiseNegationExpression(expression) }
-                }
-
-                @Override
-                void visitCastExpression(CastExpression expression) {
-                    both { it.visitCastExpression(expression) }
-                }
-
-                @Override
-                void visitConstantExpression(ConstantExpression expression) {
-                    both { it.visitConstantExpression(expression) }
-                }
-
-                @Override
-                void visitClassExpression(ClassExpression expression) {
-                    both { it.visitClassExpression(expression) }
-                }
-
-                @Override
-                void visitVariableExpression(VariableExpression expression) {
-                    both { it.visitVariableExpression(expression) }
-                }
-
-                @Override
-                void visitPropertyExpression(PropertyExpression expression) {
-                    both { it.visitPropertyExpression(expression) }
-                }
-
-                @Override
-                void visitAttributeExpression(AttributeExpression expression) {
-                    both { it.visitAttributeExpression(expression) }
-                }
-
-                @Override
-                void visitFieldExpression(FieldExpression expression) {
-                    both { it.visitFieldExpression(expression) }
-                }
-
-                @Override
-                void visitGStringExpression(GStringExpression expression) {
-                    both { it.visitGStringExpression(expression) }
-                }
-
-                @Override
-                protected void visitListOfExpressions(List<? extends Expression> list) {
-                    both { it.visitListOfExpressions(list) }
-                }
-
-                @Override
-                void visitArgumentlistExpression(ArgumentListExpression ale) {
-                    both { it.visitArgumentlistExpression(ale) }
-                }
-
-                @Override
-                void visitClosureListExpression(ClosureListExpression cle) {
-                    both { it.visitClosureListExpression(cle) }
-                }
-
-                @Override
-                void visitBytecodeExpression(BytecodeExpression cle) {
-                    both { it.visitBytecodeExpression(cle) }
-                }
+        AstVisitor compositeVisitor = new AbstractAstVisitor() {
+            @Override
+            List<Violation> getViolations() {
+                return GradleLintRule.this.gradleViolations
+            }
+
+            void both(Closure c) {
+                c(gradleAstVisitor)
+                c(GradleLintRule.this)
+            }
+
+            @Override
+            protected void visitClassEx(ClassNode node) {
+                both { it.visitClassEx(node) }
+            }
+
+            @Override
+            protected void visitClassComplete(ClassNode node) {
+                both { it.visitClassComplete(node) }
+            }
+
+            @Override
+            protected void visitMethodComplete(MethodNode node) {
+                both { it.visitMethodComplete(node) }
+            }
+
+            @Override
+            protected void visitMethodEx(MethodNode node) {
+                both { it.visitMethodEx(node) }
+            }
+
+            @Override
+            protected void visitObjectInitializerStatements(ClassNode node) {
+                both { it.visitObjectInitializerStatements(node) }
+            }
+
+            @Override
+            void visitPackage(PackageNode node) {
+                both { it.visitPackage(node) }
+            }
+
+            @Override
+            void visitImports(ModuleNode node) {
+                both { it.visitImports(node) }
+            }
+
+            @Override
+            void visitAnnotations(AnnotatedNode node) {
+                both { it.visitAnnotations(node) }
+            }
+
+            @Override
+            protected void visitClassCodeContainer(Statement code) {
+                both { it.visitClassCodeContainer(code) }
+            }
+
+            @Override
+            void visitDeclarationExpression(DeclarationExpression expression) {
+                both { it.visitDeclarationExpression(expression) }
+            }
+
+            @Override
+            protected void visitConstructorOrMethod(MethodNode node, boolean isConstructor) {
+                both { it.visitConstructorOrMethod(node, isConstructor) }
+            }
+
+            @Override
+            void visitConstructor(ConstructorNode node) {
+                both { it.visitConstructor(node) }
+            }
+
+            @Override
+            void visitField(FieldNode node) {
+                both { it.visitField(node) }
+            }
+
+            @Override
+            void visitProperty(PropertyNode node) {
+                both { it.visitProperty(node) }
+            }
+
+            @Override
+            protected void visitStatement(Statement statement) {
+                both { it.visitStatement(statement) }
+            }
+
+            @Override
+            void visitAssertStatement(AssertStatement statement) {
+                both { it.visitAssertStatement(statement) }
+            }
+
+            @Override
+            void visitBlockStatement(BlockStatement block) {
+                both { it.visitBlockStatement(block) }
+            }
+
+            @Override
+            void visitBreakStatement(BreakStatement statement) {
+                both { it.visitBreakStatement(statement) }
+            }
+
+            @Override
+            void visitCaseStatement(CaseStatement statement) {
+                both { it.visitCaseStatement(statement) }
+            }
+
+            @Override
+            void visitCatchStatement(CatchStatement statement) {
+                both { it.visitCatchStatement(statement) }
+            }
+
+            @Override
+            void visitContinueStatement(ContinueStatement statement) {
+                both { it.visitContinueStatement(statement) }
+            }
+
+            @Override
+            void visitDoWhileLoop(DoWhileStatement loop) {
+                both { it.visitDoWhileLoop(loop) }
+            }
+
+            @Override
+            void visitExpressionStatement(ExpressionStatement statement) {
+                both { it.visitExpressionStatement(statement) }
+            }
+
+            @Override
+            void visitForLoop(ForStatement forLoop) {
+                both { it.visitForLoop(forLoop) }
+            }
+
+            @Override
+            void visitIfElse(IfStatement ifElse) {
+                both { it.visitIfElse(ifElse) }
+            }
+
+            @Override
+            void visitReturnStatement(ReturnStatement statement) {
+                both { it.visitReturnStatement(statement) }
+            }
+
+            @Override
+            void visitSwitch(SwitchStatement statement) {
+                both { it.visitSwitch(statement) }
+            }
+
+            @Override
+            void visitSynchronizedStatement(SynchronizedStatement statement) {
+                both { it.visitSynchronizedStatement(statement) }
+            }
+
+            @Override
+            void visitThrowStatement(ThrowStatement statement) {
+                both { it.visitThrowStatement(statement) }
+            }
+
+            @Override
+            void visitTryCatchFinally(TryCatchStatement statement) {
+                both { it.visitTryCatchFinally(statement) }
+            }
+
+            @Override
+            void visitWhileLoop(WhileStatement loop) {
+                both { it.visitWhileLoop(loop) }
+            }
+
+            @Override
+            protected void visitEmptyStatement(EmptyStatement statement) {
+                both { it.visitEmptyStatement(statement) }
+            }
+
+            @Override
+            void visitMethodCallExpression(MethodCallExpression call) {
+                both { it.visitMethodCallExpression(call) }
+            }
+
+            @Override
+            void visitStaticMethodCallExpression(StaticMethodCallExpression call) {
+                both { it.visitStaticMethodCallExpression(call) }
+            }
+
+            @Override
+            void visitConstructorCallExpression(ConstructorCallExpression call) {
+                both { it.visitConstructorCallExpression(call) }
+            }
+
+            @Override
+            void visitBinaryExpression(BinaryExpression expression) {
+                both { it.visitBinaryExpression(expression) }
+            }
+
+            @Override
+            void visitTernaryExpression(TernaryExpression expression) {
+                both { it.visitTernaryExpression(expression) }
+            }
+
+            @Override
+            void visitShortTernaryExpression(ElvisOperatorExpression expression) {
+                both { it.visitShortTernaryExpression(expression) }
+            }
+
+            @Override
+            void visitPostfixExpression(PostfixExpression expression) {
+                both { it.visitPostfixExpression(expression) }
+            }
+
+            @Override
+            void visitPrefixExpression(PrefixExpression expression) {
+                both { it.visitPrefixExpression(expression) }
+            }
+
+            @Override
+            void visitBooleanExpression(BooleanExpression expression) {
+                both { it.visitBooleanExpression(expression) }
+            }
+
+            @Override
+            void visitNotExpression(NotExpression expression) {
+                both { it.visitNotExpression(expression) }
+            }
+
+            @Override
+            void visitClosureExpression(ClosureExpression expression) {
+                both { it.visitClosureExpression(expression) }
+            }
+
+            @Override
+            void visitTupleExpression(TupleExpression expression) {
+                both { it.visitTupleExpression(expression) }
+            }
+
+            @Override
+            void visitListExpression(ListExpression expression) {
+                both { it.visitListExpression(expression) }
+            }
+
+            @Override
+            void visitArrayExpression(ArrayExpression expression) {
+                both { it.visitArrayExpression(expression) }
+            }
+
+            @Override
+            void visitMapExpression(MapExpression expression) {
+                both { it.visitMapExpression(expression) }
+            }
+
+            @Override
+            void visitMapEntryExpression(MapEntryExpression expression) {
+                both { it.visitMapEntryExpression(expression) }
+            }
+
+            @Override
+            void visitRangeExpression(RangeExpression expression) {
+                both { it.visitRangeExpression(expression) }
+            }
+
+            @Override
+            void visitSpreadExpression(SpreadExpression expression) {
+                both { it.visitSpreadExpression(expression) }
+            }
+
+            @Override
+            void visitSpreadMapExpression(SpreadMapExpression expression) {
+                both { it.visitSpreadMapExpression(expression) }
+            }
+
+            @Override
+            void visitMethodPointerExpression(MethodPointerExpression expression) {
+                both { it.visitMethodPointerExpression(expression) }
+            }
+
+            @Override
+            void visitUnaryMinusExpression(UnaryMinusExpression expression) {
+                both { it.visitUnaryMinusExpression(expression) }
+            }
+
+            @Override
+            void visitUnaryPlusExpression(UnaryPlusExpression expression) {
+                both { it.visitUnaryPlusExpression(expression) }
+            }
+
+            @Override
+            void visitBitwiseNegationExpression(BitwiseNegationExpression expression) {
+                both { it.visitBitwiseNegationExpression(expression) }
+            }
+
+            @Override
+            void visitCastExpression(CastExpression expression) {
+                both { it.visitCastExpression(expression) }
+            }
+
+            @Override
+            void visitConstantExpression(ConstantExpression expression) {
+                both { it.visitConstantExpression(expression) }
+            }
+
+            @Override
+            void visitClassExpression(ClassExpression expression) {
+                both { it.visitClassExpression(expression) }
+            }
+
+            @Override
+            void visitVariableExpression(VariableExpression expression) {
+                both { it.visitVariableExpression(expression) }
+            }
+
+            @Override
+            void visitPropertyExpression(PropertyExpression expression) {
+                both { it.visitPropertyExpression(expression) }
+            }
+
+            @Override
+            void visitAttributeExpression(AttributeExpression expression) {
+                both { it.visitAttributeExpression(expression) }
+            }
+
+            @Override
+            void visitFieldExpression(FieldExpression expression) {
+                both { it.visitFieldExpression(expression) }
+            }
+
+            @Override
+            void visitGStringExpression(GStringExpression expression) {
+                both { it.visitGStringExpression(expression) }
+            }
+
+            @Override
+            protected void visitListOfExpressions(List<? extends Expression> list) {
+                both { it.visitListOfExpressions(list) }
+            }
+
+            @Override
+            void visitArgumentlistExpression(ArgumentListExpression ale) {
+                both { it.visitArgumentlistExpression(ale) }
+            }
+
+            @Override
+            void visitClosureListExpression(ClosureListExpression cle) {
+                both { it.visitClosureListExpression(cle) }
+            }
+
+            @Override
+            void visitBytecodeExpression(BytecodeExpression cle) {
+                both { it.visitBytecodeExpression(cle) }
             }
         }
     }

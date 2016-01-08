@@ -4,6 +4,7 @@ import com.netflix.nebula.lint.plugin.GradleLintPlugin
 import com.netflix.nebula.lint.plugin.LintRuleRegistry
 import com.netflix.nebula.lint.rule.test.AbstractRuleSpec
 import org.codehaus.groovy.ast.expr.MethodCallExpression
+import org.codehaus.groovy.ast.expr.VariableExpression
 import org.codehaus.groovy.ast.stmt.ExpressionStatement
 import org.gradle.api.plugins.JavaPlugin
 import org.junit.Rule
@@ -204,6 +205,30 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
 
         then:
         results.violations.size() == 4
+    }
+
+    def 'codenarc visit methods in a rule have access to parent closure'() {
+        when:
+        project.buildFile << """
+            publications {
+                JAR
+            }
+        """
+
+        MethodCallExpression parent = null
+
+        runRulesAgainst(new GradleLintRule() {
+            @Override
+            void visitExpressionStatement(ExpressionStatement statement) {
+                println statement
+                println '  ' + parentClosure()
+                if(statement.expression instanceof VariableExpression)
+                    parent = parentClosure()
+            }
+        })
+
+        then:
+        parent?.methodAsString == 'publications'
     }
 
 }
