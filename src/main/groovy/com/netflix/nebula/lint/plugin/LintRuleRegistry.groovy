@@ -1,6 +1,6 @@
 package com.netflix.nebula.lint.plugin
 
-import com.google.common.base.Preconditions
+import com.netflix.nebula.lint.rule.GradleLintRule
 import com.netflix.nebula.lint.rule.GradleModelAware
 import org.codenarc.rule.Rule
 import org.gradle.api.Project
@@ -19,19 +19,19 @@ class LintRuleRegistry {
         return resource ? new LintRuleDescriptor(resource) : null
     }
 
-    static List<Class> findVisitorClassNames(String ruleId) {
+    static List<String> findRules(String ruleId) {
         assert classLoader != null
         def ruleDescriptor = findRuleDescriptor(ruleId)
         if (ruleDescriptor == null)
             return []
 
         if(ruleDescriptor.implementationClassName)
-            return [classLoader.loadClass(ruleDescriptor.implementationClassName).newInstance().astVisitor.class]
+            return [ruleId]
         else
-            return (ruleDescriptor.includes?.collect { findVisitorClassNames(it as String) }?.flatten() ?: []) as List<Class>
+            return (ruleDescriptor.includes?.collect { findRules(it as String) }?.flatten() ?: []) as List<String>
     }
 
-    List<Rule> findRule(String ruleId) {
+    List<Rule> buildRules(String ruleId) {
         assert classLoader != null
         def ruleDescriptor = findRuleDescriptor(ruleId)
         if (ruleDescriptor == null)
@@ -44,13 +44,17 @@ class LintRuleRegistry {
             throw new InvalidRuleException(String.format("No implementation class or includes specified for rule '%s' in %s.", ruleId, ruleDescriptor))
         }
 
-        def included = includes.collect { findRule(it as String) }.flatten() as List<Rule>
+        def included = includes.collect { buildRules(it as String) }.flatten() as List<Rule>
 
         if(implClassName) {
             try {
                 Rule r = (Rule) classLoader.loadClass(implClassName).newInstance()
                 if(r instanceof GradleModelAware) {
                     (r as GradleModelAware).project = project
+                }
+
+                if(r instanceof GradleLintRule) {
+                    r.ruleId = ruleId
                 }
                 return included + r
             } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {

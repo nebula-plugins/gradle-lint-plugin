@@ -1,8 +1,11 @@
 package com.netflix.nebula.lint.rule
 
+import com.netflix.nebula.lint.rule.dependency.DependencyParenthesesRule
 import com.netflix.nebula.lint.rule.test.AbstractRuleSpec
 
 class DependencyParenthesesRuleSpec extends AbstractRuleSpec {
+    def rule = new DependencyParenthesesRule()
+
     def 'valid uses of parentheses pass'() {
         when:
         project.buildFile << """
@@ -11,10 +14,10 @@ class DependencyParenthesesRuleSpec extends AbstractRuleSpec {
                compile ('a:a:1') { }
             }
         """
-        def results = runRulesAgainst(new DependencyParenthesesRule())
+        def results = runRulesAgainst(rule)
 
         then:
-        results.doesNotViolate(DependencyParenthesesRule)
+        results.doesNotViolate()
     }
 
     def 'parenthesized dependency violates'() {
@@ -24,10 +27,10 @@ class DependencyParenthesesRuleSpec extends AbstractRuleSpec {
                compile('junit:junit:4.11')
             }
         """
-        def results = runRulesAgainst(new DependencyParenthesesRule())
+        def results = runRulesAgainst(rule)
 
         then:
-        results.violates(DependencyParenthesesRule)
+        results.violates()
     }
 
     def 'parenthesized dependencies are corrected'() {
@@ -37,7 +40,7 @@ class DependencyParenthesesRuleSpec extends AbstractRuleSpec {
                compile('junit:junit:4.11')
             }
         """
-        def results = correct(new DependencyParenthesesRule())
+        def results = correct(rule)
 
         then:
         results == """

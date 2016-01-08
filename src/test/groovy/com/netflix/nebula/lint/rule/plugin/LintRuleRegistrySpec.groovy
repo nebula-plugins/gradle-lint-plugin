@@ -1,7 +1,7 @@
 package com.netflix.nebula.lint.rule.plugin
 
 import com.netflix.nebula.lint.plugin.LintRuleRegistry
-import org.codenarc.rule.AbstractAstVisitorRule
+import com.netflix.nebula.lint.rule.GradleLintRule
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
@@ -20,11 +20,12 @@ class LintRuleRegistrySpec extends Specification {
         singleRule << "implementation-class=${MockRule1.name}"
 
         when:
-        def rules = new LintRuleRegistry(null).findRule('single-rule')
+        def rules = new LintRuleRegistry(null).buildRules('single-rule')
 
         then:
         rules.size() == 1
         rules[0] instanceof MockRule1
+        rules[0].ruleId == 'single-rule'
     }
 
     def 'load a rule that includes other rules'() {
@@ -39,7 +40,7 @@ class LintRuleRegistrySpec extends Specification {
         composite << 'includes=rule1,rule2'
 
         when:
-        def rules = new LintRuleRegistry(null).findRule('composite')
+        def rules = new LintRuleRegistry(null).buildRules('composite')
 
         then:
         rules.size() == 2
@@ -47,18 +48,32 @@ class LintRuleRegistrySpec extends Specification {
         rules[1] instanceof MockRule2
     }
 
+    def 'list rule ids associated with a single rule id'() {
+        setup:
+        def rule1 = ruleFile('rule1')
+        rule1 << "implementation-class=${MockRule1.name}"
+
+        def rule2 = ruleFile('rule2')
+        rule2 << "implementation-class=${MockRule2.name}"
+
+        def composite = ruleFile('composite')
+        composite << 'includes=rule1,rule2'
+
+        when:
+        def rules = new LintRuleRegistry(null).findRules('composite')
+
+        then:
+        rules.size() == 2
+        rules[0] == 'rule1'
+        rules[1] == 'rule2'
+    }
+
     private File ruleFile(String ruleId) {
         new File(temp.root, 'META-INF/lint-rules').mkdirs()
         temp.newFile("META-INF/lint-rules/${ruleId}.properties")
     }
 
-    static class MockRule1 extends AbstractAstVisitorRule {
-        String name = 'rule1'
-        int priority = 3
-    }
+    static class MockRule1 extends GradleLintRule { }
 
-    static class MockRule2 extends AbstractAstVisitorRule {
-        String name = 'rule2'
-        int priority = 3
-    }
+    static class MockRule2 extends GradleLintRule { }
 }

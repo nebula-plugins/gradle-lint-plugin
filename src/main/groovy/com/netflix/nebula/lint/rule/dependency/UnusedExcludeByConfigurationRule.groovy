@@ -1,24 +1,13 @@
-package com.netflix.nebula.lint.rule
+package com.netflix.nebula.lint.rule.dependency
 
+import com.netflix.nebula.lint.rule.GradleDependency
+import com.netflix.nebula.lint.rule.GradleLintRule
+import com.netflix.nebula.lint.rule.GradleModelAware
 import org.codehaus.groovy.ast.expr.MethodCallExpression
-import org.codenarc.rule.AbstractAstVisitorRule
-import org.codenarc.rule.AstVisitor
-import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.specs.Specs
 
-class UnusedExcludeByConfigurationRule extends AbstractAstVisitorRule implements GradleModelAware {
-    Project project
-    String name = 'unused-exclude-by-configuration'
-    int priority = 2
-
-    @Override
-    AstVisitor getAstVisitor() {
-        return new UnusedExcludeByConfigurationVisitor(project: project)
-    }
-}
-
-class UnusedExcludeByConfigurationVisitor extends AbstractGradleLintVisitor {
+class UnusedExcludeByConfigurationRule extends GradleLintRule implements GradleModelAware {
     @Override
     void visitConfigurationExclude(MethodCallExpression call, String conf, GradleDependency exclude) {
         // Since Gradle does not expose any information about which excludes were effective, we will create a new configuration

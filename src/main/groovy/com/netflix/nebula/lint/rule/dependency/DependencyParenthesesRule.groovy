@@ -1,18 +1,11 @@
-package com.netflix.nebula.lint.rule
+package com.netflix.nebula.lint.rule.dependency
 
+import com.netflix.nebula.lint.rule.GradleDependency
+import com.netflix.nebula.lint.rule.GradleLintRule
 import org.codehaus.groovy.ast.expr.ClosureExpression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
-import org.codenarc.rule.AbstractAstVisitorRule
 
-class DependencyParenthesesRule extends AbstractAstVisitorRule {
-    String name = 'dependency-parentheses'
-    int priority = 3
-    Class astVisitorClass = DependencyParenthesesAstVisitor
-}
-
-class DependencyParenthesesAstVisitor extends AbstractGradleLintVisitor {
-    boolean inDependenciesBlock = false
-
+class DependencyParenthesesRule extends GradleLintRule {
     @Override
     void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
         def args = call.arguments.expressions as List

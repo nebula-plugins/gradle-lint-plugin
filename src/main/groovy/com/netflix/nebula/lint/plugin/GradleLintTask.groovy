@@ -26,7 +26,7 @@ class GradleLintTask extends DefaultTask {
                 .extensions
                 .getByType(GradleLintExtension)
                 .rules
-                .collect { registry.findRule(it) }
+                .collect { registry.buildRules(it) }
                 .flatten() as List<Rule>)
 
         def violations = new StringSourceAnalyzer(project.buildFile.text).analyze(ruleSet).violations
@@ -48,7 +48,7 @@ class GradleLintTask extends DefaultTask {
             def severity = v.rule.priority <= 3 ? 'warning' : 'error'
 
             textOutput.withStyle(StyledTextOutput.Style.Failure).text(severity.padRight(10))
-            textOutput.text(v.rule.name.padRight(25))
+            textOutput.text(v.rule.ruleId.padRight(25))
             textOutput.withStyle(StyledTextOutput.Style.Description).println(v.message)
 
             textOutput.withStyle(StyledTextOutput.Style.UserInput).println(buildFilePath + ':' + v.lineNumber)

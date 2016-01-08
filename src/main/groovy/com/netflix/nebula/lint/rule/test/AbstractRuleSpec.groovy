@@ -35,10 +35,20 @@ abstract class AbstractRuleSpec extends ProjectSpec {
 
 class ResultsAssert {
     boolean violates(Class<? extends Rule> ruleClass) {
-        this.violations.find { v -> ruleClass.isAssignableFrom(v.rule.class) }
+        this.violations.find { v ->
+            ruleClass.newInstance().name == v.rule.name
+        }
+    }
+
+    boolean violates() {
+        !this.violations.isEmpty()
     }
 
     boolean doesNotViolate(Class<? extends Rule> ruleClass) {
         !violates(ruleClass)
+    }
+
+    boolean doesNotViolate() {
+        !violates()
     }
 }

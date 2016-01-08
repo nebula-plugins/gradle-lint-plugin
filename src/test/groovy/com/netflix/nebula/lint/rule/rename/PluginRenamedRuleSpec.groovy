@@ -9,7 +9,7 @@ class PluginRenamedRuleSpec extends AbstractRuleSpec {
             apply plugin: 'ye-olde-plugin'
         """
 
-        def results = runRulesAgainst(new PluginRenamedRule('renamed', 'ye-olde-plugin', 'shiny-new-plugin'))
+        def results = runRulesAgainst(new PluginRenamedRule('ye-olde-plugin', 'shiny-new-plugin'))
 
         then:
         results.violations.size() == 1
@@ -21,7 +21,7 @@ class PluginRenamedRuleSpec extends AbstractRuleSpec {
             apply plugin: 'ye-olde-plugin'
         """
 
-        def corrected = correct(new PluginRenamedRule('renamed', 'ye-olde-plugin', 'shiny-new-plugin'))
+        def corrected = correct(new PluginRenamedRule('ye-olde-plugin', 'shiny-new-plugin'))
 
         then:
         corrected == """

@@ -1,8 +1,15 @@
 package com.netflix.nebula.lint.rule
 
+import com.netflix.nebula.lint.rule.dependency.UnusedDependencyExcludeRule
 import com.netflix.nebula.lint.rule.test.AbstractRuleSpec
 
 class UnusedDependencyExcludeRuleSpec extends AbstractRuleSpec {
+    def rule
+
+    def setup() {
+        rule = new UnusedDependencyExcludeRule(project: project)
+    }
+
     def 'unused exclude violates'() {
         when:
         // trivial case: no dependencies
@@ -27,10 +34,10 @@ class UnusedDependencyExcludeRuleSpec extends AbstractRuleSpec {
             }
         }
 
-        def results = runRulesAgainst(new UnusedDependencyExcludeRule(project: project))
+        def results = runRulesAgainst(rule)
 
         then:
-        results.violates(UnusedDependencyExcludeRule)
+        results.violates()
     }
 
     def 'exclude matching a transitive dependency does not violate'() {
@@ -57,9 +64,9 @@ class UnusedDependencyExcludeRuleSpec extends AbstractRuleSpec {
             }
         }
 
-        def results = runRulesAgainst(new UnusedDependencyExcludeRule(project: project))
+        def results = runRulesAgainst(rule)
 
         then:
-        results.doesNotViolate(UnusedDependencyExcludeRule)
+        results.doesNotViolate()
     }
 }

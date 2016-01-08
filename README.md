@@ -101,26 +101,13 @@ You can also be selective about which rules to ignore in the block by providing 
 
 ## Building your own rules
 
-A lint rule consists of a `org.codenarc.rule.Rule` implementation plus a properties file.  Let's build a simple rule that blocks build scripts from applying an imaginary Gradle plugin `nebula.fix-jersey-bundle` that might do something like replace a jersey-bundle dependency with a more narrowly defined dependency.
+A lint rule consists of a `GradleLintRule` implementation plus a properties file.  Let's build a simple rule that blocks build scripts from applying an imaginary Gradle plugin `nebula.fix-jersey-bundle` that might do something like replace a jersey-bundle dependency with a more narrowly defined dependency.
 
 ### The `Rule` implementation
 
-First, we will write a rule:
+Lint rules are AST visiting rules, because the AST gives us the ingredients we need to form good auto-fixing strategies. This will become apparent momentarily. In this example, we are using the optional `GradleModelAware` feature to imbue our visitor with knowledge of the evaluated Gradle `Project` object. The combination of Groovy AST and the evaluated model allows us to write powerful rules.
 
-    class FixJerseyBundleRule extends AbstractAstVisitorRule implements GradleModelAware {
-      String name = 'fix-jersey-bundle'
-      int priority = 2
-      Project project
-
-      @Override
-      AstVisitor getAstVisitor() {
-        new FixJerseyBundleVisitor(project: project)
-      }
-    }
-
-The vast majority of lint rules will be AST visiting rules, because the AST gives us the ingredients we need to form good auto-fixing strategies. This will become apparent momentarily. In this example, we are using the optional `GradleModelAware` feature to imbue our visitor with knowledge of the evaluated Gradle `Project` object. The combination of Groovy AST and the evaluated model allows us to write powerful rules.
-
-    class FixJerseyBundleVisitor extends AbstractGradleLintVisitor {
+    class FixJerseyBundleRule extends GradleLintRule {
       @Override
       void visitApplyPlugin(MethodCallExpression call, String plugin) {
           if(plugin == 'nebula.fix-jersey-bundle') {
@@ -139,9 +126,9 @@ The vast majority of lint rules will be AST visiting rules, because the AST give
 
 We use the AST to look for the specific piece of code where `nebula.fix-jersey-bundle` was applied. We could determine through the Gradle model that the plugin had been applied, but not how or where this had been accomplished. Then we transition to using the Gradle model to determine if `jersey-bundle` is in our transitive dependencies. We could not have determined this with the AST alone! Finally, we use `addViolationToDelete` to indicate to the lint plugin that this block of code applying `nebula.fix-jersey-bundle` violates the rule, and that the `fixGradleLint` can safely delete this code snippet.
 
-Currently, `addViolationWithReplacement` and `addViolationNoCorrection` are provided as helper functions to add violations as well.
+Currently, `addViolationWithReplacement`, `addViolationInsert`, `addViolationNoCorrection` are also provided as helper functions to add violations as well.
 
-Finally, notice how we overrode the `visitApplyPlugin` method.  `AbstractGradleLintVisitor` has added several convenience hooks for Gradle specific constructs to the rich set of hooks already provided by CodeNarc's `AbstractAstVisitor`, including:
+Finally, notice how we overrode the `visitApplyPlugin` method.  `GradleLintRule` implements the `GradleAstVisitor` interface which adds several convenience hooks for Gradle specific constructs to the rich set of hooks already provided by CodeNarc's `AbstractAstVisitor`, including:
 
 * `visitApplyPlugin(MethodCallExpression call, String plugin)`
 * `visitExtensionProperty(ExpressionStatement expression, String extension, String prop, String value)`

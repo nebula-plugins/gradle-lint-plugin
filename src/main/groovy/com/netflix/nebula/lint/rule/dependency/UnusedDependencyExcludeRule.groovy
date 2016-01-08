@@ -1,24 +1,14 @@
-package com.netflix.nebula.lint.rule
+package com.netflix.nebula.lint.rule.dependency
 
+import com.netflix.nebula.lint.rule.GradleAstUtil
+import com.netflix.nebula.lint.rule.GradleDependency
+import com.netflix.nebula.lint.rule.GradleLintRule
+import com.netflix.nebula.lint.rule.GradleModelAware
 import org.codehaus.groovy.ast.expr.MethodCallExpression
-import org.codenarc.rule.AbstractAstVisitorRule
-import org.codenarc.rule.AstVisitor
-import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.specs.Specs
 
-class UnusedDependencyExcludeRule extends AbstractAstVisitorRule implements GradleModelAware {
-    String name = "unused-dependency-exclude"
-    int priority = 2
-    Project project
-
-    @Override
-    AstVisitor getAstVisitor() {
-        return new UnusedDependencyExcludeVisitor(project: project)
-    }
-}
-
-class UnusedDependencyExcludeVisitor extends AbstractGradleLintVisitor {
+class UnusedDependencyExcludeRule extends GradleLintRule implements GradleModelAware {
     GradleDependency dependency
 
     @Override
@@ -29,16 +19,15 @@ class UnusedDependencyExcludeVisitor extends AbstractGradleLintVisitor {
     }
 
     @Override
-    protected void visitMethodCallExpressionInternal(MethodCallExpression call) {
+    void visitMethodCallExpression(MethodCallExpression call) {
         if(dependency) {
             // https://docs.gradle.org/current/javadoc/org/gradle/api/artifacts/ModuleDependency.html#exclude(java.util.Map)
             if(call.methodAsString == 'exclude') {
-                def entries = collectEntryExpressions(call)
+                def entries = GradleAstUtil.collectEntryExpressions(call)
                 if(isExcludeUnnecessary(entries.group, entries.module))
                     addViolationToDelete(call, "the excluded dependency is not a transitive of $dependency.group:$dependency.name:$dependency.version, so has no effect")
             }
         }
-        super.visitMethodCallExpressionInternal(call)
     }
 
     private boolean isExcludeUnnecessary(String group, String name) {
