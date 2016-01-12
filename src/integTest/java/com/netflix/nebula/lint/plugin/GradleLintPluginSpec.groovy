@@ -31,6 +31,22 @@ class GradleLintPluginSpec extends IntegrationSpec {
         console.any { it.contains('dependency-tuple') }
     }
 
+    def 'run rules on multi-module project where one of the subprojects has no build.gradle'() {
+        when:
+        buildFile << """
+            allprojects {
+                apply plugin: 'java'
+                apply plugin: ${GradleLintPlugin.name}
+                gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
+            }
+        """
+
+        addSubproject('sub')
+
+        then:
+        runTasksSuccessfully('gradleLint')
+    }
+
     def 'auto correct all violations on a single module project'() {
         when:
         buildFile << """

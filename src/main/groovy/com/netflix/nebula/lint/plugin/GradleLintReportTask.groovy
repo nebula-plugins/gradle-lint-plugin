@@ -35,6 +35,10 @@ class GradleLintReportTask extends DefaultTask implements VerificationTask, Repo
 
     @TaskAction
     void generateReport() {
+        if(!project.buildFile.exists()) {
+            return
+        }
+
         if(reports.enabled) {
             def lintExt = project.extensions.getByType(GradleLintExtension)
             def registry = new LintRuleRegistry(project)

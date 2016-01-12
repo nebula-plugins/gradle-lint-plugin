@@ -18,15 +18,19 @@ class GradleLintTask extends DefaultTask {
 
     @TaskAction
     void lint() {
+        if(!project.buildFile.exists()) {
+            return
+        }
+
         def textOutput = textOutputFactory.create('lint')
         def buildFilePath = relPath(project.rootDir, project.buildFile).path
 
         def registry = new LintRuleRegistry(project)
-        def ruleSet = RuleSetFactory.configureRuleSet(project
+        def extension = project
                 .extensions
                 .getByType(GradleLintExtension)
-                .rules
-                .collect { registry.buildRules(it) }
+
+        def ruleSet = RuleSetFactory.configureRuleSet(extension.rules.collect { registry.buildRules(it) }
                 .flatten() as List<Rule>)
 
         def violations = new StringSourceAnalyzer(project.buildFile.text).analyze(ruleSet).violations

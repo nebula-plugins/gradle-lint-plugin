@@ -19,6 +19,10 @@ class GradleLintCorrectionTask extends DefaultTask {
 
     @TaskAction
     void lintCorrections() {
+        if(!project.buildFile.exists()) {
+            return
+        }
+
         def registry = new LintRuleRegistry(project)
         def ruleSet = RuleSetFactory.configureRuleSet(project.extensions
                 .getByType(GradleLintExtension)
