@@ -23,6 +23,7 @@ class GradleLintTask extends DefaultTask {
         }
 
         def textOutput = textOutputFactory.create('lint')
+
         def buildFilePath = relPath(project.rootDir, project.buildFile).path
 
         def registry = new LintRuleRegistry(project)
@@ -52,7 +53,7 @@ class GradleLintTask extends DefaultTask {
             def severity = v.rule.priority <= 3 ? 'warning' : 'error'
 
             textOutput.withStyle(StyledTextOutput.Style.Failure).text(severity.padRight(10))
-            textOutput.text(v.rule.ruleId.padRight(25))
+            textOutput.text(v.rule.ruleId.padRight(35))
             textOutput.withStyle(StyledTextOutput.Style.Description).println(v.message)
 
             textOutput.withStyle(StyledTextOutput.Style.UserInput).println(buildFilePath + ':' + v.lineNumber)
@@ -61,7 +62,10 @@ class GradleLintTask extends DefaultTask {
 
         if (!violations.isEmpty()) {
             textOutput.withStyle(StyledTextOutput.Style.Failure)
-                    .println("\u2716 ${buildFilePath}: ${violations.size()} problem${violations.isEmpty() ? '' : 's'} (${totalBySeverity.error ?: 0} errors, ${totalBySeverity.warning ?: 0} warnings)".toString())
+                    .println("\u2716 ${buildFilePath}: ${violations.size()} problem${violations.isEmpty() ? '' : 's'} (${totalBySeverity.error ?: 0} errors, ${totalBySeverity.warning ?: 0} warnings)\n".toString())
+
+            textOutput.text("To apply auto-fixes, run ").withStyle(StyledTextOutput.Style.UserInput).text("fixGradleLint")
+            textOutput.text(", review, and commit the changes.")
 
             if (totalBySeverity.error)
                 throw new LintCheckFailedException() // fail the whole build

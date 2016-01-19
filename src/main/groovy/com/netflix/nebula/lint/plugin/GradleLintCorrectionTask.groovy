@@ -30,6 +30,7 @@ class GradleLintCorrectionTask extends DefaultTask {
                 .collect { registry.buildRules(it) }
                 .flatten() as List<Rule>)
 
+        // look at org.gradle.logging.internal.DefaultColorMap
         def textOutput = textOutputFactory.create('lint')
 
         def analyzer = new CorrectableStringSourceAnalyzer(project.buildFile.text)
@@ -58,7 +59,7 @@ class GradleLintCorrectionTask extends DefaultTask {
                 textOutput.withStyle(StyledTextOutput.Style.Failure).text(severity.padRight(10))
             }
 
-            textOutput.text(v.rule.ruleId.padRight(25))
+            textOutput.text(v.rule.ruleId.padRight(35))
             textOutput.withStyle(StyledTextOutput.Style.Description).println(v.message)
 
             textOutput.withStyle(StyledTextOutput.Style.UserInput).println(buildFilePath + ':' + v.lineNumber)

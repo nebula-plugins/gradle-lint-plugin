@@ -94,7 +94,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
             dependencies {
                 compile 'com.google.guava:guava:18.0'
             }
-        """.stripIndent().trim()
+        """.stripIndent()
 
         def rule = new GradleLintRule() {
             @Override
@@ -120,7 +120,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
             dependencies {
                 compile 'com.google.guava:guava:18.0'
             }
-        """.stripIndent().trim()
+        """.stripIndent()
     }
 
     @Unroll

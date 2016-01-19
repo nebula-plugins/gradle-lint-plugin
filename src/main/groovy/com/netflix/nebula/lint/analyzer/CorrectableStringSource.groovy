@@ -5,6 +5,7 @@ import org.codenarc.analyzer.SuppressionAnalyzer
 import org.codenarc.source.AbstractSourceCode
 
 class CorrectableStringSource extends AbstractSourceCode {
+    String originalSource
     List<String> lines
 
     Map<ASTNode, String> replacements = [:]
@@ -13,6 +14,7 @@ class CorrectableStringSource extends AbstractSourceCode {
 
     CorrectableStringSource(String source) {
         assert source != null
+        this.originalSource = source
         this.lines = new StringReader(source).readLines()
         setSuppressionAnalyzer(new SuppressionAnalyzer(this))
     }
@@ -43,6 +45,10 @@ class CorrectableStringSource extends AbstractSourceCode {
                 }
             }
         }
+
+        if(originalSource.endsWith('\n'))
+            corrections.append('\n')
+
         corrections.toString()
     }
 
