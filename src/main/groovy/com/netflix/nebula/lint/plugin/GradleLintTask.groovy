@@ -65,7 +65,7 @@ class GradleLintTask extends DefaultTask {
                     .println("\u2716 ${buildFilePath}: ${violations.size()} problem${violations.isEmpty() ? '' : 's'} (${totalBySeverity.error ?: 0} errors, ${totalBySeverity.warning ?: 0} warnings)\n".toString())
 
             textOutput.text("To apply auto-fixes, run ").withStyle(StyledTextOutput.Style.UserInput).text("fixGradleLint")
-            textOutput.text(", review, and commit the changes.")
+            textOutput.println(", review, and commit the changes.")
 
             if (totalBySeverity.error)
                 throw new LintCheckFailedException() // fail the whole build
