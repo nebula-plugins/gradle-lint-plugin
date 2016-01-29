@@ -5,23 +5,25 @@
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/nebula-plugins/gradle-lint-plugin?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![Apache 2.0](https://img.shields.io/github/license/nebula-plugins/gradle-lint-plugin.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 ## Table of Contents
 
-- [Gradle Lint Plugin](#gradle-lint-plugin)
-  - [Purpose](#purpose)
-  - [Usage](#usage)
-  - [Tasks](#tasks)
-    - [Running the linter](#running-the-linter)
-    - [Auto-fixing violations](#auto-fixing-violations)
-    - [Generating a lint report](#generating-a-lint-report)
-  - [Force the linter to ignore a piece of code](#force-the-linter-to-ignore-a-piece-of-code)
-  - [Building your own rules](#building-your-own-rules)
-    - [The `Rule` implementation](#the-rule-implementation)
-    - [The properties file](#the-properties-file)
-    - [Grouping rules](#grouping-rules)
-  - [License](#license)
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+- [Purpose](#purpose)
+- [Usage](#usage)
+- [Tasks](#tasks)
+  - [Running the linter](#running-the-linter)
+  - [Auto-fixing violations](#auto-fixing-violations)
+  - [Generating a lint report](#generating-a-lint-report)
+- [Force the linter to ignore a piece of code](#force-the-linter-to-ignore-a-piece-of-code)
+- [Building your own rules](#building-your-own-rules)
+  - [The `Rule` implementation](#the-rule-implementation)
+  - [The properties file](#the-properties-file)
+  - [Grouping rules](#grouping-rules)
+- [Rule listing](#rule-listing)
+  - [Included rules](#included-rules)
+  - [Rule wish list](#rule-wish-list)
+- [License](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -161,6 +163,44 @@ Then we can apply both rules at once:
     gradleLint.rules = ['fix-all']
 
 The includes list can refer to other rule groups as well, and in this way you can compose together larger and larger sets of rules incrementally.
+
+## Rule listing
+
+A sampling of rules is provided as part of this package, largely to demonstrate what is possible.  
+
+We do have a broader set of rules we apply to every build internally at Netflix, but since these deal with moving along the state of internal extensions and plugins from one generation to another, they were not useful to include in this package.
+
+### Included rules
+
+* Dependency related rules
+  - **Unused dependency exclusions** - triggered when the linter can determine that a dependency level exclude has no effect on the transitive dependency graph
+  - **Unused configuration exclusion** - triggered when the linter can determine that a configuration wide exclude has no effect on the transitive dependency graph
+  - **Unnecessary dependency parenetheses** - a stylistic rule to strip unnecessary parentheses from dependency declarations
+  - **Unnecessary dependency tuple** - a stylistic rule that prefers the `g:a:v` dependency syntax to the `group: 'g', name: 'a', version: 'v'` syntax (when possible).
+* Plugin rename rules (to deal with the renamings of all the Nebula plugins after the introduction of the Gradle plugin portal)
+  - nebula.clojure
+  - nebula.deb
+  - nebula.dependency-lock
+  - nebula.facet
+  - nebula.gradle-git-scm
+  - nebula.info-ci
+  - nebula.info
+  - nebula.integtest
+  - nebula.ospackage-application-daemon
+  - nebula.ospackage-application
+  - nebula.ospackage-daemon
+  - nebula.ospackage
+  - nebula.override
+  - nebula.gradle-stash
+
+### Rule wish list
+
+If you have any other ideas, don't hesitate for a minute to drop a suggestion in the [gitter channel](https://gitter.im/nebula-plugins/gradle-lint-plugin)!
+
+  - **Gradle wrapper version** - don't allow the wrapper to skew more than N versions behind latest Gradle release
+  - **Unnecessary dependency** - for when static code analysis determines that you are not using a first order dependency in your defined source sets
+  - **Suspicious compile/runtime dependency** - to prevent the inclusion of dependencies like JUnit in the compile configuration unless they are actually used in runtime code (suggest they become testCompile dependencies).
+  - **Gradle 2+ to Gradle 3 model upgrades** - we anticipate significant changes in Gradle 3's DSL and look forward to providing rules to advance build code along quickly and automatically.
 
 ## License
 
