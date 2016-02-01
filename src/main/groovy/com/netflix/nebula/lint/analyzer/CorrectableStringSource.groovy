@@ -21,9 +21,13 @@ class CorrectableStringSource extends AbstractSourceCode {
 
     String getCorrectedSource() {
         def corrections = new StringBuffer()
+        def lastLineDeleted = false
+
         for(int i = 0; i < lines.size(); i++) {
-            if(i > 0)
+            if(i > 0 && !lastLineDeleted)
                 corrections.append('\n')
+
+            lastLineDeleted = false
 
             def replacement = replacements.find { it.key.lineNumber-1 == i }
             def deletion = deletions.find { it.lineNumber-1 == i }
@@ -35,6 +39,7 @@ class CorrectableStringSource extends AbstractSourceCode {
                 i += replacement.key.lastLineNumber - replacement.key.lineNumber
             } else if(deletion) {
                 i += deletion.lastLineNumber-deletion.lineNumber
+                lastLineDeleted = true
             } else {
                 corrections.append(lines[i])
             }

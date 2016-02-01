@@ -305,8 +305,10 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
                     def extension = expression.leftExpression.objectExpression.text
                     def prop = expression.leftExpression.property.text
                     if (expression.rightExpression instanceof ConstantExpression) {
+                        // STYLE: nebula.moduleOwner = 'me'
                         visitExtensionProperty(statement, extension, prop, expression.rightExpression.text)
                     }
+                    // STYLE: nebula.moduleOwner trim('me')
                     visitExtensionProperty(statement, extension, prop)
                 }
                 super.visitExpressionStatement(statement)

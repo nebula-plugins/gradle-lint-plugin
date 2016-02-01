@@ -232,5 +232,4 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         then:
         parent?.methodAsString == 'publications'
     }
-
 }

@@ -49,7 +49,7 @@ class GradleLintPluginSpec extends IntegrationSpec {
 
     def 'auto correct all violations on a single module project'() {
         when:
-        buildFile << """
+        buildFile.text = """
             apply plugin: ${GradleLintPlugin.name}
             apply plugin: 'java'
 
@@ -58,13 +58,15 @@ class GradleLintPluginSpec extends IntegrationSpec {
             dependencies {
                 compile('com.google.guava:guava:18.0')
             }
+
+            configurations { }
         """
 
         then:
         def results = runTasksSuccessfully('fixGradleLint')
         println results.standardOutput
 
-        buildFile.text.contains("""
+        buildFile.text == """
             apply plugin: ${GradleLintPlugin.name}
             apply plugin: 'java'
 
@@ -73,7 +75,8 @@ class GradleLintPluginSpec extends IntegrationSpec {
             dependencies {
                 compile 'com.google.guava:guava:18.0'
             }
-        """.toString())
+
+        """.toString()
     }
 
     def 'rules relative to each project'() {
