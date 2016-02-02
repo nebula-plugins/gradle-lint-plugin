@@ -47,6 +47,27 @@ class GradleLintPluginSpec extends IntegrationSpec {
         runTasksSuccessfully('gradleLint')
     }
 
+    def 'run rules on multi-module project where one of the subprojects does not apply gradle lint'() {
+        when:
+        buildFile << """
+            allprojects {
+                apply plugin: 'java'
+            }
+
+            apply plugin: ${GradleLintPlugin.name}
+            gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
+        """
+
+        addSubproject('sub', """
+            dependencies {
+                compile('a:a:1')
+            }
+        """)
+
+        then:
+        runTasksSuccessfully('gradleLint')
+    }
+
     def 'auto correct all violations on a single module project'() {
         when:
         buildFile.text = """
@@ -130,6 +151,27 @@ class GradleLintPluginSpec extends IntegrationSpec {
 
             task taskA {}
         """
+    }
+
+    def 'auto correct violations on a multi-module project where one of the subprojects does not apply gradle lint'() {
+        when:
+        buildFile << """
+            allprojects {
+                apply plugin: 'java'
+            }
+
+            apply plugin: ${GradleLintPlugin.name}
+            gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
+        """
+
+        addSubproject('sub', """
+            dependencies {
+                compile('a:a:1')
+            }
+        """)
+
+        then:
+        runTasksSuccessfully('fixGradleLint')
     }
 
     def 'rules relative to each project'() {

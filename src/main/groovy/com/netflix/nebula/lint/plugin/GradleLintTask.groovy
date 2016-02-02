@@ -32,7 +32,13 @@ class GradleLintTask extends DefaultTask {
 
         ([project] + project.subprojects).each { p ->
             if(p.buildFile.exists()) {
-                def extension = p.extensions.getByType(GradleLintExtension)
+                def extension
+                try {
+                    extension = p.extensions.getByType(GradleLintExtension)
+                } catch(UnknownDomainObjectException) {
+                    // if the subproject has not applied lint, use the extension configuration from the root project
+                    extension = p.rootProject.extensions.getByType(GradleLintExtension)
+                }
                 def ruleSet = RuleSetFactory.configureRuleSet(extension.rules.collect { registry.buildRules(it, p) }
                         .flatten() as List<Rule>)
 
