@@ -53,7 +53,9 @@ dependencies {
     compile gradleApi()
     compile localGroovy()
 
-    compile 'org.codenarc:CodeNarc:latest.release'
+    compile('org.codenarc:CodeNarc:latest.release') {
+        transitive = false
+    }
 
     // these two dependencies exist so we can provide a test harness
     // to proprietary rule implementations packed in other jars
