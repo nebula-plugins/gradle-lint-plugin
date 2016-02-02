@@ -126,7 +126,9 @@ Lint rules are AST visiting rules, because the AST gives us the ingredients we n
       }
     }
 
-We use the AST to look for the specific piece of code where `nebula.fix-jersey-bundle` was applied. We could determine through the Gradle model that the plugin had been applied, but not how or where this had been accomplished. Then we transition to using the Gradle model to determine if `jersey-bundle` is in our transitive dependencies. We could not have determined this with the AST alone! Finally, we use `addViolationToDelete` to indicate to the lint plugin that this block of code applying `nebula.fix-jersey-bundle` violates the rule, and that the `fixGradleLint` can safely delete this code snippet.
+We use the AST to look for the specific piece of code where `nebula.fix-jersey-bundle` was applied. We could determine through the Gradle model that the plugin had been applied, but not how or where this had been accomplished. Then we transition to using the Gradle model to determine if `jersey-bundle` is in our transitive dependencies. We could not have determined this with the AST alone! Also, since linting runs not only after project configuration but in fact LAST in the task execution order, we can comfortably use Gradle bits like `resolvedConfiguration` without fear of introducing side effects.
+
+Finally, we use `addViolationToDelete` to indicate to the lint plugin that this block of code applying `nebula.fix-jersey-bundle` violates the rule, and that the `fixGradleLint` can safely delete this code snippet.
 
 Currently, `addViolationWithReplacement`, `addViolationInsert`, `addViolationNoCorrection` are also provided as helper functions to add violations as well.
 
@@ -175,7 +177,7 @@ We do have a broader set of rules we apply to every build internally at Netflix,
 * Dependency related rules
   - **Unused dependency exclusions** - triggered when the linter can determine that a dependency level exclude has no effect on the transitive dependency graph
   - **Unused configuration exclusion** - triggered when the linter can determine that a configuration wide exclude has no effect on the transitive dependency graph
-  - **Unnecessary dependency parenetheses** - a stylistic rule to strip unnecessary parentheses from dependency declarations
+  - **Unnecessary dependency parentheses** - a stylistic rule to strip unnecessary parentheses from dependency declarations
   - **Unnecessary dependency tuple** - a stylistic rule that prefers the `g:a:v` dependency syntax to the `group: 'g', name: 'a', version: 'v'` syntax (when possible).
 * Plugin rename rules (to deal with the renamings of all the Nebula plugins after the introduction of the Gradle plugin portal)
   - nebula.clojure
