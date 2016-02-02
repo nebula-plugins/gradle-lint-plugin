@@ -16,7 +16,7 @@ class GradleLintPlugin implements Plugin<Project> {
         // 1. Make gradleLint and fixGradleLint on root run against all subprojects
         // 2. Only automatically add root project's gradle lint the end of the build
 
-        if(project.rootProject == project) {
+        if (project.rootProject == project) {
             project.tasks.create('fixGradleLint', GradleLintCorrectionTask)
             project.tasks.create('gradleLint', GradleLintTask)
             project.rootProject.apply plugin: GradleLintPlugin
@@ -33,7 +33,11 @@ class GradleLintPlugin implements Plugin<Project> {
             if (task != rootLint && !exemptTasks.contains(task.name)) {
                 // when running a lint-eligible task on a subproject, we want to lint the whole project
                 task.finalizedBy rootLint
-                rootLint.shouldRunAfter task
+
+                // because technically you can override path in a Gradle task implementation and cause path to be null!
+                if(task.getPath() != null) {
+                    rootLint.shouldRunAfter task
+                }
             }
         }
     }
