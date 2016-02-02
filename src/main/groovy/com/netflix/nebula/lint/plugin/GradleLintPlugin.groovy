@@ -5,27 +5,33 @@ import org.gradle.api.Project
 
 class GradleLintPlugin implements Plugin<Project> {
     private final exemptTasks = ['help', 'tasks', 'dependencies', 'dependencyInsight',
-        'components', 'model', 'projects', 'properties']
+        'components', 'model', 'projects', 'properties', 'fixGradleLint']
 
     @Override
     void apply(Project project) {
         LintRuleRegistry.classLoader = getClass().classLoader
         def lintExt = project.extensions.create('gradleLint', GradleLintExtension)
 
-        project.tasks.create('fixGradleLint', GradleLintCorrectionTask)
-        def lint = project.tasks.create('gradleLint', GradleLintTask)
-        configureReportTask(project, lintExt)
+        // TODO
+        // 1. Make gradleLint and fixGradleLint on root run against all subprojects
+        // 2. Only automatically add root project's gradle lint the end of the build
 
-        project.rootProject.apply plugin: GradleLintPlugin
-        def rootLint = project.rootProject.tasks.getByName('gradleLint')
+        if(project.rootProject == project) {
+            project.tasks.create('fixGradleLint', GradleLintCorrectionTask)
+            project.tasks.create('gradleLint', GradleLintTask)
+            project.rootProject.apply plugin: GradleLintPlugin
+        } else {
+            project.tasks.create('gradleLint') // this task does nothing
+            project.tasks.create('fixGradleLint').finalizedBy project.rootProject.tasks.getByName('fixGradleLint')
+        }
+
+        configureReportTask(project, lintExt)
 
         // ensure that lint runs
         project.tasks.whenTaskAdded { task ->
-            if(task != lint && !exemptTasks.contains(task.name)) {
-                task.finalizedBy lint
-                lint.shouldRunAfter task
-
-                // when running a lint-eligible task on a subproject, we want to lint the root project as well
+            def rootLint = project.rootProject.tasks.getByName('gradleLint')
+            if (task != rootLint && !exemptTasks.contains(task.name)) {
+                // when running a lint-eligible task on a subproject, we want to lint the whole project
                 task.finalizedBy rootLint
                 rootLint.shouldRunAfter task
             }

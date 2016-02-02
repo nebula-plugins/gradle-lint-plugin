@@ -79,9 +79,62 @@ class GradleLintPluginSpec extends IntegrationSpec {
         """.toString()
     }
 
+    def 'auto correct all violations on a multi-module project'() {
+        when:
+        buildFile.text = """
+            allprojects {
+                apply plugin: ${GradleLintPlugin.name}
+                gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
+            }
+
+            subprojects {
+                apply plugin: 'java'
+                dependencies {
+                    compile('com.google.guava:guava:18.0')
+                }
+            }
+        """
+
+        def subDir = addSubproject('sub', """
+            dependencies {
+                testCompile group: 'junit',
+                    name: 'junit',
+                    version: '4.11'
+            }
+
+            task taskA {}
+        """)
+
+        then:
+        def results = runTasksSuccessfully(':sub:fixGradleLint') // prove that this links to the root project task
+        println results.standardOutput
+
+        buildFile.text == """
+            allprojects {
+                apply plugin: ${GradleLintPlugin.name}
+                gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
+            }
+
+            subprojects {
+                apply plugin: 'java'
+                dependencies {
+                    compile 'com.google.guava:guava:18.0'
+                }
+            }
+        """.toString()
+
+        new File(subDir, 'build.gradle').text == """
+            dependencies {
+                testCompile 'junit:junit:4.11'
+            }
+
+            task taskA {}
+        """
+    }
+
     def 'rules relative to each project'() {
         when:
-        buildFile << """
+        buildFile.text = """
             allprojects {
                 apply plugin: ${GradleLintPlugin.name}
                 gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
@@ -110,6 +163,7 @@ class GradleLintPluginSpec extends IntegrationSpec {
 
         when:
         def console = results.standardOutput.readLines()
+        println results.standardOutput
 
         then:
         console.findAll { it.startsWith('warning') }.size() == 2

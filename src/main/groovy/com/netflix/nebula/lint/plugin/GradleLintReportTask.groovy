@@ -35,14 +35,10 @@ class GradleLintReportTask extends DefaultTask implements VerificationTask, Repo
 
     @TaskAction
     void generateReport() {
-        if(!project.buildFile.exists()) {
-            return
-        }
-
         if(reports.enabled) {
             def lintExt = project.extensions.getByType(GradleLintExtension)
-            def registry = new LintRuleRegistry(project)
-            def ruleSet = RuleSetFactory.configureRuleSet(lintExt.rules.collect { registry.buildRules(it) }.flatten() as List<Rule>)
+            def registry = new LintRuleRegistry()
+            def ruleSet = RuleSetFactory.configureRuleSet(lintExt.rules.collect { registry.buildRules(it, project) }.flatten() as List<Rule>)
             def results = new FilesystemSourceAnalyzer(baseDirectory: project.projectDir.absolutePath,
                     includes: project.buildFile.absolutePath).analyze(ruleSet)
 

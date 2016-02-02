@@ -18,4 +18,16 @@ class EmptyClosureRuleSpec extends AbstractRuleSpec {
         then:
         correct(new EmptyClosureRule()).replaceAll(/\s/, '') == /nebula{moduleOwner='me'}/
     }
+
+    def 'do not delete empty tasks'() {
+        when:
+        project.buildFile << """
+            task taskA {}
+        """
+
+        then:
+        correct(new EmptyClosureRule()) == """
+            task taskA {}
+        """
+    }
 }

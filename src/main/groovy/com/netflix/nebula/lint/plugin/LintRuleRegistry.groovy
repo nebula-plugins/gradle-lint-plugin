@@ -6,12 +6,7 @@ import org.codenarc.rule.Rule
 import org.gradle.api.Project
 
 class LintRuleRegistry {
-    private final Project project
     static ClassLoader classLoader = null
-
-    LintRuleRegistry(Project project) {
-        this.project = project
-    }
 
     private static LintRuleDescriptor findRuleDescriptor(String ruleId) {
         assert classLoader != null
@@ -31,7 +26,7 @@ class LintRuleRegistry {
             return (ruleDescriptor.includes?.collect { findRules(it as String) }?.flatten() ?: []) as List<String>
     }
 
-    List<Rule> buildRules(String ruleId) {
+    List<Rule> buildRules(String ruleId, Project project) {
         assert classLoader != null
         def ruleDescriptor = findRuleDescriptor(ruleId)
         if (ruleDescriptor == null)
@@ -44,7 +39,7 @@ class LintRuleRegistry {
             throw new InvalidRuleException(String.format("No implementation class or includes specified for rule '%s' in %s.", ruleId, ruleDescriptor))
         }
 
-        def included = includes.collect { buildRules(it as String) }.flatten() as List<Rule>
+        def included = includes.collect { buildRules(it as String, project) }.flatten() as List<Rule>
 
         if(implClassName) {
             try {

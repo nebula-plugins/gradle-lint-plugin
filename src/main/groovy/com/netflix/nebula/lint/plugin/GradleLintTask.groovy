@@ -2,7 +2,6 @@ package com.netflix.nebula.lint.plugin
 
 import org.codenarc.analyzer.StringSourceAnalyzer
 import org.codenarc.rule.Rule
-import org.codenarc.rule.Violation
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 import org.gradle.logging.StyledTextOutput
@@ -16,29 +15,38 @@ class GradleLintTask extends DefaultTask {
         null // see http://gradle.1045684.n5.nabble.com/injecting-dependencies-into-task-instances-td5712637.html
     }
 
+    def mergeBySum(Map... m) {
+        m.collectMany { it.entrySet() }.inject([:]) { result, e ->
+            result << [(e.key): e.value + (result[e.key] ?: 0)]
+        }
+    }
+
     @TaskAction
     void lint() {
-        if(!project.buildFile.exists()) {
-            return
-        }
-
         def textOutput = textOutputFactory.create('lint')
 
-        def buildFilePath = relPath(project.rootDir, project.buildFile).path
+        def registry = new LintRuleRegistry()
 
-        def registry = new LintRuleRegistry(project)
-        def extension = project
-                .extensions
-                .getByType(GradleLintExtension)
+        def violationsByProject = [:]
+        def totalBySeverity = [warning: 0, error: 0]
 
-        def ruleSet = RuleSetFactory.configureRuleSet(extension.rules.collect { registry.buildRules(it) }
-                .flatten() as List<Rule>)
+        ([project] + project.subprojects).each { p ->
+            if(p.buildFile.exists()) {
+                def extension = p.extensions.getByType(GradleLintExtension)
+                def ruleSet = RuleSetFactory.configureRuleSet(extension.rules.collect { registry.buildRules(it, p) }
+                        .flatten() as List<Rule>)
 
-        def violations = new StringSourceAnalyzer(project.buildFile.text).analyze(ruleSet).violations
-        def totalBySeverity = violations.countBy { it.rule.priority <= 3 ? 'warning' : 'error' }
+                violationsByProject[p] = new StringSourceAnalyzer(p.buildFile.text).analyze(ruleSet).violations
+                mergeBySum(totalBySeverity, violationsByProject[p].countBy {
+                    it.rule.priority <= 3 ? 'warning' : 'error'
+                })
+            }
+        }
 
-        if (!violations.isEmpty()) {
-            textOutput.withStyle(StyledTextOutput.Style.UserInput).text('\nThis build contains lint violations. ')
+        def allViolations = violationsByProject.values().flatten()
+
+        if (!allViolations.isEmpty()) {
+            textOutput.withStyle(StyledTextOutput.Style.UserInput).text('\nThis project contains lint violations. ')
             textOutput.println('A complete listing of the violations follows. ')
 
             if (totalBySeverity.error) {
@@ -49,30 +57,35 @@ class GradleLintTask extends DefaultTask {
             }
         }
 
-        violations.eachWithIndex { Violation v, Integer i ->
-            def severity = v.rule.priority <= 3 ? 'warning' : 'error'
+        violationsByProject.entrySet().each {
+            def buildFilePath = it.key.rootDir.toURI().relativize(it.key.buildFile.toURI()).toString()
+            def violations = it.value
 
-            textOutput.withStyle(StyledTextOutput.Style.Failure).text(severity.padRight(10))
-            textOutput.text(v.rule.ruleId.padRight(35))
-            textOutput.withStyle(StyledTextOutput.Style.Description).println(v.message)
+            violations.each { v ->
+                def severity = v.rule.priority <= 3 ? 'warning' : 'error'
 
-            textOutput.withStyle(StyledTextOutput.Style.UserInput).println(buildFilePath + ':' + v.lineNumber)
-            textOutput.println("$v.sourceLine\n") // extra space between violations
+                textOutput.withStyle(StyledTextOutput.Style.Failure).text(severity.padRight(10))
+                textOutput.text(v.rule.ruleId.padRight(35))
+                textOutput.withStyle(StyledTextOutput.Style.Description).println(v.message)
+
+                textOutput.withStyle(StyledTextOutput.Style.UserInput).println(buildFilePath + ':' + v.lineNumber)
+                textOutput.println("$v.sourceLine\n") // extra space between violations
+            }
+
+            def errors = totalBySeverity.error ?: 0
+            def warnings = totalBySeverity.warning ?: 0
+            if(!violations.isEmpty()) {
+                textOutput.withStyle(StyledTextOutput.Style.Failure)
+                        .println("\u2716 ${buildFilePath}: ${violations.size()} problem${violations.size() == 1 ? '' : 's'} ($errors error${errors == 1 ? '' : 's'}, $warnings warning${warnings == 1 ? '' : 's'})\n".toString())
+            }
         }
 
-        if (!violations.isEmpty()) {
-            textOutput.withStyle(StyledTextOutput.Style.Failure)
-                    .println("\u2716 ${buildFilePath}: ${violations.size()} problem${violations.isEmpty() ? '' : 's'} (${totalBySeverity.error ?: 0} errors, ${totalBySeverity.warning ?: 0} warnings)\n".toString())
-
-            textOutput.text("To apply auto-fixes, run ").withStyle(StyledTextOutput.Style.UserInput).text("fixGradleLint")
-            textOutput.println(", review, and commit the changes.")
+        if (!allViolations.isEmpty()) {
+            textOutput.text("To apply fixes automatically, run ").withStyle(StyledTextOutput.Style.UserInput).text("fixGradleLint")
+            textOutput.println(", review, and commit the changes.\n")
 
             if (totalBySeverity.error)
                 throw new LintCheckFailedException() // fail the whole build
         }
-    }
-
-    private static File relPath(File root, File f) {
-        new File(root.toURI().relativize(f.toURI()).toString())
     }
 }

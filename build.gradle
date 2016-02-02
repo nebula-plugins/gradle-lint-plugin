@@ -55,6 +55,8 @@ dependencies {
 
     compile 'org.codenarc:CodeNarc:latest.release'
 
+    // these two dependencies exist so we can provide a test harness
+    // to proprietary rule implementations packed in other jars
     provided ('org.spockframework:spock-core:latest.release') {
         exclude module: 'groovy-all'
     }
