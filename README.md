@@ -69,7 +69,7 @@ For multimodule projects, we recommend applying the plugin in an allprojects blo
 
 ### Running the linter
 
-When `nebula.lint` is applied, build scripts will be automatically linted by a task called `gradleLint` after the last task in the task graph executes. Results are held until after the last task is ran, then reported in the console.
+When `nebula.lint` is applied, build scripts will be automatically linted by a task called `lintGradle` after the last task in the task graph executes. Results are held until after the last task is ran, then reported in the console.
 
 ![gradle-lint output](docs/images/lint-output.png)
 

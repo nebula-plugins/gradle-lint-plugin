@@ -30,7 +30,7 @@ class GradleLintReportTask extends DefaultTask implements VerificationTask, Repo
 
     GradleLintReportTask() {
         reports = instantiator.newInstance(CodeNarcReportsImpl, this)
-        finalizedBy 'gradleLint'
+        finalizedBy 'lintGradle'
     }
 
     @TaskAction

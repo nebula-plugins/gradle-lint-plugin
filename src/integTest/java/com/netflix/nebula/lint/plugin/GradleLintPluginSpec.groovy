@@ -44,7 +44,7 @@ class GradleLintPluginSpec extends IntegrationSpec {
         addSubproject('sub')
 
         then:
-        runTasksSuccessfully('gradleLint')
+        runTasksSuccessfully('lintGradle')
     }
 
     def 'run rules on multi-module project where one of the subprojects does not apply gradle lint'() {
@@ -65,7 +65,7 @@ class GradleLintPluginSpec extends IntegrationSpec {
         """)
 
         then:
-        runTasksSuccessfully('gradleLint')
+        runTasksSuccessfully('lintGradle')
     }
 
     def 'auto correct all violations on a single module project'() {

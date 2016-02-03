@@ -12,16 +12,12 @@ class GradleLintPlugin implements Plugin<Project> {
         LintRuleRegistry.classLoader = getClass().classLoader
         def lintExt = project.extensions.create('gradleLint', GradleLintExtension)
 
-        // TODO
-        // 1. Make gradleLint and fixGradleLint on root run against all subprojects
-        // 2. Only automatically add root project's gradle lint the end of the build
-
         if (project.rootProject == project) {
             project.tasks.create('fixGradleLint', GradleLintCorrectionTask)
-            project.tasks.create('gradleLint', GradleLintTask)
+            project.tasks.create('lintGradle', GradleLintTask)
             project.rootProject.apply plugin: GradleLintPlugin
         } else {
-            project.tasks.create('gradleLint') // this task does nothing
+            project.tasks.create('lintGradle') // this task does nothing
             project.tasks.create('fixGradleLint').finalizedBy project.rootProject.tasks.getByName('fixGradleLint')
         }
 
@@ -29,7 +25,7 @@ class GradleLintPlugin implements Plugin<Project> {
 
         // ensure that lint runs
         project.tasks.whenTaskAdded { task ->
-            def rootLint = project.rootProject.tasks.getByName('gradleLint')
+            def rootLint = project.rootProject.tasks.getByName('lintGradle')
             if (task != rootLint && !exemptTasks.contains(task.name)) {
                 // when running a lint-eligible task on a subproject, we want to lint the whole project
                 task.finalizedBy rootLint
