@@ -14,11 +14,13 @@ class GradleLintPlugin implements Plugin<Project> {
 
         if (project.rootProject == project) {
             project.tasks.create('fixGradleLint', GradleLintCorrectionTask)
+            project.tasks.create('fixLintGradle', GradleLintCorrectionTask)
             project.tasks.create('lintGradle', GradleLintTask)
             project.rootProject.apply plugin: GradleLintPlugin
         } else {
             project.tasks.create('lintGradle') // this task does nothing
             project.tasks.create('fixGradleLint').finalizedBy project.rootProject.tasks.getByName('fixGradleLint')
+            project.tasks.create('fixLintGradle').finalizedBy project.rootProject.tasks.getByName('fixGradleLint')
         }
 
         configureReportTask(project, lintExt)

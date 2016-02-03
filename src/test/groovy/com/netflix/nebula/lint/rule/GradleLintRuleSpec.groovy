@@ -222,8 +222,6 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         runRulesAgainst(new GradleLintRule() {
             @Override
             void visitExpressionStatement(ExpressionStatement statement) {
-                println statement
-                println '  ' + parentClosure()
                 if(statement.expression instanceof VariableExpression)
                     parent = parentClosure()
             }

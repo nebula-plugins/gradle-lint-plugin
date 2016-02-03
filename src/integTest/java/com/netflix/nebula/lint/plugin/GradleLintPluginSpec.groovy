@@ -1,6 +1,7 @@
 package com.netflix.nebula.lint.plugin
 
 import nebula.test.IntegrationSpec
+import spock.lang.Unroll
 
 class GradleLintPluginSpec extends IntegrationSpec {
     def 'run multiple rules on a single module project'() {
@@ -68,7 +69,8 @@ class GradleLintPluginSpec extends IntegrationSpec {
         runTasksSuccessfully('lintGradle')
     }
 
-    def 'auto correct all violations on a single module project'() {
+    @Unroll
+    def 'auto correct all violations on a single module project with task #taskName'() {
         when:
         buildFile.text = """
             apply plugin: ${GradleLintPlugin.name}
@@ -84,7 +86,7 @@ class GradleLintPluginSpec extends IntegrationSpec {
         """
 
         then:
-        def results = runTasksSuccessfully('fixGradleLint')
+        def results = runTasksSuccessfully(taskName)
         println results.standardOutput
 
         buildFile.text == """
@@ -98,9 +100,13 @@ class GradleLintPluginSpec extends IntegrationSpec {
             }
 
         """.toString()
+
+        where:
+        taskName << ['fixGradleLint', 'fixLintGradle']
     }
 
-    def 'auto correct all violations on a multi-module project'() {
+    @Unroll
+    def 'auto correct all violations on a multi-module project with task #taskName'() {
         when:
         buildFile.text = """
             allprojects {
@@ -127,7 +133,7 @@ class GradleLintPluginSpec extends IntegrationSpec {
         """)
 
         then:
-        def results = runTasksSuccessfully(':sub:fixGradleLint') // prove that this links to the root project task
+        def results = runTasksSuccessfully(":sub:$taskName") // prove that this links to the root project task
         println results.standardOutput
 
         buildFile.text == """
@@ -151,9 +157,13 @@ class GradleLintPluginSpec extends IntegrationSpec {
 
             task taskA {}
         """
+
+        where:
+        taskName << ['fixGradleLint', 'fixLintGradle']
     }
 
-    def 'auto correct violations on a multi-module project where one of the subprojects does not apply gradle lint'() {
+    @Unroll
+    def 'auto correct violations on a multi-module project where one of the subprojects does not apply gradle lint with task #taskName'() {
         when:
         buildFile << """
             allprojects {
@@ -171,7 +181,10 @@ class GradleLintPluginSpec extends IntegrationSpec {
         """)
 
         then:
-        runTasksSuccessfully('fixGradleLint')
+        runTasksSuccessfully(taskName)
+
+        where:
+        taskName << ['fixGradleLint', 'fixLintGradle']
     }
 
     def 'rules relative to each project'() {

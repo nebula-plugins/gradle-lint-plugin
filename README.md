@@ -77,7 +77,7 @@ So as not to interfere with common informational tasks, linting does not run if 
 
 ### Auto-fixing violations
 
-Run `./gradlew fixGradleLint` to automatically fix your build scripts!  The auto-fix process lists all violations and how they were fixed (when a fix was possible):
+Run `./gradlew fixGradleLint` (or `./gradlew fixLintGradle`, which is an alias) to automatically fix your build scripts!  The auto-fix process lists all violations and how they were fixed (when a fix was possible):
 
 ![gradle-lint output](docs/images/lint-correction.png)
 
