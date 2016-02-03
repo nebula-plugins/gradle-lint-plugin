@@ -32,7 +32,12 @@ class GradleLintPlugin implements Plugin<Project> {
 
                 // because technically you can override path in a Gradle task implementation and cause path to be null!
                 if(task.getPath() != null) {
-                    rootLint.shouldRunAfter task
+                    try {
+                        rootLint.shouldRunAfter task
+                    } catch(Throwable t) {
+                        // just quietly DON'T add rootLint to run after this task, it will probably still run because
+                        // it will be hung on some other task as a shouldRunAfter
+                    }
                 }
             }
         }
