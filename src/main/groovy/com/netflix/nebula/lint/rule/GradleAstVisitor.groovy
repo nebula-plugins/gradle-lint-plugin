@@ -39,6 +39,7 @@ interface GradleAstVisitor {
     void visitExtensionProperty(ExpressionStatement expression, String extension, String prop)
 
     MethodCallExpression parentClosure()
+    List<MethodCallExpression> closureStack()
 
     void bookmark(String label, ASTNode node)
 

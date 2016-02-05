@@ -90,6 +90,11 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
         rule.closureStack.isEmpty() ? null : rule.closureStack.peek()
     }
 
+    @Override
+    final List<MethodCallExpression> closureStack() {
+        new ArrayList<MethodCallExpression>(rule.closureStack as List)
+    }
+
     /**
      * Used to preserve the location of a block of code so that it can be affected in some way
      * later in the AST visit
