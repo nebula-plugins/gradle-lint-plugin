@@ -1,6 +1,5 @@
-package com.netflix.nebula.lint.rule
+package com.netflix.nebula.lint.rule.dependency
 
-import com.netflix.nebula.lint.rule.dependency.DependencyTupleExpressionRule
 import com.netflix.nebula.lint.rule.test.AbstractRuleSpec
 
 class DependencyTupleExpressionRuleSpec extends AbstractRuleSpec {

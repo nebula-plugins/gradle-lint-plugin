@@ -1,6 +1,5 @@
-package com.netflix.nebula.lint.rule
+package com.netflix.nebula.lint.rule.dependency
 
-import com.netflix.nebula.lint.rule.dependency.DependencyParenthesesRule
 import com.netflix.nebula.lint.rule.test.AbstractRuleSpec
 
 class DependencyParenthesesRuleSpec extends AbstractRuleSpec {
