@@ -4,8 +4,9 @@ import com.netflix.nebula.lint.plugin.GradleLintPlugin
 import nebula.test.IntegrationSpec
 
 class UnusedDependencyRuleSpec extends IntegrationSpec {
-    def 'unused dependency is marked for deletion'() {
-        setup:
+    File mainClass
+
+    def setup() {
         buildFile.text = """
             apply plugin: ${GradleLintPlugin.name}
             apply plugin: 'java'
@@ -15,18 +16,28 @@ class UnusedDependencyRuleSpec extends IntegrationSpec {
             repositories {
                 mavenCentral()
             }
+        """
 
+        def sourceFolder = new File(projectDir, 'src/main/java')
+        sourceFolder.mkdirs()
+
+        mainClass = new File(sourceFolder, 'Main.java')
+    }
+
+    def cleanup() {
+        mainClass.delete()
+    }
+
+    def 'unused dependency is marked for deletion'() {
+        setup:
+        buildFile << """
             dependencies {
                 compile 'com.google.guava:guava:19.0'
                 compile 'commons-configuration:commons-configuration:latest.release'
             }
         """
 
-        def sourceFolder = new File(projectDir, 'src/main/java')
-        sourceFolder.mkdirs()
-
-        def main = new File(sourceFolder, 'Main.java')
-        main.text = '''
+        mainClass << '''
             import com.google.common.collect.*;
 
             public class Main {
@@ -39,24 +50,17 @@ class UnusedDependencyRuleSpec extends IntegrationSpec {
         '''
 
         when:
-        def results = runTasks('compileJava', 'fixGradleLint')
-        println(results.standardOutput)
-        println(results.standardError)
+        runTasks('compileJava', 'fixGradleLint')
 
         then:
-        buildFile.text == """
-            apply plugin: ${GradleLintPlugin.name}
-            apply plugin: 'java'
+        dependencies() == ['com.google.guava:guava:19.0']
+    }
 
-            gradleLint.rules = ['unused-dependency']
-
-            repositories {
-                mavenCentral()
-            }
-
-            dependencies {
-                compile 'com.google.guava:guava:19.0'
-            }
-        """.toString()
+    def dependencies() {
+        buildFile.text.readLines()
+                .collect { it.trim() }
+                .findAll { it.startsWith('compile') || it.startsWith('testCompile') }
+                .collect { it.split(/\s+/)[1].replaceAll(/'/, '') }
+                .sort()
     }
 }

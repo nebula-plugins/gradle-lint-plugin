@@ -16,7 +16,9 @@ class DependencyClassVisitorSpec extends Specification {
     def setup() {
         compile('''\
             package a
-            class A {}
+            class A {
+                static A create() { new A() }
+            }
         ''')
 
         compile('''\
@@ -47,7 +49,8 @@ class DependencyClassVisitorSpec extends Specification {
         field << [
             'A a',
             'A[] a',
-            'List<A> a'
+            'List<A> a',
+            'Object a = A.create()'
         ]
     }
 
@@ -113,7 +116,7 @@ class DependencyClassVisitorSpec extends Specification {
             package a
 
             class AFactory {
-                public static A build() { return new A(); }
+                public static A build() { return new A() }
             }
         ''')
 
@@ -125,7 +128,7 @@ class DependencyClassVisitorSpec extends Specification {
 
             class B {
                 void foo() {
-                    $methodBodyReference;
+                    $methodBodyReference
                 }
             }
         """)
@@ -141,10 +144,15 @@ class DependencyClassVisitorSpec extends Specification {
         'A a = AFactory.build()'        | true
         'Object a = new A()'            | true
         'A[] a = new A[0]'              | true
+        'A a = A.create()'              | true
 
         // type erasure prevents the following two references from being observable from ASM
         'List<A> a = new ArrayList()'   | false
         'Object a = new ArrayList<A>()' | false
+
+        // java does not preserve left-hand types, but rather the compiler adds CHECKCAST instructions
+        // wherever right-hand assignments happen (with the exception of null)
+        'A a = null'                    | false
     }
 
     void traceClass(String className) {

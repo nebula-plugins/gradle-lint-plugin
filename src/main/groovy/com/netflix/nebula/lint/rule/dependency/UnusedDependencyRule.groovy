@@ -41,9 +41,6 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
         return definedClasses
     }
 
-    /**
-     * @return the set of classes in each first order dependency of a particular configuration
-     */
     Map<String, Set<ModuleVersionIdentifier>> firstOrderDependencyClassOwners() {
         def classOwners = new HashMap<String, Set<ModuleVersionIdentifier>>().withDefault {[] as Set}
         def mvidsAlreadySeen = [] as Set
