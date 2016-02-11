@@ -1,17 +1,22 @@
 package com.netflix.nebula.lint.rule.dependency
 
 import org.gradle.api.artifacts.ModuleVersionIdentifier
+import org.gradle.api.logging.Logger
 import org.objectweb.asm.*
 import org.objectweb.asm.signature.SignatureReader
 import org.objectweb.asm.signature.SignatureVisitor
 
 class DependencyClassVisitor extends ClassVisitor {
     private Map<String, Set<ModuleVersionIdentifier>> classOwners
+    private String className
+    private Logger logger
+
     Set<ModuleVersionIdentifier> references = new HashSet()
 
-    DependencyClassVisitor(Map<String, Set<ModuleVersionIdentifier>> classOwners) {
+    DependencyClassVisitor(Map<String, Set<ModuleVersionIdentifier>> classOwners, Logger logger) {
         super(Opcodes.ASM5)
         this.classOwners = classOwners
+        this.logger = logger
     }
 
     void readSignature(String signature) {
@@ -20,7 +25,13 @@ class DependencyClassVisitor extends ClassVisitor {
     }
 
     void readObjectName(String type) {
-        references.addAll(classOwners[Type.getObjectType(type).internalName] ?: Collections.emptySet())
+        def owners = classOwners[Type.getObjectType(type).internalName] ?: Collections.emptySet()
+        if(logger.isDebugEnabled()) {
+            for (owner in owners) {
+                logger.debug("$className refers to $type which was found in $owner")
+            }
+        }
+        references.addAll(owners)
     }
 
     void readType(String desc) {
@@ -39,6 +50,7 @@ class DependencyClassVisitor extends ClassVisitor {
 
     @Override
     void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+        className = name
         readObjectName(superName)
         interfaces.each { readObjectName(it) }
         readSignature(signature)
@@ -105,7 +117,8 @@ class DependencyClassVisitor extends ClassVisitor {
 
         @Override
         void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-            readType(desc)
+            readType(Type.getReturnType(desc).descriptor)
+            Type.getArgumentTypes(desc).collect { readType(it.descriptor) }
         }
 
         @Override

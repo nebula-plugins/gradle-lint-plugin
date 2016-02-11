@@ -16,9 +16,9 @@ class GradleLintPlugin implements Plugin<Project> {
             project.tasks.create('fixGradleLint', GradleLintCorrectionTask)
             project.tasks.create('fixLintGradle', GradleLintCorrectionTask)
             project.tasks.create('lintGradle', GradleLintTask)
-            project.rootProject.apply plugin: GradleLintPlugin
         } else {
-            project.tasks.create('lintGradle') // this task does nothing
+            project.rootProject.apply plugin: GradleLintPlugin
+            project.tasks.create('lintGradle').finalizedBy project.rootProject.tasks.getByName('lintGradle')
             project.tasks.create('fixGradleLint').finalizedBy project.rootProject.tasks.getByName('fixGradleLint')
             project.tasks.create('fixLintGradle').finalizedBy project.rootProject.tasks.getByName('fixGradleLint')
         }

@@ -1,29 +1,29 @@
 package com.netflix.nebula.lint.rule.dependency
 
-import org.codehaus.groovy.control.CompilationUnit
-import org.codehaus.groovy.control.Phases
-import org.codehaus.groovy.tools.GroovyClass
 import org.gradle.api.artifacts.ModuleVersionIdentifier
+import org.gradle.api.logging.Logger
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.util.TraceClassVisitor
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import javax.tools.*
+
 class DependencyClassVisitorSpec extends Specification {
-    Set<GroovyClass> classpath = new TreeSet<>({ c1, c2 -> c1.name.compareTo(c2.name) } as Comparator)
-    def classLoader = new ByteClassLoader(classpath)
+    List<SimpleJavaFileObject> sources = []
+    def compiler = ToolProvider.getSystemJavaCompiler()
 
     def setup() {
         compile('''\
-            package a
-            class A {
-                static A create() { new A() }
+            package a;
+            public class A {
+                public static A create() { return new A(); }
             }
         ''')
 
         compile('''\
-            package a
-            interface AInt {}
+            package a;
+            public interface AInt {}
         ''')
     }
 
@@ -31,12 +31,12 @@ class DependencyClassVisitorSpec extends Specification {
     def 'references are found on class fields (when field is "#field")'() {
         when:
         compile("""\
-            package b
-            import a.A
-            import java.util.*
+            package b;
+            import a.A;
+            import java.util.*;
 
-            class B {
-                $field
+            public class B {
+                $field;
             }
         """)
 
@@ -55,15 +55,15 @@ class DependencyClassVisitorSpec extends Specification {
     }
 
     @Unroll
-    def 'references are found on methods (when method is "#methodSignature")'() {
+    def 'references are found on methods (when method is "#method")'() {
         when:
         compile("""\
-            package b
-            import a.A
-            import java.util.*
+            package b;
+            import a.A;
+            import java.util.*;
 
-            class B {
-                $methodSignature { }
+            public class B {
+                $method
             }
         """)
 
@@ -73,14 +73,14 @@ class DependencyClassVisitorSpec extends Specification {
         containsReferenceTo('b.B', ['a/A': [a1].toSet()], a1)
 
         where:
-        methodSignature << [
-            'A m()',
-            'void m(A a)',
-            'public <T extends A> void m(T t)',
-            'A[] m()',
-            'void m(A[] a)',
-            'List<A> m()',
-            'void m(List<A> a)'
+        method << [
+            'A m() { return null; }',
+            'void m(A a) {}',
+            'public <T extends A> void m(T t) {}',
+            'A[] m() { return null; }',
+            'void m(A[] a) {}',
+            'List<A> m() { return null; }',
+            'void m(List<A> a) {}'
         ]
     }
 
@@ -88,11 +88,11 @@ class DependencyClassVisitorSpec extends Specification {
     def 'references are found on class signature (when signature is "#classSignature")'() {
         when:
         compile("""\
-            package b
-            import a.*
-            import java.util.*
+            package b;
+            import a.*;
+            import java.util.*;
 
-            class B$classSignature {
+            public class B$classSignature {
             }
         """)
 
@@ -113,22 +113,22 @@ class DependencyClassVisitorSpec extends Specification {
     def 'references are found inside method bodies (when instance is "#methodBodyReference")'() {
         setup:
         compile('''\
-            package a
+            package a;
 
-            class AFactory {
-                public static A build() { return new A() }
+            public class AFactory {
+                public static A build() { return new A(); }
             }
         ''')
 
         when:
         compile("""\
-            package b
-            import a.*
-            import java.util.*
+            package b;
+            import a.*;
+            import java.util.*;
 
-            class B {
+            public class B {
                 void foo() {
-                    $methodBodyReference
+                    $methodBodyReference;
                 }
             }
         """)
@@ -141,61 +141,115 @@ class DependencyClassVisitorSpec extends Specification {
 
         where:
         methodBodyReference             | found
-        'A a = AFactory.build()'        | true
-        'Object a = new A()'            | true
-        'A[] a = new A[0]'              | true
+//        'A a = AFactory.build()'        | true
+//        'Object a = new A()'            | true
+//        'A[] a = new A[0]'              | true
         'A a = A.create()'              | true
 
         // type erasure prevents the following two references from being observable from ASM
-        'List<A> a = new ArrayList()'   | false
-        'Object a = new ArrayList<A>()' | false
+//        'List<A> a = new ArrayList()'   | false
+//        'Object a = new ArrayList<A>()' | false
 
         // java does not preserve left-hand types, but rather the compiler adds CHECKCAST instructions
         // wherever right-hand assignments happen (with the exception of null)
-        'A a = null'                    | false
+//        'A a = null'                    | false
     }
 
     void traceClass(String className) {
-        new ClassReader(classpath.find { it.name == className }.bytes).accept(
+        new ClassReader(inMemoryClassFileManager.classBytes(className) as byte[]).accept(
                 new TraceClassVisitor(new PrintWriter(System.out)), ClassReader.SKIP_DEBUG)
     }
 
     boolean containsReferenceTo(String source, Map<String, Set<ModuleVersionIdentifier>> referenceMap,
                                 ModuleVersionIdentifier refersTo) {
-        def visitor = new DependencyClassVisitor(referenceMap)
-        new ClassReader(classpath.find { it.name == source }.bytes).accept(visitor, ClassReader.SKIP_DEBUG)
+        def visitor = new DependencyClassVisitor(referenceMap, [isDebugEnabled: { true }, debug: { d -> println d }] as Logger)
+        new ClassReader(inMemoryClassFileManager.classBytes(source) as byte[]).accept(visitor, ClassReader.SKIP_DEBUG)
         return visitor.references.contains(refersTo)
     }
 
     ModuleVersionIdentifier gav(String g, String a, String v) { [version: v, group: g, name: a] as ModuleVersionIdentifier }
 
-    Collection<GroovyClass> compile(String classSource) { compile([classSource]) }
+    def 'compile java'() {
+        expect:
+        compile('''
+            package myorg;
+            public class A {
+            }
+        ''')
 
-    Collection<GroovyClass> compile(Collection<String> classSources) {
-        def cu = new CompilationUnit(new GroovyClassLoader(classLoader))
-        classSources.each { cu.addSource(UUID.randomUUID().toString(), it) }
-        cu.compile(Phases.CLASS_GENERATION)
-        classpath.addAll(cu.classes)
-        cu.classes
+        compile('''
+            package myorg;
+            public class B {
+                A a = new A();
+            }
+        ''')
     }
 
-    class ByteClassLoader extends ClassLoader {
-        Collection<GroovyClass> classpath = []
+    byte[] compile(String sourceStr) {
+        def className = fqn(sourceStr)
 
-        ByteClassLoader(Collection<GroovyClass> classpath) {
-            super(Thread.currentThread().contextClassLoader)
-            this.classpath = classpath
+        if(className) {
+            sources.add(new SimpleJavaFileObject(URI.create("string:///${className.replaceAll(/\./, '/')}.java"), JavaFileObject.Kind.SOURCE) {
+                @Override CharSequence getCharContent(boolean ignoreEncodingErrors) { sourceStr.trim() }
+            })
+
+            def diagnostics = new DiagnosticCollector<JavaFileObject>()
+            if(!compiler.getTask(null, inMemoryClassFileManager, diagnostics, null, null, sources).call()) {
+                for(d in diagnostics.diagnostics) {
+                    println "line $d.lineNumber: ${d.getMessage(Locale.default)}"
+                }
+                throw new RuntimeException('compilation failed')
+            }
+
+            return inMemoryClassFileManager.classBytes(className)
         }
 
+        return null
+    }
+
+    def 'find fully qualified name in Java source'() {
+        expect:
+        fqn('''
+            package myorg.a;
+            public class A {
+            }
+        ''') == 'myorg.a.A'
+
+        fqn('''
+            package myorg.a;
+            public interface A {
+            }
+        ''') == 'myorg.a.A'
+    }
+
+    String fqn(String sourceStr) {
+        def pkgMatcher = sourceStr =~ /\s*package\s+([\w\.]+)/
+        def pkg = pkgMatcher.find() ? pkgMatcher[0][1] + '.' : ''
+
+        def classMatcher = sourceStr =~ /\s*(class|interface)\s+(\w+)/
+        return classMatcher.find() ? pkg + classMatcher[0][2] : null
+    }
+
+    def inMemoryClassFileManager = new ForwardingJavaFileManager(compiler.getStandardFileManager(null, null, null)) {
+        Map<String, JavaClassObject> classesByName = [:]
+
+        byte[] classBytes(String className) { classesByName[className]?.bos?.toByteArray() }
+
         @Override
-        protected Class<?> findClass(String name) throws ClassNotFoundException {
-            try {
-                def b = classpath.find { it.name == name }.bytes
-                return defineClass(name, b, 0, b.length)
+        JavaFileObject getJavaFileForOutput(JavaFileManager.Location location, String className, JavaFileObject.Kind kind, FileObject sibling) {
+            def clazz = new JavaClassObject(className, kind)
+            classesByName[className] = clazz
+            return clazz
+        }
+
+        private class JavaClassObject extends SimpleJavaFileObject {
+            private def bos = new ByteArrayOutputStream()
+
+            JavaClassObject(String name, JavaFileObject.Kind kind) {
+                super(URI.create("string:///${name}.class".toString()), kind)
             }
-            catch(e) {
-                throw new ClassNotFoundException(name)
-            }
+
+            @Override OutputStream openOutputStream() { bos }
         }
     }
 }

@@ -2,9 +2,11 @@ package com.netflix.nebula.lint.rule.dependency
 
 import com.netflix.nebula.lint.plugin.GradleLintPlugin
 import nebula.test.IntegrationSpec
+import org.gradle.api.logging.LogLevel
 
 class UnusedDependencyRuleSpec extends IntegrationSpec {
     File mainClass
+    LogLevel logLevel = LogLevel.DEBUG
 
     def setup() {
         buildFile.text = """
@@ -41,8 +43,6 @@ class UnusedDependencyRuleSpec extends IntegrationSpec {
             import com.google.common.collect.*;
 
             public class Main {
-                Multimap f1 = HashMultimap.create();
-
                 public static void main(String[] args) {
                     Multimap m = HashMultimap.create();
                 }
@@ -50,7 +50,8 @@ class UnusedDependencyRuleSpec extends IntegrationSpec {
         '''
 
         when:
-        runTasks('compileJava', 'fixGradleLint')
+        def result = runTasks('compileJava', 'fixGradleLint')
+        println(result.standardOutput)
 
         then:
         dependencies() == ['com.google.guava:guava:19.0']

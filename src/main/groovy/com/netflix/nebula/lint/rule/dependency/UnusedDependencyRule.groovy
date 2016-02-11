@@ -79,15 +79,16 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
         }
     }
 
-    static Set<ModuleVersionIdentifier> dependencyReferences(File classesDir, Map<String, Set<ModuleVersionIdentifier>> classOwners) {
+    Set<ModuleVersionIdentifier> dependencyReferences(File classesDir, Map<String, Set<ModuleVersionIdentifier>> classOwners) {
         def references = new HashSet<ModuleVersionIdentifier>()
 
         Files.walkFileTree(classesDir.toPath(), new SimpleFileVisitor<Path>() {
             @Override
             FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 if(file.toFile().name.endsWith('.class')) {
+                    project.logger.debug("Examining ${file.toFile().path} for first-order dependency references")
                     def fin = file.newInputStream()
-                    def visitor = new DependencyClassVisitor(classOwners)
+                    def visitor = new DependencyClassVisitor(classOwners, project.logger)
                     new ClassReader(fin).accept(visitor, ClassReader.SKIP_DEBUG)
                     references.addAll(visitor.references)
                 }
