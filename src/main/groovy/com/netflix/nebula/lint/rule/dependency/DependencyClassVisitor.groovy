@@ -35,6 +35,7 @@ class DependencyClassVisitor extends ClassVisitor {
     }
 
     void readType(String desc) {
+        if(!desc) return
         def t = Type.getType(desc)
         switch(t.sort) {
             case Type.ARRAY:
@@ -58,6 +59,12 @@ class DependencyClassVisitor extends ClassVisitor {
 
     @Override
     AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
+        readType(desc)
+        return new DependencyAnnotationVisitor()
+    }
+
+    @Override
+    AnnotationVisitor visitAnnotation(String desc, boolean visible) {
         readType(desc)
         return new DependencyAnnotationVisitor()
     }

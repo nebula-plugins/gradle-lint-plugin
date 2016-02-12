@@ -70,7 +70,10 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
                     .collect { ModuleVersionIdentifier mvid -> "$mvid.group:$mvid.name".toString() }
 
             def referencedDependencies = project.tasks.findAll { it instanceof AbstractCompile }
-                    .collect { (it as AbstractCompile) }
+                    .collect {
+                        logger.debug('Looking for output dir for task {}', it.name)
+                        it as AbstractCompile
+                    }
                     .collect { it.destinationDir }
                     .unique()
                     .findAll { it.exists() }
@@ -86,11 +89,13 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
     Set<ModuleVersionIdentifier> dependencyReferences(File classesDir, Map<String, Set<ModuleVersionIdentifier>> classOwners) {
         def references = new HashSet<ModuleVersionIdentifier>()
 
+        logger.debug('Looking for classes to examine in {}', classesDir)
+
         Files.walkFileTree(classesDir.toPath(), new SimpleFileVisitor<Path>() {
             @Override
             FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 if(file.toFile().name.endsWith('.class')) {
-                    logger.debug("Examining ${file.toFile().path} for first-order dependency references")
+                    logger.debug('Examining {} for first-order dependency references', file.toFile().path)
                     def fin = file.newInputStream()
                     def visitor = new DependencyClassVisitor(classOwners, logger)
                     new ClassReader(fin).accept(visitor, ClassReader.SKIP_DEBUG)

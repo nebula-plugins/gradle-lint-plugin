@@ -138,6 +138,7 @@ class DependencyClassVisitorSpec extends Specification {
         'Object a = new A()'            | true
         'A[] a = new A[0]'              | true
         'A a = A.create()'              | true
+        'A.create()'                    | true
 
         // type erasure prevents the following two references from being observable from ASM
         'List<A> a = new ArrayList()'   | false
@@ -146,6 +147,37 @@ class DependencyClassVisitorSpec extends Specification {
         // java does not preserve left-hand types, but rather the compiler adds CHECKCAST instructions
         // wherever right-hand assignments happen (with the exception of null)
         'A a = null'                    | false
+    }
+
+    def 'references are found on annotations'() {
+        setup:
+        java.compile('''
+            package a;
+            import java.lang.annotation.*;
+
+            @Retention(RetentionPolicy.RUNTIME)
+            @Target({ElementType.TYPE})
+            public @interface AAnnot {
+            }
+        ''')
+
+        when:
+        java.compile("""
+            package b;
+            import a.*;
+            import java.util.*;
+
+            @AAnnot
+            public class B {
+            }
+        """)
+
+        java.traceClass('b.B')
+
+        def a1 = gav('netflix', 'a', '1')
+
+        then:
+        java.containsReferenceTo('b.B', ['a/AAnnot': [a1].toSet()], a1)
     }
 
     ModuleVersionIdentifier gav(String g, String a, String v) { [version: v, group: g, name: a] as ModuleVersionIdentifier }

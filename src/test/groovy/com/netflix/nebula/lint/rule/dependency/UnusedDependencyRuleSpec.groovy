@@ -39,6 +39,36 @@ class UnusedDependencyRuleSpec extends IntegrationSpec {
         dependencies(buildFile) == ['com.google.guava:guava:19.0']
     }
 
+    def 'find dependency references in test code'() {
+        buildFile.text = """
+            apply plugin: ${GradleLintPlugin.name}
+            gradleLint.rules = ['unused-dependency']
+
+            repositories { mavenCentral() }
+
+            dependencies {
+                testCompile 'junit:junit:4.+'
+            }
+        """
+
+        createJavaTestFile(projectDir, '''
+            import static org.junit.Assert.*;
+
+            public class Main {
+                public static void main(String[] args) {
+                    assertEquals(1, 1);
+                }
+            }
+        ''')
+
+        when:
+        def result = runTasks('compileJava', 'fixGradleLint')
+        println(result.standardOutput)
+
+        then:
+        dependencies(buildFile) == ['junit:junit:4.+']
+    }
+
     def 'unused dependency in a subproject is marked for deletion'() {
         setup:
         buildFile.text = """
@@ -86,7 +116,15 @@ class UnusedDependencyRuleSpec extends IntegrationSpec {
     }
 
     def createJavaSourceFile(File projectDir, String source) {
-        def sourceFolder = new File(projectDir, 'src/main/java')
+        createJavaFile(projectDir, source, 'src/main/java')
+    }
+
+    def createJavaTestFile(File projectDir, String source) {
+        createJavaFile(projectDir, source, 'src/test/java')
+    }
+
+    def createJavaFile(File projectDir, String source, String sourceFolderPath) {
+        def sourceFolder = new File(projectDir, sourceFolderPath)
         sourceFolder.mkdirs()
         new File(sourceFolder, JavaFixture.fullyQualifiedName(source).replaceAll(/\./, '/') + '.java').text = source
     }

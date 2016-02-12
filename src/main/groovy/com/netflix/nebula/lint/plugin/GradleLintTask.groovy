@@ -1,15 +1,20 @@
 package com.netflix.nebula.lint.plugin
 
+import com.netflix.nebula.lint.rule.GradleLintRule
 import org.codenarc.analyzer.StringSourceAnalyzer
 import org.codenarc.rule.Rule
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 import org.gradle.logging.StyledTextOutput
 import org.gradle.logging.StyledTextOutputFactory
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import javax.inject.Inject
 
 class GradleLintTask extends DefaultTask {
+    Logger taskLogger = LoggerFactory.getLogger(GradleLintTask)
+
     @Inject
     protected StyledTextOutputFactory getTextOutputFactory() {
         null // see http://gradle.1045684.n5.nabble.com/injecting-dependencies-into-task-instances-td5712637.html
@@ -41,6 +46,13 @@ class GradleLintTask extends DefaultTask {
                 }
                 def ruleSet = RuleSetFactory.configureRuleSet(extension.rules.collect { registry.buildRules(it, p) }
                         .flatten() as List<Rule>)
+
+                if(taskLogger.isDebugEnabled()) {
+                    ruleSet.rules.each {
+                        if(it instanceof GradleLintRule)
+                            taskLogger.debug('Executing {} against {}', it.ruleId, p.buildFile.path)
+                    }
+                }
 
                 violationsByProject[p] = new StringSourceAnalyzer(p.buildFile.text).analyze(ruleSet).violations
                 mergeBySum(totalBySeverity, violationsByProject[p].countBy {
