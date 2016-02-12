@@ -165,19 +165,41 @@ class DependencyClassVisitorSpec extends Specification {
         java.compile("""
             package b;
             import a.*;
-            import java.util.*;
 
             @AAnnot
             public class B {
             }
         """)
 
-        java.traceClass('b.B')
-
         def a1 = gav('netflix', 'a', '1')
 
         then:
         java.containsReferenceTo('b.B', ['a/AAnnot': [a1].toSet()], a1)
+    }
+
+    def 'references are found on throws'() {
+        setup:
+        java.compile('''
+            package a;
+
+            public class AException extends Exception {
+            }
+        ''')
+
+        when:
+        java.compile("""
+            package b;
+            import a.*;
+
+            public class B {
+                public void foo() throws AException {}
+            }
+        """)
+
+        def a1 = gav('netflix', 'a', '1')
+
+        then:
+        java.containsReferenceTo('b.B', ['a/AException': [a1].toSet()], a1)
     }
 
     ModuleVersionIdentifier gav(String g, String a, String v) { [version: v, group: g, name: a] as ModuleVersionIdentifier }

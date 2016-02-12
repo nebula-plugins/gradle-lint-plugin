@@ -81,6 +81,7 @@ class DependencyClassVisitor extends ClassVisitor {
         Type.getArgumentTypes(desc).each { readType(it.descriptor) }
         readType(Type.getReturnType(desc).descriptor)
         readSignature(signature)
+        exceptions.each { readType(it) }
         return new DependencyMethodVisitor()
     }
 
