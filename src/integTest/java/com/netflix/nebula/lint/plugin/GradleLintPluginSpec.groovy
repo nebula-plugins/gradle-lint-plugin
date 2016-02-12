@@ -22,6 +22,7 @@ class GradleLintPluginSpec extends IntegrationSpec {
 
         then:
         def results = runTasksSuccessfully('assemble')
+        println(results.standardOutput)
 
         when:
         def console = results.standardOutput.readLines()

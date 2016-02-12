@@ -20,7 +20,7 @@ class GradleLintTask extends DefaultTask {
         null // see http://gradle.1045684.n5.nabble.com/injecting-dependencies-into-task-instances-td5712637.html
     }
 
-    def mergeBySum(Map... m) {
+    static def mergeBySum(Map... m) {
         m.collectMany { it.entrySet() }.inject([:]) { result, e ->
             result << [(e.key): e.value + (result[e.key] ?: 0)]
         }
@@ -55,7 +55,8 @@ class GradleLintTask extends DefaultTask {
                 }
 
                 violationsByProject[p] = new StringSourceAnalyzer(p.buildFile.text).analyze(ruleSet).violations
-                mergeBySum(totalBySeverity, violationsByProject[p].countBy {
+
+                totalBySeverity = mergeBySum(totalBySeverity, violationsByProject[p].countBy {
                     it.rule.priority <= 3 ? 'warning' : 'error'
                 })
             }
