@@ -8,6 +8,8 @@ import org.gradle.api.artifacts.ModuleVersionIdentifier
 import org.gradle.api.artifacts.ResolvedDependency
 import org.gradle.api.tasks.compile.AbstractCompile
 import org.objectweb.asm.ClassReader
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
@@ -19,6 +21,8 @@ import java.util.jar.JarFile
 
 class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
     def unusedDependencies
+
+    Logger logger = LoggerFactory.getLogger(UnusedDependencyRule)
 
     static Set<String> classSet(ResolvedDependency d) {
         def definedClasses = new HashSet<String>()
@@ -86,9 +90,9 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
             @Override
             FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 if(file.toFile().name.endsWith('.class')) {
-                    project.logger.debug("Examining ${file.toFile().path} for first-order dependency references")
+                    logger.debug("Examining ${file.toFile().path} for first-order dependency references")
                     def fin = file.newInputStream()
-                    def visitor = new DependencyClassVisitor(classOwners, project.logger)
+                    def visitor = new DependencyClassVisitor(classOwners, logger)
                     new ClassReader(fin).accept(visitor, ClassReader.SKIP_DEBUG)
                     references.addAll(visitor.references)
                 }

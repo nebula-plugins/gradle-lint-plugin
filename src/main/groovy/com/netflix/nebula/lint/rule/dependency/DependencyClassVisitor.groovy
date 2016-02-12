@@ -1,10 +1,10 @@
 package com.netflix.nebula.lint.rule.dependency
 
 import org.gradle.api.artifacts.ModuleVersionIdentifier
-import org.gradle.api.logging.Logger
 import org.objectweb.asm.*
 import org.objectweb.asm.signature.SignatureReader
 import org.objectweb.asm.signature.SignatureVisitor
+import org.slf4j.Logger
 
 class DependencyClassVisitor extends ClassVisitor {
     private Map<String, Set<ModuleVersionIdentifier>> classOwners
