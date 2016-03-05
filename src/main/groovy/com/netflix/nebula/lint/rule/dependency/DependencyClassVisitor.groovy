@@ -1,19 +1,19 @@
 package com.netflix.nebula.lint.rule.dependency
 
-import org.gradle.api.artifacts.ModuleVersionIdentifier
+import org.gradle.api.artifacts.ResolvedDependency
 import org.objectweb.asm.*
 import org.objectweb.asm.signature.SignatureReader
 import org.objectweb.asm.signature.SignatureVisitor
 import org.slf4j.Logger
 
 class DependencyClassVisitor extends ClassVisitor {
-    private Map<String, Set<ModuleVersionIdentifier>> classOwners
+    private Map<String, Set<ResolvedDependency>> classOwners
     private String className
     private Logger logger
 
-    Set<ModuleVersionIdentifier> references = new HashSet()
+    Set<ResolvedDependency> references = new HashSet()
 
-    DependencyClassVisitor(Map<String, Set<ModuleVersionIdentifier>> classOwners, Logger logger) {
+    DependencyClassVisitor(Map<String, Set<ResolvedDependency>> classOwners, Logger logger) {
         super(Opcodes.ASM5)
         this.classOwners = classOwners
         this.logger = logger
@@ -125,6 +125,7 @@ class DependencyClassVisitor extends ClassVisitor {
 
         @Override
         void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+            readType(owner)
             readType(Type.getReturnType(desc).descriptor)
             Type.getArgumentTypes(desc).collect { readType(it.descriptor) }
         }
@@ -154,6 +155,12 @@ class DependencyClassVisitor extends ClassVisitor {
         AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
             readType(desc)
             return new DependencyAnnotationVisitor()
+        }
+
+        @Override
+        AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+            readType(desc)
+            return super.visitAnnotation(desc, visible)
         }
 
         @Override

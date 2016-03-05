@@ -4,8 +4,8 @@ import com.netflix.nebula.lint.rule.GradleDependency
 import com.netflix.nebula.lint.rule.GradleLintRule
 import com.netflix.nebula.lint.rule.GradleModelAware
 import org.codehaus.groovy.ast.expr.MethodCallExpression
-import org.gradle.api.artifacts.ModuleVersionIdentifier
 import org.gradle.api.artifacts.ResolvedDependency
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.DefaultVersionComparator
 import org.gradle.api.tasks.compile.AbstractCompile
 import org.objectweb.asm.ClassReader
 import org.slf4j.Logger
@@ -20,7 +20,7 @@ import java.util.jar.JarEntry
 import java.util.jar.JarFile
 
 class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
-    def unusedDependencies
+    Collection<ResolvedDependency> firstLevelDependencies
 
     Logger logger = LoggerFactory.getLogger(UnusedDependencyRule)
 
@@ -45,49 +45,131 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
         return definedClasses
     }
 
-    Map<String, Set<ModuleVersionIdentifier>> firstOrderDependencyClassOwners() {
-        def classOwners = new HashMap<String, Set<ModuleVersionIdentifier>>().withDefault {[] as Set}
+    Map<String, Set<ResolvedDependency>> classOwners() {
+        def classOwners = new HashMap<String, Set<ResolvedDependency>>().withDefault {[] as Set}
         def mvidsAlreadySeen = [] as Set
 
-        project.configurations*.resolvedConfiguration*.firstLevelModuleDependencies*.each { ResolvedDependency d ->
-            if (mvidsAlreadySeen.add(d.module.id)) {
-                for(clazz in classSet(d))
-                    classOwners[clazz].add(d.module.id)
+
+        def recurseFindClassOwnersSingle
+        recurseFindClassOwnersSingle = { ResolvedDependency d ->
+            for (clazz in classSet(d)) {
+                logger.debug('Class {} found in module {}', clazz, d.module.id)
+                classOwners[clazz].add(d)
+            }
+
+            d.children.each {
+                recurseFindClassOwnersSingle(it)
             }
         }
+
+        def recurseFindClassOwners
+        recurseFindClassOwners = { Collection<ResolvedDependency> ds ->
+            if(ds.isEmpty()) return
+
+            def notYetSeen = ds.findAll { d -> mvidsAlreadySeen.add(d.module.id) }
+
+            notYetSeen.each { d ->
+                for (clazz in classSet(d)) {
+                    logger.debug('Class {} found in module {}', clazz, d.module.id)
+                    classOwners[clazz].add(d)
+                }
+            }
+
+            recurseFindClassOwners(notYetSeen*.children.flatten())
+        }
+
+        recurseFindClassOwners(firstLevelDependencies)
 
         return classOwners
     }
 
-    void calculateUnusedDependenciesIfNecessary() {
-        if(!unusedDependencies) {
-            def classOwners = firstOrderDependencyClassOwners()
+    boolean unusedDependenciesCalculated = false
+    Set<ResolvedDependency> firstOrderDependenciesToRemove = new HashSet()
+    Set<ResolvedDependency> transitiveDependenciesToAddAsFirstOrder = new HashSet()
+    Map<ResolvedDependency, String> firstOrderDependenciesWhoseConfigurationNeedsToChange = [:]
 
-            unusedDependencies = project
-                    .configurations*.resolvedConfiguration*.firstLevelModuleDependencies*.collect { it.module.id }
-                    .flatten()
-                    .unique()
-                    .collect { ModuleVersionIdentifier mvid -> "$mvid.group:$mvid.name".toString() }
-
-            def referencedDependencies = project.tasks.findAll { it instanceof AbstractCompile }
-                    .collect {
-                        logger.debug('Looking for output dir for task {}', it.name)
-                        it as AbstractCompile
-                    }
-                    .collect { it.destinationDir }
-                    .unique()
-                    .findAll { it.exists() }
-                    .collect { dependencyReferences(it, classOwners) }
-                    .flatten()
-                    .unique()
-                    .collect { ModuleVersionIdentifier mvid -> "$mvid.group:$mvid.name".toString() }
-
-            unusedDependencies.removeAll(referencedDependencies)
-        }
+    Collection<String> configurations(ResolvedDependency d) {
+        return project.configurations.findAll { it.resolvedConfiguration.firstLevelModuleDependencies.contains(d) }*.name
     }
 
-    Set<ModuleVersionIdentifier> dependencyReferences(File classesDir, Map<String, Set<ModuleVersionIdentifier>> classOwners) {
-        def references = new HashSet<ModuleVersionIdentifier>()
+    void calculateUnusedDependenciesIfNecessary() {
+        if(unusedDependenciesCalculated)
+            return
+
+        firstLevelDependencies = project.configurations*.resolvedConfiguration*.firstLevelModuleDependencies
+                .flatten().unique() as Collection<ResolvedDependency>
+
+        // Unused first order dependencies
+        Collection<ResolvedDependency> unusedDependencies = firstLevelDependencies.clone()
+
+        // Used dependencies, both first order and transitive
+        def classOwners = classOwners()
+        Collection<ResolvedDependency> usedDependencies = project.tasks.findAll { it instanceof AbstractCompile }
+                .collect { it as AbstractCompile }
+                .collect { it.destinationDir }
+                .unique()
+                .findAll { it.exists() }
+                .collect { dependencyReferences(it, classOwners) }
+                .flatten()
+                .unique { it.module.id } as Collection<ResolvedDependency>
+
+        unusedDependencies.removeAll(usedDependencies)
+
+        for(d in firstLevelDependencies) {
+            def confs = configurations(d)
+            if(unusedDependencies.contains(d)) {
+                if(!confs.contains('compile') && !confs.contains('testCompile'))
+                    continue
+
+                firstOrderDependenciesToRemove.add(d)
+
+                def inUse = transitivesInUse(d, usedDependencies)
+                if(!inUse.isEmpty()) {
+                    inUse.each { used ->
+                        def matching = firstLevelDependencies.find {
+                            it.module.id.group == used.moduleGroup && it.module.id.name == used.moduleName
+                        }
+
+                        if(!matching) {
+                            transitiveDependenciesToAddAsFirstOrder.add(used)
+                        }
+                        else if(matching.configuration == 'runtime') {
+                            firstOrderDependenciesWhoseConfigurationNeedsToChange.put(matching, 'compile')
+                        }
+                    }
+                }
+            }
+            else {
+                if(!confs.contains('compile') && !confs.contains('testCompile')) {
+                    firstOrderDependenciesWhoseConfigurationNeedsToChange.put(d, 'compile')
+                }
+            }
+        }
+
+        // only keep the highest version of each transitive module that we need to add as a first order dependency
+        def versionComparator = new DefaultVersionComparator().asStringComparator()
+        transitiveDependenciesToAddAsFirstOrder = transitiveDependenciesToAddAsFirstOrder
+                .groupBy { "$it.moduleGroup:$it.moduleName".toString() }
+                .values()
+                .collect {
+                    it.sort { d1, d2 -> versionComparator.compare(d2.moduleVersion, d1.moduleVersion) }.first()
+                }
+                .toSet()
+
+        unusedDependenciesCalculated = true
+    }
+
+    private Set<ResolvedDependency> transitivesInUse(ResolvedDependency d, Collection<ResolvedDependency> usedDependencies) {
+        def childrenInUse = d.children.collect { transitivesInUse(it, usedDependencies) }.flatten() as Collection<ResolvedDependency>
+        if(usedDependencies.contains(d)) {
+            return childrenInUse.plus(d).toSet()
+        }
+        else
+            return childrenInUse
+    }
+
+    Set<ResolvedDependency> dependencyReferences(File classesDir, Map<String, Set<ResolvedDependency>> classOwners) {
+        def references = new HashSet<ResolvedDependency>()
 
         logger.debug('Looking for classes to examine in {}', classesDir)
 
@@ -111,7 +193,38 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
     @Override
     void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
         calculateUnusedDependenciesIfNecessary()
-        if(unusedDependencies.contains("$dep.group:$dep.name".toString()))
+
+        def matchesGradleDep = { ResolvedDependency d -> d.module.id.group == dep.group && d.module.id.name == dep.name }
+        def match
+
+        if(firstOrderDependenciesToRemove.find(matchesGradleDep)) {
             addViolationToDelete(call, 'this dependency is unused and can be removed')
+        }
+        else if((match = firstOrderDependenciesWhoseConfigurationNeedsToChange.keySet().find(matchesGradleDep))) {
+            def toConf = firstOrderDependenciesWhoseConfigurationNeedsToChange[match]
+            addViolationWithReplacement(call, 'this dependency is required at compile time',
+                    "$toConf '$match.module.id")
+        }
+    }
+
+    @Override
+    void visitMethodCallExpression(MethodCallExpression call) {
+        if(call.methodAsString == 'dependencies') {
+            // TODO match indentation of surroundings
+            def indentation = ''.padLeft(call.columnNumber + 3)
+            def transitiveSize = transitiveDependenciesToAddAsFirstOrder.size()
+
+            if(transitiveSize == 1) {
+                def d = transitiveDependenciesToAddAsFirstOrder.first()
+                addViolationInsert(call, 'one or more classes in this transitive dependency are required by your code directly',
+                        "\n${indentation}compile '$d.module.id'")
+            }
+            else if(transitiveSize > 1) {
+                addViolationInsert(call, 'one or more classes in these transitive dependencies are required by your code directly',
+                        transitiveDependenciesToAddAsFirstOrder.inject('') {
+                            deps, d -> deps + "\n${indentation}compile '$d.module.id'"
+                        })
+            }
+        }
     }
 }

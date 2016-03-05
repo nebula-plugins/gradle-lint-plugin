@@ -1,6 +1,6 @@
 package com.netflix.nebula.lint.rule.dependency
 
-import org.gradle.api.artifacts.ModuleVersionIdentifier
+import org.gradle.api.artifacts.ResolvedDependency
 import org.gradle.api.logging.Logger
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.util.TraceClassVisitor
@@ -47,8 +47,8 @@ class JavaFixture {
                 new TraceClassVisitor(new PrintWriter(System.out)), ClassReader.SKIP_DEBUG)
     }
 
-    boolean containsReferenceTo(String source, Map<String, Set<ModuleVersionIdentifier>> referenceMap,
-                                ModuleVersionIdentifier refersTo) {
+    boolean containsReferenceTo(String source, Map<String, Set<ResolvedDependency>> referenceMap,
+                                ResolvedDependency refersTo) {
         def visitor = new DependencyClassVisitor(referenceMap, [isDebugEnabled: { true }, debug: { d -> println d }] as Logger)
         new ClassReader(inMemoryClassFileManager.classBytes(source) as byte[]).accept(visitor, ClassReader.SKIP_DEBUG)
         return visitor.references.contains(refersTo)

@@ -1,6 +1,8 @@
 package com.netflix.nebula.lint.rule.dependency
 
-import org.gradle.api.artifacts.ModuleVersionIdentifier
+import org.gradle.api.artifacts.ResolvedDependency
+import org.gradle.api.internal.artifacts.DefaultModuleVersionIdentifier
+import org.gradle.api.internal.artifacts.DefaultResolvedDependency
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -12,6 +14,7 @@ class DependencyClassVisitorSpec extends Specification {
             package a;
             public class A {
                 public static A create() { return new A(); }
+                public static void sideEffect() { }
             }
         ''')
 
@@ -139,6 +142,7 @@ class DependencyClassVisitorSpec extends Specification {
         'A[] a = new A[0]'              | true
         'A a = A.create()'              | true
         'A.create()'                    | true
+        'A.sideEffect()'                | true
 
         // type erasure prevents the following two references from being observable from ASM
         'List<A> a = new ArrayList()'   | false
@@ -149,14 +153,16 @@ class DependencyClassVisitorSpec extends Specification {
         'A a = null'                    | false
     }
 
-    def 'references are found on annotations'() {
+    @Unroll
+    def 'references are found on #type annotations'() {
         setup:
         java.compile('''
             package a;
             import java.lang.annotation.*;
 
             @Retention(RetentionPolicy.RUNTIME)
-            @Target({ElementType.TYPE})
+            @Target({ElementType.TYPE, ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER,
+                ElementType.CONSTRUCTOR, ElementType.LOCAL_VARIABLE})
             public @interface AAnnot {
             }
         ''')
@@ -166,15 +172,26 @@ class DependencyClassVisitorSpec extends Specification {
             package b;
             import a.*;
 
-            @AAnnot
-            public class B {
-            }
+            $annotation
         """)
 
         def a1 = gav('netflix', 'a', '1')
 
+        println(java.traceClass('b.B'))
+
         then:
         java.containsReferenceTo('b.B', ['a/AAnnot': [a1].toSet()], a1)
+
+        where:
+        annotation                                                                          | type
+        '''@AAnnot public class B { }'''                                                    | 'class'
+        '''public class B { @AAnnot public void foo() {} }'''                               | 'method'
+        '''public class B { @AAnnot Object field; }'''                                      | 'field'
+        '''public class B { public void foo(@AAnnot Object p) {} }'''                       | 'param'
+        '''public class B { @AAnnot public B() {} }'''                                      | 'constructor'
+
+        // Local variable annotations don't appear to be stored in the bytecode
+//        '''public class B { public void foo() { @AAnnot Object o = new Object(); } }'''     | 'local field'
     }
 
     def 'references are found on throws'() {
@@ -202,5 +219,7 @@ class DependencyClassVisitorSpec extends Specification {
         java.containsReferenceTo('b.B', ['a/AException': [a1].toSet()], a1)
     }
 
-    ModuleVersionIdentifier gav(String g, String a, String v) { [version: v, group: g, name: a] as ModuleVersionIdentifier }
+    ResolvedDependency gav(String g, String a, String v) {
+        new DefaultResolvedDependency(new DefaultModuleVersionIdentifier(g, a, v), 'compile')
+    }
 }
