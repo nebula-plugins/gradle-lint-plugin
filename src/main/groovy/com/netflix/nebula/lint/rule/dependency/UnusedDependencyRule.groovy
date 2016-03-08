@@ -1,5 +1,6 @@
 package com.netflix.nebula.lint.rule.dependency
 
+import com.google.common.collect.ComparisonChain
 import com.netflix.nebula.lint.rule.GradleDependency
 import com.netflix.nebula.lint.rule.GradleLintRule
 import com.netflix.nebula.lint.rule.GradleModelAware
@@ -21,6 +22,11 @@ import java.util.jar.JarFile
 
 class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
     Collection<ResolvedDependency> firstLevelDependencies
+    Collection<String> runtimeConfs = [
+        'provided', // from nebula extra configurations plugin
+        'runtime',  // from java plugin
+        'providedRuntime' // from war plugin
+    ]
 
     Logger logger = LoggerFactory.getLogger(UnusedDependencyRule)
 
@@ -85,7 +91,16 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
 
     boolean unusedDependenciesCalculated = false
     Set<ResolvedDependency> firstOrderDependenciesToRemove = new HashSet()
-    Set<ResolvedDependency> transitiveDependenciesToAddAsFirstOrder = new HashSet()
+    Set<ResolvedDependency> transitiveDependenciesToAddAsFirstOrder = new TreeSet(new Comparator<ResolvedDependency>() {
+        @Override
+        int compare(ResolvedDependency d1, ResolvedDependency d2) {
+            return ComparisonChain.start()
+                .compare(d1.moduleGroup, d2.moduleGroup)
+                .compare(d1.moduleName, d2.moduleName)
+                .compare(d1.moduleVersion, d2.moduleVersion)
+                .result()
+        }
+    })
     Map<ResolvedDependency, String> firstOrderDependenciesWhoseConfigurationNeedsToChange = [:]
 
     Collection<String> configurations(ResolvedDependency d) {
@@ -133,7 +148,7 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
                         if(!matching) {
                             transitiveDependenciesToAddAsFirstOrder.add(used)
                         }
-                        else if(matching.configuration == 'runtime') {
+                        else if(runtimeConfs.contains(matching.configuration)) {
                             firstOrderDependenciesWhoseConfigurationNeedsToChange.put(matching, 'compile')
                         }
                     }
