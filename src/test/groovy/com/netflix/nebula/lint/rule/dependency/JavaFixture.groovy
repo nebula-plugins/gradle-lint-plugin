@@ -1,7 +1,6 @@
 package com.netflix.nebula.lint.rule.dependency
 
 import org.gradle.api.artifacts.ResolvedDependency
-import org.gradle.api.logging.Logger
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.util.TraceClassVisitor
 import spock.lang.Specification
@@ -49,9 +48,26 @@ class JavaFixture {
 
     boolean containsReferenceTo(String source, Map<String, Set<ResolvedDependency>> referenceMap,
                                 ResolvedDependency refersTo) {
-        def visitor = new DependencyClassVisitor(referenceMap, [isDebugEnabled: { true }, debug: { d -> println d }] as Logger)
+        def visitor = new DependencyClassVisitor(referenceMap, classLoader)
         new ClassReader(inMemoryClassFileManager.classBytes(source) as byte[]).accept(visitor, ClassReader.SKIP_DEBUG)
-        return visitor.references.contains(refersTo)
+        return visitor.directReferences.contains(refersTo)
+    }
+
+    boolean containsIndirectReferenceTo(String source, Map<String, Set<ResolvedDependency>> referenceMap,
+                                ResolvedDependency refersTo) {
+        def visitor = new DependencyClassVisitor(referenceMap, classLoader)
+        new ClassReader(inMemoryClassFileManager.classBytes(source) as byte[]).accept(visitor, ClassReader.SKIP_DEBUG)
+        return visitor.indirectReferences.contains(refersTo)
+    }
+
+    def classLoader = new ClassLoader() {
+        @Override
+        protected Class<?> findClass(String name) throws ClassNotFoundException {
+            def b = inMemoryClassFileManager.classBytes(name)
+            if(b) {
+                return defineClass(name, b, 0, b.length)
+            } else throw new ClassNotFoundException(name)
+        }
     }
 
     def inMemoryClassFileManager = new ForwardingJavaFileManager(compiler.getStandardFileManager(null, null, null)) {

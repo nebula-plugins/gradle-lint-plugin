@@ -32,10 +32,11 @@ class UnusedDependencyRuleSpec extends IntegrationSpec {
 
     // TODO should we be on the lookout for common runtime dependencies like xerces generally marked as compile?
 
+    // TODO match indentation when adding dependencies
+
     @Unroll
     def 'unused compile dependencies are marked for deletion'() {
-        setup:
-
+        when:
         buildFile.text = """
             apply plugin: ${GradleLintPlugin.name}
             apply plugin: 'java'
@@ -51,10 +52,8 @@ class UnusedDependencyRuleSpec extends IntegrationSpec {
 
         createJavaSourceFile(projectDir, main)
 
-        when:
-        runTasks('compileJava', 'fixGradleLint')
-
         then:
+        runTasksSuccessfully('compileJava', 'fixGradleLint')
         dependencies(buildFile) == expected
 
         where:
@@ -66,8 +65,7 @@ class UnusedDependencyRuleSpec extends IntegrationSpec {
 
     @Unroll
     def 'runtime dependencies with \'#conf\' that are used at compile time are transformed into compile dependencies'() {
-        setup:
-
+        when:
         buildFile.text = """
             apply plugin: ${GradleLintPlugin.name}
             apply plugin: 'war'
@@ -83,12 +81,8 @@ class UnusedDependencyRuleSpec extends IntegrationSpec {
 
         createJavaSourceFile(projectDir, main)
 
-        when:
-        def result = runTasks('compileJava', 'fixGradleLint')
-        println result.standardError
-        println result.standardOutput
-
         then:
+        runTasksSuccessfully('compileJava', 'fixGradleLint')
         dependencies(buildFile) == [guava]
 
         where:
@@ -97,8 +91,7 @@ class UnusedDependencyRuleSpec extends IntegrationSpec {
 
     @Unroll
     def 'runtime dependencies with configuration \'#conf\' that are unused at compile time are left alone'() {
-        setup:
-
+        when:
         buildFile.text = """
             apply plugin: ${GradleLintPlugin.name}
             apply plugin: 'war'
@@ -112,10 +105,8 @@ class UnusedDependencyRuleSpec extends IntegrationSpec {
             }
         """
 
-        when:
-        runTasks('compileJava', 'fixGradleLint')
-
         then:
+        runTasksSuccessfully('compileJava', 'fixGradleLint')
         dependencies(buildFile, conf) == [guava]
 
         where:
@@ -123,6 +114,7 @@ class UnusedDependencyRuleSpec extends IntegrationSpec {
     }
 
     def 'find dependency references in test code'() {
+        when:
         buildFile.text = """
             apply plugin: ${GradleLintPlugin.name}
             apply plugin: 'java'
@@ -148,15 +140,13 @@ class UnusedDependencyRuleSpec extends IntegrationSpec {
             }
         ''')
 
-        when:
-        runTasks('compileTestJava', 'fixGradleLint')
-
         then:
+        runTasksSuccessfully('compileTestJava', 'fixGradleLint')
         dependencies(buildFile) == ['junit:junit:4.+']
     }
 
     def 'unused dependency in a subproject is marked for deletion'() {
-        setup:
+        when:
         buildFile.text = """
             apply plugin: ${GradleLintPlugin.name}
             gradleLint.rules = ['unused-dependency']
@@ -185,47 +175,61 @@ class UnusedDependencyRuleSpec extends IntegrationSpec {
             }
         ''')
 
-        when:
-        runTasks('compileJava', 'fixGradleLint')
-
         then:
+        runTasksSuccessfully('compileJava', 'fixGradleLint')
         dependencies(aBuildFile) == [guava]
     }
 
     @Unroll
-    def 'provided dependencies with conf \'#conf\' are removed if there is no compile time reference'() {
-        setup:
-
+    def 'providedCompile dependencies are removed if there is no compile time reference'() {
+        when:
         buildFile.text = """
-            plugins {
-              id 'java'
-              id $plugin
-            }
             apply plugin: ${GradleLintPlugin.name}
+            apply plugin: 'war'
 
             gradleLint.rules = ['unused-dependency']
 
             repositories { mavenCentral() }
 
             dependencies {
-                $conf '$guava'
-                $conf '$asm'
+                providedCompile '$guava'
+                providedCompile '$asm'
             }
         """
 
         createJavaSourceFile(projectDir, main)
 
+        then:
+        runTasksSuccessfully('compileJava', 'fixGradleLint')
+
+        // also, provided dependencies are NOT moved to compile
+        dependencies(buildFile, 'providedCompile') == [guava]
+    }
+
+    def 'dependencies that are indirectly required through the type hierarchy are not removed'() {
         when:
-        runTasks('compileJava', 'fixGradleLint')
+        buildFile.text = """
+            apply plugin: ${GradleLintPlugin.name}
+            apply plugin: 'war'
+
+            gradleLint.rules = ['unused-dependency']
+
+            repositories { mavenCentral() }
+
+            dependencies {
+                compile 'com.google.inject.extensions:guice-servlet:3.0'
+                compile 'javax.servlet:servlet-api:2.5'
+            }
+        """
+
+        createJavaSourceFile(projectDir, '''
+            public abstract class Main extends com.google.inject.servlet.GuiceServletContextListener {
+            }
+        ''')
 
         then:
-        // also, provided dependencies are NOT moved to compile
-        dependencies(buildFile, conf) == [guava]
-
-        where:
-        conf                | plugin
-        'provided'          | "'nebula.provided-base' version '3.0.3'"
-        'providedCompile'   | "'war'"
+        runTasksSuccessfully('compileJava', 'fixGradleLint')
+        dependencies(buildFile, 'compile') == ['com.google.inject.extensions:guice-servlet:3.0', 'javax.servlet:servlet-api:2.5']
     }
 
     def dependencies(File _buildFile, String... confs = ['compile', 'testCompile']) {

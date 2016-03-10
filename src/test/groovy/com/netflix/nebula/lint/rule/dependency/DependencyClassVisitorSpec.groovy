@@ -177,8 +177,6 @@ class DependencyClassVisitorSpec extends Specification {
 
         def a1 = gav('netflix', 'a', '1')
 
-        println(java.traceClass('b.B'))
-
         then:
         java.containsReferenceTo('b.B', ['a/AAnnot': [a1].toSet()], a1)
 
@@ -190,8 +188,29 @@ class DependencyClassVisitorSpec extends Specification {
         '''public class B { public void foo(@AAnnot Object p) {} }'''                       | 'param'
         '''public class B { @AAnnot public B() {} }'''                                      | 'constructor'
 
-        // Local variable annotations don't appear to be stored in the bytecode
-//        '''public class B { public void foo() { @AAnnot Object o = new Object(); } }'''     | 'local field'
+        // Note: local variable annotations aren't stored in the bytecode
+    }
+
+    def 'indirect reference through type hierarchy'() {
+        setup:
+        java.compile('''
+            package a2;
+            public interface AInt2 extends a.AInt {}
+        ''')
+
+        when:
+        java.compile('''
+            package b;
+            public class B implements a2.AInt2 {}
+        ''')
+
+        def a1 = gav('netflix', 'a', '1')
+        def a2 = gav('netflix', 'a2', '1')
+        def refMap = ['a/AInt': [a1].toSet(), 'a2/AInt2': [a2].toSet()]
+
+        then:
+        java.containsIndirectReferenceTo('b.B', refMap, a1)
+        java.containsReferenceTo('b.B', refMap, a2)
     }
 
     def 'references are found on throws'() {

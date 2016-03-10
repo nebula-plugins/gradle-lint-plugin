@@ -5,18 +5,29 @@ import org.objectweb.asm.*
 import org.objectweb.asm.signature.SignatureReader
 import org.objectweb.asm.signature.SignatureVisitor
 import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
-class DependencyClassVisitor extends ClassVisitor {
+final class DependencyClassVisitor extends ClassVisitor {
     private Map<String, Set<ResolvedDependency>> classOwners
     private String className
-    private Logger logger
+    private ClassLoader loader
+    private Logger logger = LoggerFactory.getLogger(DependencyClassVisitor)
 
-    Set<ResolvedDependency> references = new HashSet()
+    Set<ResolvedDependency> directReferences = new HashSet()
 
-    DependencyClassVisitor(Map<String, Set<ResolvedDependency>> classOwners, Logger logger) {
+    /**
+     * References that are necessary at compile time (e.g. type hierarchy of implemented interfaces), but are satisfactory
+     * as transitive dependencies. Example: guice's <code>GuiceServletContextListener</code> refers to javax.servlet's
+     * <code>ServletContextListener</code>, but adding guice as a dependency does NOT result in a transitive dependency on
+     * javax.servlet. In this case, we want to preserve a first order dependency on javax.servlet when
+     * <code>GuiceServletContextListener</code> is extended somewhere in the code.
+     */
+    Set<ResolvedDependency> indirectReferences = new HashSet()
+
+    DependencyClassVisitor(Map<String, Set<ResolvedDependency>> classOwners, ClassLoader loader) {
         super(Opcodes.ASM5)
         this.classOwners = classOwners
-        this.logger = logger
+        this.loader = loader
     }
 
     void readSignature(String signature) {
@@ -24,14 +35,16 @@ class DependencyClassVisitor extends ClassVisitor {
             new SignatureReader(signature).accept(new DependencySignatureVisitor())
     }
 
-    void readObjectName(String type) {
+    void readObjectName(String type, boolean indirect = false) {
         def owners = classOwners[Type.getObjectType(type).internalName] ?: Collections.emptySet()
         if(logger.isDebugEnabled()) {
             for (owner in owners) {
                 logger.debug("$className refers to $type which was found in $owner")
             }
         }
-        references.addAll(owners)
+
+        if(indirect) indirectReferences.addAll(owners)
+        else directReferences.addAll(owners)
     }
 
     void readType(String desc) {
@@ -54,6 +67,18 @@ class DependencyClassVisitor extends ClassVisitor {
         className = name
         readObjectName(superName)
         interfaces.each { readObjectName(it) }
+
+        if(superName) {
+            ClassHierarchyUtils.typeHierarchy(Class.forName(superName.replace('/', '.'), false, loader)).each {
+                readObjectName(it.replace('.', '/'), true)
+            }
+        }
+        interfaces.each { intf ->
+            ClassHierarchyUtils.typeHierarchy(Class.forName(intf.replace('/', '.'), false, loader)).each {
+                readObjectName(it.replace('.', '/'), true)
+            }
+        }
+
         readSignature(signature)
     }
 

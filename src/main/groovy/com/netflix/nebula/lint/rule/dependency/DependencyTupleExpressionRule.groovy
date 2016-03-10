@@ -6,6 +6,7 @@ import com.netflix.nebula.lint.rule.GradleLintRule
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 
 class DependencyTupleExpressionRule extends GradleLintRule {
+
     @Override
     void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
         if(dep.conf == null && dep.syntax == GradleDependency.Syntax.MapNotation) {

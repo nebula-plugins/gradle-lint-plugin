@@ -1,12 +1,12 @@
 package com.netflix.nebula.lint.rule.dependency
 
-import com.google.common.collect.ComparisonChain
 import com.netflix.nebula.lint.rule.GradleDependency
 import com.netflix.nebula.lint.rule.GradleLintRule
 import com.netflix.nebula.lint.rule.GradleModelAware
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.gradle.api.artifacts.ResolvedDependency
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.DefaultVersionComparator
+import org.gradle.api.specs.Specs
 import org.gradle.api.tasks.compile.AbstractCompile
 import org.objectweb.asm.ClassReader
 import org.slf4j.Logger
@@ -22,13 +22,27 @@ import java.util.jar.JarFile
 
 class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
     Collection<ResolvedDependency> firstLevelDependencies
+    Set<ResolvedDependency> transitiveDependencies
+
     Collection<String> runtimeConfs = [
-        'provided', // from nebula extra configurations plugin
         'runtime',  // from java plugin
         'providedRuntime' // from war plugin
     ]
 
     Logger logger = LoggerFactory.getLogger(UnusedDependencyRule)
+    Comparator<String> versionComparator = new DefaultVersionComparator().asStringComparator()
+
+    Comparator<ResolvedDependency> dependencyComparator = new Comparator<ResolvedDependency>() {
+        @Override
+        int compare(ResolvedDependency d1, ResolvedDependency d2) {
+            if(d1.moduleGroup != d2.moduleGroup)
+                return d1?.moduleGroup?.compareTo(d2.moduleGroup) ?: d2.moduleGroup ? -1 : 1
+            else if(d1.moduleName != d2.moduleName)
+                return d1?.moduleName?.compareTo(d2.moduleName) ?: d2.moduleName ? -1 : 1
+            else
+                return versionComparator.compare(d1.moduleVersion, d2.moduleVersion)
+        }
+    }
 
     static Set<String> classSet(ResolvedDependency d) {
         def definedClasses = new HashSet<String>()
@@ -54,7 +68,6 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
     Map<String, Set<ResolvedDependency>> classOwners() {
         def classOwners = new HashMap<String, Set<ResolvedDependency>>().withDefault {[] as Set}
         def mvidsAlreadySeen = [] as Set
-
 
         def recurseFindClassOwnersSingle
         recurseFindClassOwnersSingle = { ResolvedDependency d ->
@@ -91,16 +104,7 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
 
     boolean unusedDependenciesCalculated = false
     Set<ResolvedDependency> firstOrderDependenciesToRemove = new HashSet()
-    Set<ResolvedDependency> transitiveDependenciesToAddAsFirstOrder = new TreeSet(new Comparator<ResolvedDependency>() {
-        @Override
-        int compare(ResolvedDependency d1, ResolvedDependency d2) {
-            return ComparisonChain.start()
-                .compare(d1.moduleGroup, d2.moduleGroup)
-                .compare(d1.moduleName, d2.moduleName)
-                .compare(d1.moduleVersion, d2.moduleVersion)
-                .result()
-        }
-    })
+    Set<ResolvedDependency> transitiveDependenciesToAddAsFirstOrder = new TreeSet(dependencyComparator)
     Map<ResolvedDependency, String> firstOrderDependenciesWhoseConfigurationNeedsToChange = [:]
 
     Collection<String> configurations(ResolvedDependency d) {
@@ -114,31 +118,55 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
         firstLevelDependencies = project.configurations*.resolvedConfiguration*.firstLevelModuleDependencies
                 .flatten().unique() as Collection<ResolvedDependency>
 
+        transitiveDependencies = new HashSet()
+        def recurseTransitives
+        recurseTransitives = { Collection<ResolvedDependency> ds ->
+            ds.each { d ->
+                transitiveDependencies.add(d)
+                recurseTransitives(d.children)
+            }
+        }
+        recurseTransitives(firstLevelDependencies*.children.flatten() as Collection<ResolvedDependency>)
+
         // Unused first order dependencies
         Collection<ResolvedDependency> unusedDependencies = firstLevelDependencies.clone()
 
         // Used dependencies, both first order and transitive
         def classOwners = classOwners()
-        Collection<ResolvedDependency> usedDependencies = project.tasks.findAll { it instanceof AbstractCompile }
+        DependencyReferences usedDependencies = project.tasks.findAll { it instanceof AbstractCompile }
                 .collect { it as AbstractCompile }
                 .collect { it.destinationDir }
                 .unique()
                 .findAll { it.exists() }
-                .collect { dependencyReferences(it, classOwners) }
-                .flatten()
-                .unique { it.module.id } as Collection<ResolvedDependency>
+                .inject(new DependencyReferences()) { DependencyReferences result, File classesDir ->
+                    def refs = dependencyReferences(classesDir, classOwners)
+                    result.direct.addAll(refs.direct)
+                    result.indirect.addAll(refs.indirect)
+                    result
+                }
 
-        unusedDependencies.removeAll(usedDependencies)
+        unusedDependencies.removeAll(usedDependencies.direct)
 
         for(d in firstLevelDependencies) {
             def confs = configurations(d)
             if(unusedDependencies.contains(d)) {
                 if(!confs.contains('compile') && !confs.contains('testCompile'))
                     continue
+                if(confs.contains('provided')) {
+                    // these are treated as both compile and runtime type dependencies; the nebula extra-configurations
+                    // plugin doesn't provide enough detail to tell between the two
+                    continue
+                }
+
+                if(usedDependencies.indirect.contains(d) && !transitiveDependencies.contains(d)) {
+                    // this dependency is indirectly used -- if we remove it as a first order dependency,
+                    // it will break compilation
+                    continue
+                }
 
                 firstOrderDependenciesToRemove.add(d)
 
-                def inUse = transitivesInUse(d, usedDependencies)
+                def inUse = transitivesInUse(d, usedDependencies.direct)
                 if(!inUse.isEmpty()) {
                     inUse.each { used ->
                         def matching = firstLevelDependencies.find {
@@ -162,7 +190,6 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
         }
 
         // only keep the highest version of each transitive module that we need to add as a first order dependency
-        def versionComparator = new DefaultVersionComparator().asStringComparator()
         transitiveDependenciesToAddAsFirstOrder = transitiveDependenciesToAddAsFirstOrder
                 .groupBy { "$it.moduleGroup:$it.moduleName".toString() }
                 .values()
@@ -183,8 +210,8 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
             return childrenInUse
     }
 
-    Set<ResolvedDependency> dependencyReferences(File classesDir, Map<String, Set<ResolvedDependency>> classOwners) {
-        def references = new HashSet<ResolvedDependency>()
+    DependencyReferences dependencyReferences(File classesDir, Map<String, Set<ResolvedDependency>> classOwners) {
+        def references = new DependencyReferences()
 
         logger.debug('Looking for classes to examine in {}', classesDir)
 
@@ -192,17 +219,32 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
             @Override
             FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 if(file.toFile().name.endsWith('.class')) {
-                    logger.debug('Examining {} for first-order dependency references', file.toFile().path)
+                    logger.debug('Examining {} for first-order dependency directReferences', file.toFile().path)
                     def fin = file.newInputStream()
-                    def visitor = new DependencyClassVisitor(classOwners, logger)
+
+                    def visitor = new DependencyClassVisitor(classOwners, compiledSourceClassLoader())
                     new ClassReader(fin).accept(visitor, ClassReader.SKIP_DEBUG)
-                    references.addAll(visitor.references)
+                    references.direct.addAll(visitor.directReferences)
+                    references.indirect.addAll(visitor.indirectReferences)
                 }
                 return FileVisitResult.CONTINUE
             }
         })
 
         return references
+    }
+
+    ClassLoader compiledSourceClassLoader() {
+        def jars = project.configurations*.resolvedConfiguration*.getFiles(Specs.SATISFIES_ALL).flatten()
+                .findAll { it.name.endsWith('.jar') } as List<File>
+
+        def classDirs = project.tasks.findAll { it instanceof AbstractCompile }
+                .collect { it as AbstractCompile }
+                .collect { it.destinationDir }
+                .unique()
+                .findAll { it.exists() }
+
+        return new URLClassLoader((jars + classDirs).collect { it.toURI().toURL() } as URL[])
     }
 
     @Override
@@ -241,5 +283,10 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
                         })
             }
         }
+    }
+
+    class DependencyReferences {
+        Set<ResolvedDependency> direct = new TreeSet(dependencyComparator)
+        Set<ResolvedDependency> indirect = new TreeSet(dependencyComparator)
     }
 }
