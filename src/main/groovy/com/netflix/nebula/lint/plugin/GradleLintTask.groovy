@@ -1,6 +1,7 @@
 package com.netflix.nebula.lint.plugin
 
 import com.netflix.nebula.lint.rule.GradleLintRule
+import com.netflix.nebula.lint.rule.GradleViolation
 import org.codenarc.analyzer.StringSourceAnalyzer
 import org.codenarc.rule.Rule
 import org.gradle.api.DefaultTask
@@ -91,6 +92,14 @@ class GradleLintTask extends DefaultTask {
                     textOutput.withStyle(StyledTextOutput.Style.UserInput).println(buildFilePath + ':' + v.lineNumber)
                 if(v.sourceLine)
                     textOutput.println("$v.sourceLine")
+
+                if (v instanceof GradleViolation && v.isFixable() && v.addition) {
+                    if (v.addition) {
+                        textOutput.withStyle(StyledTextOutput.Style.UserInput).println("add this:")
+                        textOutput.println(v.addition.stripIndent().trim())
+                    }
+                }
+
                 textOutput.println() // extra space between violations
             }
 
