@@ -5,11 +5,15 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ResolvedDependency
 import org.gradle.api.specs.Specs
 import org.gradle.api.tasks.compile.AbstractCompile
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import java.util.jar.JarEntry
 import java.util.jar.JarFile
 
 class DependencyUtils {
+    private static Logger logger = LoggerFactory.getLogger(DependencyUtils)
+
     static Set<String> classes(ResolvedDependency d) {
         def definedClasses = new HashSet<String>()
 
@@ -47,5 +51,49 @@ class DependencyUtils {
                 .findAll { it.exists() }
 
         return new URLClassLoader((jars + classDirs).collect { it.toURI().toURL() } as URL[])
+    }
+
+    /**
+     * @return a map of fully qualified class name to a ResolvedDependency set representing those jars in the
+     * project's dependency configurations that contain the class
+     */
+    static Map<String, Set<ResolvedDependency>> resolvedDependenciesByClass(Project p) {
+        def firstLevelDependencies = p.configurations*.resolvedConfiguration*.firstLevelModuleDependencies
+                .flatten().unique() as Collection<ResolvedDependency>
+
+        def classOwners = new HashMap<String, Set<ResolvedDependency>>().withDefault {[] as Set}
+        def mvidsAlreadySeen = [] as Set
+
+        def recurseFindClassOwnersSingle
+        recurseFindClassOwnersSingle = { ResolvedDependency d ->
+            for (clazz in classes(d)) {
+                logger.debug('Class {} found in module {}', clazz, d.module.id)
+                classOwners[clazz].add(d)
+            }
+
+            d.children.each {
+                recurseFindClassOwnersSingle(it)
+            }
+        }
+
+        def recurseFindClassOwners
+        recurseFindClassOwners = { Collection<ResolvedDependency> ds ->
+            if(ds.isEmpty()) return
+
+            def notYetSeen = ds.findAll { d -> mvidsAlreadySeen.add(d.module.id) }
+
+            notYetSeen.each { d ->
+                for (clazz in classes(d)) {
+                    logger.debug('Class {} found in module {}', clazz, d.module.id)
+                    classOwners[clazz].add(d)
+                }
+            }
+
+            recurseFindClassOwners(notYetSeen*.children.flatten())
+        }
+
+        recurseFindClassOwners(firstLevelDependencies)
+
+        return classOwners
     }
 }
