@@ -24,8 +24,8 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
         }
         else if((match = report.firstOrderDependenciesWhoseConfigurationNeedsToChange.keySet().find(matchesGradleDep))) {
             def toConf = report.firstOrderDependenciesWhoseConfigurationNeedsToChange[match]
-            addViolationWithReplacement(call, 'this dependency is required at compile time',
-                    "$toConf '$match.module.id")
+            addViolationWithReplacement(call, "this dependency should be moved to configuration $toConf",
+                    "$toConf '$match.module.id'")
         }
     }
 
@@ -43,6 +43,10 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
 
     @Override
     void visitMethodCallExpression(MethodCallExpression call) {
+        if(report == null) {
+            report = UnusedDependencyReport.forProject(project)
+        }
+
         if(call.methodAsString == 'dependencies') {
             // TODO match indentation of surroundings
             def indentation = ''.padLeft(call.columnNumber + 3)
@@ -50,14 +54,14 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
 
             if(transitiveSize == 1) {
                 def d = report.transitiveDependenciesToAddAsFirstOrder.first()
-                addViolationInsert(call, 'one or more classes in this transitive dependency are required by your code directly',
-                        "\n${indentation}compile '$d.module.id'")
+                addViolationInsert(null, 'one or more classes in your transitive dependencies are required by your code directly',
+                        "\n${indentation}compile '$d.module.id'", call)
             }
             else if(transitiveSize > 1) {
-                addViolationInsert(call, 'one or more classes in these transitive dependencies are required by your code directly',
-                        report.transitiveDependenciesToAddAsFirstOrder.inject('') { deps, d ->
+                addViolationInsert(null, 'one or more classes in your transitive dependencies are required by your code directly',
+                        report.transitiveDependenciesToAddAsFirstOrder.toSorted(dependencyComparator).inject('') { deps, d ->
                             deps + "\n${indentation}compile '$d.module.id'"
-                        })
+                        }, call)
             }
         }
     }

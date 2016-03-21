@@ -85,8 +85,10 @@ class GradleLintCorrectionTask extends DefaultTask {
                     textOutput.text(v.rule.ruleId.padRight(35))
                     textOutput.withStyle(StyledTextOutput.Style.Description).println(v.message)
 
-                    textOutput.withStyle(StyledTextOutput.Style.UserInput).println(buildFilePath + ':' + v.lineNumber)
-                    textOutput.println("$v.sourceLine")
+                    if(v.lineNumber)
+                        textOutput.withStyle(StyledTextOutput.Style.UserInput).println(buildFilePath + ':' + v.lineNumber)
+                    if(v.sourceLine)
+                        textOutput.println("$v.sourceLine")
 
                     if (v instanceof GradleViolation && v.isFixable()) {
                         if (v.replacement) {
@@ -98,7 +100,7 @@ class GradleLintCorrectionTask extends DefaultTask {
                             correctedViolations++
                         } else if (v.addition) {
                             textOutput.withStyle(StyledTextOutput.Style.UserInput).println("adding:")
-                            textOutput.println(v.addition)
+                            textOutput.println(v.addition.trim().stripIndent())
                             correctedViolations++
                         }
                     } else {

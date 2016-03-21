@@ -59,10 +59,15 @@ class UnusedDependencyReport {
         // Used dependencies, both first order and transitive
         def resolvedDependenciesByClass = resolvedDependenciesByClass(project)
 
-        DependencyReferences usedDependencies = project.convention.getPlugin(JavaPluginConvention)
-                .sourceSets
-                .inject(new DependencyReferences()) { DependencyReferences result, sourceSet ->
-            dependencyReferences(sourceSet, resolvedDependenciesByClass, result)
+        DependencyReferences usedDependencies
+        try {
+            usedDependencies = project.convention.getPlugin(JavaPluginConvention)
+                    .sourceSets
+                    .inject(new DependencyReferences()) { DependencyReferences result, sourceSet ->
+                dependencyReferences(sourceSet, resolvedDependenciesByClass, result)
+            }
+        } catch(IllegalStateException e) {
+            return // no Java plugin convention, so nothing further we can do...
         }
 
         unusedDependencies.removeAll(usedDependencies.direct.keySet())

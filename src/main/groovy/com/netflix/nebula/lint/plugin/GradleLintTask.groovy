@@ -87,8 +87,11 @@ class GradleLintTask extends DefaultTask {
                 textOutput.text(v.rule.ruleId.padRight(35))
                 textOutput.withStyle(StyledTextOutput.Style.Description).println(v.message)
 
-                textOutput.withStyle(StyledTextOutput.Style.UserInput).println(buildFilePath + ':' + v.lineNumber)
-                textOutput.println("$v.sourceLine\n") // extra space between violations
+                if(v.lineNumber)
+                    textOutput.withStyle(StyledTextOutput.Style.UserInput).println(buildFilePath + ':' + v.lineNumber)
+                if(v.sourceLine)
+                    textOutput.println("$v.sourceLine")
+                textOutput.println() // extra space between violations
             }
 
             def errors = totalBySeverity.error ?: 0

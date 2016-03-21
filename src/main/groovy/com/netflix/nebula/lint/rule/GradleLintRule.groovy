@@ -156,7 +156,7 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
         if(isIgnored())
             return
 
-        def v = new GradleViolation(rule: rule, lineNumber: node.lineNumber,
+        def v = new GradleViolation(rule: rule, lineNumber: node?.lineNumber,
                 sourceLine: formattedViolation(node), message: message,
                 addition: addition)
         gradleViolations.add(v)
@@ -186,6 +186,8 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
      * prior to the starting column, and code that exists on the last line after the ending column
      */
     private String formattedViolation(ASTNode node) {
+        if(!node) return null
+
         // make a copy of violating lines so they can be formatted for display in a report
         def violatingLines = new ArrayList(sourceCode.lines.subList(node.lineNumber - 1, node.lastLineNumber))
 
