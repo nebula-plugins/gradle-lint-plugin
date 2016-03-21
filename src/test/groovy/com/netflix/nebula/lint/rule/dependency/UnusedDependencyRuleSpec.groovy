@@ -20,10 +20,6 @@ class UnusedDependencyRuleSpec extends IntegrationSpec {
             }
         '''
 
-    // TODO source is matched up to the appropriate configuration --> junit moved from compile to testCompile if appropriate
-
-    // TODO match up dependencies with source sets
-
     // TODO move dependencies from root project to subproject where appropriate
 
     // TODO look in web.xml for things like <filter-class>com.google.inject.servlet.GuiceFilter</filter-class>
@@ -33,6 +29,9 @@ class UnusedDependencyRuleSpec extends IntegrationSpec {
     // TODO should we be on the lookout for common runtime dependencies like xerces generally marked as compile?
 
     // TODO match indentation when adding dependencies
+
+    // TODO move dependencies from runtime to compile if the dependency is required at compile time (possible if
+    // the dependency is also being sourced transitively from a compile time dependency)
 
     @Unroll
     def 'unused compile dependencies are marked for deletion'() {
@@ -53,7 +52,9 @@ class UnusedDependencyRuleSpec extends IntegrationSpec {
         createJavaSourceFile(projectDir, main)
 
         then:
-        runTasksSuccessfully('compileJava', 'fixGradleLint')
+        def results = runTasksSuccessfully('compileJava', 'fixGradleLint')
+        println(results.standardOutput)
+
         dependencies(buildFile) == expected
 
         where:
@@ -230,6 +231,38 @@ class UnusedDependencyRuleSpec extends IntegrationSpec {
         then:
         runTasksSuccessfully('compileJava', 'fixGradleLint')
         dependencies(buildFile, 'compile') == ['com.google.inject.extensions:guice-servlet:3.0', 'javax.servlet:servlet-api:2.5']
+    }
+
+    def 'dependencies are moved to a configuration that matches the source set(s) that refer to them'() {
+        when:
+        buildFile.text = """
+            apply plugin: ${GradleLintPlugin.name}
+            apply plugin: 'java'
+
+            gradleLint.rules = ['unused-dependency']
+
+            repositories { mavenCentral() }
+
+            dependencies {
+                compile 'junit:junit:4.12'
+            }
+        """
+
+        createJavaTestFile(projectDir, '''
+            import org.junit.Test;
+            public class Test1 {
+                @Test
+                public void test() {}
+            }
+        ''')
+
+        then:
+        def results = runTasksSuccessfully('compileTestJava', 'fixGradleLint')
+
+        println(results.standardOutput)
+
+        dependencies(buildFile, 'compile') == []
+        dependencies(buildFile, 'testCompile') == ['junit:junit:4.12']
     }
 
     def dependencies(File _buildFile, String... confs = ['compile', 'testCompile']) {

@@ -6,8 +6,8 @@ import com.netflix.nebula.lint.rule.GradleModelAware
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.gradle.api.artifacts.ResolvedDependency
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.DefaultVersionComparator
-import org.gradle.api.specs.Specs
-import org.gradle.api.tasks.compile.AbstractCompile
+import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.tasks.SourceSet
 import org.objectweb.asm.ClassReader
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -17,8 +17,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
-import java.util.jar.JarEntry
-import java.util.jar.JarFile
+
+import static com.netflix.nebula.lint.rule.dependency.DependencyUtils.*
 
 class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
     Collection<ResolvedDependency> firstLevelDependencies
@@ -44,34 +44,17 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
         }
     }
 
-    static Set<String> classSet(ResolvedDependency d) {
-        def definedClasses = new HashSet<String>()
-
-        d.moduleArtifacts
-                .collect { it.file }
-                .findAll { it.name.endsWith('.jar') }
-                .findAll { !it.name.endsWith('-sources.jar') && !it.name.endsWith('-javadoc.jar') }
-                .each {
-                    def jarFile = new JarFile(it)
-                    def allEntries = jarFile.entries()
-                    while (allEntries.hasMoreElements()) {
-                        def entry = allEntries.nextElement() as JarEntry
-                        if(entry.name.endsWith('.class'))
-                            definedClasses += entry.name.replaceAll(/\.class$/, '')
-                    }
-                    jarFile.close()
-                }
-
-        return definedClasses
-    }
-
-    Map<String, Set<ResolvedDependency>> classOwners() {
+    /**
+     * @return a map of fully qualified class name to a ResolvedDependency set representing those jars in the
+     * project's dependency configurations that contain the class
+     */
+    Map<String, Set<ResolvedDependency>> resolvedDependenciesByClass() {
         def classOwners = new HashMap<String, Set<ResolvedDependency>>().withDefault {[] as Set}
         def mvidsAlreadySeen = [] as Set
 
         def recurseFindClassOwnersSingle
         recurseFindClassOwnersSingle = { ResolvedDependency d ->
-            for (clazz in classSet(d)) {
+            for (clazz in classes(d)) {
                 logger.debug('Class {} found in module {}', clazz, d.module.id)
                 classOwners[clazz].add(d)
             }
@@ -88,7 +71,7 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
             def notYetSeen = ds.findAll { d -> mvidsAlreadySeen.add(d.module.id) }
 
             notYetSeen.each { d ->
-                for (clazz in classSet(d)) {
+                for (clazz in classes(d)) {
                     logger.debug('Class {} found in module {}', clazz, d.module.id)
                     classOwners[clazz].add(d)
                 }
@@ -106,10 +89,6 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
     Set<ResolvedDependency> firstOrderDependenciesToRemove = new HashSet()
     Set<ResolvedDependency> transitiveDependenciesToAddAsFirstOrder = new TreeSet(dependencyComparator)
     Map<ResolvedDependency, String> firstOrderDependenciesWhoseConfigurationNeedsToChange = [:]
-
-    Collection<String> configurations(ResolvedDependency d) {
-        return project.configurations.findAll { it.resolvedConfiguration.firstLevelModuleDependencies.contains(d) }*.name
-    }
 
     void calculateUnusedDependenciesIfNecessary() {
         if(unusedDependenciesCalculated)
@@ -129,36 +108,34 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
         recurseTransitives(firstLevelDependencies*.children.flatten() as Collection<ResolvedDependency>)
 
         // Unused first order dependencies
-        Collection<ResolvedDependency> unusedDependencies = firstLevelDependencies.clone()
+        Collection<ResolvedDependency> unusedDependencies = firstLevelDependencies.clone() as Collection<ResolvedDependency>
 
         // Used dependencies, both first order and transitive
-        def classOwners = classOwners()
-        DependencyReferences usedDependencies = project.tasks.findAll { it instanceof AbstractCompile }
-                .collect { it as AbstractCompile }
-                .collect { it.destinationDir }
-                .unique()
-                .findAll { it.exists() }
-                .inject(new DependencyReferences()) { DependencyReferences result, File classesDir ->
-                    def refs = dependencyReferences(classesDir, classOwners)
-                    result.direct.addAll(refs.direct)
-                    result.indirect.addAll(refs.indirect)
-                    result
+        def resolvedDependenciesByClass = resolvedDependenciesByClass()
+
+        DependencyReferences usedDependencies = project.convention.getPlugin(JavaPluginConvention)
+                .sourceSets
+                .inject(new DependencyReferences()) { DependencyReferences result, sourceSet ->
+                    dependencyReferences(sourceSet, resolvedDependenciesByClass, result)
                 }
 
-        unusedDependencies.removeAll(usedDependencies.direct)
+        unusedDependencies.removeAll(usedDependencies.direct.keySet())
 
         for(d in firstLevelDependencies) {
-            def confs = configurations(d)
+            def confs = configurations(d, project)
             if(unusedDependencies.contains(d)) {
+                logger.info("Unused dependency found $d.module.id")
+
                 if(!confs.contains('compile') && !confs.contains('testCompile'))
                     continue
-                if(confs.contains('provided')) {
+
+                if(unusedDependencies.contains('provided')) {
                     // these are treated as both compile and runtime type dependencies; the nebula extra-configurations
-                    // plugin doesn't provide enough detail to tell between the two
-                    continue
+                    // plugin doesn't provide enough detail to differentiate between the two
+                    continue // we have to assume that this dependency is a runtime dependency
                 }
 
-                if(usedDependencies.indirect.contains(d) && !transitiveDependencies.contains(d)) {
+                if(!usedDependencies.indirect[d].isEmpty() && !transitiveDependencies.contains(d)) {
                     // this dependency is indirectly used -- if we remove it as a first order dependency,
                     // it will break compilation
                     continue
@@ -166,7 +143,8 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
 
                 firstOrderDependenciesToRemove.add(d)
 
-                def inUse = transitivesInUse(d, usedDependencies.direct)
+                // determine if a transitive is directly referenced and needs to be promoted to a first-order dependency
+                def inUse = transitivesInUse(d, usedDependencies.direct.keySet())
                 if(!inUse.isEmpty()) {
                     inUse.each { used ->
                         def matching = firstLevelDependencies.find {
@@ -182,10 +160,35 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
                     }
                 }
             }
+            // this is a dependency which is used at compile time for one or more source sets
             else {
-                if(!confs.contains('compile') && !confs.contains('testCompile')) {
-                    firstOrderDependenciesWhoseConfigurationNeedsToChange.put(d, 'compile')
+                logger.info("Unsimplified required in: " + (usedDependencies.direct[d] + usedDependencies.indirect[d]))
+
+                def confsRequiringDep = ConfigurationUtils.simplify(project, usedDependencies.direct[d] + usedDependencies.indirect[d])
+                def actualConfs = ConfigurationUtils.simplify(project, confs)
+
+                logger.info("Required in: $confsRequiringDep")
+                logger.info("Actually in: $actualConfs")
+
+                if(confsRequiringDep.size() == 1) { // except in the rare case of disjoint configurations, this will be true
+                    if(!actualConfs.contains(confsRequiringDep[0])) {
+                        firstOrderDependenciesWhoseConfigurationNeedsToChange.put(d, confsRequiringDep[0])
+                    }
+                    else {
+                        // this dependency is defined in the correct configuration, nothing needs to change
+                    }
                 }
+                else {
+                    // TODO this is a complicated case...
+
+                    // if the opposite difference (confsRequiringDeps - actualConfs) is non-empty, the code should
+                    // not compile, so we don't need to do anything in this lint rule
+                }
+
+//                if(!confs.contains('compile') && !confs.contains('testCompile') && !confs.contains('provided') &&
+//                        !confs.contains('providedCompile')) {
+//                    firstOrderDependenciesWhoseConfigurationNeedsToChange.put(d, 'compile')
+//                }
             }
         }
 
@@ -210,22 +213,25 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
             return childrenInUse
     }
 
-    DependencyReferences dependencyReferences(File classesDir, Map<String, Set<ResolvedDependency>> classOwners) {
-        def references = new DependencyReferences()
+    DependencyReferences dependencyReferences(SourceSet sourceSet,
+                                              Map<String, Set<ResolvedDependency>> resolvedDependenciesByClass,
+                                              DependencyReferences references) {
+        logger.debug('Looking for classes to examine in {}', sourceSet.output.classesDir)
 
-        logger.debug('Looking for classes to examine in {}', classesDir)
+        if(!sourceSet.output.classesDir.exists()) return references
 
-        Files.walkFileTree(classesDir.toPath(), new SimpleFileVisitor<Path>() {
+        Files.walkFileTree(sourceSet.output.classesDir.toPath(), new SimpleFileVisitor<Path>() {
             @Override
             FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 if(file.toFile().name.endsWith('.class')) {
                     logger.debug('Examining {} for first-order dependency directReferences', file.toFile().path)
                     def fin = file.newInputStream()
 
-                    def visitor = new DependencyClassVisitor(classOwners, compiledSourceClassLoader())
+                    def visitor = new DependencyClassVisitor(resolvedDependenciesByClass, compiledSourceClassLoader(project))
                     new ClassReader(fin).accept(visitor, ClassReader.SKIP_DEBUG)
-                    references.direct.addAll(visitor.directReferences)
-                    references.indirect.addAll(visitor.indirectReferences)
+
+                    visitor.directReferences.each { d -> references.direct[d].add(sourceSet.compileConfigurationName) }
+                    visitor.indirectReferences.each { d -> references.indirect[d].add(sourceSet.compileConfigurationName) }
                 }
                 return FileVisitResult.CONTINUE
             }
@@ -234,21 +240,13 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
         return references
     }
 
-    ClassLoader compiledSourceClassLoader() {
-        def jars = project.configurations*.resolvedConfiguration*.getFiles(Specs.SATISFIES_ALL).flatten()
-                .findAll { it.name.endsWith('.jar') } as List<File>
-
-        def classDirs = project.tasks.findAll { it instanceof AbstractCompile }
-                .collect { it as AbstractCompile }
-                .collect { it.destinationDir }
-                .unique()
-                .findAll { it.exists() }
-
-        return new URLClassLoader((jars + classDirs).collect { it.toURI().toURL() } as URL[])
-    }
-
     @Override
     void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
+//        if(project.rootProject == project) {
+//            // TODO write a test for this
+//            return // we won't touch dependencies in the root project
+//        }
+
         calculateUnusedDependenciesIfNecessary()
 
         def matchesGradleDep = { ResolvedDependency d -> d.module.id.group == dep.group && d.module.id.name == dep.name }
@@ -286,7 +284,8 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
     }
 
     class DependencyReferences {
-        Set<ResolvedDependency> direct = new TreeSet(dependencyComparator)
-        Set<ResolvedDependency> indirect = new TreeSet(dependencyComparator)
+        // maps of dependencies to the compile configuration of the source set that
+        Map<ResolvedDependency, Set<String>> direct = [:].withDefault {[] as Set}
+        Map<ResolvedDependency, Set<String>> indirect = [:].withDefault {[] as Set}
     }
 }
