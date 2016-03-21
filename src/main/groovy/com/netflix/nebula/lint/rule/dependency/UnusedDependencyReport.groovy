@@ -33,8 +33,20 @@ class UnusedDependencyReport {
     private Comparator<String> versionComparator = new DefaultVersionComparator().asStringComparator()
     private Project project
 
-    static UnusedDependencyReport forProject(Project project) {
-        return new UnusedDependencyReport(project)
+    private static Map<Project, UnusedDependencyReport> reportsByProject = [:]
+
+    /**
+     * @param project
+     * @return the unused dependency report, calculated once per project per lint session, regardless of how many
+     * rules use the report
+     */
+    static synchronized UnusedDependencyReport forProject(Project project) {
+        def report = reportsByProject[project]
+        if(report) return report
+
+        report = new UnusedDependencyReport(project)
+        reportsByProject[project] = report
+        return report
     }
 
     private UnusedDependencyReport(Project project) {

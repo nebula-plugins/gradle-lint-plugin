@@ -185,21 +185,28 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
      * @return a single or multi-line code snippet stripped of indentation, code that exists on the starting line
      * prior to the starting column, and code that exists on the last line after the ending column
      */
-    private String formattedViolation(ASTNode node) {
+    private final String formattedViolation(ASTNode node) {
         if(!node) return null
 
         // make a copy of violating lines so they can be formatted for display in a report
-        def violatingLines = new ArrayList(sourceCode.lines.subList(node.lineNumber - 1, node.lastLineNumber))
+        def violatingLines = new ArrayList<String>(sourceCode.lines.subList(node.lineNumber - 1, node.lastLineNumber))
 
         violatingLines[0] = violatingLines[0][(node.columnNumber - 1)..-1]
         if (node.lineNumber != node.lastLineNumber) {
             violatingLines[-1] = violatingLines[-1][0..(node.lastColumnNumber - 2)]
         }
 
-        violatingLines.eachWithIndex { String line, Integer i ->
-            if (i > 0) violatingLines[i] = '  ' + line.stripIndent()
+        // taken from the internal implementation of stripIndent()
+        def findMinimumLeadingSpaces = { Integer count, String line ->
+            int index
+            for(index = 0; index < line.length() && index < count && Character.isWhitespace(line.charAt(index)); ++index) {
+                ;
+            }
+            index
         }
 
+        def indentFirst = violatingLines.size() > 1 ? violatingLines.drop(1).inject(Integer.MAX_VALUE, findMinimumLeadingSpaces) : 0
+        violatingLines[0] = violatingLines[0].padLeft(violatingLines[0].length()+indentFirst)
         violatingLines.join('\n').stripIndent()
     }
 

@@ -230,4 +230,28 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         then:
         parent?.methodAsString == 'publications'
     }
+
+    def 'format multi-line violations'() {
+        when:
+        project.buildFile << """
+            multiline {
+              'this is a multiline'
+            }
+        """
+
+        def results = runRulesAgainst(new GradleLintRule() {
+            @Override
+            void visitMethodCallExpression(MethodCallExpression call) {
+                if(call.methodAsString == 'multiline')
+                    addViolationToDelete(call, 'this block can be deleted')
+            }
+        })
+
+        then:
+        (results.violations[0] as GradleViolation).sourceLine == '''
+            multiline {
+              'this is a multiline'
+            }
+        '''.stripIndent().trim()
+    }
 }

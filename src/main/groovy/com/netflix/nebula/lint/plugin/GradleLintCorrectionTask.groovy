@@ -100,7 +100,7 @@ class GradleLintCorrectionTask extends DefaultTask {
                             correctedViolations++
                         } else if (v.addition) {
                             textOutput.withStyle(StyledTextOutput.Style.UserInput).println("adding:")
-                            textOutput.println(v.addition.trim().stripIndent())
+                            textOutput.println(v.addition.stripIndent().trim())
                             correctedViolations++
                         }
                     } else {
