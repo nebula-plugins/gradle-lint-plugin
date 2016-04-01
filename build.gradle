@@ -17,12 +17,12 @@
 plugins {
     id 'groovy'
     id 'jacoco'
-    id 'nebula.info' version '3.0.3'
+    id 'nebula.info' version '3.0.4'
     id 'nebula.contacts' version '3.0.1'
     id 'nebula.integtest' version '3.0.3'
     id 'nebula.maven-publish' version '4.4.4'
-    id 'nebula.nebula-release' version '3.1.1'
-    id 'nebula.nebula-bintray' version '3.2.0'
+    id 'nebula.nebula-release' version '4.0.1'
+    id 'nebula.nebula-bintray' version '3.3.4'
     id 'com.gradle.plugin-publish' version '0.9.2'
     id 'nebula.javadoc-jar' version '4.4.4'
     id 'nebula.source-jar' version '4.4.4'
@@ -57,6 +57,7 @@ dependencies {
     compile('org.codenarc:CodeNarc:latest.release') {
         transitive = false
     }
+    compile 'com.netflix.nebula:gradle-info-plugin:3.0.4'
 
     // these two dependencies exist so we can provide a test harness
     // to proprietary rule implementations packed in other jars
