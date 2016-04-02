@@ -2,6 +2,7 @@ package com.netflix.nebula.lint.plugin
 
 import com.netflix.nebula.lint.rule.GradleLintRule
 import com.netflix.nebula.lint.rule.GradleViolation
+import nebula.plugin.info.InfoBrokerPlugin
 import org.codenarc.analyzer.StringSourceAnalyzer
 import org.codenarc.rule.Rule
 import org.gradle.api.DefaultTask
@@ -27,6 +28,12 @@ class GradleLintTask extends DefaultTask {
         }
     }
 
+    void tryReportToBroker(List<LintViolationReportItem> reportItems) {
+        project.getPlugins().withType(InfoBrokerPlugin) {
+            it.addReport('lintViolations', reportItems)
+        }
+    }
+
     @TaskAction
     void lint() {
         def textOutput = textOutputFactory.create('lint')
@@ -37,20 +44,20 @@ class GradleLintTask extends DefaultTask {
         def totalBySeverity = [warning: 0, error: 0]
 
         ([project] + project.subprojects).each { p ->
-            if(p.buildFile.exists()) {
+            if (p.buildFile.exists()) {
                 def extension
                 try {
                     extension = p.extensions.getByType(GradleLintExtension)
-                } catch(UnknownDomainObjectException) {
+                } catch (UnknownDomainObjectException) {
                     // if the subproject has not applied lint, use the extension configuration from the root project
                     extension = p.rootProject.extensions.getByType(GradleLintExtension)
                 }
                 def ruleSet = RuleSetFactory.configureRuleSet(extension.rules.collect { registry.buildRules(it, p) }
                         .flatten() as List<Rule>)
 
-                if(taskLogger.isDebugEnabled()) {
+                if (taskLogger.isDebugEnabled()) {
                     ruleSet.rules.each {
-                        if(it instanceof GradleLintRule)
+                        if (it instanceof GradleLintRule)
                             taskLogger.debug('Executing {} against {}', it.ruleId, p.buildFile.path)
                     }
                 }
@@ -80,18 +87,25 @@ class GradleLintTask extends DefaultTask {
         violationsByProject.entrySet().each {
             def buildFilePath = it.key.rootDir.toURI().relativize(it.key.buildFile.toURI()).toString()
             def violations = it.value
+            def violationReportItems = []
 
             violations.each { v ->
                 def severity = v.rule.priority <= 3 ? 'warning' : 'error'
+                def reportItem = new LintViolationReportItem(ruleId: v.rule.ruleId,
+                        severity: severity, buildFilePath: buildFilePath)
 
                 textOutput.withStyle(StyledTextOutput.Style.Failure).text(severity.padRight(10))
                 textOutput.text(v.rule.ruleId.padRight(35))
                 textOutput.withStyle(StyledTextOutput.Style.Description).println(v.message)
 
-                if(v.lineNumber)
+                if (v.lineNumber) {
                     textOutput.withStyle(StyledTextOutput.Style.UserInput).println(buildFilePath + ':' + v.lineNumber)
-                if(v.sourceLine)
+                    reportItem.lineNumber = v.lineNumber
+                }
+                if (v.sourceLine) {
                     textOutput.println("$v.sourceLine")
+                    reportItem.sourceLine = v.sourceLine
+                }
 
                 if (v instanceof GradleViolation && v.isFixable() && v.addition) {
                     if (v.addition) {
@@ -101,14 +115,17 @@ class GradleLintTask extends DefaultTask {
                 }
 
                 textOutput.println() // extra space between violations
+                violationReportItems << reportItem
             }
 
             def errors = totalBySeverity.error ?: 0
             def warnings = totalBySeverity.warning ?: 0
-            if(!violations.isEmpty()) {
+            if (!violations.isEmpty()) {
                 textOutput.withStyle(StyledTextOutput.Style.Failure)
                         .println("\u2716 ${buildFilePath}: ${violations.size()} problem${violations.size() == 1 ? '' : 's'} ($errors error${errors == 1 ? '' : 's'}, $warnings warning${warnings == 1 ? '' : 's'})\n".toString())
             }
+
+            tryReportToBroker(violationReportItems)
         }
 
         if (!allViolations.isEmpty()) {
