@@ -31,9 +31,7 @@ plugins {
     id 'nebula.provided-base' version '3.0.3'
 }
 
-group 'com.netflix.nebula'
-
-apply from: 'https://raw.githubusercontent.com/nebula-plugins/nebula-core/b676bbc026d0053494b5439ba8ef147c16adabba/common.gradle'
+apply from: 'https://raw.githubusercontent.com/nebula-plugins/nebula-core/59c9e15f561372a8a72bbe13e4fbb114d0ef16f8/common.gradle'
 
 description 'Pluggable and configurable linter tool for identifying and reporting on patterns of misuse or deprecations in Gradle scripts'
 
@@ -50,9 +48,6 @@ repositories {
 }
 
 dependencies {
-    compile gradleApi()
-    compile localGroovy()
-
     compile 'org.ow2.asm:asm:5.0.4'
     compile('org.codenarc:CodeNarc:latest.release') {
         transitive = false
