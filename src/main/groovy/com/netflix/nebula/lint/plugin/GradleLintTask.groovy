@@ -28,12 +28,6 @@ class GradleLintTask extends DefaultTask {
         }
     }
 
-    void tryReportToBroker(List<LintViolationReportItem> reportItems) {
-        project.getPlugins().withType(InfoBrokerPlugin) {
-            it.addReport('lintViolations', reportItems)
-        }
-    }
-
     @TaskAction
     void lint() {
         def textOutput = textOutputFactory.create('lint')
@@ -84,10 +78,10 @@ class GradleLintTask extends DefaultTask {
             }
         }
 
+        def violationReportItems = []
         violationsByProject.entrySet().each {
             def buildFilePath = it.key.rootDir.toURI().relativize(it.key.buildFile.toURI()).toString()
             def violations = it.value
-            def violationReportItems = []
 
             violations.each { v ->
                 def severity = v.rule.priority <= 3 ? 'warning' : 'error'
@@ -125,8 +119,8 @@ class GradleLintTask extends DefaultTask {
                         .println("\u2716 ${buildFilePath}: ${violations.size()} problem${violations.size() == 1 ? '' : 's'} ($errors error${errors == 1 ? '' : 's'}, $warnings warning${warnings == 1 ? '' : 's'})\n".toString())
             }
 
-            tryReportToBroker(violationReportItems)
         }
+        project.getPlugins().withType(InfoBrokerPlugin) { it.addReport('lintViolations', violationReportItems) }
 
         if (!allViolations.isEmpty()) {
             textOutput.text("To apply fixes automatically, run ").withStyle(StyledTextOutput.Style.UserInput).text("fixGradleLint")
