@@ -1,12 +1,10 @@
 package com.netflix.nebula.lint.plugin
 
-import com.netflix.nebula.lint.analyzer.CorrectableStringSourceAnalyzer
-import com.netflix.nebula.lint.postprocess.EmptyClosureRule
-import com.netflix.nebula.lint.rule.GradleViolation
-import org.codenarc.rule.Rule
-import org.codenarc.rule.Violation
+import com.netflix.nebula.lint.GradleLintPatchGenerator
+import com.netflix.nebula.lint.GradleLintViolationAction
+import com.netflix.nebula.lint.GradleViolation
+import org.eclipse.jgit.api.ApplyCommand
 import org.gradle.api.DefaultTask
-import org.gradle.api.Project
 import org.gradle.api.tasks.TaskAction
 import org.gradle.logging.StyledTextOutput
 import org.gradle.logging.StyledTextOutputFactory
@@ -14,109 +12,58 @@ import org.gradle.logging.StyledTextOutputFactory
 import javax.inject.Inject
 
 class GradleLintCorrectionTask extends DefaultTask {
+    List<GradleLintViolationAction> listeners = []
+
     @Inject
     protected StyledTextOutputFactory getTextOutputFactory() {
         null // see http://gradle.1045684.n5.nabble.com/injecting-dependencies-into-task-instances-td5712637.html
     }
 
-    void performCorrections(Project p, CorrectableStringSourceAnalyzer analyzer) {
-        p.buildFile.text = analyzer.corrected // perform initial correction
-
-        // Clean up any ugly artifacts we may have created through the auto-fix process
-        // (e.g. empty extension object closures that have had all their property definitions removed)
-        def ruleSet = RuleSetFactory.configureRuleSet([new EmptyClosureRule()])
-        def postProcessor = new CorrectableStringSourceAnalyzer(p.buildFile.text)
-        postProcessor.analyze(ruleSet)
-
-        p.buildFile.text = postProcessor.corrected
-    }
-
     @TaskAction
     void lintCorrections() {
         // look at org.gradle.logging.internal.DefaultColorMap
-        def textOutput = textOutputFactory.create('lint')
-        def registry = new LintRuleRegistry()
-
-        def violationsByProject = [:]
-
-        ([project] + project.subprojects).each { p ->
-            if (p.buildFile.exists()) {
-                def extension
-                try {
-                    extension = p.extensions.getByType(GradleLintExtension)
-                } catch(UnknownDomainObjectException) {
-                    // if the subproject has not applied lint, use the extension configuration from the root project
-                    extension = p.rootProject.extensions.getByType(GradleLintExtension)
-                }
-
-                def ruleSet = RuleSetFactory.configureRuleSet(extension.rules.collect { registry.buildRules(it, p) }
-                        .flatten() as List<Rule>)
-
-                def analyzer = new CorrectableStringSourceAnalyzer(p.buildFile.text)
-                def results = analyzer.analyze(ruleSet)
-
-                performCorrections(p, analyzer)
-                violationsByProject[p] = results.violations
-            }
+        def violations = new GradleLintService().lint(project)
+        (listeners + new GradleLintPatchGenerator(project) + consoleOutputAction).each {
+            it.lintFinished(violations)
+            it.lintFixed(violations.findAll { it.isFixable() })
         }
 
-        def allViolations = violationsByProject.values().flatten()
-        def correctedViolations = 0, uncorrectedViolations = 0
+        def patchFile = new File(project.buildDir, GradleLintPatchGenerator.PATCH_NAME)
+        if(patchFile.exists()) {
+            new ApplyCommand(new NotNecessarilyGitRepository(project.projectDir)).setPatch(patchFile.newInputStream()).call()
+        }
+    }
 
-        if(allViolations.isEmpty()) {
-            textOutput.style(StyledTextOutput.Style.Identifier).println("Passed lint check with 0 violations; no corrections necessary")
-        } else {
-            textOutput.withStyle(StyledTextOutput.Style.UserInput).text('\nThis project contains lint violations. ')
-            textOutput.println('A complete listing of my attempt to fix them follows. Please review and commit the changes.\n')
+    final def consoleOutputAction = new GradleLintViolationAction() {
+        @Override
+        void lintFixed(Collection<GradleViolation> violations) {
+            def textOutput = textOutputFactory.create('lint')
 
-            violationsByProject.entrySet().each {
-                def buildFilePath = it.key.rootDir.toURI().relativize(it.key.buildFile.toURI()).toString()
-                def violations = it.value
+            if(violations.empty) {
+                textOutput.style(StyledTextOutput.Style.Identifier).println("Passed lint check with 0 violations; no corrections necessary")
+            } else {
+                textOutput.withStyle(StyledTextOutput.Style.UserInput).text('\nThis project contains lint violations. ')
+                textOutput.println('A complete listing of my attempt to fix them follows. Please review and commit the changes.\n')
 
-                violations.each { Violation v ->
-                    def severity = v.rule.priority <= 3 ? 'warning' : 'error'
+                violations.groupBy { it.buildFile }.each { buildFile, projectViolations ->
+                    def buildFilePath = project.rootDir.toURI().relativize(buildFile.toURI()).toString()
 
-                    if (v instanceof GradleViolation && v.isFixable()) {
+                    projectViolations.each { v ->
                         textOutput.withStyle(StyledTextOutput.Style.Identifier).text('fixed'.padRight(10))
-                    } else {
-                        textOutput.withStyle(StyledTextOutput.Style.Failure).text(severity.padRight(10))
+                        textOutput.text(v.rule.ruleId.padRight(35))
+                        textOutput.withStyle(StyledTextOutput.Style.Description).println(v.message)
+
+                        if(v.lineNumber)
+                            textOutput.withStyle(StyledTextOutput.Style.UserInput).println(buildFilePath + ':' + v.lineNumber)
+                        if (v.sourceLine)
+                            textOutput.println("$v.sourceLine")
+
+                        textOutput.println() // extra space between violations
                     }
-
-                    textOutput.text(v.rule.ruleId.padRight(35))
-                    textOutput.withStyle(StyledTextOutput.Style.Description).println(v.message)
-
-                    if(v.lineNumber)
-                        textOutput.withStyle(StyledTextOutput.Style.UserInput).println(buildFilePath + ':' + v.lineNumber)
-                    if(v.sourceLine)
-                        textOutput.println("$v.sourceLine")
-
-                    if (v instanceof GradleViolation && v.isFixable()) {
-                        if (v.replacement) {
-                            textOutput.withStyle(StyledTextOutput.Style.UserInput).println('replaced with:')
-                            textOutput.println(v.replacement)
-                            correctedViolations++
-                        } else if (v.deleteLine) {
-                            textOutput.withStyle(StyledTextOutput.Style.UserInput).println("deleted line $v.deleteLine")
-                            correctedViolations++
-                        } else if (v.addition) {
-                            textOutput.withStyle(StyledTextOutput.Style.UserInput).println("adding:")
-                            textOutput.println(v.addition.stripIndent().trim())
-                            correctedViolations++
-                        }
-                    } else {
-                        textOutput.withStyle(StyledTextOutput.Style.Error).println('\u2716 no auto-correct available')
-                        uncorrectedViolations++
-                    }
-
-                    textOutput.println() // extra space between violations
                 }
+
+                textOutput.style(StyledTextOutput.Style.Identifier).println("Corrected ${violations.size()} lint problems\n")
             }
-
-            if(correctedViolations > 0)
-                textOutput.style(StyledTextOutput.Style.Identifier).println("Corrected $correctedViolations lint problems\n")
-
-            if(uncorrectedViolations > 0)
-                textOutput.style(StyledTextOutput.Style.Error).println("Corrected $correctedViolations lint problems\n")
         }
     }
 }

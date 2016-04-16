@@ -17,16 +17,21 @@ import java.nio.file.attribute.BasicFileAttributes
 
 import static com.netflix.nebula.lint.rule.dependency.DependencyUtils.compiledSourceClassLoader
 import static com.netflix.nebula.lint.rule.dependency.DependencyUtils.configurations
-import static com.netflix.nebula.lint.rule.dependency.DependencyUtils.resolvedDependenciesByClass
 
 class UnusedDependencyReport {
     Set<ResolvedDependency> firstOrderDependenciesToRemove = new HashSet()
     Set<ResolvedDependency> transitiveDependenciesToAddAsFirstOrder = new HashSet()
     Map<ResolvedDependency, String> firstOrderDependenciesWhoseConfigurationNeedsToChange = [:]
+    Set<ResolvedDependency> firstOrderDependenciesWithNoClasses = new HashSet()
+
+    /**
+     * The set of source sets that were unevaluated because there were no compiled classes in their output classes directories
+     */
+    Set<SourceSet> unevaluatedSourceSets = new HashSet()
 
     private Collection<String> runtimeConfs = [
-            'runtime',  // from java plugin
-            'providedRuntime' // from war plugin
+        'runtime',  // from java plugin
+        'providedRuntime' // from war plugin
     ]
 
     private static Logger logger = LoggerFactory.getLogger(UnusedDependencyReport)
@@ -42,7 +47,7 @@ class UnusedDependencyReport {
      */
     static synchronized UnusedDependencyReport forProject(Project project) {
         def report = reportsByProject[project]
-        if(report) return report
+        if (report) return report
 
         report = new UnusedDependencyReport(project)
         reportsByProject[project] = report
@@ -76,27 +81,27 @@ class UnusedDependencyReport {
             usedDependencies = project.convention.getPlugin(JavaPluginConvention)
                     .sourceSets
                     .inject(new DependencyReferences()) { DependencyReferences result, sourceSet ->
-                dependencyReferences(sourceSet, resolvedDependenciesByClass, result)
-            }
-        } catch(IllegalStateException e) {
+                        dependencyReferences(sourceSet, resolvedDependenciesByClass, result)
+                    }
+        } catch (IllegalStateException e) {
             return // no Java plugin convention, so nothing further we can do...
         }
 
         unusedDependencies.removeAll(usedDependencies.direct.keySet())
 
-        for(d in firstLevelDependencies) {
+        for (d in firstLevelDependencies) {
             def confs = configurations(d, project)
-            if(unusedDependencies.contains(d)) {
-                if(!confs.contains('compile') && !confs.contains('testCompile'))
+            if (unusedDependencies.contains(d)) {
+                if (!confs.contains('compile') && !confs.contains('testCompile'))
                     continue
 
-                if(unusedDependencies.contains('provided')) {
+                if (unusedDependencies.contains('provided')) {
                     // these are treated as both compile and runtime type dependencies; the nebula extra-configurations
                     // plugin doesn't provide enough detail to differentiate between the two
                     continue // we have to assume that this dependency is a runtime dependency
                 }
 
-                if(!usedDependencies.indirect[d].isEmpty() && !transitiveDependencies.contains(d)) {
+                if (!usedDependencies.indirect[d].isEmpty() && !transitiveDependencies.contains(d)) {
                     // this dependency is indirectly used -- if we remove it as a first order dependency,
                     // it will break compilation
                     continue
@@ -106,16 +111,15 @@ class UnusedDependencyReport {
 
                 // determine if a transitive is directly referenced and needs to be promoted to a first-order dependency
                 def inUse = transitivesInUse(d, usedDependencies.direct.keySet())
-                if(!inUse.isEmpty()) {
+                if (!inUse.isEmpty()) {
                     inUse.each { used ->
                         def matching = firstLevelDependencies.find {
                             it.module.id.group == used.moduleGroup && it.module.id.name == used.moduleName
                         }
 
-                        if(!matching) {
+                        if (!matching) {
                             transitiveDependenciesToAddAsFirstOrder.add(used)
-                        }
-                        else if(runtimeConfs.contains(matching.configuration)) {
+                        } else if (runtimeConfs.contains(matching.configuration)) {
                             firstOrderDependenciesWhoseConfigurationNeedsToChange.put(matching, 'compile')
                         }
                     }
@@ -126,17 +130,15 @@ class UnusedDependencyReport {
                 def confsRequiringDep = ConfigurationUtils.simplify(project, usedDependencies.direct[d] + usedDependencies.indirect[d])
                 def actualConfs = ConfigurationUtils.simplify(project, confs)
 
-                if(confsRequiringDep.size() == 1) { // except in the rare case of disjoint configurations, this will be true
-                    if(!actualConfs.contains(confsRequiringDep[0])) {
+                if (confsRequiringDep.size() == 1) {
+                    // except in the rare case of disjoint configurations, this will be true
+                    if (!actualConfs.contains(confsRequiringDep[0])) {
                         firstOrderDependenciesWhoseConfigurationNeedsToChange.put(d, confsRequiringDep[0])
-                    }
-                    else {
+                    } else {
                         // this dependency is defined in the correct configuration, nothing needs to change
                     }
-                }
-                else {
+                } else {
                     // TODO this is a complicated case...
-
                     // if the opposite difference (confsRequiringDeps - actualConfs) is non-empty, the code should
                     // not compile, so we don't need to do anything in this lint rule
                 }
@@ -148,17 +150,53 @@ class UnusedDependencyReport {
                 .groupBy { "$it.moduleGroup:$it.moduleName".toString() }
                 .values()
                 .collect {
-            it.sort { d1, d2 -> versionComparator.compare(d2.moduleVersion, d1.moduleVersion) }.first()
+                    it.sort { d1, d2 -> versionComparator.compare(d2.moduleVersion, d1.moduleVersion) }.first()
+                }
+                .toSet()
+    }
+
+    /**
+     * @return a map of fully qualified class name to a ResolvedDependency set representing those jars in the
+     * project's dependency configurations that contain the class
+     */
+    private Map<String, Set<ResolvedDependency>> resolvedDependenciesByClass(Project p) {
+        def firstLevelDependencies = p.configurations*.resolvedConfiguration*.firstLevelModuleDependencies
+                .flatten().unique() as Collection<ResolvedDependency>
+
+        def classOwners = new HashMap<String, Set<ResolvedDependency>>().withDefault { [] as Set }
+        def mvidsAlreadySeen = [] as Set
+
+        def recurseFindClassOwners
+        recurseFindClassOwners = { Collection<ResolvedDependency> ds ->
+            if (ds.empty) return
+
+            def notYetSeen = ds.findAll { d -> mvidsAlreadySeen.add(d.module.id) }
+
+            notYetSeen.each { d ->
+                def classes = DependencyUtils.classes(d)
+
+                if(classes.empty)
+                    firstOrderDependenciesWithNoClasses.add(d)
+
+                for (clazz in classes) {
+                    logger.debug('Class {} found in module {}', clazz, d.module.id)
+                    classOwners[clazz].add(d)
+                }
+            }
+
+            recurseFindClassOwners(notYetSeen*.children.flatten())
         }
-        .toSet()
+
+        recurseFindClassOwners(firstLevelDependencies)
+
+        return classOwners
     }
 
     private Set<ResolvedDependency> transitivesInUse(ResolvedDependency d, Collection<ResolvedDependency> usedDependencies) {
         def childrenInUse = d.children.collect { transitivesInUse(it, usedDependencies) }.flatten() as Collection<ResolvedDependency>
-        if(usedDependencies.contains(d)) {
+        if (usedDependencies.contains(d)) {
             return childrenInUse.plus(d).toSet()
-        }
-        else
+        } else
             return childrenInUse
     }
 
@@ -167,12 +205,15 @@ class UnusedDependencyReport {
                                               DependencyReferences references) {
         logger.debug('Looking for classes to examine in {}', sourceSet.output.classesDir)
 
-        if(!sourceSet.output.classesDir.exists()) return references
+        if (!sourceSet.output.classesDir.exists()) {
+            unevaluatedSourceSets.add(sourceSet)
+            return references
+        }
 
         Files.walkFileTree(sourceSet.output.classesDir.toPath(), new SimpleFileVisitor<Path>() {
             @Override
             FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                if(file.toFile().name.endsWith('.class')) {
+                if (file.toFile().name.endsWith('.class')) {
                     logger.debug('Examining {} for first-order dependency directReferences', file.toFile().path)
                     def fin = file.newInputStream()
 
@@ -191,7 +232,7 @@ class UnusedDependencyReport {
 
     class DependencyReferences {
         // maps of dependencies to the compile configuration of the source set that
-        Map<ResolvedDependency, Set<String>> direct = [:].withDefault {[] as Set}
-        Map<ResolvedDependency, Set<String>> indirect = [:].withDefault {[] as Set}
+        Map<ResolvedDependency, Set<String>> direct = [:].withDefault { [] as Set }
+        Map<ResolvedDependency, Set<String>> indirect = [:].withDefault { [] as Set }
     }
 }

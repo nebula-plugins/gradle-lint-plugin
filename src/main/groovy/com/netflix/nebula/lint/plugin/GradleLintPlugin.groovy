@@ -13,14 +13,19 @@ class GradleLintPlugin implements Plugin<Project> {
         def lintExt = project.extensions.create('gradleLint', GradleLintExtension)
 
         if (project.rootProject == project) {
-            project.tasks.create('fixGradleLint', GradleLintCorrectionTask)
-            project.tasks.create('fixLintGradle', GradleLintCorrectionTask)
-            project.tasks.create('lintGradle', GradleLintTask)
+            def lintTask = project.tasks.create('lintGradle', GradleLintTask)
+            lintTask.listeners = lintExt.listeners
+
+            def fixTask = project.tasks.create('fixGradleLint', GradleLintCorrectionTask)
+            fixTask.listeners = lintExt.listeners
+
+            def fixTask2 = project.tasks.create('fixLintGradle', GradleLintCorrectionTask)
+            fixTask2.listeners = lintExt.listeners
         } else {
-            project.rootProject.apply plugin: GradleLintPlugin
-            project.tasks.create('lintGradle').finalizedBy project.rootProject.tasks.getByName('lintGradle')
-            project.tasks.create('fixGradleLint').finalizedBy project.rootProject.tasks.getByName('fixGradleLint')
-            project.tasks.create('fixLintGradle').finalizedBy project.rootProject.tasks.getByName('fixGradleLint')
+//            project.rootProject.apply plugin: GradleLintPlugin
+//            project.tasks.create('lintGradle').finalizedBy project.rootProject.tasks.getByName('lintGradle')
+//            project.tasks.create('fixGradleLint').finalizedBy project.rootProject.tasks.getByName('fixGradleLint')
+//            project.tasks.create('fixLintGradle').finalizedBy project.rootProject.tasks.getByName('fixGradleLint')
         }
 
         configureReportTask(project, lintExt)

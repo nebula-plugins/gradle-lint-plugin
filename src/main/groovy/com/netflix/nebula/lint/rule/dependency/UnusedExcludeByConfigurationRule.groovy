@@ -35,7 +35,8 @@ class UnusedExcludeByConfigurationRule extends GradleLintRule implements GradleM
         project.configurations.remove(lintExcludeConf)
 
         if(!excludeIsInTransitiveClosure) {
-            addViolationToDelete(call, 'the exclude dependency is not in your dependency graph, so has no effect')
+            addLintViolation('the exclude dependency is not in your dependency graph, so has no effect', call)
+                .delete(call)
         }
     }
 }

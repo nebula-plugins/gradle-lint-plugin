@@ -1,63 +1,19 @@
 package com.netflix.nebula.lint.rule
 
-import com.netflix.nebula.lint.analyzer.CorrectableStringSource
+import com.netflix.nebula.lint.GradleViolation
 import com.netflix.nebula.lint.plugin.LintRuleRegistry
 import org.codehaus.groovy.ast.*
-import org.codehaus.groovy.ast.expr.ArgumentListExpression
-import org.codehaus.groovy.ast.expr.ArrayExpression
-import org.codehaus.groovy.ast.expr.AttributeExpression
-import org.codehaus.groovy.ast.expr.BinaryExpression
-import org.codehaus.groovy.ast.expr.BitwiseNegationExpression
-import org.codehaus.groovy.ast.expr.BooleanExpression
-import org.codehaus.groovy.ast.expr.CastExpression
-import org.codehaus.groovy.ast.expr.ClassExpression
-import org.codehaus.groovy.ast.expr.ClosureExpression
-import org.codehaus.groovy.ast.expr.ClosureListExpression
-import org.codehaus.groovy.ast.expr.ConstantExpression
-import org.codehaus.groovy.ast.expr.ConstructorCallExpression
-import org.codehaus.groovy.ast.expr.DeclarationExpression
-import org.codehaus.groovy.ast.expr.ElvisOperatorExpression
-import org.codehaus.groovy.ast.expr.Expression
-import org.codehaus.groovy.ast.expr.FieldExpression
-import org.codehaus.groovy.ast.expr.GStringExpression
-import org.codehaus.groovy.ast.expr.ListExpression
-import org.codehaus.groovy.ast.expr.MapEntryExpression
-import org.codehaus.groovy.ast.expr.MapExpression
-import org.codehaus.groovy.ast.expr.MethodCallExpression
-import org.codehaus.groovy.ast.expr.MethodPointerExpression
-import org.codehaus.groovy.ast.expr.NotExpression
-import org.codehaus.groovy.ast.expr.PostfixExpression
-import org.codehaus.groovy.ast.expr.PrefixExpression
-import org.codehaus.groovy.ast.expr.PropertyExpression
-import org.codehaus.groovy.ast.expr.RangeExpression
-import org.codehaus.groovy.ast.expr.SpreadExpression
-import org.codehaus.groovy.ast.expr.SpreadMapExpression
-import org.codehaus.groovy.ast.expr.StaticMethodCallExpression
-import org.codehaus.groovy.ast.expr.TernaryExpression
-import org.codehaus.groovy.ast.expr.TupleExpression
-import org.codehaus.groovy.ast.expr.UnaryMinusExpression
-import org.codehaus.groovy.ast.expr.UnaryPlusExpression
-import org.codehaus.groovy.ast.expr.VariableExpression
+import org.codehaus.groovy.ast.expr.*
 import org.codehaus.groovy.ast.stmt.*
 import org.codehaus.groovy.classgen.BytecodeExpression
-import org.codenarc.rule.AbstractAstVisitor
-import org.codenarc.rule.AbstractAstVisitorRule
-import org.codenarc.rule.AstVisitor
-import org.codenarc.rule.Rule
-import org.codenarc.rule.Violation
+import org.codenarc.rule.*
 import org.codenarc.source.SourceCode
-import org.gradle.api.Project
+
 
 abstract class GradleLintRule extends AbstractAstVisitor implements Rule, GradleAstVisitor {
-    enum Level {
-        Trivial(1), Warning(2), Error(3)
-
-        int priority
-        Level(int priority) { this.priority = priority }
-    }
-
-    Level level = Level.Warning
+    private static final GradleViolation.Level DEFAULT_LEVEL = GradleViolation.Level.Warning
     Project project // will be non-null if type is GradleModelAware, otherwise null
+    File buildFile
     SourceCode sourceCode
     List<GradleViolation> gradleViolations = []
 
@@ -70,7 +26,7 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
 
     @Override
     final int getPriority() {
-        return level.priority
+        return DEFAULT_LEVEL.priority
     }
 
     private Map<String, ASTNode> bookmarks = [:]
@@ -109,14 +65,6 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
         bookmarks[label]
     }
 
-    boolean isCorrectable() {
-        return sourceCode instanceof CorrectableStringSource
-    }
-
-    CorrectableStringSource getCorrectableSourceCode() {
-        return (CorrectableStringSource) sourceCode
-    }
-
     @SuppressWarnings("GrDeprecatedAPIUsage")
     @Override
     protected final void addViolation(ASTNode node) {
@@ -128,50 +76,15 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
         throw new UnsupportedOperationException("use one of the addViolationWith* methods or addViolationNoCorrection if there is no auto-fix rule")
     }
 
-    void addViolationWithReplacement(ASTNode node, String message, String replacement, ASTNode replaceAt = null) {
-        if (isIgnored())
-            return
-
-        def v = new GradleViolation(rule: rule, lineNumber: node.lineNumber,
-                sourceLine: formattedViolation(node), message: message,
-                replacement: replacement)
-        gradleViolations.add(v)
-        if (replacement != null && isCorrectable())
-            correctableSourceCode.replace(replaceAt ?: node, replacement)
+    public GradleViolation addLintViolation(String message, ASTNode node, GradleViolation.Level level = DEFAULT_LEVEL) {
+        def v = new GradleViolation(level, buildFile, rule, node?.lineNumber, formattedViolation(node), message)
+        if(!isIgnored())
+            gradleViolations.add(v)
+        return v
     }
 
-    void addViolationToDelete(ASTNode node, String message, ASTNode deleteAt = null) {
-        if (isIgnored())
-            return
-
-        def v = new GradleViolation(rule: rule, lineNumber: node.lineNumber,
-                sourceLine: formattedViolation(node), message: message,
-                deleteLine: (deleteAt ?: node).lineNumber)
-        gradleViolations.add(v)
-        if (isCorrectable())
-            correctableSourceCode.delete(deleteAt ?: node)
-    }
-
-    void addViolationInsert(ASTNode node, String message, String addition, ASTNode insertAt = null) {
-        if(isIgnored())
-            return
-
-        def v = new GradleViolation(rule: rule, lineNumber: node?.lineNumber,
-                sourceLine: formattedViolation(node), message: message,
-                addition: addition)
-        gradleViolations.add(v)
-        if (isCorrectable()) {
-            correctableSourceCode.add(insertAt ?: node, addition)
-        }
-    }
-
-    void addViolationNoCorrection(ASTNode node, String message) {
-        if (isIgnored())
-            return
-
-        def v = new GradleViolation(rule: rule, lineNumber: node.lineNumber,
-                sourceLine: formattedViolation(node), message: message)
-        gradleViolations.add(v)
+    public GradleViolation addLintViolation(String message, GradleViolation.Level level = DEFAULT_LEVEL) {
+        addLintViolation(message, null, level)
     }
 
     @Override
@@ -215,7 +128,7 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
      */
     @Delegate final Rule rule = new AbstractAstVisitorRule() {
         String name = GradleLintRule.this.ruleId
-        int priority = level.priority
+        int priority = 0 // not relevant, as this 'rule' will never emit a violation
         Stack<MethodCallExpression> closureStack = new Stack<MethodCallExpression>()
 
         AbstractAstVisitor gradleAstVisitor = new AbstractAstVisitor() {
@@ -730,3 +643,5 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
         }
     }
 }
+
+import org.gradle.api.Project

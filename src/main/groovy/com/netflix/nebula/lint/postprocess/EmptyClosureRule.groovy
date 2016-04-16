@@ -28,8 +28,9 @@ class EmptyClosureRule extends GradleLintRule {
 
     @Override
     protected void visitClassComplete(ClassNode node) {
-        potentialDeletes.each {
-            addViolationToDelete(it, 'this is an empty configuration closure that can be removed')
+        potentialDeletes.unique().each {
+            addLintViolation('this is an empty configuration closure that can be removed', it)
+                .delete(it)
         }
     }
 }

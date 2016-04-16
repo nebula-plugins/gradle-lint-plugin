@@ -7,13 +7,9 @@ class EmptyClosureRuleSpec extends AbstractRuleSpec {
     def 'if a deletion rule(s) causes a closure to be empty, delete the closure'() {
         when:
         project.buildFile << """
-            nebula {
-                moduleOwner = 'me'
-            }
-
-            nebula {
-            }
-        """
+            nebula { moduleOwner = 'me' }
+            nebula { }
+            """.substring(1).stripIndent()
 
         then:
         correct(new EmptyClosureRule()).replaceAll(/\s/, '') == /nebula{moduleOwner='me'}/

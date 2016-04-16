@@ -1,13 +1,9 @@
 package com.netflix.nebula.lint.rule.dependency
 
-import com.netflix.nebula.lint.plugin.GradleLintPlugin
-import nebula.test.IntegrationSpec
-import org.gradle.api.logging.LogLevel
+import com.netflix.nebula.lint.TestKitSpecification
 import spock.lang.Unroll
 
-class UnusedDependencyRuleSpec extends IntegrationSpec {
-    LogLevel logLevel = LogLevel.DEBUG
-
+class UnusedDependencyRuleSpec extends TestKitSpecification {
     static def guava = 'com.google.guava:guava:18.0'
     static def asm = 'org.ow2.asm:asm:5.0.4'
 
@@ -33,12 +29,18 @@ class UnusedDependencyRuleSpec extends IntegrationSpec {
     // TODO move dependencies from runtime to compile if the dependency is required at compile time (possible if
     // the dependency is also being sourced transitively from a compile time dependency)
 
+    // TODO if a dependency is not used at compile but has META-INF/services, move to runtime
+
+    // TODO if we identify junit as an unused dependency but have not compiled the test source set, move it to testCompile optimistically
+
     @Unroll
     def 'unused compile dependencies are marked for deletion'() {
         when:
         buildFile.text = """
-            apply plugin: ${GradleLintPlugin.name}
-            apply plugin: 'java'
+            plugins {
+                id 'nebula.lint'
+                id 'java'
+            }
 
             gradleLint.rules = ['unused-dependency']
 
@@ -52,24 +54,24 @@ class UnusedDependencyRuleSpec extends IntegrationSpec {
         createJavaSourceFile(projectDir, main)
 
         then:
-        def results = runTasksSuccessfully('compileJava', 'fixGradleLint')
-        println results.standardOutput
-
+        runTasksSuccessfully('compileJava', 'fixGradleLint')
         dependencies(buildFile) == expected
 
         where:
         deps                                                  | expected
-//        [guava, asm]                                          | [guava]
+        [guava, asm]                                          | [guava]
         ['io.springfox:springfox-core:2.0.2']                 | [guava]
-//        [guava, 'io.springfox:springfox-core:2.0.2']          | [guava]
+        [guava, 'io.springfox:springfox-core:2.0.2']          | [guava]
     }
 
     @Unroll
     def 'runtime dependencies with \'#conf\' that are used at compile time are transformed into compile dependencies'() {
         when:
         buildFile.text = """
-            apply plugin: ${GradleLintPlugin.name}
-            apply plugin: 'war'
+            plugins {
+                id 'nebula.lint'
+                id 'war'
+            }
 
             gradleLint.rules = ['unused-dependency']
 
@@ -94,8 +96,10 @@ class UnusedDependencyRuleSpec extends IntegrationSpec {
     def 'runtime dependencies with configuration \'#conf\' that are unused at compile time are left alone'() {
         when:
         buildFile.text = """
-            apply plugin: ${GradleLintPlugin.name}
-            apply plugin: 'war'
+            plugins {
+                id 'nebula.lint'
+                id 'war'
+            }
 
             gradleLint.rules = ['unused-dependency']
 
@@ -117,8 +121,10 @@ class UnusedDependencyRuleSpec extends IntegrationSpec {
     def 'find dependency references in test code'() {
         when:
         buildFile.text = """
-            apply plugin: ${GradleLintPlugin.name}
-            apply plugin: 'java'
+            plugins {
+                id 'nebula.lint'
+                id 'java'
+            }
 
             gradleLint.rules = ['unused-dependency']
 
@@ -149,11 +155,16 @@ class UnusedDependencyRuleSpec extends IntegrationSpec {
     def 'unused dependency in a subproject is marked for deletion'() {
         when:
         buildFile.text = """
-            apply plugin: ${GradleLintPlugin.name}
+            plugins {
+                id 'nebula.lint'
+            }
+
             gradleLint.rules = ['unused-dependency']
         """
 
-        def aDir = addSubproject('a')
+        def aDir = new File(projectDir, 'a')
+        aDir.mkdirs()
+        new File(projectDir, 'settings.gradle').text = /include 'a'/
         def aBuildFile = new File(aDir, 'build.gradle')
 
         aBuildFile << """
@@ -177,16 +188,17 @@ class UnusedDependencyRuleSpec extends IntegrationSpec {
         ''')
 
         then:
-        runTasksSuccessfully('compileJava', 'fixGradleLint')
+        runTasksSuccessfully('a:compileJava', 'fixGradleLint')
         dependencies(aBuildFile) == [guava]
     }
 
-    @Unroll
     def 'providedCompile dependencies are removed if there is no compile time reference'() {
         when:
         buildFile.text = """
-            apply plugin: ${GradleLintPlugin.name}
-            apply plugin: 'war'
+            plugins {
+                id 'nebula.lint'
+                id 'war'
+            }
 
             gradleLint.rules = ['unused-dependency']
 
@@ -210,8 +222,10 @@ class UnusedDependencyRuleSpec extends IntegrationSpec {
     def 'dependencies that are indirectly required through the type hierarchy are not removed'() {
         when:
         buildFile.text = """
-            apply plugin: ${GradleLintPlugin.name}
-            apply plugin: 'war'
+            plugins {
+                id 'nebula.lint'
+                id 'war'
+            }
 
             gradleLint.rules = ['unused-dependency']
 
@@ -236,8 +250,10 @@ class UnusedDependencyRuleSpec extends IntegrationSpec {
     def 'dependencies are moved to a configuration that matches the source set(s) that refer to them'() {
         when:
         buildFile.text = """
-            apply plugin: ${GradleLintPlugin.name}
-            apply plugin: 'java'
+            plugins {
+                id 'nebula.lint'
+                id 'java'
+            }
 
             gradleLint.rules = ['unused-dependency']
 
@@ -258,9 +274,33 @@ class UnusedDependencyRuleSpec extends IntegrationSpec {
 
         then:
         runTasksSuccessfully('compileTestJava', 'fixGradleLint')
-
         dependencies(buildFile, 'compile') == []
         dependencies(buildFile, 'testCompile') == ['junit:junit:4.12']
+    }
+
+    def 'dependencies with no classes should be moved to runtime'() {
+        when:
+        buildFile.text = """
+            plugins {
+                id 'nebula.lint'
+                id 'java'
+            }
+
+            gradleLint.rules = ['unused-dependency']
+
+            repositories { mavenCentral() }
+
+            dependencies {
+                compile 'org.webjars:acorn:0.5.0'
+            }
+        """
+
+        then:
+        def results = runTasksSuccessfully('compileTestJava', 'fixGradleLint')
+        println(results.output)
+
+        dependencies(buildFile, 'compile') == []
+        dependencies(buildFile, 'runtime') == ['org.webjars:acorn:0.5.0']
     }
 
     def dependencies(File _buildFile, String... confs = ['compile', 'testCompile']) {

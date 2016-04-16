@@ -50,6 +50,7 @@ class LintRuleRegistry {
 
                 if(r instanceof GradleLintRule) {
                     r.ruleId = ruleId
+                    r.buildFile = project.buildFile
                 }
                 return included + r
             } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {

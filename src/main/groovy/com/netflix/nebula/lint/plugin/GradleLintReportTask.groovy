@@ -2,6 +2,7 @@ package com.netflix.nebula.lint.plugin
 
 import org.codenarc.AnalysisContext
 import org.codenarc.analyzer.FilesystemSourceAnalyzer
+import org.codenarc.analyzer.StringSourceAnalyzer
 import org.codenarc.report.HtmlReportWriter
 import org.codenarc.report.ReportWriter
 import org.codenarc.report.TextReportWriter
@@ -39,8 +40,7 @@ class GradleLintReportTask extends DefaultTask implements VerificationTask, Repo
             def lintExt = project.extensions.getByType(GradleLintExtension)
             def registry = new LintRuleRegistry()
             def ruleSet = RuleSetFactory.configureRuleSet(lintExt.rules.collect { registry.buildRules(it, project) }.flatten() as List<Rule>)
-            def results = new FilesystemSourceAnalyzer(baseDirectory: project.projectDir.absolutePath,
-                    includes: project.buildFile.absolutePath).analyze(ruleSet)
+            def results = new StringSourceAnalyzer(project.buildFile.text).analyze(ruleSet)
 
             reports.enabled.each { Report r ->
                 ReportWriter writer = null

@@ -12,8 +12,6 @@ import java.util.jar.JarEntry
 import java.util.jar.JarFile
 
 class DependencyUtils {
-    private static Logger logger = LoggerFactory.getLogger(DependencyUtils)
-
     static Set<String> classes(ResolvedDependency d) {
         def definedClasses = new HashSet<String>()
 
@@ -22,15 +20,15 @@ class DependencyUtils {
                 .findAll { it.name.endsWith('.jar') }
                 .findAll { !it.name.endsWith('-sources.jar') && !it.name.endsWith('-javadoc.jar') }
                 .each {
-            def jarFile = new JarFile(it)
-            def allEntries = jarFile.entries()
-            while (allEntries.hasMoreElements()) {
-                def entry = allEntries.nextElement() as JarEntry
-                if(entry.name.endsWith('.class'))
-                    definedClasses += entry.name.replaceAll(/\.class$/, '')
-            }
-            jarFile.close()
-        }
+                    def jarFile = new JarFile(it)
+                    def allEntries = jarFile.entries()
+                    while (allEntries.hasMoreElements()) {
+                        def entry = allEntries.nextElement() as JarEntry
+                        if(entry.name.endsWith('.class'))
+                            definedClasses += entry.name.replaceAll(/\.class$/, '')
+                    }
+                    jarFile.close()
+                }
 
         return definedClasses
     }
@@ -51,49 +49,5 @@ class DependencyUtils {
                 .findAll { it.exists() }
 
         return new URLClassLoader((jars + classDirs).collect { it.toURI().toURL() } as URL[])
-    }
-
-    /**
-     * @return a map of fully qualified class name to a ResolvedDependency set representing those jars in the
-     * project's dependency configurations that contain the class
-     */
-    static Map<String, Set<ResolvedDependency>> resolvedDependenciesByClass(Project p) {
-        def firstLevelDependencies = p.configurations*.resolvedConfiguration*.firstLevelModuleDependencies
-                .flatten().unique() as Collection<ResolvedDependency>
-
-        def classOwners = new HashMap<String, Set<ResolvedDependency>>().withDefault {[] as Set}
-        def mvidsAlreadySeen = [] as Set
-
-        def recurseFindClassOwnersSingle
-        recurseFindClassOwnersSingle = { ResolvedDependency d ->
-            for (clazz in classes(d)) {
-                logger.debug('Class {} found in module {}', clazz, d.module.id)
-                classOwners[clazz].add(d)
-            }
-
-            d.children.each {
-                recurseFindClassOwnersSingle(it)
-            }
-        }
-
-        def recurseFindClassOwners
-        recurseFindClassOwners = { Collection<ResolvedDependency> ds ->
-            if(ds.isEmpty()) return
-
-            def notYetSeen = ds.findAll { d -> mvidsAlreadySeen.add(d.module.id) }
-
-            notYetSeen.each { d ->
-                for (clazz in classes(d)) {
-                    logger.debug('Class {} found in module {}', clazz, d.module.id)
-                    classOwners[clazz].add(d)
-                }
-            }
-
-            recurseFindClassOwners(notYetSeen*.children.flatten())
-        }
-
-        recurseFindClassOwners(firstLevelDependencies)
-
-        return classOwners
     }
 }

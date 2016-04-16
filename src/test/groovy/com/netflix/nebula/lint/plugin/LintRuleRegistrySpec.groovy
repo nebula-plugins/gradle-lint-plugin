@@ -1,7 +1,7 @@
-package com.netflix.nebula.lint.rule.plugin
+package com.netflix.nebula.lint.plugin
 
-import com.netflix.nebula.lint.plugin.LintRuleRegistry
 import com.netflix.nebula.lint.rule.GradleLintRule
+import org.gradle.api.Project
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
@@ -16,11 +16,13 @@ class LintRuleRegistrySpec extends Specification {
 
     def 'load a rule with a single defined implementation class'() {
         setup:
+        def project = Mock(Project)
+
         def singleRule = ruleFile('single-rule')
         singleRule << "implementation-class=${MockRule1.name}"
 
         when:
-        def rules = new LintRuleRegistry().buildRules('single-rule', null)
+        def rules = new LintRuleRegistry().buildRules('single-rule', project)
 
         then:
         rules.size() == 1
@@ -30,6 +32,8 @@ class LintRuleRegistrySpec extends Specification {
 
     def 'load a rule that includes other rules'() {
         setup:
+        def project = Mock(Project)
+
         def rule1 = ruleFile('rule1')
         rule1 << "implementation-class=${MockRule1.name}"
 
@@ -40,7 +44,7 @@ class LintRuleRegistrySpec extends Specification {
         composite << 'includes=rule1,rule2'
 
         when:
-        def rules = new LintRuleRegistry().buildRules('composite', null)
+        def rules = new LintRuleRegistry().buildRules('composite', project)
 
         then:
         rules.size() == 2
