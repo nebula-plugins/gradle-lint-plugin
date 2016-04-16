@@ -127,7 +127,8 @@ Lint rules are AST visiting rules, because the AST gives us the ingredients we n
             }
 
             if(!foundJerseyBundle)
-              addViolationToDelete(call, 'since there is no dependency on jersey-bundle this plugin has no effect')
+              addLintViolation('since there is no dependency on jersey-bundle this plugin has no effect', call)
+                .delete(call) // Note: we could keep chaining additional fixes here if there was more to do
           }
       }
     }
