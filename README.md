@@ -1,3 +1,9 @@
+# SF JUG Members
+
+![SF JUG](https://pbs.twimg.com/profile_images/628788640240381952/cY17lJIv.png)
+
+The demo you saw at Pandora on April 12 involved some as-yet uncommitted changes. Check back in the next couple days for a more fully flushed out plugin. We'll remove this banner once everything is merged and ready to go!
+
 # Gradle Lint Plugin
 
 [![Build Status](https://travis-ci.org/nebula-plugins/gradle-lint-plugin.svg?branch=master)](https://travis-ci.org/nebula-plugins/gradle-lint-plugin)
@@ -206,7 +212,7 @@ If you have any other ideas, don't hesitate for a minute to drop a suggestion in
 
 ## License
 
-Copyright 2014-2015 Netflix, Inc.
+Copyright 2015-2016 Netflix, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

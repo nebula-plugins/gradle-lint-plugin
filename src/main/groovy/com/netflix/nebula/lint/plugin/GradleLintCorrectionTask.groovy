@@ -1,6 +1,23 @@
+/*
+ * Copyright 2015-2016 Netflix, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.netflix.nebula.lint.plugin
 
-import com.netflix.nebula.lint.GradleLintPatchGenerator
+import com.netflix.nebula.lint.GradleLintInfoBrokerAction
+import com.netflix.nebula.lint.GradleLintPatchAction
 import com.netflix.nebula.lint.GradleLintViolationAction
 import com.netflix.nebula.lint.GradleViolation
 import org.eclipse.jgit.api.ApplyCommand
@@ -23,12 +40,12 @@ class GradleLintCorrectionTask extends DefaultTask {
     void lintCorrections() {
         // look at org.gradle.logging.internal.DefaultColorMap
         def violations = new GradleLintService().lint(project)
-        (listeners + new GradleLintPatchGenerator(project) + consoleOutputAction).each {
+        (listeners + new GradleLintPatchAction(project) + new GradleLintInfoBrokerAction(project) + consoleOutputAction).each {
             it.lintFinished(violations)
             it.lintFixed(violations.findAll { it.isFixable() })
         }
 
-        def patchFile = new File(project.buildDir, GradleLintPatchGenerator.PATCH_NAME)
+        def patchFile = new File(project.buildDir, GradleLintPatchAction.PATCH_NAME)
         if(patchFile.exists()) {
             new ApplyCommand(new NotNecessarilyGitRepository(project.projectDir)).setPatch(patchFile.newInputStream()).call()
         }

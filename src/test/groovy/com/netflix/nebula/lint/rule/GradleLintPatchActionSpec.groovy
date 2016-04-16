@@ -1,3 +1,19 @@
+/*
+ * Copyright 2015-2016 Netflix, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.netflix.nebula.lint.rule
 
 import com.netflix.nebula.lint.*
@@ -6,7 +22,7 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
-class GradleLintPatchGeneratorSpec extends Specification {
+class GradleLintPatchActionSpec extends Specification {
     @Rule TemporaryFolder temp
     Project project
 
@@ -26,7 +42,7 @@ class GradleLintPatchGeneratorSpec extends Specification {
 
         when:
         def fix = new GradleLintReplaceWith(f, 2..2, 1, 2, '*')
-        def patch = new GradleLintPatchGenerator(project).patch([fix])
+        def patch = new GradleLintPatchAction(project).patch([fix])
 
         then:
         patch == '''
@@ -48,7 +64,7 @@ class GradleLintPatchGeneratorSpec extends Specification {
 
         when:
         def fix = new GradleLintReplaceWith(f, 1..1, 2, 3, '*')
-        def patch = new GradleLintPatchGenerator(project).patch([fix])
+        def patch = new GradleLintPatchAction(project).patch([fix])
 
         then:
         patch == '''
@@ -68,7 +84,7 @@ class GradleLintPatchGeneratorSpec extends Specification {
 
         when:
         def fix = new GradleLintReplaceWith(f, 1..2, 2, 3, '*')
-        def patch = new GradleLintPatchGenerator(project).patch([fix])
+        def patch = new GradleLintPatchAction(project).patch([fix])
 
         then:
         patch == '''
@@ -95,7 +111,7 @@ class GradleLintPatchGeneratorSpec extends Specification {
         def f = temp.newFile('my.txt')
         f.text = 'a\nb\n'
 
-        def generator = new GradleLintPatchGenerator(project)
+        def generator = new GradleLintPatchAction(project)
 
         then:
         generator.patch([new GradleLintReplaceWith(f, 1..1, 1, 2, '')]) == expect
@@ -117,7 +133,7 @@ class GradleLintPatchGeneratorSpec extends Specification {
         def f = temp.newFile('my.txt')
         f.text = 'a'
 
-        def generator = new GradleLintPatchGenerator(project)
+        def generator = new GradleLintPatchAction(project)
 
         then:
         generator.patch([new GradleLintDelete(f, 1..1)]) == expect
@@ -128,7 +144,7 @@ class GradleLintPatchGeneratorSpec extends Specification {
         def f = temp.newFile('my.txt')
         f.text = 'a\n'
 
-        def generator = new GradleLintPatchGenerator(project)
+        def generator = new GradleLintPatchAction(project)
 
         then:
         generator.patch([new GradleLintInsertAfter(f, 1, 'b')]) == '''
@@ -167,7 +183,7 @@ class GradleLintPatchGeneratorSpec extends Specification {
         when:
         def fix1 = new GradleLintReplaceWith(f, 1..1, 1, 2, '*')
         def fix2 = new GradleLintReplaceWith(f, 9..9, 1, 2, '*')
-        def patch = new GradleLintPatchGenerator(project).patch([fix1, fix2])
+        def patch = new GradleLintPatchAction(project).patch([fix1, fix2])
 
         then:
         patch == '''
@@ -203,7 +219,7 @@ class GradleLintPatchGeneratorSpec extends Specification {
         when:
         def fix1 = new GradleLintReplaceWith(f, 1..1, 1, 2, '*')
         def fix2 = new GradleLintReplaceWith(f, 3..3, 1, 2, '*')
-        def patch = new GradleLintPatchGenerator(project).patch([fix1, fix2])
+        def patch = new GradleLintPatchAction(project).patch([fix1, fix2])
 
         then:
         patch == '''
@@ -230,7 +246,7 @@ class GradleLintPatchGeneratorSpec extends Specification {
 
         when:
         def fix = new GradleLintReplaceWith(f, 1..1, 1, 2, '*')
-        def patch = new GradleLintPatchGenerator(project).patch([fix])
+        def patch = new GradleLintPatchAction(project).patch([fix])
 
         then:
         patch == '''
@@ -254,7 +270,7 @@ class GradleLintPatchGeneratorSpec extends Specification {
 
         when:
         def fix = new GradleLintReplaceWith(f, 3..3, 1, 2, '*')
-        def patch = new GradleLintPatchGenerator(project).patch([fix])
+        def patch = new GradleLintPatchAction(project).patch([fix])
 
         then:
         patch == '''
@@ -276,7 +292,7 @@ class GradleLintPatchGeneratorSpec extends Specification {
 
         when:
         def fix = new GradleLintReplaceWith(f, 1..1, 1, 2, '*')
-        def patch = new GradleLintPatchGenerator(project).patch([fix])
+        def patch = new GradleLintPatchAction(project).patch([fix])
 
         then:
         patch == '''
@@ -298,7 +314,7 @@ class GradleLintPatchGeneratorSpec extends Specification {
 
         when:
         def fix = new GradleLintReplaceWith(f, 1..1, 1, 2, '*')
-        def patch = new GradleLintPatchGenerator(project).patch([fix])
+        def patch = new GradleLintPatchAction(project).patch([fix])
 
         then:
         patch == '''
@@ -320,7 +336,7 @@ class GradleLintPatchGeneratorSpec extends Specification {
 
         when:
         def fix = new GradleLintInsertAfter(f, 1, 'b\n')
-        def patch = new GradleLintPatchGenerator(project).patch([fix])
+        def patch = new GradleLintPatchAction(project).patch([fix])
 
         then:
         patch == '''
@@ -349,14 +365,14 @@ class GradleLintPatchGeneratorSpec extends Specification {
 
         when:
         def fix = new GradleLintInsertBefore(f, 1, 'a\n')
-        def patch = new GradleLintPatchGenerator(project).patch([fix])
+        def patch = new GradleLintPatchAction(project).patch([fix])
 
         then:
         patch == expect
 
         when:
         fix = new GradleLintInsertAfter(f, 0, 'a\n')
-        patch = new GradleLintPatchGenerator(project).patch([fix])
+        patch = new GradleLintPatchAction(project).patch([fix])
 
         then:
         patch == expect
