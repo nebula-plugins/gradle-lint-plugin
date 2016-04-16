@@ -44,7 +44,7 @@ It assists a centralized build tools team in gently introducing and maintaining 
 To apply this plugin:
 
     plugins {
-      id 'nebula.lint' version '0.10.0'
+      id 'nebula.lint' version '0.22.0'
     }
 
 Alternatively:
