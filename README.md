@@ -1,9 +1,3 @@
-# SF JUG Members
-
-![SF JUG](https://pbs.twimg.com/profile_images/628788640240381952/cY17lJIv.png)
-
-The demo you saw at Pandora on April 12 involved some as-yet uncommitted changes. Check back in the next couple days for a more fully flushed out plugin. We'll remove this banner once everything is merged and ready to go!
-
 # Gradle Lint Plugin
 
 [![Build Status](https://travis-ci.org/nebula-plugins/gradle-lint-plugin.svg?branch=master)](https://travis-ci.org/nebula-plugins/gradle-lint-plugin)
@@ -135,9 +129,9 @@ Lint rules are AST visiting rules, because the AST gives us the ingredients we n
 
 We use the AST to look for the specific piece of code where `nebula.fix-jersey-bundle` was applied. We could determine through the Gradle model that the plugin had been applied, but not how or where this had been accomplished. Then we transition to using the Gradle model to determine if `jersey-bundle` is in our transitive dependencies. We could not have determined this with the AST alone! Also, since linting runs not only after project configuration but in fact LAST in the task execution order, we can comfortably use Gradle bits like `resolvedConfiguration` without fear of introducing side effects.
 
-Finally, we use `addViolationToDelete` to indicate to the lint plugin that this block of code applying `nebula.fix-jersey-bundle` violates the rule, and that the `fixGradleLint` can safely delete this code snippet.
+Finally, we use `addLintViolation` to indicate to the lint plugin that this block of code applying `nebula.fix-jersey-bundle` violates the rule, and the `delete` fix hint tells `fixGradleLint` that it can safely delete this code snippet.
 
-Currently, `addViolationWithReplacement`, `addViolationInsert`, `addViolationNoCorrection` are also provided as helper functions to add violations as well.
+Currently, `delete`, `insertBefore`, `insertAfter`, and `replaceWith` are provided as fix hints.
 
 Finally, notice how we overrode the `visitApplyPlugin` method.  `GradleLintRule` implements the `GradleAstVisitor` interface which adds several convenience hooks for Gradle specific constructs to the rich set of hooks already provided by CodeNarc's `AbstractAstVisitor`, including:
 
@@ -182,10 +176,11 @@ We do have a broader set of rules we apply to every build internally at Netflix,
 ### Included rules
 
 * Dependency related rules
-  - **Unused dependency exclusions** - triggered when the linter can determine that a dependency level exclude has no effect on the transitive dependency graph
-  - **Unused configuration exclusion** - triggered when the linter can determine that a configuration wide exclude has no effect on the transitive dependency graph
-  - **Unnecessary dependency parentheses** - a stylistic rule to strip unnecessary parentheses from dependency declarations
-  - **Unnecessary dependency tuple** - a stylistic rule that prefers the `g:a:v` dependency syntax to the `group: 'g', name: 'a', version: 'v'` syntax (when possible).
+  - **Unused dependency** - (1) Remove unused dependencies when static code analysis determines that you are not using a first order dependency in your defined source sets. (2) Adds first order dependencies for transitives that your project uses directly. (3) Relocates dependencies to the correct configuration (e.g. junit should be in testCompile if it is only used by tests).
+  - **Unused dependency exclusions** - Triggered when the linter can determine that a dependency level exclude has no effect on the transitive dependency graph
+  - **Unused configuration exclusion** - Triggered when the linter can determine that a configuration wide exclude has no effect on the transitive dependency graph
+  - **Unnecessary dependency parentheses** - A stylistic rule to strip unnecessary parentheses from dependency declarations
+  - **Unnecessary dependency tuple** - A stylistic rule that prefers the `g:a:v` dependency syntax to the `group: 'g', name: 'a', version: 'v'` syntax (when possible).
 * Plugin rename rules (to deal with the renamings of all the Nebula plugins after the introduction of the Gradle plugin portal)
   - nebula.clojure
   - nebula.deb
@@ -207,8 +202,6 @@ We do have a broader set of rules we apply to every build internally at Netflix,
 If you have any other ideas, don't hesitate for a minute to drop a suggestion in the [gitter channel](https://gitter.im/nebula-plugins/gradle-lint-plugin)!
 
   - **Gradle wrapper version** - don't allow the wrapper to skew more than N versions behind latest Gradle release
-  - **Unnecessary dependency** - for when static code analysis determines that you are not using a first order dependency in your defined source sets
-  - **Suspicious compile/runtime dependency** - to prevent the inclusion of dependencies like JUnit in the compile configuration unless they are actually used in runtime code (suggest they become testCompile dependencies).
   - **Gradle 2+ to Gradle 3 model upgrades** - we anticipate significant changes in Gradle 3's DSL and look forward to providing rules to advance build code along quickly and automatically.
 
 ## License
