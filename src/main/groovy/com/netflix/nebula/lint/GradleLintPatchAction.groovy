@@ -72,6 +72,8 @@ class GradleLintPatchAction extends GradleLintViolationAction {
             def lines = [''] + file.readLines() // the extra empty line is so we don't have to do a bunch of zero-based conversions for line arithmetic
             def patch = []
             patchFixes.eachWithIndex { fix, j ->
+                def lastFix = j == patchFixes.size() - 1
+
                 // 'before' context
                 if (fix.from() > 0) {
                     int minBeforeLines = (j == 0 ? 3 : Math.min(3, Math.max(fix.from() - patchFixes[j - 1].to() - 3, 0)))
@@ -79,7 +81,7 @@ class GradleLintPatchAction extends GradleLintViolationAction {
                     def firstLine = Math.max(fix.from() - minBeforeLines, 1)
                     def beforeContext = lines.subList(firstLine, fix.from())
                             .collect { line -> ' ' + line }
-                            .dropWhile { String line -> StringUtils.isBlank(line) }
+                            .dropWhile { String line -> j == 0 && StringUtils.isBlank(line) }
 
                     if(j == 0) {
                         firstLineOfContext = fix.from() - beforeContext.size()
@@ -133,13 +135,13 @@ class GradleLintPatchAction extends GradleLintViolationAction {
 
                 // 'after' context
                 if (fix.to() < lines.size() - 1) {
-                    int maxAfterLines = (j == patchFixes.size() - 1) ? 3 : Math.min(3, patchFixes[j + 1].from() - fix.to() - 1)
+                    int maxAfterLines = lastFix ? 3 : Math.min(3, patchFixes[j + 1].from() - fix.to() - 1)
 
                     def lastLineOfContext = Math.min(fix.to() + maxAfterLines + 1, lines.size())
                     def afterContext = lines.subList(fix.to() + 1, lastLineOfContext)
                             .collect { line -> ' ' + line }
                             .reverse()
-                            .dropWhile { String line -> StringUtils.isBlank(line) }
+                            .dropWhile { String line -> lastFix && StringUtils.isBlank(line) }
                             .reverse()
 
                     beforeLineCount += afterContext.size()
@@ -147,10 +149,10 @@ class GradleLintPatchAction extends GradleLintViolationAction {
 
                     patch += afterContext
 
-                    if (j == patchFixes.size() - 1 && lastLineOfContext == lines.size() && file.text[-1] != '\n') {
+                    if (lastFix && lastLineOfContext == lines.size() && file.text[-1] != '\n') {
                         patch += /\ No newline at end of file/
                     }
-                } else if (j == patchFixes.size() - 1 && fix.changes() && fix.changes()[-1] != '\n' && !newlineAtEndOfOriginal) {
+                } else if (lastFix && fix.changes() && fix.changes()[-1] != '\n' && !newlineAtEndOfOriginal) {
                     patch += /\ No newline at end of file/
                 }
             }

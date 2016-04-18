@@ -282,6 +282,29 @@ class GradleLintPatchActionSpec extends Specification {
             '''.substring(1).stripIndent()
     }
 
+    def 'whitespace between + and - is retained'() {
+        setup:
+        def f = temp.newFile('my.txt')
+
+        f.text = 'a\n\nb\n'
+
+        when:
+        def fix1 = new GradleLintInsertAfter(f, 1, 'c')
+        def fix2 = new GradleLintDelete(f, 3..3)
+        def patch = new GradleLintPatchAction(project).patch([fix1, fix2])
+
+        then:
+        patch == '''
+            --- a/my.txt
+            +++ b/my.txt
+            @@ -1,3 +1,3 @@
+             a
+            +c
+
+            -b
+            '''.substring(1).stripIndent().replace('\n\n', '\n \n') // line 3 needs to have a single space, but the IDE likes to strip it
+    }
+
     def '\'no newline at end of file statement\' when after context includes the last line of a file'() {
         setup:
         def f = temp.newFile('my.txt')
