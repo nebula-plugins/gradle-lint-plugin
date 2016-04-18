@@ -66,7 +66,16 @@ class GradleViolation extends Violation {
 
     GradleViolation delete(ASTNode node) {
         fixes += new GradleLintReplaceWith(buildFile, node.lineNumber..node.lastLineNumber, node.columnNumber, node.lastColumnNumber, '')
-//        fixes += new GradleLintDelete(buildFile, node.lineNumber..node.lastLineNumber)
+        this
+    }
+
+    GradleViolation insertAfter(File file, Integer afterLine, String changes) {
+        fixes += new GradleLintInsertAfter(file, afterLine, changes)
+        this
+    }
+
+    GradleViolation insertBefore(File file, Integer beforeLine, String changes) {
+        fixes += new GradleLintInsertBefore(file, beforeLine, changes)
         this
     }
 }
