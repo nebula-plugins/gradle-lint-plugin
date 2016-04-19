@@ -17,6 +17,7 @@
 plugins {
     id 'groovy'
     id 'jacoco'
+    id 'java-gradle-plugin'
     id 'nebula.info' version '3.0.4'
     id 'nebula.contacts' version '3.0.1'
     id 'nebula.integtest' version '3.0.3'
@@ -61,9 +62,7 @@ task createClasspathManifest {
 }
 
 dependencies {
-    compile gradleApi()
     compile localGroovy()
-    compile gradleTestKit()
 
     compile 'org.ow2.asm:asm:5.0.4'
     compile('org.codenarc:CodeNarc:latest.release') {
@@ -84,9 +83,6 @@ dependencies {
         exclude module: 'groovy-all'
     }
     testCompile 'org.ow2.asm:asm-util:5.0.4'
-
-    // Add the classpath file to the test runtime classpath
-    testRuntime files(createClasspathManifest)
 }
 
 pluginBundle {

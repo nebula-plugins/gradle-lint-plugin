@@ -15,18 +15,10 @@ class TestKitSpecification extends Specification {
     @Rule final TemporaryFolder temp = new TemporaryFolder()
     File projectDir
     File buildFile
-    List<File> pluginClasspath
 
     def setup() {
         projectDir = temp.root
         buildFile = new File(projectDir, 'build.gradle')
-
-        def pluginClasspathResource = getClass().classLoader.findResource('plugin-classpath.txt')
-        if (pluginClasspathResource == null) {
-            throw new IllegalStateException('Did not find plugin classpath resource, run `cCM` build task.')
-        }
-
-        pluginClasspath = pluginClasspathResource.readLines().collect { new File(it) }
     }
 
     def runTasksSuccessfully(String... tasks) {
@@ -34,7 +26,7 @@ class TestKitSpecification extends Specification {
                 .withDebug(true)
                 .withProjectDir(projectDir)
                 .withArguments(tasks)
-                .withPluginClasspath(pluginClasspath)
+                .withPluginClasspath()
                 .build()
 
         tasks.each { task ->
