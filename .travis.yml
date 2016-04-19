@@ -2,7 +2,7 @@ language: java
 sudo: false
 jdk:
 - oraclejdk7
-install: ./installViaTravis.sh
+install: true
 script: ./buildViaTravis.sh
 cache:
   directories:
