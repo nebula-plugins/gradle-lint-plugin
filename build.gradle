@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Netflix, Inc.
+ * Copyright 2014-2015 Netflix, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-dependencies {
-    compile 'com.netflix.nebula:gradle-scm-plugin:2.2.+'
-    compile 'org.ajoberstar:grgit:0.+'
+buildscript { repositories { jcenter() } } // Some plugin dependencies (namely JFrog) are not in Maven Central
+
+plugins {
+    id 'com.gradle.plugin-publish' version '0.9.1'
+    id 'nebula.plugin-plugin' version '4.0.0'
 }
 
 description 'Pluggable and configurable linter tool for identifying and reporting on patterns of misuse or deprecations in Gradle scripts'
