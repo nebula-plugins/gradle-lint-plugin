@@ -27,7 +27,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
-    Logger logger = LoggerFactory.getLogger("rule")
     UnusedDependencyReport report
 
     @Override
@@ -36,8 +35,6 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
 
         def matchesGradleDep = { ResolvedDependency d -> d.module.id.group == dep.group && d.module.id.name == dep.name }
         def match
-
-        logger.info("With no classes: " + report.firstOrderDependenciesWithNoClasses.collect { it.module.id.toString() }.join(','))
 
         if ((match = report.firstOrderDependenciesWithNoClasses.find(matchesGradleDep))) {
             addLintViolation("this dependency should be moved to the runtime configuration since it has no classes", call)

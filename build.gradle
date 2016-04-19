@@ -63,7 +63,6 @@ task createClasspathManifest {
 dependencies {
     compile gradleApi()
     compile localGroovy()
-    compile gradleTestKit()
 
     compile 'org.ow2.asm:asm:5.0.4'
     compile('org.codenarc:CodeNarc:latest.release') {
@@ -80,6 +79,7 @@ dependencies {
     }
     provided 'com.netflix.nebula:nebula-test:3.1.0'
 
+    testCompile gradleTestKit()
     testCompile ('org.spockframework:spock-core:latest.release') {
         exclude module: 'groovy-all'
     }

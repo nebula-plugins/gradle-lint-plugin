@@ -16,10 +16,12 @@ class TestKitSpecification extends Specification {
     File projectDir
     File buildFile
     List<File> pluginClasspath
+    File settingsFile
 
     def setup() {
         projectDir = temp.root
         buildFile = new File(projectDir, 'build.gradle')
+        settingsFile = new File(projectDir, 'settings.gradle')
 
         def pluginClasspathResource = getClass().classLoader.findResource('plugin-classpath.txt')
         if (pluginClasspathResource == null) {
@@ -45,5 +47,17 @@ class TestKitSpecification extends Specification {
         println result.output
 
         result
+    }
+
+    def addSubproject(String name) {
+        new File(projectDir, name).mkdirs()
+        settingsFile << "include '$name'\n"
+    }
+
+    def addSubproject(String name, String buildGradleContents) {
+        def subprojectDir = new File(projectDir, name)
+        subprojectDir.mkdirs()
+        new File(subprojectDir, 'build.gradle').text = buildGradleContents
+        settingsFile << "include '$name'\n"
     }
 }

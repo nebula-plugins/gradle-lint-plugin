@@ -16,10 +16,10 @@
 
 package com.netflix.nebula.lint.plugin
 
-import nebula.test.IntegrationSpec
+import com.netflix.nebula.lint.TestKitSpecification
 import spock.lang.Unroll
 
-class GradleLintPluginSpec extends IntegrationSpec {
+class GradleLintPluginSpec extends TestKitSpecification {
     def 'run multiple rules on a single module project'() {
         when:
         buildFile << """
@@ -38,10 +38,9 @@ class GradleLintPluginSpec extends IntegrationSpec {
 
         then:
         def results = runTasksSuccessfully('assemble')
-        println(results.standardOutput)
 
         when:
-        def console = results.standardOutput.readLines()
+        def console = results.output.readLines()
 
         then:
         console.findAll { it.startsWith('warning') }.size() == 2
@@ -53,8 +52,11 @@ class GradleLintPluginSpec extends IntegrationSpec {
         when:
         buildFile << """
             allprojects {
-                apply plugin: 'java'
-                apply plugin: ${GradleLintPlugin.name}
+                plugins {
+                    id 'nebula.lint'
+                    id 'java'
+                }
+
                 gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
             }
         """
@@ -90,8 +92,10 @@ class GradleLintPluginSpec extends IntegrationSpec {
     def 'auto correct all violations on a single module project with task #taskName'() {
         when:
         buildFile.text = """
-            apply plugin: ${GradleLintPlugin.name}
-            apply plugin: 'java'
+            plugins {
+                id 'nebula.lint'
+                id 'java'
+            }
 
             gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
 
@@ -103,12 +107,13 @@ class GradleLintPluginSpec extends IntegrationSpec {
         """
 
         then:
-        def results = runTasksSuccessfully(taskName)
-        println results.standardOutput
+        runTasksSuccessfully(taskName)
 
         buildFile.text == """
-            apply plugin: ${GradleLintPlugin.name}
-            apply plugin: 'java'
+            plugins {
+                id 'nebula.lint'
+                id 'java'
+            }
 
             gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
 
@@ -127,7 +132,9 @@ class GradleLintPluginSpec extends IntegrationSpec {
         when:
         buildFile.text = """
             allprojects {
-                apply plugin: ${GradleLintPlugin.name}
+                plugins {
+                    id 'nebula.lint'
+                }
                 gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
             }
 
@@ -150,12 +157,13 @@ class GradleLintPluginSpec extends IntegrationSpec {
         """)
 
         then:
-        def results = runTasksSuccessfully(":sub:$taskName") // prove that this links to the root project task
-        println results.standardOutput
+        runTasksSuccessfully(":sub:$taskName") // prove that this links to the root project task
 
         buildFile.text == """
             allprojects {
-                apply plugin: ${GradleLintPlugin.name}
+                plugins {
+                    id 'nebula.lint'
+                }
                 gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
             }
 
@@ -183,15 +191,14 @@ class GradleLintPluginSpec extends IntegrationSpec {
     def 'auto correct violations on a multi-module project where one of the subprojects does not apply gradle lint with task #taskName'() {
         when:
         buildFile << """
-            allprojects {
-                apply plugin: 'java'
+            plugins {
+                id 'nebula.lint'
             }
-
-            apply plugin: ${GradleLintPlugin.name}
             gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
         """
 
         addSubproject('sub', """
+            apply plugin: 'java'
             dependencies {
                 compile('a:a:1')
             }
@@ -208,7 +215,9 @@ class GradleLintPluginSpec extends IntegrationSpec {
         when:
         buildFile.text = """
             allprojects {
-                apply plugin: ${GradleLintPlugin.name}
+                plugins {
+                    id 'nebula.lint'
+                }
                 gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
             }
 
@@ -234,8 +243,7 @@ class GradleLintPluginSpec extends IntegrationSpec {
         def results = runTasksSuccessfully('taskA')
 
         when:
-        def console = results.standardOutput.readLines()
-        println results.standardOutput
+        def console = results.output.readLines()
 
         then:
         console.findAll { it.startsWith('warning') }.size() == 2
@@ -246,8 +254,10 @@ class GradleLintPluginSpec extends IntegrationSpec {
     def 'generate a lint report for a single module project'() {
         when:
         buildFile << """
-            apply plugin: ${GradleLintPlugin.name}
-            apply plugin: 'java'
+            plugins {
+                id 'nebula.lint'
+                id 'java'
+            }
 
             gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
 
@@ -263,7 +273,7 @@ class GradleLintPluginSpec extends IntegrationSpec {
         def results = runTasksSuccessfully('generateGradleLintReport')
 
         when:
-        def console = results.standardOutput.readLines()
+        def console = results.output.readLines()
 
         then:
         console.findAll { it.startsWith('warning') }.size() == 2
