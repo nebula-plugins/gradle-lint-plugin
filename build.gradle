@@ -14,24 +14,10 @@
  * limitations under the License.
  */
 
-plugins {
-    id 'groovy'
-    id 'jacoco'
-    id 'nebula.info' version '3.0.4'
-    id 'nebula.contacts' version '3.0.1'
-    id 'nebula.integtest' version '3.0.3'
-    id 'nebula.maven-publish' version '4.4.4'
-    id 'nebula.nebula-release' version '4.0.1'
-    id 'nebula.nebula-bintray' version '3.3.4'
-    id 'com.gradle.plugin-publish' version '0.9.2'
-    id 'nebula.javadoc-jar' version '4.4.4'
-    id 'nebula.source-jar' version '4.4.4'
-    id 'nebula.maven-apache-license' version '4.2.2'
-    id 'com.github.kt3k.coveralls' version '2.4.0'
-    id 'nebula.provided-base' version '3.0.3'
+dependencies {
+    compile 'com.netflix.nebula:gradle-scm-plugin:2.2.+'
+    compile 'org.ajoberstar:grgit:0.+'
 }
-
-apply from: 'https://raw.githubusercontent.com/nebula-plugins/nebula-core/59c9e15f561372a8a72bbe13e4fbb114d0ef16f8/common.gradle'
 
 description 'Pluggable and configurable linter tool for identifying and reporting on patterns of misuse or deprecations in Gradle scripts'
 
