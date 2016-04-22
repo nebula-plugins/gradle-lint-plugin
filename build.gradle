@@ -31,6 +31,9 @@ contacts {
 }
 
 repositories {
+    maven {
+        url 'https://repo.eclipse.org/content/groups/jgit/'
+    }
     mavenCentral()
 }
 
@@ -58,7 +61,7 @@ dependencies {
     }
     compile 'com.netflix.nebula:gradle-info-plugin:3.0.4'
 
-    compile 'org.eclipse.jgit:org.eclipse.jgit:4.+'
+    compile 'org.eclipse.jgit:org.eclipse.jgit:4.3.1-SNAPSHOT'
 
     // these two dependencies exist so we can provide a test harness
     // to proprietary rule implementations packed in other jars
