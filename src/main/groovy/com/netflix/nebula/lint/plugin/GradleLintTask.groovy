@@ -27,8 +27,6 @@ import org.gradle.logging.StyledTextOutputFactory
 
 import javax.inject.Inject
 
-import static com.netflix.nebula.lint.GradleViolation.Level.Warning
-
 class GradleLintTask extends DefaultTask {
     List<GradleLintViolationAction> listeners = []
 
@@ -48,12 +46,12 @@ class GradleLintTask extends DefaultTask {
     final def consoleOutputAction = new GradleLintViolationAction() {
         @Override
         void lintFinished(Collection<GradleViolation> violations) {
-            def totalBySeverity = [(Warning): 0, (GradleViolation.Level.Error): 0] +
+            def totalBySeverity = [(GradleViolation.Level.Warning): 0, (GradleViolation.Level.Error): 0] +
                     violations.countBy { it.level }
 
             def textOutput = textOutputFactory.create('lint')
 
-            if (totalBySeverity[GradleViolation.Level.Error] > 0 || totalBySeverity[Warning] > 0) {
+            if (totalBySeverity[GradleViolation.Level.Error] > 0 || totalBySeverity[GradleViolation.Level.Warning] > 0) {
                 textOutput.withStyle(StyledTextOutput.Style.UserInput).text('\nThis project contains lint violations. ')
                 textOutput.println('A complete listing of the violations follows. ')
 
@@ -65,18 +63,18 @@ class GradleLintTask extends DefaultTask {
                 }
             }
 
-            violations.groupBy { it.buildFile }.each { buildFile, projectViolations ->
+            violations.groupBy { it.buildFile }.each { buildFile, violationsByFile ->
                 def buildFilePath = project.rootDir.toURI().relativize(buildFile.toURI()).toString()
 
-                projectViolations.each { v ->
+                violationsByFile.each { v ->
                     switch (v.level as GradleViolation.Level) {
-                        case Warning:
+                        case GradleViolation.Level.Warning:
                             textOutput.withStyle(StyledTextOutput.Style.Failure).text('warning'.padRight(10))
                             break
                         case GradleViolation.Level.Error:
                             textOutput.withStyle(StyledTextOutput.Style.Failure).text('error'.padRight(10))
                             break
-                        case Info:
+                        case GradleViolation.Level.Info:
                             textOutput.withStyle(StyledTextOutput.Style.Description).text('info'.padRight(10))
                             break
                     }
@@ -92,15 +90,15 @@ class GradleLintTask extends DefaultTask {
                     textOutput.println() // extra space between violations
                 }
 
-                def errors = totalBySeverity[GradleViolation.Level.Error] ?: 0
-                def warnings = totalBySeverity[Warning] ?: 0
+                def errors = violationsByFile.count { it.level == GradleViolation.Level.Error }
+                def warnings = violationsByFile.count { it.level == GradleViolation.Level.Warning }
                 if (errors + warnings > 0) {
                     textOutput.withStyle(StyledTextOutput.Style.Failure)
                             .println("\u2716 ${buildFilePath}: ${errors + warnings} problem${errors + warnings == 1 ? '' : 's'} ($errors error${errors == 1 ? '' : 's'}, $warnings warning${warnings == 1 ? '' : 's'})\n".toString())
                 }
             }
 
-            if (totalBySeverity[GradleViolation.Level.Error] > 0 || totalBySeverity[Warning] > 0) {
+            if (totalBySeverity[GradleViolation.Level.Error] > 0 || totalBySeverity[GradleViolation.Level.Warning] > 0) {
                 textOutput.text("To apply fixes automatically, run ").withStyle(StyledTextOutput.Style.UserInput).text("fixGradleLint")
                 textOutput.println(", review, and commit the changes.\n")
 
