@@ -52,9 +52,6 @@ task createClasspathManifest {
 }
 
 dependencies {
-    compile gradleApi()
-    compile localGroovy()
-
     compile 'org.ow2.asm:asm:5.0.4'
     compile('org.codenarc:CodeNarc:latest.release') {
         transitive = false
