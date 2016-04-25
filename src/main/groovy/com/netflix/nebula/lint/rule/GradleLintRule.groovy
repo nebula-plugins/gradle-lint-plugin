@@ -103,8 +103,14 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
         addLintViolation(message, null, level)
     }
 
+    /**
+     * Allows a rule to perform one-off processing before a rule is applied.
+     */
+    protected void beforeApplyTo() {}
+
     @Override
-    List<Violation> applyTo(SourceCode sourceCode) {
+    final List<Violation> applyTo(SourceCode sourceCode) {
+        beforeApplyTo()
         this.sourceCode = sourceCode
         rule.applyTo(sourceCode)
     }
