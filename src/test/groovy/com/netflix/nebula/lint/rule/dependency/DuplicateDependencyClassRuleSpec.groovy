@@ -35,7 +35,7 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
                 id 'java'
             }
 
-            gradleLint.rules = ['duplicate-dependency-classes']
+            gradleLint.rules = ['duplicate-dependency-class']
 
             repositories { mavenCentral() }
 
@@ -53,7 +53,7 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
 
         where:
         deps | message
-        [guava, collections] | "$guava in configuration 'compile' has 310 classes duplicated by $collections"
+        [guava, collections] | "$collections in configuration 'compile' has 310 classes duplicated by $guava"
         [guava_transitive, collections] | "$collections in configuration 'compile' has 310 classes duplicated by $guava"
         [asm, asm_asm] |  "$asm_asm in configuration 'compile' has 21 classes duplicated by $asm"
     }

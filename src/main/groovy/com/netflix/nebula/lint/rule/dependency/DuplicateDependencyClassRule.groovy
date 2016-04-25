@@ -11,7 +11,7 @@ class DuplicateDependencyClassRule extends AbstractDependencyReportRule {
         def matchesGradleDep = { ResolvedDependency d -> d.module.id.group == dep.group && d.module.id.name == dep.name }
         def dependencyClasses = report.dependenciesByClass.findAll { it.value.find(matchesGradleDep) }
         def dupeDependencyClasses = dependencyClasses.findAll { it.value.size() > 1 }
-        def dupeClassesByDependency = new HashMap<ResolvedDependency, Set<String>>().withDefault { [] as Set }
+        def dupeClassesByDependency = new TreeMap<ResolvedDependency, Set<String>>(dependencyComparator).withDefault { [] as Set }
         dupeDependencyClasses.each { className, resolvedDependencies ->
             resolvedDependencies.each { dependency ->
                 dupeClassesByDependency.get(dependency).add(className)
