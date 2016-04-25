@@ -16,6 +16,8 @@
 
 package com.netflix.nebula.lint.rule.dependency
 
+import com.netflix.nebula.lint.GradleViolation
+import com.netflix.nebula.lint.rule.GradleLintRule
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ResolvedDependency
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.DefaultVersionComparator
@@ -34,11 +36,12 @@ import java.nio.file.attribute.BasicFileAttributes
 import static com.netflix.nebula.lint.rule.dependency.DependencyUtils.compiledSourceClassLoader
 import static com.netflix.nebula.lint.rule.dependency.DependencyUtils.configurations
 
-class UnusedDependencyReport {
+class DependencyReport {
     Set<ResolvedDependency> firstOrderDependenciesToRemove = new HashSet()
     Set<ResolvedDependency> transitiveDependenciesToAddAsFirstOrder = new HashSet()
     Map<ResolvedDependency, String> firstOrderDependenciesWhoseConfigurationNeedsToChange = [:]
     Set<ResolvedDependency> firstOrderDependenciesWithNoClasses = new HashSet()
+    Map<String, Set<ResolvedDependency>> dependenciesByClass = null
 
     /**
      * The set of source sets that were unevaluated because there were no compiled classes in their output classes directories
@@ -50,27 +53,32 @@ class UnusedDependencyReport {
         'providedRuntime' // from war plugin
     ]
 
-    private static Logger logger = LoggerFactory.getLogger(UnusedDependencyReport)
+    private static Logger logger = LoggerFactory.getLogger(DependencyReport)
     private Comparator<String> versionComparator = new DefaultVersionComparator().asStringComparator()
     private Project project
 
-    private static Map<Project, UnusedDependencyReport> reportsByProject = [:]
+    private static Map<Project, DependencyReport> reportsByProject = [:]
 
     /**
      * @param project
      * @return the unused dependency report, calculated once per project per lint session, regardless of how many
      * rules use the report
      */
-    static synchronized UnusedDependencyReport forProject(Project project) {
+    static synchronized DependencyReport forRule(GradleLintRule rule) {
+        def project = rule.project
         def report = reportsByProject[project]
         if (report) return report
 
-        report = new UnusedDependencyReport(project)
+        report = new DependencyReport(project)
         reportsByProject[project] = report
+        report.unevaluatedSourceSets.each {
+            rule.addLintViolation("the $it.compileConfigurationName configuration was not analyzed for unused dependencies because there were no compiled classes found for source set $it.name",
+                    GradleViolation.Level.Warning)
+        }
         return report
     }
 
-    private UnusedDependencyReport(Project project) {
+    private DependencyReport(Project project) {
         this.project = project
 
         def firstLevelDependencies = project.configurations*.resolvedConfiguration*.firstLevelModuleDependencies
@@ -90,16 +98,16 @@ class UnusedDependencyReport {
         Collection<ResolvedDependency> unusedDependencies = firstLevelDependencies.clone() as Collection<ResolvedDependency>
 
         // Used dependencies, both first order and transitive
-        def resolvedDependenciesByClass = resolvedDependenciesByClass(project)
+        dependenciesByClass = resolvedDependenciesByClass(project)
 
         DependencyReferences usedDependencies
         try {
             usedDependencies = project.convention.getPlugin(JavaPluginConvention)
                     .sourceSets
                     .inject(new DependencyReferences()) { DependencyReferences result, sourceSet ->
-                        dependencyReferences(sourceSet, resolvedDependenciesByClass, result)
+                        dependencyReferences(sourceSet, dependenciesByClass, result)
                     }
-        } catch (IllegalStateException e) {
+        } catch (IllegalStateException ignored) {
             return // no Java plugin convention, so nothing further we can do...
         }
 
