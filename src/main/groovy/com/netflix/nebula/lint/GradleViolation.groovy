@@ -78,4 +78,25 @@ class GradleViolation extends Violation {
         fixes += new GradleLintInsertBefore(file, beforeLine, changes)
         this
     }
+
+    GradleViolation replaceAll(File file, String changes) {
+        fixes += new GradleLintReplaceAll(file, changes)
+        this
+    }
+
+    GradleViolation deleteLines(File file, Range<Integer> linesToDelete) {
+        fixes += new GradleLintDeleteLines(file, linesToDelete)
+        this
+    }
+
+    GradleViolation deleteFile(File file) {
+        fixes += new GradleLintDeleteFile(file)
+        this
+    }
+
+    GradleViolation createFile(File file, String changes) {
+        fixes += new GradleLintCreateFile(file, changes)
+        this
+    }
+
 }

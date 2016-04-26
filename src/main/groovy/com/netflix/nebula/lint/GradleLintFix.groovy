@@ -18,6 +18,15 @@ package com.netflix.nebula.lint
 
 import groovy.transform.Canonical
 
+import java.nio.file.Files
+
+/**
+ * Fixes that implement this marker interface will generate a single patchset per fix
+ */
+interface RequiresOwnPatchset {}
+interface DeletesFile extends RequiresOwnPatchset {}
+interface CreatesFile extends RequiresOwnPatchset {}
+
 /**
  * Used to generate a unified diff format of auto-corrections for violations
  */
@@ -57,9 +66,10 @@ class GradleLintReplaceWith extends GradleLintMultilineFix {
     String changes() { changes }
 }
 
-class GradleLintDelete extends GradleLintMultilineFix {
+@Canonical
+class GradleLintDeleteLines extends GradleLintMultilineFix {
 
-    GradleLintDelete(File affectedFile, Range<Integer> affectedLines) {
+    GradleLintDeleteLines(File affectedFile, Range<Integer> affectedLines) {
         this.affectedFile = affectedFile
         this.affectedLines = affectedLines
     }
@@ -68,6 +78,22 @@ class GradleLintDelete extends GradleLintMultilineFix {
     String changes() { null }
 }
 
+@Canonical
+class GradleLintReplaceAll extends GradleLintMultilineFix {
+
+    String changes
+
+    GradleLintReplaceAll(File affectedFile, String changes) {
+        this.affectedFile = affectedFile
+        this.affectedLines = 1..affectedFile.readLines().size()
+        this.changes = changes
+    }
+
+    @Override
+    String changes() { changes }
+}
+
+@Canonical
 class GradleLintInsertAfter extends GradleLintFix {
     Integer afterLine // 1-based
     String changes
@@ -107,4 +133,26 @@ class GradleLintInsertBefore extends GradleLintFix {
 
     @Override
     String changes() { changes }
+}
+
+@Canonical
+class GradleLintDeleteFile extends GradleLintMultilineFix implements DeletesFile {
+    GradleLintDeleteFile(File affectedFile) {
+        this.affectedFile = affectedFile
+        def numberOfLines = Files.isSymbolicLink(affectedFile.toPath()) ? 1 : affectedFile.readLines().size()
+        this.affectedLines = 1..numberOfLines
+    }
+
+    @Override
+    String changes() { null }
+}
+
+@Canonical
+class GradleLintCreateFile extends GradleLintInsertBefore implements CreatesFile {
+    FileType fileType
+
+    GradleLintCreateFile(File newFile, String changes, FileType fileType = FileType.Regular) {
+        super(newFile, 1, changes)
+        this.fileType = fileType
+    }
 }
