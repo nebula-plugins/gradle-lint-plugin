@@ -136,7 +136,7 @@ class GradleLintTask extends DefaultTask {
             }
 
         }
-        project.getPlugins().withType(InfoBrokerPlugin) { it.addReport('lintViolations', violationReportItems) }
+        project.getPlugins().withType(InfoBrokerPlugin) { it.addReport('gradleLintViolations', violationReportItems) }
 
         if (!allViolations.isEmpty()) {
             textOutput.text("To apply fixes automatically, run ").withStyle(StyledTextOutput.Style.UserInput).text("fixGradleLint")
