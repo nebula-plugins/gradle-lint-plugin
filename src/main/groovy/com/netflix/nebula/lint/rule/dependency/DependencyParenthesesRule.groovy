@@ -29,7 +29,7 @@ class DependencyParenthesesRule extends GradleLintRule {
             def callSource = getSourceCode().line(call.lineNumber-1)
             def matcher = callSource =~ /^${call.methodAsString}\s*\((?<dep>[^\)]+)/
             if(matcher.find()) {
-                addLintViolation('parentheses are unnecessary for dependencies', call)
+                addBuildLintViolation('parentheses are unnecessary for dependencies', call)
                     .replaceWith(call, "${call.methodAsString} ${matcher.group('dep')}")
             }
         }

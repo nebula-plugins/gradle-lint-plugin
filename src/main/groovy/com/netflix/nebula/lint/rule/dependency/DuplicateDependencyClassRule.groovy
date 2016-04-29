@@ -20,7 +20,7 @@ class DuplicateDependencyClassRule extends AbstractDependencyReportRule {
         if (!dupeClassesByDependency.isEmpty() && matchesGradleDep(dupeClassesByDependency.keySet().first())) {
             dupeClassesByDependency.each { resolvedDependency, classes ->
                 if (!matchesGradleDep(resolvedDependency)) {
-                    addLintViolation("${dep.group}:${dep.name}:${dep.version} in configuration '$conf' has ${classes.size()} classes duplicated by ${resolvedDependency.name}", GradleViolation.Level.Warning)
+                    addBuildLintViolation("${dep.group}:${dep.name}:${dep.version} in configuration '$conf' has ${classes.size()} classes duplicated by ${resolvedDependency.name}", GradleViolation.Level.Warning)
                 }
             }
         }

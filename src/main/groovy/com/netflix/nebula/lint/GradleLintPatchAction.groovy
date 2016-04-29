@@ -20,6 +20,10 @@ import groovy.transform.Canonical
 import org.apache.commons.lang.StringUtils
 import org.gradle.api.Project
 
+import static com.netflix.nebula.lint.FileType.Symlink
+import static com.netflix.nebula.lint.PatchType.*
+import static java.nio.file.Files.readSymbolicLink
+
 @Canonical
 class GradleLintPatchAction extends GradleLintViolationAction {
     Project project
@@ -35,20 +39,53 @@ class GradleLintPatchAction extends GradleLintViolationAction {
         }
     }
 
+    static determinePatchType(List<GradleLintFix> patchFixes) {
+        if (patchFixes.size() == 1 && patchFixes.get(0) instanceof DeletesFile)
+            return Delete
+        else if (patchFixes.size() == 1 && patchFixes.get(0) instanceof CreatesFile) {
+            return Create
+        } else {
+            return Update
+        }
+    }
+
+    static readFileOrSymlink(File file, FileType type) {
+        return type == Symlink ? [readSymbolicLink(file.toPath()).toString()] : file.readLines()
+    }
+
+    static diffHints(String path, PatchType patchType, FileType fileType) {
+        def headers = ["diff --git a/$path b/$path"]
+        switch (patchType) {
+            case Create:
+                headers += "new file mode ${fileType.mode}"
+                break
+            case Delete:
+                headers += "deleted file mode ${fileType.mode}"
+                break
+            case Update:
+                // no hint necessary
+                break
+        }
+        return headers.collect { "|$it" }.join('\n')
+    }
+
     String patch(List<GradleLintFix> fixes) {
         List<List<GradleLintFix>> patchSets = []
 
-        fixes.groupBy { it.affectedFile }.each { file, fileFixes ->
+        fixes.groupBy { it.affectedFile }.each { file, fileFixes ->  // internal ordering of fixes per file is maintained (file order does not)
             List<GradleLintFix> curPatch = []
-            GradleLintFix last = null
 
-            for (f in fileFixes.sort { f1, f2 -> f1.from() <=> f2.from() ?: f1.to() <=> f2.to() ?: f1.changes() <=> f2.changes() }) {
+            def (individualFixes, maybeCombinedFixes) = fileFixes.split { it instanceof RequiresOwnPatchset }
+            individualFixes.each { patchSets.add([it] as List<GradleLintFix>) }
+
+            GradleLintFix last = null
+            for (f in maybeCombinedFixes.sort { f1, f2 -> f1.from() <=> f2.from() ?: f1.to() <=> f2.to() ?: f1.changes() <=> f2.changes() }) {
                 if (!last || f.from() - last.to() <= MIN_LINES_CONTEXT * 2) {
                     // if context lines would overlap or abut, put these fixes in the same patch
                     curPatch += f
                 } else {
                     patchSets.add(curPatch)
-                    curPatch = [f]
+                    curPatch = [f] as List<GradleLintFix>
                 }
                 last = f
             }
@@ -59,9 +96,15 @@ class GradleLintPatchAction extends GradleLintViolationAction {
 
         String combinedPatch = ''
 
+        def lastPathDeleted = null
         patchSets.eachWithIndex { patchFixes, i ->
+            def patchType = determinePatchType(patchFixes)
+
             def file = patchFixes[0].affectedFile
-            def newlineAtEndOfOriginal = file.text.empty ? false : file.text[-1] == '\n'
+            def fileType = patchType == Create ? (patchFixes[0] as GradleLintCreateFile).fileType : FileType.fromFile(file)
+            def emptyFile = file.exists() ? (lastPathDeleted == file.absolutePath || patchType == Create ||
+                    readFileOrSymlink(file, fileType).size() == 0) : true
+            def newlineAtEndOfOriginal = emptyFile ? false : fileType != Symlink && file.text[-1] == '\n'
 
             def firstLineOfContext = 1
 
@@ -69,7 +112,9 @@ class GradleLintPatchAction extends GradleLintViolationAction {
             def afterLineCount = 0
 
             // generate just this patch
-            def lines = [''] + file.readLines() // the extra empty line is so we don't have to do a bunch of zero-based conversions for line arithmetic
+            def lines = [''] // the extra empty line is so we don't have to do a bunch of zero-based conversions for line arithmetic
+            if (!emptyFile) lines += readFileOrSymlink(file, fileType)
+
             def patch = []
             patchFixes.eachWithIndex { fix, j ->
                 def lastFix = j == patchFixes.size() - 1
@@ -83,7 +128,7 @@ class GradleLintPatchAction extends GradleLintViolationAction {
                             .collect { line -> ' ' + line }
                             .dropWhile { String line -> j == 0 && StringUtils.isBlank(line) }
 
-                    if(j == 0) {
+                    if (j == 0) {
                         firstLineOfContext = fix.from() - beforeContext.size()
                     }
 
@@ -103,7 +148,7 @@ class GradleLintPatchAction extends GradleLintViolationAction {
                     if (j == 0 && fix.to() + 1 == lines.size() && !newlineAtEndOfOriginal && changed[-1] != '\n') {
                         patch += /\ No newline at end of file/
                     }
-                } else if (fix instanceof GradleLintInsertAfter && fix.afterLine == lines.size() - 1 && !newlineAtEndOfOriginal && !file.text.empty) {
+                } else if (fix instanceof GradleLintInsertAfter && fix.afterLine == lines.size() - 1 && !newlineAtEndOfOriginal && !emptyFile) {
                     patch = patch.dropRight(1)
                     patch.addAll(['-' + lines[-1], /\ No newline at end of file/, '+' + lines[-1]])
                 }
@@ -149,7 +194,7 @@ class GradleLintPatchAction extends GradleLintViolationAction {
 
                     patch += afterContext
 
-                    if (lastFix && lastLineOfContext == lines.size() && file.text[-1] != '\n') {
+                    if (lastFix && lastLineOfContext == lines.size() && !newlineAtEndOfOriginal) {
                         patch += /\ No newline at end of file/
                     }
                 } else if (lastFix && fix.changes() && fix.changes()[-1] != '\n' && !newlineAtEndOfOriginal) {
@@ -162,13 +207,23 @@ class GradleLintPatchAction extends GradleLintViolationAction {
 
             if (i > 0)
                 combinedPatch += '\n'
-            combinedPatch += """\
-                --- a/$path
-                +++ b/$path
-                @@ -${file.text.empty ? 0 : firstLineOfContext},$beforeLineCount +${afterLineCount == 0 ? 0 : firstLineOfContext},$afterLineCount @@
-            """.stripIndent() + patch.join('\n')
+
+            def diffHeader = """\
+                ${diffHints(path, patchType, fileType)}
+                |--- ${patchType == Create ? '/dev/null' : 'a/' + path}
+                |+++ ${patchType == Delete ? '/dev/null' : 'b/' + path}
+                |@@ -${emptyFile ? 0 : firstLineOfContext},$beforeLineCount +${afterLineCount == 0 ? 0 : firstLineOfContext},$afterLineCount @@
+                |""".stripMargin()
+
+            combinedPatch += diffHeader + patch.join('\n')
+
+            lastPathDeleted = patchType == Delete ? file.absolutePath : null
         }
 
         combinedPatch + '\n'
     }
+}
+
+enum PatchType {
+    Update, Create, Delete
 }

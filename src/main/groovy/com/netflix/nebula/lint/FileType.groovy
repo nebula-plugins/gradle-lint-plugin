@@ -14,23 +14,28 @@
  * limitations under the License.
  */
 
-package com.netflix.nebula.lint.rule.rename
+package com.netflix.nebula.lint
 
-import com.netflix.nebula.lint.rule.GradleLintRule
-import groovy.transform.Canonical
-import org.codehaus.groovy.ast.expr.MethodCallExpression
+import static java.nio.file.Files.isSymbolicLink
 
-@Canonical
-class PluginRenamedRule extends GradleLintRule {
-    String deprecatedPluginName
-    String pluginName
+enum FileType {
+    Regular(100644),
+    Symlink(120000),
+    Executable(100755)
 
-    @Override
-    void visitApplyPlugin(MethodCallExpression call, String plugin) {
-        if(plugin == deprecatedPluginName) {
-            addBuildLintViolation("plugin $deprecatedPluginName has been renamed to $pluginName", call)
-                .replaceWith(call, "apply plugin: '$pluginName'")
+    int mode
 
+    FileType(int mode) {
+        this.mode = mode
+    }
+
+    static fromFile(File file) {
+        if (isSymbolicLink(file.toPath()))
+            return Symlink
+        else if (file.canExecute()) {
+            return Executable
+        } else {
+            return Regular
         }
     }
 }

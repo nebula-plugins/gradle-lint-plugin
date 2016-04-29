@@ -97,7 +97,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         def rule = new GradleLintRule() {
             @Override
             void visitApplyPlugin(MethodCallExpression call, String plugin) {
-                addLintViolation("'apply plugin' syntax is not allowed", call).delete(call)
+                addBuildLintViolation("'apply plugin' syntax is not allowed", call).delete(call)
             }
         }
 
@@ -124,9 +124,9 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
             @Override
             void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
                 if(bookmark('lastApplyPlugin')) {
-                    addLintViolation('should generate source jar', call)
+                    addBuildLintViolation('should generate source jar', call)
                         .insertAfter(bookmark('lastApplyPlugin'), "apply plugin: 'nebula.source-jar'")
-                    addLintViolation('should generate javadoc jar', call)
+                    addBuildLintViolation('should generate javadoc jar', call)
                         .insertAfter(bookmark('lastApplyPlugin'), "apply plugin: 'nebula.javadoc-jar'")
                 }
             }
@@ -150,7 +150,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         def rule = new GradleLintRule() {
             @Override
             void visitApplyPlugin(MethodCallExpression call, String plugin) {
-                addLintViolation('no plugins allowed', call)
+                addBuildLintViolation('no plugins allowed', call)
             }
         }
         rule.ruleId = 'no-plugins-allowed'
@@ -220,7 +220,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
             @Override
             void visitExtensionProperty(ExpressionStatement expression, String extension, String prop) {
                 if(extension == 'nebula' && prop == 'moduleOwner')
-                    addLintViolation('moduleOwner is deprecated and should be removed', expression)
+                    addBuildLintViolation('moduleOwner is deprecated and should be removed', expression)
             }
         }
 
@@ -264,7 +264,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
             @Override
             void visitMethodCallExpression(MethodCallExpression call) {
                 if(call.methodAsString == 'multiline')
-                    addLintViolation('this block can be deleted', call).delete(call)
+                    addBuildLintViolation('this block can be deleted', call).delete(call)
             }
         })
 

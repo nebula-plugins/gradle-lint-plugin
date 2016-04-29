@@ -22,8 +22,11 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
+import java.nio.file.Files
+
 class GradleLintPatchActionSpec extends Specification {
-    @Rule TemporaryFolder temp
+    @Rule
+    TemporaryFolder temp
     Project project
 
     def setup() {
@@ -46,6 +49,7 @@ class GradleLintPatchActionSpec extends Specification {
 
         then:
         patch == '''
+            diff --git a/my.txt b/my.txt
             --- a/my.txt
             +++ b/my.txt
             @@ -1,3 +1,3 @@
@@ -53,6 +57,168 @@ class GradleLintPatchActionSpec extends Specification {
             -b
             +*
              c
+             '''.substring(1).stripIndent()
+    }
+
+    def 'delete file patch'() {
+        setup:
+        def f = temp.newFile('my.txt')
+
+        f.text = '''\
+        a
+        '''.substring(0).stripIndent()
+
+        when:
+        def fix = new GradleLintDeleteFile(f)
+        def patch = new GradleLintPatchAction(project).patch([fix])
+
+        then:
+        patch == '''
+            diff --git a/my.txt b/my.txt
+            deleted file mode 100644
+            --- a/my.txt
+            +++ /dev/null
+            @@ -1,1 +0,0 @@
+            -a
+             '''.substring(1).stripIndent()
+    }
+
+    def 'create regular file patch'() {
+        setup:
+        def f = new File(project.rootDir, 'my.txt')
+
+        when:
+        def fix = new GradleLintCreateFile(f, 'hello')
+        def patch = new GradleLintPatchAction(project).patch([fix])
+
+        then:
+        patch == '''
+            diff --git a/my.txt b/my.txt
+            new file mode 100644
+            --- /dev/null
+            +++ b/my.txt
+            @@ -0,0 +1,1 @@
+            +hello
+            \\ No newline at end of file
+             '''.substring(1).stripIndent()
+    }
+
+    def 'create executable file patch'() {
+        setup:
+        def f = new File(project.rootDir, 'exec.sh')
+        f.text = 'execute me'
+
+        when:
+        def fix = new GradleLintCreateFile(f, 'hello', FileType.Executable)
+        def patch = new GradleLintPatchAction(project).patch([fix])
+
+        then:
+        patch == '''
+            diff --git a/exec.sh b/exec.sh
+            new file mode 100755
+            --- /dev/null
+            +++ b/exec.sh
+            @@ -0,0 +1,1 @@
+            +hello
+            \\ No newline at end of file
+             '''.substring(1).stripIndent()
+    }
+
+    def 'delete symlink and replace with executable'() {
+        setup:
+        def f = temp.newFile('real.txt')
+        f.text = 'hello world'
+        def symlink = new File(project.rootDir, 'gradle')
+        Files.createSymbolicLink(symlink.toPath(), f.toPath())
+
+        when:
+        def delete = new GradleLintDeleteFile(symlink)
+        def create = new GradleLintCreateFile(new File(project.rootDir, 'gradle/some/dir.txt'), 'new file', FileType.Executable)
+        def patch = new GradleLintPatchAction(project).patch([delete, create])
+
+        then:
+        patch == """\
+            diff --git a/gradle b/gradle
+            deleted file mode 120000
+            --- a/gradle
+            +++ /dev/null
+            @@ -1,1 +0,0 @@
+            -${f.absolutePath}
+            \\ No newline at end of file
+            diff --git a/gradle/some/dir.txt b/gradle/some/dir.txt
+            new file mode 100755
+            --- /dev/null
+            +++ b/gradle/some/dir.txt
+            @@ -0,0 +1,1 @@
+            +new file
+            \\ No newline at end of file
+            """.substring(0).stripIndent()
+    }
+
+
+    def 'delete symlink and create file patch'() {
+        setup:
+        def f = temp.newFile('real.txt')
+        f.text = 'hello world'
+        def symlink = new File(project.rootDir, 'gradle')
+        Files.createSymbolicLink(symlink.toPath(), f.toPath())
+
+        when:
+        def delete = new GradleLintDeleteFile(symlink)
+        def create = new GradleLintCreateFile(new File(project.rootDir, 'gradle/some/dir.txt'), 'new file')
+        def patch = new GradleLintPatchAction(project).patch([delete, create])
+
+        then:
+        patch == """\
+            diff --git a/gradle b/gradle
+            deleted file mode 120000
+            --- a/gradle
+            +++ /dev/null
+            @@ -1,1 +0,0 @@
+            -${f.absolutePath}
+            \\ No newline at end of file
+            diff --git a/gradle/some/dir.txt b/gradle/some/dir.txt
+            new file mode 100644
+            --- /dev/null
+            +++ b/gradle/some/dir.txt
+            @@ -0,0 +1,1 @@
+            +new file
+            \\ No newline at end of file
+            """.substring(0).stripIndent()
+    }
+
+    def 'delete and create patches'() {
+        setup:
+        def f = temp.newFile('my.txt')
+
+        f.text = '''\
+        a
+        b
+        c
+        '''.substring(0).stripIndent()
+
+        when:
+        def delFix = new GradleLintDeleteFile(f)
+        def createFix = new GradleLintCreateFile(f, 'hello')
+        def patch = new GradleLintPatchAction(project).patch([delFix, createFix])
+
+        then:
+        patch == '''
+            diff --git a/my.txt b/my.txt
+            deleted file mode 100644
+            --- a/my.txt
+            +++ /dev/null
+            @@ -1,3 +0,0 @@
+            -a
+            -b
+            -c
+            diff --git a/my.txt b/my.txt
+            new file mode 100644
+            --- /dev/null
+            +++ b/my.txt
+            @@ -0,0 +1,1 @@
+            +hello
+            \\ No newline at end of file
              '''.substring(1).stripIndent()
     }
 
@@ -68,6 +234,7 @@ class GradleLintPatchActionSpec extends Specification {
 
         then:
         patch == '''
+            diff --git a/my.txt b/my.txt
             --- a/my.txt
             +++ b/my.txt
             @@ -1,1 +1,1 @@
@@ -88,6 +255,7 @@ class GradleLintPatchActionSpec extends Specification {
 
         then:
         patch == '''
+            diff --git a/my.txt b/my.txt
             --- a/my.txt
             +++ b/my.txt
             @@ -1,2 +1,1 @@
@@ -100,6 +268,7 @@ class GradleLintPatchActionSpec extends Specification {
     def 'deleting a line'() {
         setup:
         def expect = '''
+            diff --git a/my.txt b/my.txt
             --- a/my.txt
             +++ b/my.txt
             @@ -1,2 +1,1 @@
@@ -116,12 +285,13 @@ class GradleLintPatchActionSpec extends Specification {
         then:
         generator.patch([new GradleLintReplaceWith(f, 1..1, 1, 2, '')]) == expect
         generator.patch([new GradleLintReplaceWith(f, 1..1, 1, -1, '')]) == expect
-        generator.patch([new GradleLintDelete(f, 1..1)]) == expect
+        generator.patch([new GradleLintDeleteLines(f, 1..1)]) == expect
     }
 
     def 'deleting such that the entire file is empty'() {
         setup:
         def expect = '''
+            diff --git a/my.txt b/my.txt
             --- a/my.txt
             +++ b/my.txt
             @@ -1,1 +0,0 @@
@@ -136,7 +306,7 @@ class GradleLintPatchActionSpec extends Specification {
         def generator = new GradleLintPatchAction(project)
 
         then:
-        generator.patch([new GradleLintDelete(f, 1..1)]) == expect
+        generator.patch([new GradleLintDeleteLines(f, 1..1)]) == expect
     }
 
     def 'inserting a line'() {
@@ -148,6 +318,7 @@ class GradleLintPatchActionSpec extends Specification {
 
         then:
         generator.patch([new GradleLintInsertAfter(f, 1, 'b')]) == '''
+            diff --git a/my.txt b/my.txt
             --- a/my.txt
             +++ b/my.txt
             @@ -1,1 +1,2 @@
@@ -156,6 +327,7 @@ class GradleLintPatchActionSpec extends Specification {
             '''.substring(1).stripIndent()
 
         generator.patch([new GradleLintInsertBefore(f, 1, 'b')]) == '''
+            diff --git a/my.txt b/my.txt
             --- a/my.txt
             +++ b/my.txt
             @@ -1,1 +1,2 @@
@@ -187,6 +359,7 @@ class GradleLintPatchActionSpec extends Specification {
 
         then:
         patch == '''
+            diff --git a/my.txt b/my.txt
             --- a/my.txt
             +++ b/my.txt
             @@ -1,4 +1,4 @@
@@ -195,6 +368,7 @@ class GradleLintPatchActionSpec extends Specification {
              b
              c
              d
+            diff --git a/my.txt b/my.txt
             --- a/my.txt
             +++ b/my.txt
             @@ -6,4 +6,4 @@
@@ -223,6 +397,7 @@ class GradleLintPatchActionSpec extends Specification {
 
         then:
         patch == '''
+            diff --git a/my.txt b/my.txt
             --- a/my.txt
             +++ b/my.txt
             @@ -1,3 +1,3 @@
@@ -250,6 +425,7 @@ class GradleLintPatchActionSpec extends Specification {
 
         then:
         patch == '''
+            diff --git a/my.txt b/my.txt
             --- a/my.txt
             +++ b/my.txt
             @@ -1,1 +1,1 @@
@@ -274,6 +450,7 @@ class GradleLintPatchActionSpec extends Specification {
 
         then:
         patch == '''
+            diff --git a/my.txt b/my.txt
             --- a/my.txt
             +++ b/my.txt
             @@ -3,1 +3,1 @@
@@ -290,11 +467,12 @@ class GradleLintPatchActionSpec extends Specification {
 
         when:
         def fix1 = new GradleLintInsertAfter(f, 1, 'c')
-        def fix2 = new GradleLintDelete(f, 3..3)
+        def fix2 = new GradleLintDeleteLines(f, 3..3)
         def patch = new GradleLintPatchAction(project).patch([fix1, fix2])
 
         then:
         patch == '''
+            diff --git a/my.txt b/my.txt
             --- a/my.txt
             +++ b/my.txt
             @@ -1,3 +1,3 @@
@@ -319,6 +497,7 @@ class GradleLintPatchActionSpec extends Specification {
 
         then:
         patch == '''
+            diff --git a/my.txt b/my.txt
             --- a/my.txt
             +++ b/my.txt
             @@ -1,2 +1,2 @@
@@ -341,6 +520,7 @@ class GradleLintPatchActionSpec extends Specification {
 
         then:
         patch == '''
+            diff --git a/my.txt b/my.txt
             --- a/my.txt
             +++ b/my.txt
             @@ -1,1 +1,1 @@
@@ -363,6 +543,7 @@ class GradleLintPatchActionSpec extends Specification {
 
         then:
         patch == '''
+            diff --git a/my.txt b/my.txt
             --- a/my.txt
             +++ b/my.txt
             @@ -1,1 +1,2 @@
@@ -380,6 +561,7 @@ class GradleLintPatchActionSpec extends Specification {
         f.text = ''
 
         def expect = '''
+            diff --git a/my.txt b/my.txt
             --- a/my.txt
             +++ b/my.txt
             @@ -0,0 +1,1 @@
@@ -400,4 +582,5 @@ class GradleLintPatchActionSpec extends Specification {
         then:
         patch == expect
     }
+
 }

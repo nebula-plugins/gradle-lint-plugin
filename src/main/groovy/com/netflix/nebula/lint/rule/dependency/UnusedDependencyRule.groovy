@@ -27,13 +27,13 @@ class UnusedDependencyRule extends AbstractDependencyReportRule {
         def match
 
         if ((match = report.firstOrderDependenciesWithNoClasses.find(matchesGradleDep))) {
-            addLintViolation("this dependency should be moved to the runtime configuration since it has no classes", call)
+            addBuildLintViolation("this dependency should be moved to the runtime configuration since it has no classes", call)
                     .replaceWith(call, "runtime '$match.module.id'")
         } else if (report.firstOrderDependenciesToRemove.find(matchesGradleDep)) {
-            addLintViolation('this dependency is unused and can be removed', call).delete(call)
+            addBuildLintViolation('this dependency is unused and can be removed', call).delete(call)
         } else if ((match = report.firstOrderDependenciesWhoseConfigurationNeedsToChange.keySet().find(matchesGradleDep))) {
             def toConf = report.firstOrderDependenciesWhoseConfigurationNeedsToChange[match]
-            addLintViolation("this dependency should be moved to configuration $toConf", call)
+            addBuildLintViolation("this dependency should be moved to configuration $toConf", call)
                     .replaceWith(call, "$toConf '$match.module.id'")
         }
     }
@@ -47,10 +47,10 @@ class UnusedDependencyRule extends AbstractDependencyReportRule {
 
             if (transitiveSize == 1) {
                 def d = report.transitiveDependenciesToAddAsFirstOrder.first()
-                addLintViolation('one or more classes in your transitive dependencies are required by your code directly')
+                addBuildLintViolation('one or more classes in your transitive dependencies are required by your code directly')
                         .insertAfter(call, "${indentation}compile '${d.module.id}'")
             } else if (transitiveSize > 1) {
-                addLintViolation('one or more classes in your transitive dependencies are required by your code directly')
+                addBuildLintViolation('one or more classes in your transitive dependencies are required by your code directly')
                         .insertAfter(call,
                         report.transitiveDependenciesToAddAsFirstOrder.toSorted(dependencyComparator).inject('') { deps, d ->
                             deps + "\n${indentation}compile '$d.module.id'"

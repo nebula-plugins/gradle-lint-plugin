@@ -29,7 +29,7 @@
 
 ## Purpose
 
-The Gradle Lint plugin is a pluggable and configurable linter tool for identifying and reporting on patterns of misuse or deprecations in Gradle scripts.  It is inspired by the excellent ESLint tool for Javascript and by the formatting in NPM's [eslint-friendly-formatter](https://www.npmjs.com/package/eslint-friendly-formatter) package.
+The Gradle Lint plugin is a pluggable and configurable linter tool for identifying and reporting on patterns of misuse or deprecations in Gradle scripts and related files.  It is inspired by the excellent ESLint tool for Javascript and by the formatting in NPM's [eslint-friendly-formatter](https://www.npmjs.com/package/eslint-friendly-formatter) package.
 
 It assists a centralized build tools team in gently introducing and maintaining a standard build script style across their organization.
 
@@ -38,7 +38,7 @@ It assists a centralized build tools team in gently introducing and maintaining 
 To apply this plugin:
 
     plugins {
-      id 'nebula.lint' version '0.22.0'
+      id 'nebula.lint' version '0.23.0'
     }
 
 Alternatively:
@@ -103,7 +103,9 @@ You can also be selective about which rules to ignore in the block by providing 
 
 ## Building your own rules
 
-A lint rule consists of a `GradleLintRule` implementation plus a properties file.  Let's build a simple rule that blocks build scripts from applying an imaginary Gradle plugin `nebula.fix-jersey-bundle` that might do something like replace a jersey-bundle dependency with a more narrowly defined dependency.
+A lint rule consists of a `GradleLintRule` implementation plus a properties file. Once called, the rule _visits_ different components in `build.gradle` and allows the code to report violations relating to `build.gradle` or other files via the `addBuildLintViolation` or `addLintViolation` methods respectively.     
+
+Let's build a simple rule that blocks build scripts from applying an imaginary Gradle plugin `nebula.fix-jersey-bundle` that might do something like replace a jersey-bundle dependency with a more narrowly defined dependency. 
 
 ### The `Rule` implementation
 
@@ -121,7 +123,7 @@ Lint rules are AST visiting rules, because the AST gives us the ingredients we n
             }
 
             if(!foundJerseyBundle)
-              addLintViolation('since there is no dependency on jersey-bundle this plugin has no effect', call)
+              addBuildLintViolation('since there is no dependency on jersey-bundle this plugin has no effect', call)
                 .delete(call) // Note: we could keep chaining additional fixes here if there was more to do
           }
       }
@@ -129,9 +131,7 @@ Lint rules are AST visiting rules, because the AST gives us the ingredients we n
 
 We use the AST to look for the specific piece of code where `nebula.fix-jersey-bundle` was applied. We could determine through the Gradle model that the plugin had been applied, but not how or where this had been accomplished. Then we transition to using the Gradle model to determine if `jersey-bundle` is in our transitive dependencies. We could not have determined this with the AST alone! Also, since linting runs not only after project configuration but in fact LAST in the task execution order, we can comfortably use Gradle bits like `resolvedConfiguration` without fear of introducing side effects.
 
-Finally, we use `addLintViolation` to indicate to the lint plugin that this block of code applying `nebula.fix-jersey-bundle` violates the rule, and the `delete` fix hint tells `fixGradleLint` that it can safely delete this code snippet.
-
-Currently, `delete`, `insertBefore`, `insertAfter`, and `replaceWith` are provided as fix hints.
+As shown above, `addBuildLintViolation` is used to indicate to the lint plugin that this block of code applying `nebula.fix-jersey-bundle` violates the rule, and the `delete` fix hint tells `fixGradleLint` that it can safely delete this code snippet. 
 
 Finally, notice how we overrode the `visitApplyPlugin` method.  `GradleLintRule` implements the `GradleAstVisitor` interface which adds several convenience hooks for Gradle specific constructs to the rich set of hooks already provided by CodeNarc's `AbstractAstVisitor`, including:
 
@@ -140,6 +140,10 @@ Finally, notice how we overrode the `visitApplyPlugin` method.  `GradleLintRule`
 * `visitExtensionProperty(ExpressionStatement expression, String extension, String prop)`
 * `visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep)`
 * `visitConfigurationExclude(MethodCallExpression call, String conf, GradleDependency exclude)`
+
+### Lint violation fixes
+
+There are several lint violation fixes currently available. For AST-based fixes, you would typically want to use `insertAfter`, `insertBefore`, `replaceWith`, or `delete`. For fixes that cannot specify AST nodes, such as text files, `replaceAll`, `deleteLines`, `deleteFile` and `createFile` are also available. 
 
 ### The properties file
 

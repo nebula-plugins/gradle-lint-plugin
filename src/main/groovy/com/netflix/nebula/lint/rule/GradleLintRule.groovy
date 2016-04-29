@@ -17,6 +17,7 @@
 package com.netflix.nebula.lint.rule
 
 import com.netflix.nebula.lint.GradleViolation
+import com.netflix.nebula.lint.GradleViolation.Level
 import com.netflix.nebula.lint.plugin.LintRuleRegistry
 import org.codehaus.groovy.ast.*
 import org.codehaus.groovy.ast.expr.*
@@ -27,7 +28,7 @@ import org.codenarc.source.SourceCode
 
 
 abstract class GradleLintRule extends AbstractAstVisitor implements Rule, GradleAstVisitor {
-    private static final GradleViolation.Level DEFAULT_LEVEL = GradleViolation.Level.Warning
+    private static final Level DEFAULT_LEVEL = Level.Warning
     Project project // will be non-null if type is GradleModelAware, otherwise null
     File buildFile
     SourceCode sourceCode
@@ -84,23 +85,31 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
     @SuppressWarnings("GrDeprecatedAPIUsage")
     @Override
     protected final void addViolation(ASTNode node) {
-        throw new UnsupportedOperationException("use one of the addViolationWith* methods or addViolationNoCorrection if there is no auto-fix rule")
+        throw new UnsupportedOperationException("use either addLintViolation or one of the addBuildFileViolation* methods to create a lint violation")
     }
 
     @Override
     protected final void addViolation(ASTNode node, String message) {
-        throw new UnsupportedOperationException("use one of the addViolationWith* methods or addViolationNoCorrection if there is no auto-fix rule")
+        throw new UnsupportedOperationException("use either addLintViolation or one of the addBuildFileViolation* methods to create a lint violation")
     }
 
-    public GradleViolation addLintViolation(String message, ASTNode node, GradleViolation.Level level = DEFAULT_LEVEL) {
+    public GradleViolation addBuildLintViolation(String message, ASTNode node, Level level = DEFAULT_LEVEL) {
         def v = new GradleViolation(level, buildFile, rule, node?.lineNumber, formattedViolation(node), message)
         if(!isIgnored())
             gradleViolations.add(v)
         return v
     }
 
-    public GradleViolation addLintViolation(String message, GradleViolation.Level level = DEFAULT_LEVEL) {
-        addLintViolation(message, null, level)
+
+    public GradleViolation addBuildLintViolation(String message, Level level = DEFAULT_LEVEL) {
+        addBuildLintViolation(message, null, level)
+    }
+
+    public GradleViolation addLintViolation(String message, File file, Integer lineNumber, Level level = DEFAULT_LEVEL) {
+        def v = new GradleViolation(level, file, rule, lineNumber, null, message)
+        if(!isIgnored())
+            gradleViolations.add(v)
+        return v
     }
 
     /**

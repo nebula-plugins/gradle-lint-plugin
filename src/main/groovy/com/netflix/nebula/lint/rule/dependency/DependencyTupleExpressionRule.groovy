@@ -28,7 +28,7 @@ class DependencyTupleExpressionRule extends GradleLintRule {
         if(dep.conf == null && dep.syntax == GradleDependency.Syntax.MapNotation) {
             // FIXME what if one of the values is a function call?
             def ex = GradleAstUtil.collectEntryExpressions(call)
-            addLintViolation('use the shortcut form of the dependency', call)
+            addBuildLintViolation('use the shortcut form of the dependency', call)
                 .replaceWith(call, "${call.methodAsString} '${ex.group ?: ''}:${ex.name}${ex.version ? ":$ex.version" : ''}'")
         }
     }

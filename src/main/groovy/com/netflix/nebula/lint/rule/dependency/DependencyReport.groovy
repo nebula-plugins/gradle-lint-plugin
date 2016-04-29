@@ -72,7 +72,7 @@ class DependencyReport {
         report = new DependencyReport(project)
         reportsByProject[project] = report
         report.unevaluatedSourceSets.each {
-            rule.addLintViolation("the $it.compileConfigurationName configuration was not analyzed for unused dependencies because there were no compiled classes found for source set $it.name",
+            rule.addBuildLintViolation("the $it.compileConfigurationName configuration was not analyzed for unused dependencies because there were no compiled classes found for source set $it.name",
                     GradleViolation.Level.Warning)
         }
         return report
