@@ -59,7 +59,10 @@ dependencies {
     }
     compile 'com.netflix.nebula:gradle-info-plugin:3.0.4'
 
-    compile 'org.eclipse.jgit:org.eclipse.jgit:4.3.1-SNAPSHOT'
+    compile ('org.eclipse.jgit:org.eclipse.jgit:4.3.1-SNAPSHOT') {
+        transitive = false
+        exclude group: '*', module: '*'
+    }
 
     // these two dependencies exist so we can provide a test harness
     // to proprietary rule implementations packed in other jars
@@ -116,7 +119,7 @@ task mvids << {
 shadowJar {
     classifier = null
     dependencies {
-        include(dependency('org.eclipse.jgit:.*'))
+        include(dependency('org.eclipse.jgit:org.eclipse.jgit'))
     }
     relocate 'org.eclipse.jgit', 'com.netflix.nebula.jgit'
 }
