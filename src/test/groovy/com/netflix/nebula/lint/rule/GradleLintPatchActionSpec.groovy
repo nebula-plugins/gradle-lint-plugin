@@ -103,6 +103,40 @@ class GradleLintPatchActionSpec extends Specification {
              '''.substring(1).stripIndent()
     }
 
+    def 'replaceAll patch'() {
+        setup:
+        def f = temp.newFile('my.txt')
+
+        f.text = '''\
+        a
+        b
+        c
+        '''.substring(0).stripIndent()
+
+        def changes = '''\
+        hello
+        multiline
+        '''.substring(0).stripIndent()
+
+        when:
+        def lines = f.readLines()
+        def fix = new GradleLintReplaceWith(f, 1..lines.size(), 1, lines[-1].length() + 1, changes)
+        def patch = new GradleLintPatchAction(project).patch([fix])
+
+        then:
+        patch == '''
+            diff --git a/my.txt b/my.txt
+            --- a/my.txt
+            +++ b/my.txt
+            @@ -1,3 +1,2 @@
+            -a
+            -b
+            -c
+            +hello
+            +multiline
+             '''.substring(1).stripIndent()
+    }
+
     def 'create executable file patch'() {
         setup:
         def f = new File(project.rootDir, 'exec.sh')

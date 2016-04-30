@@ -40,9 +40,9 @@ class GradleLintPatchAction extends GradleLintViolationAction {
     }
 
     static determinePatchType(List<GradleLintFix> patchFixes) {
-        if (patchFixes.size() == 1 && patchFixes.get(0) instanceof DeletesFile)
+        if (patchFixes.size() == 1 && patchFixes.get(0) instanceof GradleLintDeleteFile)
             return Delete
-        else if (patchFixes.size() == 1 && patchFixes.get(0) instanceof CreatesFile) {
+        else if (patchFixes.size() == 1 && patchFixes.get(0) instanceof GradleLintCreateFile) {
             return Create
         } else {
             return Update
@@ -53,8 +53,8 @@ class GradleLintPatchAction extends GradleLintViolationAction {
         return type == Symlink ? [readSymbolicLink(file.toPath()).toString()] : file.readLines()
     }
 
-    static diffHints(String path, PatchType patchType, FileType fileType) {
-        def headers = ["diff --git a/$path b/$path"]
+    static diffHints(String relativePath, PatchType patchType, FileType fileType) {
+        def headers = ["diff --git a/$relativePath b/$relativePath"]
         switch (patchType) {
             case Create:
                 headers += "new file mode ${fileType.mode}"
@@ -202,16 +202,16 @@ class GradleLintPatchAction extends GradleLintViolationAction {
                 }
             }
 
-            // combine it with all the other patches
-            def path = project.rootDir.toPath().relativize(file.toPath()).toString()
 
+            // combine it with all the other patches
             if (i > 0)
                 combinedPatch += '\n'
 
+            def relativePath = project.rootDir.toPath().relativize(file.toPath()).toString()
             def diffHeader = """\
-                ${diffHints(path, patchType, fileType)}
-                |--- ${patchType == Create ? '/dev/null' : 'a/' + path}
-                |+++ ${patchType == Delete ? '/dev/null' : 'b/' + path}
+                ${diffHints(relativePath, patchType, fileType)}
+                |--- ${patchType == Create ? '/dev/null' : 'a/' + relativePath}
+                |+++ ${patchType == Delete ? '/dev/null' : 'b/' + relativePath}
                 |@@ -${emptyFile ? 0 : firstLineOfContext},$beforeLineCount +${afterLineCount == 0 ? 0 : firstLineOfContext},$afterLineCount @@
                 |""".stripMargin()
 
