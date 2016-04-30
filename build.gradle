@@ -19,6 +19,7 @@ buildscript { repositories { jcenter() } } // Some plugin dependencies (namely J
 plugins {
     id 'com.gradle.plugin-publish' version '0.9.4'
     id 'nebula.plugin-plugin' version '4.1.0'
+    id 'com.github.johnrengelman.shadow' version '1.2.3'
 }
 
 description 'Pluggable and configurable linter tool for identifying and reporting on patterns of misuse or deprecations in Gradle scripts'
@@ -58,7 +59,10 @@ dependencies {
     }
     compile 'com.netflix.nebula:gradle-info-plugin:3.0.4'
 
-    compile 'org.eclipse.jgit:org.eclipse.jgit:4.3.1-SNAPSHOT'
+    compile ('org.eclipse.jgit:org.eclipse.jgit:4.3.1-SNAPSHOT') {
+        transitive = false
+        exclude group: '*', module: '*'
+    }
 
     // these two dependencies exist so we can provide a test harness
     // to proprietary rule implementations packed in other jars
@@ -106,5 +110,30 @@ task listOutputs << {
 task mvids << {
     project.configurations*.resolvedConfiguration*.firstLevelModuleDependencies*.collect { it.module.id }.flatten().unique().each {
         println it
+    }
+}
+
+// Relocate jgit dependency not available in Maven Central
+// Replaces the main artifact by removing the classifier for the shadow jar, and replacing jar with shadowJar
+// Relocated dependencies are removed from the generated pom
+shadowJar {
+    classifier = null
+    dependencies {
+        include(dependency('org.eclipse.jgit:org.eclipse.jgit'))
+    }
+    relocate 'org.eclipse.jgit', 'com.netflix.nebula.jgit'
+}
+
+jar.deleteAllActions()
+jar.dependsOn shadowJar
+
+publishing {
+    publications {
+        nebula(MavenPublication) {
+            pom.withXml {
+                def node = asNode().dependencies.dependency.find { it.groupId.text() == 'org.eclipse.jgit' }
+                node.parent().remove(node)
+            }
+        }
     }
 }
