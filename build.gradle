@@ -134,3 +134,7 @@ publishing {
         }
     }
 }
+
+test {
+    jvmArgs '-Xmx256m'
+}
