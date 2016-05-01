@@ -52,24 +52,26 @@ task createClasspathManifest {
     }
 }
 
+configurations {
+    plugin.description = 'The compile dependencies for the plugin, excluding the local dependencies to avoid problems with Shadow'
+    compile.extendsFrom plugin
+}
+
 dependencies {
-    compile 'org.ow2.asm:asm:5.0.4'
-    compile('org.codenarc:CodeNarc:latest.release') {
+    plugin 'org.ow2.asm:asm:5.0.4'
+    plugin('org.codenarc:CodeNarc:latest.release') {
         transitive = false
     }
-    compile 'com.netflix.nebula:gradle-info-plugin:3.0.4'
+    plugin 'com.netflix.nebula:gradle-info-plugin:3.0.4'
 
-    compile ('org.eclipse.jgit:org.eclipse.jgit:4.3.1-SNAPSHOT') {
+    plugin ('org.eclipse.jgit:org.eclipse.jgit:4.3.1-SNAPSHOT') {
         transitive = false
-        exclude group: '*', module: '*'
     }
 
     // these two dependencies exist so we can provide a test harness
-    // to proprietary rule implementations packed in other jars
-    provided ('org.spockframework:spock-core:latest.release') {
-        exclude module: 'groovy-all'
-    }
-    provided 'com.netflix.nebula:nebula-test:3.1.0'
+    // to proprietary rule implementations packed in other jars, but are considered provided
+    plugin ('org.spockframework:spock-core:latest.release') { transitive = false }
+    plugin('com.netflix.nebula:nebula-test:3.1.0') { transitive = false }
 
     testCompile gradleTestKit()
     testCompile ('org.spockframework:spock-core:latest.release') {
@@ -101,22 +103,11 @@ pluginBundle {
     }
 }
 
-task listOutputs << {
-    tasks.compileJava.outputs.files.findAll { it.path.endsWith('classes/main') }.each {
-        println it
-    }
-}
-
-task mvids << {
-    project.configurations*.resolvedConfiguration*.firstLevelModuleDependencies*.collect { it.module.id }.flatten().unique().each {
-        println it
-    }
-}
-
 // Relocate jgit dependency not available in Maven Central
 // Replaces the main artifact by removing the classifier for the shadow jar, and replacing jar with shadowJar
 // Relocated dependencies are removed from the generated pom
 shadowJar {
+    configurations = [project.configurations.plugin]
     classifier = null
     dependencies {
         include(dependency('org.eclipse.jgit:org.eclipse.jgit'))
@@ -131,13 +122,15 @@ publishing {
     publications {
         nebula(MavenPublication) {
             pom.withXml {
-                def node = asNode().dependencies.dependency.find { it.groupId.text() == 'org.eclipse.jgit' }
-                node.parent().remove(node)
+                asNode()
+                    .dependencies
+                    .dependency
+                    .findAll {
+                        // JGit is shaded inside the distribution, and we want the others to act as 'provided'
+                        ['org.eclipse.jgit', 'org.spockframework', 'com.netflix.nebula'].contains(it.groupId.text())
+                    }
+                    .each { it.parent().remove(it) }
             }
         }
     }
-}
-
-test {
-    jvmArgs '-Xmx256m'
 }

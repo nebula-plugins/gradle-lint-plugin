@@ -44,8 +44,6 @@ class TestKitSpecification extends Specification {
             assert outcome == SUCCESS || outcome == UP_TO_DATE
         }
 
-        println result.output
-
         result
     }
 
