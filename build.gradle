@@ -127,7 +127,7 @@ publishing {
                     .dependency
                     .findAll {
                         // JGit is shaded inside the distribution, and we want the others to act as 'provided'
-                        ['org.eclipse.jgit', 'org.spockframework', 'com.netflix.nebula'].contains(it.groupId.text())
+                        ['org.eclipse.jgit', 'spock-core', 'nebula-test'].contains(it.artifactId.text())
                     }
                     .each { it.parent().remove(it) }
             }

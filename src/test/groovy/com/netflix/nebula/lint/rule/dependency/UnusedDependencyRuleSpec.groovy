@@ -312,8 +312,7 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
         """
 
         then:
-        def results = runTasksSuccessfully('compileTestJava', 'fixGradleLint')
-        println(results.output)
+        runTasksSuccessfully('compileTestJava', 'fixGradleLint')
 
         dependencies(buildFile, 'compile') == []
         dependencies(buildFile, 'runtime') == ['org.webjars:acorn:0.5.0']
