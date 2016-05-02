@@ -80,7 +80,8 @@ class GradleViolation extends Violation {
     }
 
     GradleViolation replaceAll(File file, String changes) {
-        fixes += new GradleLintReplaceAll(file, changes)
+        def lines = file.readLines()
+        fixes += new GradleLintReplaceWith(file, 1..lines.size(), 1, lines[-1].length() + 1, changes)
         this
     }
 
@@ -94,9 +95,8 @@ class GradleViolation extends Violation {
         this
     }
 
-    GradleViolation createFile(File file, String changes) {
-        fixes += new GradleLintCreateFile(file, changes)
+    GradleViolation createFile(File file, String changes, FileMode fileMode = FileMode.Regular) {
+        fixes += new GradleLintCreateFile(file, changes, fileMode)
         this
     }
-
 }
