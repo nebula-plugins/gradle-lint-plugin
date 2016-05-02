@@ -18,14 +18,14 @@ package com.netflix.nebula.lint
 
 import static java.nio.file.Files.isSymbolicLink
 
-enum FileType {
+enum FileMode {
     Regular(100644),
     Symlink(120000),
     Executable(100755)
 
     int mode
 
-    FileType(int mode) {
+    FileMode(int mode) {
         this.mode = mode
     }
 

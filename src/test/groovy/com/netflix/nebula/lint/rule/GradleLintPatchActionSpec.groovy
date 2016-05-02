@@ -143,7 +143,7 @@ class GradleLintPatchActionSpec extends Specification {
         f.text = 'execute me'
 
         when:
-        def fix = new GradleLintCreateFile(f, 'hello', FileType.Executable)
+        def fix = new GradleLintCreateFile(f, 'hello', FileMode.Executable)
         def patch = new GradleLintPatchAction(project).patch([fix])
 
         then:
@@ -167,7 +167,7 @@ class GradleLintPatchActionSpec extends Specification {
 
         when:
         def delete = new GradleLintDeleteFile(symlink)
-        def create = new GradleLintCreateFile(new File(project.rootDir, 'gradle/some/dir.txt'), 'new file', FileType.Executable)
+        def create = new GradleLintCreateFile(new File(project.rootDir, 'gradle/some/dir.txt'), 'new file', FileMode.Executable)
         def patch = new GradleLintPatchAction(project).patch([delete, create])
 
         then:

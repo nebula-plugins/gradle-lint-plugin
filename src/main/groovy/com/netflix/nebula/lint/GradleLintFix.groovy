@@ -132,10 +132,10 @@ class GradleLintDeleteFile extends GradleLintMultilineFix implements RequiresOwn
 
 @Canonical
 class GradleLintCreateFile extends GradleLintInsertBefore implements RequiresOwnPatchset {
-    FileType fileType
+    FileMode fileMode
 
-    GradleLintCreateFile(File newFile, String changes, FileType fileType = FileType.Regular) {
+    GradleLintCreateFile(File newFile, String changes, FileMode fileMode = FileMode.Regular) {
         super(newFile, 1, changes)
-        this.fileType = fileType
+        this.fileMode = fileMode
     }
 }

@@ -95,8 +95,8 @@ class GradleViolation extends Violation {
         this
     }
 
-    GradleViolation createFile(File file, String changes, FileType fileType = FileType.Regular) {
-        fixes += new GradleLintCreateFile(file, changes, fileType)
+    GradleViolation createFile(File file, String changes, FileMode fileMode = FileMode.Regular) {
+        fixes += new GradleLintCreateFile(file, changes, fileMode)
         this
     }
 }
