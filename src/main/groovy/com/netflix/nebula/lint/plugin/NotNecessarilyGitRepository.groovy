@@ -30,7 +30,7 @@ class NotNecessarilyGitRepository extends Repository {
     File workTree
 
     NotNecessarilyGitRepository(File gitDir) {
-        super(new FileRepositoryBuilder().setGitDir(gitDir).setup())
+        super(new FileRepositoryBuilder().setGitDir(gitDir))
         workTree = gitDir
     }
 
