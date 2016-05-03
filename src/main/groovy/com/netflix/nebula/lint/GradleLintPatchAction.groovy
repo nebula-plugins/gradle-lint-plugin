@@ -137,7 +137,7 @@ class GradleLintPatchAction extends GradleLintViolationAction {
 
                 // 'before' context
                 if (fix.from() > 0) {
-                    int minBeforeLines = (j == 0 ? 3 : Math.min(3, Math.max(fix.from() - patchFixes[j - 1].to() - 3, 0)))
+                    int minBeforeLines = (j == 0 ? 3 : Math.min(3, Math.max(fix.from() - patchFixes[j - 1].to() - 4, 0)))
 
                     def firstLine = Math.max(fix.from() - minBeforeLines, 1)
                     def beforeContext = lines.subList(firstLine, fix.from())
