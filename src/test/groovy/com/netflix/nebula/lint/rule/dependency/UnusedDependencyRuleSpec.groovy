@@ -67,7 +67,7 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             }
         """
 
-        createJavaSourceFile(projectDir, main)
+        createJavaSourceFile(main)
 
         then:
         runTasksSuccessfully('compileJava', 'fixGradleLint')
@@ -98,7 +98,7 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             }
         """
 
-        createJavaSourceFile(projectDir, main)
+        createJavaSourceFile(main)
 
         then:
         runTasksSuccessfully('compileJava', 'fixGradleLint')
@@ -226,7 +226,7 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             }
         """
 
-        createJavaSourceFile(projectDir, main)
+        createJavaSourceFile(main)
 
         then:
         runTasksSuccessfully('compileJava', 'fixGradleLint')
@@ -253,7 +253,7 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             }
         """
 
-        createJavaSourceFile(projectDir, '''
+        createJavaSourceFile('''
             public abstract class Main extends com.google.inject.servlet.GuiceServletContextListener {
             }
         ''')
@@ -316,27 +316,5 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
 
         dependencies(buildFile, 'compile') == []
         dependencies(buildFile, 'runtime') == ['org.webjars:acorn:0.5.0']
-    }
-
-    def dependencies(File _buildFile, String... confs = ['compile', 'testCompile']) {
-        _buildFile.text.readLines()
-                .collect { it.trim() }
-                .findAll { line -> confs.any { c -> line.startsWith(c) } }
-                .collect { it.split(/\s+/)[1].replaceAll(/'/, '') }
-                .sort()
-    }
-
-    def createJavaSourceFile(File projectDir, String source) {
-        createJavaFile(projectDir, source, 'src/main/java')
-    }
-
-    def createJavaTestFile(File projectDir, String source) {
-        createJavaFile(projectDir, source, 'src/test/java')
-    }
-
-    def createJavaFile(File projectDir, String source, String sourceFolderPath) {
-        def sourceFolder = new File(projectDir, sourceFolderPath)
-        sourceFolder.mkdirs()
-        new File(sourceFolder, JavaFixture.fullyQualifiedName(source).replaceAll(/\./, '/') + '.java').text = source
     }
 }

@@ -11,18 +11,29 @@ class GradleLintInfoBrokerAction extends GradleLintViolationAction {
     @Override
     void lintFinished(Collection<GradleViolation> violations) {
         project.getPlugins().withType(InfoBrokerPlugin) {
-            def reportItems = violations.collect { v ->
-                def buildFilePath = project.rootDir.toURI().relativize(v.buildFile.toURI()).toString()
-                new LintViolationReportItem(buildFilePath, v.rule.ruleId as String, v.level.toString(),
-                        v.lineNumber ?: -1, v.sourceLine ?: 'unspecified')
-            }
+            def reportItems = violations.collect { buildReportItem(it) }
             it.addReport('gradleLintViolations', reportItems)
         }
+    }
+
+    @Override
+    void lintFixesApplied(Collection<GradleViolation> violations) {
+        project.getPlugins().withType(InfoBrokerPlugin) {
+            def reportItems = violations.findAll { !it.fixes.any { it.reasonForNotFixing } }
+                    .collect { buildReportItem(it) }
+            it.addReport('fixedGradleLintViolations', reportItems)
+        }
+    }
+
+    LintReportItem buildReportItem(GradleViolation v) {
+        def buildFilePath = project.rootDir.toURI().relativize(v.buildFile.toURI()).toString()
+        new LintReportItem(buildFilePath, v.rule.ruleId as String, v.level.toString(),
+                v.lineNumber ?: -1, v.sourceLine ?: 'unspecified')
     }
 }
 
 @Canonical
-class LintViolationReportItem {
+class LintReportItem {
     String buildFilePath
     String ruleId
     String severity

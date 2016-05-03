@@ -35,8 +35,6 @@ class GradleViolation extends Violation {
         this.message = message
     }
 
-    boolean isFixable() { !fixes.isEmpty() }
-
     Level getLevel() {
         this.level ?: rule.defaultLevel
     }
@@ -49,54 +47,54 @@ class GradleViolation extends Violation {
     }
 
     GradleViolation insertAfter(ASTNode node, String changes) {
-        fixes += new GradleLintInsertAfter(buildFile, node.lastLineNumber, changes)
+        fixes += new GradleLintInsertAfter(this, buildFile, node.lastLineNumber, changes)
         this
     }
 
     GradleViolation insertBefore(ASTNode node, String changes) {
-        fixes += new GradleLintInsertBefore(buildFile, node.lineNumber, changes)
+        fixes += new GradleLintInsertBefore(this, buildFile, node.lineNumber, changes)
         this
     }
 
     GradleViolation replaceWith(ASTNode node, String changes) {
-        fixes += new GradleLintReplaceWith(buildFile, node.lineNumber..node.lastLineNumber, node.columnNumber,
+        fixes += new GradleLintReplaceWith(this, buildFile, node.lineNumber..node.lastLineNumber, node.columnNumber,
             node.lastColumnNumber, changes)
         this
     }
 
     GradleViolation delete(ASTNode node) {
-        fixes += new GradleLintReplaceWith(buildFile, node.lineNumber..node.lastLineNumber, node.columnNumber, node.lastColumnNumber, '')
+        fixes += new GradleLintReplaceWith(this, buildFile, node.lineNumber..node.lastLineNumber, node.columnNumber, node.lastColumnNumber, '')
         this
     }
 
     GradleViolation insertAfter(File file, Integer afterLine, String changes) {
-        fixes += new GradleLintInsertAfter(file, afterLine, changes)
+        fixes += new GradleLintInsertAfter(this, file, afterLine, changes)
         this
     }
 
     GradleViolation insertBefore(File file, Integer beforeLine, String changes) {
-        fixes += new GradleLintInsertBefore(file, beforeLine, changes)
+        fixes += new GradleLintInsertBefore(this, file, beforeLine, changes)
         this
     }
 
     GradleViolation replaceAll(File file, String changes) {
         def lines = file.readLines()
-        fixes += new GradleLintReplaceWith(file, 1..lines.size(), 1, lines[-1].length() + 1, changes)
+        fixes += new GradleLintReplaceWith(this, file, 1..lines.size(), 1, lines[-1].length() + 1, changes)
         this
     }
 
     GradleViolation deleteLines(File file, Range<Integer> linesToDelete) {
-        fixes += new GradleLintDeleteLines(file, linesToDelete)
+        fixes += new GradleLintDeleteLines(this, file, linesToDelete)
         this
     }
 
     GradleViolation deleteFile(File file) {
-        fixes += new GradleLintDeleteFile(file)
+        fixes += new GradleLintDeleteFile(this, file)
         this
     }
 
     GradleViolation createFile(File file, String changes, FileMode fileMode = FileMode.Regular) {
-        fixes += new GradleLintCreateFile(file, changes, fileMode)
+        fixes += new GradleLintCreateFile(this, file, changes, fileMode)
         this
     }
 }

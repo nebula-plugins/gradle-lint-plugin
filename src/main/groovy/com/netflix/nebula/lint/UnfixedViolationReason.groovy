@@ -16,7 +16,12 @@
 
 package com.netflix.nebula.lint
 
-abstract class GradleLintViolationAction {
-    void lintFinished(Collection<GradleViolation> violations) {}
-    void lintFixesApplied(Collection<GradleViolation> violations) {}
+enum UnfixedViolationReason {
+    OverlappingPatch('one or more fixes overlap with another, run fixGradleLint again to apply the change')
+
+    String message
+
+    UnfixedViolationReason(String message) {
+        this.message = message
+    }
 }

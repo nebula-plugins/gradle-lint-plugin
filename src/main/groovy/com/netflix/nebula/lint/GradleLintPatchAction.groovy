@@ -94,6 +94,22 @@ class GradleLintPatchAction extends GradleLintViolationAction {
                 patchSets.add(curPatch)
         }
 
+        for(patchSet in patchSets) {
+            patchSet.eachWithIndex{ fix, i ->
+                if(i < patchSet.size() - 1) {
+                    def next = patchSet[i+1]
+                    def multipleInsertionsAtSameLine = fix.from() > fix.to() && next.from() > next.to()
+
+                    if ((fix.from() <= next.from() && fix.to() >= next.to() ||
+                            next.from() <= fix.from() && next.to() >= fix.to()) &&
+                            !multipleInsertionsAtSameLine) {
+                        next.markAsUnfixed(UnfixedViolationReason.OverlappingPatch)
+                    }
+                }
+            }
+            patchSet.retainAll { it.reasonForNotFixing == null }
+        }
+
         String combinedPatch = ''
 
         def lastPathDeleted = null
@@ -201,7 +217,6 @@ class GradleLintPatchAction extends GradleLintViolationAction {
                     patch += /\ No newline at end of file/
                 }
             }
-
 
             // combine it with all the other patches
             if (i > 0)

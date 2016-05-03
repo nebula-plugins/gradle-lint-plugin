@@ -16,7 +16,11 @@
 
 package com.netflix.nebula.lint
 
-abstract class GradleLintViolationAction {
-    void lintFinished(Collection<GradleViolation> violations) {}
-    void lintFixesApplied(Collection<GradleViolation> violations) {}
+import org.gradle.logging.StyledTextOutput
+
+class Styling {
+    static StyledTextOutput.Style Bold = StyledTextOutput.Style.UserInput
+    static StyledTextOutput.Style Green = StyledTextOutput.Style.Identifier
+    static StyledTextOutput.Style Yellow = StyledTextOutput.Style.Description
+    static StyledTextOutput.Style Red = StyledTextOutput.Style.Error
 }

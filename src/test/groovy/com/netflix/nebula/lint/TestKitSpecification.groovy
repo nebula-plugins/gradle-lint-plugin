@@ -1,5 +1,6 @@
 package com.netflix.nebula.lint
 
+import com.netflix.nebula.lint.rule.dependency.JavaFixture
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
@@ -11,7 +12,7 @@ import static org.gradle.testkit.runner.TaskOutcome.UP_TO_DATE
 /**
  * Things that really belong in the unfinished Gradle Testkit
  */
-class TestKitSpecification extends Specification {
+abstract class TestKitSpecification extends Specification {
     @Rule final TemporaryFolder temp = new TemporaryFolder()
     File projectDir
     File buildFile
@@ -35,7 +36,7 @@ class TestKitSpecification extends Specification {
         def result = GradleRunner.create()
                 .withDebug(true)
                 .withProjectDir(projectDir)
-                .withArguments(tasks)
+                .withArguments(*(tasks + '--stacktrace'))
                 .withPluginClasspath(pluginClasspath)
                 .build()
 
@@ -57,5 +58,31 @@ class TestKitSpecification extends Specification {
         subprojectDir.mkdirs()
         new File(subprojectDir, 'build.gradle').text = buildGradleContents
         settingsFile << "include '$name'\n"
+    }
+
+    def dependencies(File _buildFile, String... confs = ['compile', 'testCompile']) {
+        _buildFile.text.readLines()
+                .collect { it.trim() }
+                .findAll { line -> confs.any { c -> line.startsWith(c) } }
+                .collect { it.split(/\s+/)[1].replaceAll(/'/, '') }
+                .sort()
+    }
+
+    def createJavaSourceFile(String source) {
+        createJavaSourceFile(projectDir, source)
+    }
+
+    def createJavaSourceFile(File projectDir, String source) {
+        createJavaFile(projectDir, source, 'src/main/java')
+    }
+
+    def createJavaTestFile(File projectDir, String source) {
+        createJavaFile(projectDir, source, 'src/test/java')
+    }
+
+    def createJavaFile(File projectDir, String source, String sourceFolderPath) {
+        def sourceFolder = new File(projectDir, sourceFolderPath)
+        sourceFolder.mkdirs()
+        new File(sourceFolder, JavaFixture.fullyQualifiedName(source).replaceAll(/\./, '/') + '.java').text = source
     }
 }

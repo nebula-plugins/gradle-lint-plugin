@@ -25,12 +25,20 @@ import spock.lang.Specification
 import java.nio.file.Files
 
 class GradleLintPatchActionSpec extends Specification {
+    GradleViolation violation
+
     @Rule
     TemporaryFolder temp
     Project project
 
     def setup() {
         project = [getRootDir: { temp.root }] as Project
+        violation = new GradleViolation(GradleViolation.Level.Warning,
+                temp.root, // does not matter
+                null, // does not matter
+                1, // does not matter
+                'doesnotmatter',
+                'doesnotmatter')
     }
 
     def 'single line patch'() {
@@ -41,10 +49,10 @@ class GradleLintPatchActionSpec extends Specification {
         a
         b
         c
-        '''.substring(0).stripIndent()
+        '''.stripIndent()
 
         when:
-        def fix = new GradleLintReplaceWith(f, 2..2, 1, 2, '*')
+        def fix = new GradleLintReplaceWith(violation, f, 2..2, 1, 2, '*')
         def patch = new GradleLintPatchAction(project).patch([fix])
 
         then:
@@ -66,10 +74,10 @@ class GradleLintPatchActionSpec extends Specification {
 
         f.text = '''\
         a
-        '''.substring(0).stripIndent()
+        '''.stripIndent()
 
         when:
-        def fix = new GradleLintDeleteFile(f)
+        def fix = new GradleLintDeleteFile(violation, f)
         def patch = new GradleLintPatchAction(project).patch([fix])
 
         then:
@@ -88,7 +96,7 @@ class GradleLintPatchActionSpec extends Specification {
         def f = new File(project.rootDir, 'my.txt')
 
         when:
-        def fix = new GradleLintCreateFile(f, 'hello')
+        def fix = new GradleLintCreateFile(violation, f, 'hello')
         def patch = new GradleLintPatchAction(project).patch([fix])
 
         then:
@@ -111,16 +119,16 @@ class GradleLintPatchActionSpec extends Specification {
         a
         b
         c
-        '''.substring(0).stripIndent()
+        '''.stripIndent()
 
         def changes = '''\
         hello
         multiline
-        '''.substring(0).stripIndent()
+        '''.stripIndent()
 
         when:
         def lines = f.readLines()
-        def fix = new GradleLintReplaceWith(f, 1..lines.size(), 1, lines[-1].length() + 1, changes)
+        def fix = new GradleLintReplaceWith(violation, f, 1..lines.size(), 1, lines[-1].length() + 1, changes)
         def patch = new GradleLintPatchAction(project).patch([fix])
 
         then:
@@ -143,7 +151,7 @@ class GradleLintPatchActionSpec extends Specification {
         f.text = 'execute me'
 
         when:
-        def fix = new GradleLintCreateFile(f, 'hello', FileMode.Executable)
+        def fix = new GradleLintCreateFile(violation, f, 'hello', FileMode.Executable)
         def patch = new GradleLintPatchAction(project).patch([fix])
 
         then:
@@ -166,8 +174,8 @@ class GradleLintPatchActionSpec extends Specification {
         Files.createSymbolicLink(symlink.toPath(), f.toPath())
 
         when:
-        def delete = new GradleLintDeleteFile(symlink)
-        def create = new GradleLintCreateFile(new File(project.rootDir, 'gradle/some/dir.txt'), 'new file', FileMode.Executable)
+        def delete = new GradleLintDeleteFile(violation, symlink)
+        def create = new GradleLintCreateFile(violation, new File(project.rootDir, 'gradle/some/dir.txt'), 'new file', FileMode.Executable)
         def patch = new GradleLintPatchAction(project).patch([delete, create])
 
         then:
@@ -186,7 +194,7 @@ class GradleLintPatchActionSpec extends Specification {
             @@ -0,0 +1,1 @@
             +new file
             \\ No newline at end of file
-            """.substring(0).stripIndent()
+            """.stripIndent()
     }
 
 
@@ -198,8 +206,8 @@ class GradleLintPatchActionSpec extends Specification {
         Files.createSymbolicLink(symlink.toPath(), f.toPath())
 
         when:
-        def delete = new GradleLintDeleteFile(symlink)
-        def create = new GradleLintCreateFile(new File(project.rootDir, 'gradle/some/dir.txt'), 'new file')
+        def delete = new GradleLintDeleteFile(violation, symlink)
+        def create = new GradleLintCreateFile(violation, new File(project.rootDir, 'gradle/some/dir.txt'), 'new file')
         def patch = new GradleLintPatchAction(project).patch([delete, create])
 
         then:
@@ -218,7 +226,7 @@ class GradleLintPatchActionSpec extends Specification {
             @@ -0,0 +1,1 @@
             +new file
             \\ No newline at end of file
-            """.substring(0).stripIndent()
+            """.stripIndent()
     }
 
     def 'delete and create patches'() {
@@ -229,11 +237,11 @@ class GradleLintPatchActionSpec extends Specification {
         a
         b
         c
-        '''.substring(0).stripIndent()
+        '''.stripIndent()
 
         when:
-        def delFix = new GradleLintDeleteFile(f)
-        def createFix = new GradleLintCreateFile(f, 'hello')
+        def delFix = new GradleLintDeleteFile(violation, f)
+        def createFix = new GradleLintCreateFile(violation, f, 'hello')
         def patch = new GradleLintPatchAction(project).patch([delFix, createFix])
 
         then:
@@ -263,7 +271,7 @@ class GradleLintPatchActionSpec extends Specification {
         f.text = 'abc\n'
 
         when:
-        def fix = new GradleLintReplaceWith(f, 1..1, 2, 3, '*')
+        def fix = new GradleLintReplaceWith(violation, f, 1..1, 2, 3, '*')
         def patch = new GradleLintPatchAction(project).patch([fix])
 
         then:
@@ -284,7 +292,7 @@ class GradleLintPatchActionSpec extends Specification {
         f.text = 'abc\ndef\n'
 
         when:
-        def fix = new GradleLintReplaceWith(f, 1..2, 2, 3, '*')
+        def fix = new GradleLintReplaceWith(violation, f, 1..2, 2, 3, '*')
         def patch = new GradleLintPatchAction(project).patch([fix])
 
         then:
@@ -317,9 +325,9 @@ class GradleLintPatchActionSpec extends Specification {
         def generator = new GradleLintPatchAction(project)
 
         then:
-        generator.patch([new GradleLintReplaceWith(f, 1..1, 1, 2, '')]) == expect
-        generator.patch([new GradleLintReplaceWith(f, 1..1, 1, -1, '')]) == expect
-        generator.patch([new GradleLintDeleteLines(f, 1..1)]) == expect
+        generator.patch([new GradleLintReplaceWith(violation, f, 1..1, 1, 2, '')]) == expect
+        generator.patch([new GradleLintReplaceWith(violation, f, 1..1, 1, -1, '')]) == expect
+        generator.patch([new GradleLintDeleteLines(violation, f, 1..1)]) == expect
     }
 
     def 'deleting such that the entire file is empty'() {
@@ -340,7 +348,7 @@ class GradleLintPatchActionSpec extends Specification {
         def generator = new GradleLintPatchAction(project)
 
         then:
-        generator.patch([new GradleLintDeleteLines(f, 1..1)]) == expect
+        generator.patch([new GradleLintDeleteLines(violation, f, 1..1)]) == expect
     }
 
     def 'inserting a line'() {
@@ -351,7 +359,7 @@ class GradleLintPatchActionSpec extends Specification {
         def generator = new GradleLintPatchAction(project)
 
         then:
-        generator.patch([new GradleLintInsertAfter(f, 1, 'b')]) == '''
+        generator.patch([new GradleLintInsertAfter(violation, f, 1, 'b')]) == '''
             diff --git a/my.txt b/my.txt
             --- a/my.txt
             +++ b/my.txt
@@ -360,7 +368,7 @@ class GradleLintPatchActionSpec extends Specification {
             +b
             '''.substring(1).stripIndent()
 
-        generator.patch([new GradleLintInsertBefore(f, 1, 'b')]) == '''
+        generator.patch([new GradleLintInsertBefore(violation, f, 1, 'b')]) == '''
             diff --git a/my.txt b/my.txt
             --- a/my.txt
             +++ b/my.txt
@@ -384,11 +392,11 @@ class GradleLintPatchActionSpec extends Specification {
         g
         h
         i
-        '''.substring(0).stripIndent()
+        '''.stripIndent()
 
         when:
-        def fix1 = new GradleLintReplaceWith(f, 1..1, 1, 2, '*')
-        def fix2 = new GradleLintReplaceWith(f, 9..9, 1, 2, '*')
+        def fix1 = new GradleLintReplaceWith(violation, f, 1..1, 1, 2, '*')
+        def fix2 = new GradleLintReplaceWith(violation, f, 9..9, 1, 2, '*')
         def patch = new GradleLintPatchAction(project).patch([fix1, fix2])
 
         then:
@@ -414,7 +422,7 @@ class GradleLintPatchActionSpec extends Specification {
             '''.substring(1).stripIndent()
     }
 
-    def 'overlapping patches'() {
+    def 'overlapping patch context'() {
         setup:
         def f = temp.newFile('my.txt')
 
@@ -422,11 +430,11 @@ class GradleLintPatchActionSpec extends Specification {
         a
         b
         c
-        '''.substring(0).stripIndent()
+        '''.stripIndent()
 
         when:
-        def fix1 = new GradleLintReplaceWith(f, 1..1, 1, 2, '*')
-        def fix2 = new GradleLintReplaceWith(f, 3..3, 1, 2, '*')
+        def fix1 = new GradleLintReplaceWith(violation, f, 1..1, 1, 2, '*')
+        def fix2 = new GradleLintReplaceWith(violation, f, 3..3, 1, 2, '*')
         def patch = new GradleLintPatchAction(project).patch([fix1, fix2])
 
         then:
@@ -451,10 +459,10 @@ class GradleLintPatchActionSpec extends Specification {
         a
 
 
-        '''.substring(0).stripIndent()
+        '''.stripIndent()
 
         when:
-        def fix = new GradleLintReplaceWith(f, 1..1, 1, 2, '*')
+        def fix = new GradleLintReplaceWith(violation, f, 1..1, 1, 2, '*')
         def patch = new GradleLintPatchAction(project).patch([fix])
 
         then:
@@ -476,10 +484,10 @@ class GradleLintPatchActionSpec extends Specification {
 
 
         a
-        '''.substring(0).stripIndent()
+        '''.stripIndent()
 
         when:
-        def fix = new GradleLintReplaceWith(f, 3..3, 1, 2, '*')
+        def fix = new GradleLintReplaceWith(violation, f, 3..3, 1, 2, '*')
         def patch = new GradleLintPatchAction(project).patch([fix])
 
         then:
@@ -500,8 +508,8 @@ class GradleLintPatchActionSpec extends Specification {
         f.text = 'a\n\nb\n'
 
         when:
-        def fix1 = new GradleLintInsertAfter(f, 1, 'c')
-        def fix2 = new GradleLintDeleteLines(f, 3..3)
+        def fix1 = new GradleLintInsertAfter(violation, f, 1, 'c')
+        def fix2 = new GradleLintDeleteLines(violation, f, 3..3)
         def patch = new GradleLintPatchAction(project).patch([fix1, fix2])
 
         then:
@@ -523,10 +531,10 @@ class GradleLintPatchActionSpec extends Specification {
 
         f.text = '''\
         a
-        b'''.substring(0).stripIndent()
+        b'''.stripIndent()
 
         when:
-        def fix = new GradleLintReplaceWith(f, 1..1, 1, 2, '*')
+        def fix = new GradleLintReplaceWith(violation, f, 1..1, 1, 2, '*')
         def patch = new GradleLintPatchAction(project).patch([fix])
 
         then:
@@ -549,7 +557,7 @@ class GradleLintPatchActionSpec extends Specification {
         f.text = 'a'
 
         when:
-        def fix = new GradleLintReplaceWith(f, 1..1, 1, 2, '*')
+        def fix = new GradleLintReplaceWith(violation, f, 1..1, 1, 2, '*')
         def patch = new GradleLintPatchAction(project).patch([fix])
 
         then:
@@ -572,7 +580,7 @@ class GradleLintPatchActionSpec extends Specification {
         f.text = 'a'
 
         when:
-        def fix = new GradleLintInsertAfter(f, 1, 'b\n')
+        def fix = new GradleLintInsertAfter(violation, f, 1, 'b\n')
         def patch = new GradleLintPatchAction(project).patch([fix])
 
         then:
@@ -603,18 +611,43 @@ class GradleLintPatchActionSpec extends Specification {
             '''.substring(1).stripIndent()
 
         when:
-        def fix = new GradleLintInsertBefore(f, 1, 'a\n')
+        def fix = new GradleLintInsertBefore(violation, f, 1, 'a\n')
         def patch = new GradleLintPatchAction(project).patch([fix])
 
         then:
         patch == expect
 
         when:
-        fix = new GradleLintInsertAfter(f, 0, 'a\n')
+        fix = new GradleLintInsertAfter(violation, f, 0, 'a\n')
         patch = new GradleLintPatchAction(project).patch([fix])
 
         then:
         patch == expect
     }
 
+    def 'overlapping patches (patches that occupy the same line)'() {
+        setup:
+        def f = temp.newFile('my.txt')
+
+        f.text = '''\
+        ab
+        c
+        '''.stripIndent()
+
+        when:
+        def fix1 = new GradleLintReplaceWith(violation, f, 1..2, 1, 2, 'e')
+        def fix2 = new GradleLintReplaceWith(violation, f, 1..1, 2, 3, 'f')
+        def patch = new GradleLintPatchAction(project).patch([fix1, fix2])
+
+        then: 'the second fix is ignored, and would be best applied on a second pass'
+        patch == '''
+            diff --git a/my.txt b/my.txt
+            --- a/my.txt
+            +++ b/my.txt
+            @@ -1,2 +1,2 @@
+            -ab
+            +af
+             c
+            '''.substring(1).stripIndent()
+    }
 }

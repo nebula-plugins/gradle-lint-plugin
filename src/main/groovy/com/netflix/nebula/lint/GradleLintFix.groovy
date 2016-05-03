@@ -30,10 +30,25 @@ interface RequiresOwnPatchset {}
  */
 abstract class GradleLintFix {
     File affectedFile
+    GradleViolation violation
 
+    UnfixedViolationReason reasonForNotFixing = null
+
+    /**
+     * @return 1-based, inclusive
+     */
     abstract int from()
+
+    /**
+     * @return 1-based, inclusive
+     */
     abstract int to()
+
     abstract String changes()
+
+    void markAsUnfixed(UnfixedViolationReason reason) {
+        reasonForNotFixing = reason
+    }
 }
 
 abstract class GradleLintMultilineFix extends GradleLintFix {
@@ -52,7 +67,9 @@ class GradleLintReplaceWith extends GradleLintMultilineFix {
     Integer toColumn // the last affected column of the last line (1-based, exclusive)
     String changes
 
-    GradleLintReplaceWith(File affectedFile, Range<Integer> affectedLines, Integer fromColumn, Integer toColumn, String changes) {
+    GradleLintReplaceWith(GradleViolation violation, File affectedFile, Range<Integer> affectedLines,
+                          Integer fromColumn, Integer toColumn, String changes) {
+        this.violation = violation
         this.affectedFile = affectedFile
         this.affectedLines = affectedLines
         this.fromColumn = fromColumn
@@ -67,7 +84,8 @@ class GradleLintReplaceWith extends GradleLintMultilineFix {
 @Canonical
 class GradleLintDeleteLines extends GradleLintMultilineFix {
 
-    GradleLintDeleteLines(File affectedFile, Range<Integer> affectedLines) {
+    GradleLintDeleteLines(GradleViolation violation, File affectedFile, Range<Integer> affectedLines) {
+        this.violation = violation
         this.affectedFile = affectedFile
         this.affectedLines = affectedLines
     }
@@ -81,7 +99,8 @@ class GradleLintInsertAfter extends GradleLintFix {
     Integer afterLine // 1-based
     String changes
 
-    GradleLintInsertAfter(File affectedFile, Integer afterLine, String changes) {
+    GradleLintInsertAfter(GradleViolation violation, File affectedFile, Integer afterLine, String changes) {
+        this.violation = violation
         this.affectedFile = affectedFile
         this.afterLine = afterLine
         this.changes = changes
@@ -102,7 +121,8 @@ class GradleLintInsertBefore extends GradleLintFix {
     Integer beforeLine // 1-based
     String changes
 
-    GradleLintInsertBefore(File affectedFile, Integer beforeLine, String changes) {
+    GradleLintInsertBefore(GradleViolation violation, File affectedFile, Integer beforeLine, String changes) {
+        this.violation = violation
         this.affectedFile = affectedFile
         this.beforeLine = beforeLine
         this.changes = changes
@@ -120,7 +140,8 @@ class GradleLintInsertBefore extends GradleLintFix {
 
 @Canonical
 class GradleLintDeleteFile extends GradleLintMultilineFix implements RequiresOwnPatchset {
-    GradleLintDeleteFile(File affectedFile) {
+    GradleLintDeleteFile(GradleViolation violation, File affectedFile) {
+        this.violation = violation
         this.affectedFile = affectedFile
         def numberOfLines = Files.isSymbolicLink(affectedFile.toPath()) ? 1 : affectedFile.readLines().size()
         this.affectedLines = 1..numberOfLines
@@ -134,8 +155,8 @@ class GradleLintDeleteFile extends GradleLintMultilineFix implements RequiresOwn
 class GradleLintCreateFile extends GradleLintInsertBefore implements RequiresOwnPatchset {
     FileMode fileMode
 
-    GradleLintCreateFile(File newFile, String changes, FileMode fileMode = FileMode.Regular) {
-        super(newFile, 1, changes)
+    GradleLintCreateFile(GradleViolation violation, File newFile, String changes, FileMode fileMode = FileMode.Regular) {
+        super(violation, newFile, 1, changes)
         this.fileMode = fileMode
     }
 }

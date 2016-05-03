@@ -47,7 +47,9 @@ abstract class AbstractRuleSpec extends ProjectSpec {
 
     String correct(GradleLintRule... rules) {
         def analyzer = new StringSourceAnalyzer(project.buildFile.text)
-        def violations = analyzer.analyze(configureRuleSet(*rules.collect { it.buildFile = project.buildFile; it })).violations
+        def violations = analyzer
+                .analyze(configureRuleSet(*rules.collect { it.buildFile = project.buildFile; it }))
+                .violations
 
         def patchFile = new File(projectDir, 'lint.patch')
         patchFile.text = new GradleLintPatchAction(project).patch(

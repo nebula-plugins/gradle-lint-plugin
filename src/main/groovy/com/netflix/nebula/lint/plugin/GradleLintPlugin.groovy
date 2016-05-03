@@ -29,14 +29,14 @@ class GradleLintPlugin implements Plugin<Project> {
         def lintExt = project.extensions.create('gradleLint', GradleLintExtension)
 
         if (project.rootProject == project) {
-            def lintTask = project.tasks.create('lintGradle', GradleLintTask)
+            def lintTask = project.tasks.create('lintGradle', LintGradleTask)
             lintTask.listeners = lintExt.listeners
 
-            def fixTask = project.tasks.create('fixGradleLint', GradleLintCorrectionTask)
-            fixTask.listeners = lintExt.listeners
+            def fixTask = project.tasks.create('fixGradleLint', FixGradleLintTask)
+            fixTask.userDefinedListeners = lintExt.listeners
 
-            def fixTask2 = project.tasks.create('fixLintGradle', GradleLintCorrectionTask)
-            fixTask2.listeners = lintExt.listeners
+            def fixTask2 = project.tasks.create('fixLintGradle', FixGradleLintTask)
+            fixTask2.userDefinedListeners = lintExt.listeners
         }
 
         configureReportTask(project, lintExt)
