@@ -22,5 +22,5 @@ class Styling {
     static StyledTextOutput.Style Bold = StyledTextOutput.Style.UserInput
     static StyledTextOutput.Style Green = StyledTextOutput.Style.Identifier
     static StyledTextOutput.Style Yellow = StyledTextOutput.Style.Description
-    static StyledTextOutput.Style Red = StyledTextOutput.Style.Error
+    static StyledTextOutput.Style Red = StyledTextOutput.Style.Failure
 }
