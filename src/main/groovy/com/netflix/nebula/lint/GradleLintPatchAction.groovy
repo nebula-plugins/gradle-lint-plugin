@@ -88,11 +88,11 @@ class GradleLintPatchAction extends GradleLintViolationAction {
                 patchSet.eachWithIndex { fix, i ->
                     if (i < patchSet.size() - 1) {
                         def next = patchSet[i + 1]
-                        def multipleInsertionsAtSameLine = fix.from() > fix.to() && next.from() > next.to()
+                        def involvesAnInsertion = fix.from() > fix.to() || next.from() > next.to()
 
                         if ((fix.from() <= next.from() && fix.to() >= next.to() ||
                                 next.from() <= fix.from() && next.to() >= fix.to()) &&
-                                !multipleInsertionsAtSameLine) {
+                                !involvesAnInsertion) {
                             next.markAsUnfixed(UnfixedViolationReason.OverlappingPatch)
                         }
                     }

@@ -71,6 +71,9 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
 
         then:
         runTasksSuccessfully('compileJava', 'fixGradleLint')
+
+        println(buildFile.text)
+
         dependencies(buildFile) == expected
 
         where:

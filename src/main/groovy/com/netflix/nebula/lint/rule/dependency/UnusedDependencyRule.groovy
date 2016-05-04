@@ -17,7 +17,9 @@
 package com.netflix.nebula.lint.rule.dependency
 
 import com.netflix.nebula.lint.rule.GradleDependency
+import org.codehaus.groovy.ast.expr.ClosureExpression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
+import org.codehaus.groovy.ast.stmt.BlockStatement
 import org.gradle.api.artifacts.ResolvedDependency
 
 class UnusedDependencyRule extends AbstractDependencyReportRule {
@@ -30,7 +32,9 @@ class UnusedDependencyRule extends AbstractDependencyReportRule {
             addBuildLintViolation("this dependency should be moved to the runtime configuration since it has no classes", call)
                     .replaceWith(call, "runtime '$match.module.id'")
         } else if (report.firstOrderDependenciesToRemove.find(matchesGradleDep)) {
-            addBuildLintViolation('this dependency is unused and can be removed', call).delete(call)
+            addBuildLintViolation('this dependency is unused and can be removed', call)
+                    .delete(call)
+
         } else if ((match = report.firstOrderDependenciesWhoseConfigurationNeedsToChange.keySet().find(matchesGradleDep))) {
             def toConf = report.firstOrderDependenciesWhoseConfigurationNeedsToChange[match]
             addBuildLintViolation("this dependency should be moved to configuration $toConf", call)
@@ -48,14 +52,14 @@ class UnusedDependencyRule extends AbstractDependencyReportRule {
             if (transitiveSize == 1) {
                 def d = report.transitiveDependenciesToAddAsFirstOrder.first()
                 addBuildLintViolation('one or more classes in your transitive dependencies are required by your code directly')
-                        .insertAfter(call, "${indentation}compile '${d.module.id}'")
+                        .insertIntoClosure(call, "${indentation}compile '${d.module.id}'")
             } else if (transitiveSize > 1) {
+                def transitiveDeps = report.transitiveDependenciesToAddAsFirstOrder
+                        .toSorted(dependencyComparator)
+                        .inject('') { deps, d -> deps + "\n${indentation}compile '$d.module.id'" }
+
                 addBuildLintViolation('one or more classes in your transitive dependencies are required by your code directly')
-                        .insertAfter(call,
-                        report.transitiveDependenciesToAddAsFirstOrder.toSorted(dependencyComparator).inject('') { deps, d ->
-                            deps + "\n${indentation}compile '$d.module.id'"
-                        }
-                )
+                        .insertIntoClosure(call, transitiveDeps)
             }
         }
     }
