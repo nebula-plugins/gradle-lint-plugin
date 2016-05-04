@@ -404,16 +404,13 @@ class GradleLintPatchActionSpec extends Specification {
             diff --git a/my.txt b/my.txt
             --- a/my.txt
             +++ b/my.txt
-            @@ -1,4 +1,4 @@
+            @@ -1,9 +1,9 @@
             -a
             +*
              b
              c
              d
-            diff --git a/my.txt b/my.txt
-            --- a/my.txt
-            +++ b/my.txt
-            @@ -6,4 +6,4 @@
+             e
              f
              g
              h
@@ -681,10 +678,10 @@ class GradleLintPatchActionSpec extends Specification {
             diff --git a/my.txt b/my.txt
             --- a/my.txt
             +++ b/my.txt
-            @@ -1,2 +1,2 @@
+            @@ -1,2 +1,1 @@
             -ab
-            +af
-             c
+            -c
+            +e
             '''.substring(1).stripIndent()
     }
 }
