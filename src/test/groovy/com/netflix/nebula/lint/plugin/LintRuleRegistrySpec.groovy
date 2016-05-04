@@ -93,7 +93,11 @@ class LintRuleRegistrySpec extends Specification {
         temp.newFile("META-INF/lint-rules/${ruleId}.properties")
     }
 
-    static class MockRule1 extends GradleLintRule { }
+    static class MockRule1 extends GradleLintRule {
+        String description = 'mock1'
+    }
 
-    static class MockRule2 extends GradleLintRule { }
+    static class MockRule2 extends GradleLintRule {
+        String description = 'mock2'
+    }
 }

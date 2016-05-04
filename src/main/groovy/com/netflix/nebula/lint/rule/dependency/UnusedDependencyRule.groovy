@@ -23,6 +23,8 @@ import org.codehaus.groovy.ast.stmt.BlockStatement
 import org.gradle.api.artifacts.ResolvedDependency
 
 class UnusedDependencyRule extends AbstractDependencyReportRule {
+    String description = 'remove unused dependencies, relocate dependencies to the correct configuration, and ensure that directly used transitives are declared as first order dependencies'
+
     @Override
     void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
         def matchesGradleDep = { ResolvedDependency d -> d.module.id.group == dep.group && d.module.id.name == dep.name }

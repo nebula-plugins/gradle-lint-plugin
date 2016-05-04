@@ -24,6 +24,8 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.specs.Specs
 
 class UnusedExcludeByConfigurationRule extends GradleLintRule implements GradleModelAware {
+    String description = 'excludes that have no effect on the classpath should be removed for clarity'
+
     @Override
     void visitConfigurationExclude(MethodCallExpression call, String conf, GradleDependency exclude) {
         // Since Gradle does not expose any information about which excludes were effective, we will create a new configuration

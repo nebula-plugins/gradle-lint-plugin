@@ -26,6 +26,11 @@ class PluginRenamedRule extends GradleLintRule {
     String pluginName
 
     @Override
+    String getDescription() {
+        return "the plugin name $deprecatedPluginName has been deprecated in favor of $pluginName"
+    }
+
+    @Override
     void visitApplyPlugin(MethodCallExpression call, String plugin) {
         if(plugin == deprecatedPluginName) {
             addBuildLintViolation("plugin $deprecatedPluginName has been renamed to $pluginName", call)

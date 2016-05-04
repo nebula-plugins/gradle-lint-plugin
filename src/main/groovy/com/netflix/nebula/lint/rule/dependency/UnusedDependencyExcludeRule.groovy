@@ -25,6 +25,8 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.specs.Specs
 
 class UnusedDependencyExcludeRule extends GradleLintRule implements GradleModelAware {
+    String description = 'excludes that have no effect on the classpath should be removed for clarity'
+
     GradleDependency dependency
 
     @Override

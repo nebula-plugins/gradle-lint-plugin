@@ -6,6 +6,8 @@ import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.gradle.api.artifacts.ResolvedDependency
 
 class DuplicateDependencyClassRule extends AbstractDependencyReportRule {
+    String description = 'classpaths with duplicate classes may break unpredictably depending on the order in which dependencies are provided to the classpath'
+
     @Override
     void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
         def matchesGradleDep = { ResolvedDependency d -> d.module.id.group == dep.group && d.module.id.name == dep.name }

@@ -22,6 +22,8 @@ import org.codehaus.groovy.ast.expr.ClosureExpression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 
 class DependencyParenthesesRule extends GradleLintRule {
+    String description = "don't put parentheses around dependency definitions unless it is necessary"
+
     @Override
     void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
         def args = call.arguments.expressions as List

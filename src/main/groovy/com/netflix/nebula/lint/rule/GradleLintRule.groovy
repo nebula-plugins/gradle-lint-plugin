@@ -43,8 +43,15 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
 
     @Override
     final int getPriority() {
-        return DEFAULT_LEVEL.priority
+        return gradleViolations.isEmpty() ? DEFAULT_LEVEL.priority : gradleViolations.max { it.level.priority }.level.priority
     }
+
+    @Override
+    final String getName() {
+        return ruleId
+    }
+
+    abstract String getDescription()
 
     private Map<String, ASTNode> bookmarks = [:]
 
@@ -158,8 +165,7 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
      * Invert the relationship between rule and visitor to simplify rule creation
      */
     @Delegate final Rule rule = new AbstractAstVisitorRule() {
-        String name = GradleLintRule.this.ruleId
-        int priority = 0 // not relevant, as this 'rule' will never emit a violation
+
         Stack<MethodCallExpression> closureStack = new Stack<MethodCallExpression>()
 
         AbstractAstVisitor gradleAstVisitor = new AbstractAstVisitor() {
@@ -671,6 +677,26 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
             void visitBytecodeExpression(BytecodeExpression cle) {
                 both { it.visitBytecodeExpression(cle) }
             }
+        }
+
+        @Override
+        String getName() {
+            return GradleLintRule.this.getName()
+        }
+
+        @Override
+        void setName(String name) {
+            // irrelevant, as the name always comes from the parent class
+        }
+
+        @Override
+        int getPriority() {
+            return GradleLintRule.this.getPriority()
+        }
+
+        @Override
+        void setPriority(int priority) {
+            // irrelevant, as the priority always comes from the parent class
         }
     }
 }

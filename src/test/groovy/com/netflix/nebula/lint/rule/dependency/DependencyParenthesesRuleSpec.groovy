@@ -38,9 +38,9 @@ class DependencyParenthesesRuleSpec extends AbstractRuleSpec {
     def 'parenthesized dependency violates'() {
         when:
         project.buildFile << """
-dependencies {
-compile('junit:junit:4.11')
-}
+            dependencies {
+                compile('junit:junit:4.11')
+            }
         """
         def results = runRulesAgainst(rule)
 

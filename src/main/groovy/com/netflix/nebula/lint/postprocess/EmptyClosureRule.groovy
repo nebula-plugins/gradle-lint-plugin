@@ -22,6 +22,8 @@ import org.codehaus.groovy.ast.expr.ClosureExpression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 
 class EmptyClosureRule extends GradleLintRule {
+    String description = 'empty closures should be removed'
+
     def potentialDeletes = [] as List<MethodCallExpression>
 
     @Override

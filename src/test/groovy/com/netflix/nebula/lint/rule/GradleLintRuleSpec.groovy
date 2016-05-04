@@ -42,6 +42,8 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         def pluginCount = 0
 
         runRulesAgainst(new GradleLintRule() {
+            String description = 'test'
+
             @Override
             void visitApplyPlugin(MethodCallExpression call, String plugin) {
                 pluginCount++
@@ -69,6 +71,8 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         def visited = []
 
         runRulesAgainst(new GradleLintRule() {
+            String description = 'test'
+
             @Override
             void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
                 visited += dep
@@ -95,6 +99,8 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         project.buildFile << "apply plugin: 'java'"
 
         def rule = new GradleLintRule() {
+            String description = 'test'
+
             @Override
             void visitApplyPlugin(MethodCallExpression call, String plugin) {
                 addBuildLintViolation("'apply plugin' syntax is not allowed", call).delete(call)
@@ -116,6 +122,8 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         """.stripIndent()
 
         def rule = new GradleLintRule() {
+            String description = 'test'
+
             @Override
             void visitApplyPlugin(MethodCallExpression call, String plugin) {
                 bookmark('lastApplyPlugin', call)
@@ -148,6 +156,8 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
     def 'violations suppression inside of ignore blocks when ignored rule(s) is `#rules`'() {
         setup:
         def rule = new GradleLintRule() {
+            String description = 'test'
+
             @Override
             void visitApplyPlugin(MethodCallExpression call, String plugin) {
                 addBuildLintViolation('no plugins allowed', call)
@@ -217,6 +227,8 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         """
 
         def rule = new GradleLintRule() {
+            String description = 'test'
+
             @Override
             void visitExtensionProperty(ExpressionStatement expression, String extension, String prop) {
                 if(extension == 'nebula' && prop == 'moduleOwner')
@@ -241,6 +253,8 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         MethodCallExpression parent = null
 
         runRulesAgainst(new GradleLintRule() {
+            String description = 'test'
+
             @Override
             void visitExpressionStatement(ExpressionStatement statement) {
                 if(statement.expression instanceof VariableExpression)
@@ -261,6 +275,8 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         """
 
         def results = runRulesAgainst(new GradleLintRule() {
+            String description = 'test'
+
             @Override
             void visitMethodCallExpression(MethodCallExpression call) {
                 if(call.methodAsString == 'multiline')

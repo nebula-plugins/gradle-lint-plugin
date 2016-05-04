@@ -16,16 +16,23 @@
 
 package com.netflix.nebula.lint
 
+import groovy.transform.EqualsAndHashCode
 import org.codehaus.groovy.ast.ASTNode
 import org.codehaus.groovy.ast.expr.ClosureExpression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.codenarc.rule.Rule
 import org.codenarc.rule.Violation
 
+import java.util.concurrent.atomic.AtomicInteger
+
+@EqualsAndHashCode(includes = 'id')
 class GradleViolation extends Violation {
     Level level
     File buildFile
     List<GradleLintFix> fixes = []
+    int id
+
+    static AtomicInteger nextId = new AtomicInteger(0)
 
     public GradleViolation(Level level, File buildFile, Rule rule, Integer lineNumber,
                            String sourceLine, String message) {
@@ -35,6 +42,7 @@ class GradleViolation extends Violation {
         this.lineNumber = lineNumber
         this.sourceLine = sourceLine
         this.message = message
+        this.id = nextId.getAndIncrement()
     }
 
     Level getLevel() {

@@ -22,6 +22,7 @@ import com.netflix.nebula.lint.rule.GradleLintRule
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 
 class DependencyTupleExpressionRule extends GradleLintRule {
+    String description = "use the more compact string representation of a dependency when possible"
 
     @Override
     void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
