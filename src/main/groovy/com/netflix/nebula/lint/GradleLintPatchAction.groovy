@@ -183,7 +183,7 @@ class GradleLintPatchAction extends GradleLintViolationAction {
                             def affected = lines[fix.to()]
                             line += affected.substring(replace.toColumn < 0 ? affected.length() + replace.toColumn + 1 : replace.toColumn - 1)
                         }
-                        !line.empty ? '+' + line : null
+                        StringUtils.isNotBlank(line) ? '+' + line : null
                     }
                     .findAll { it }
 
