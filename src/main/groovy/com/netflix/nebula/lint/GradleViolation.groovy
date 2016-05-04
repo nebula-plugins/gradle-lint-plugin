@@ -17,6 +17,8 @@
 package com.netflix.nebula.lint
 
 import org.codehaus.groovy.ast.ASTNode
+import org.codehaus.groovy.ast.expr.ClosureExpression
+import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.codenarc.rule.Rule
 import org.codenarc.rule.Violation
 
@@ -53,6 +55,36 @@ class GradleViolation extends Violation {
 
     GradleViolation insertBefore(ASTNode node, String changes) {
         fixes += new GradleLintInsertBefore(this, buildFile, node.lineNumber, changes)
+        this
+    }
+
+    GradleViolation insertIntoClosure(ASTNode node, String changes) {
+        ClosureExpression closure = null
+        if(node instanceof MethodCallExpression) {
+            closure = node.arguments.find { it instanceof ClosureExpression } as ClosureExpression
+        }
+        else if(node instanceof ClosureExpression) {
+            closure = node
+        }
+
+        // we want to indent 3 spaces in from the last bracket, since the first bracket may be further to the right, e.g.
+        // foo {
+        // }
+
+        if(closure) {
+            if (closure.lineNumber == closure.lastLineNumber) {
+                // TODO what to do about single line closures?
+            }
+            else {
+                def indentedChanges = changes.stripIndent()
+                        .split('\n')
+                        .collect { line -> ''.padRight(closure.lastColumnNumber + 1) + line }
+                        .join('\n')
+
+                fixes += new GradleLintInsertAfter(this, buildFile, closure.lineNumber, indentedChanges)
+            }
+        }
+
         this
     }
 

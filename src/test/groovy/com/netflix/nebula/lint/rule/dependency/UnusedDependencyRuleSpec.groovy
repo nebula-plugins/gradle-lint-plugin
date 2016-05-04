@@ -52,25 +52,28 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
     @Unroll
     def 'unused compile dependencies are marked for deletion'() {
         when:
-        buildFile.text = """
-            plugins {
-                id 'nebula.lint'
-                id 'java'
-            }
-
-            gradleLint.rules = ['unused-dependency']
-
-            repositories { mavenCentral() }
-
-            dependencies {
-                ${deps.collect { "compile '$it'" }.join('\n') }
-            }
-        """
+        buildFile.text = """\
+            |plugins {
+            |    id 'nebula.lint'
+            |    id 'java'
+            |}
+            |
+            |gradleLint.rules = ['unused-dependency']
+            |
+            |repositories { mavenCentral() }
+            |
+            |dependencies {
+            ${deps.collect { "|   compile '$it'" }.join('\n') }
+            |}
+            |""".stripMargin()
 
         createJavaSourceFile(main)
 
         then:
         runTasksSuccessfully('compileJava', 'fixGradleLint')
+
+        println(buildFile.text)
+
         dependencies(buildFile) == expected
 
         where:

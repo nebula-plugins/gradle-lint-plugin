@@ -39,7 +39,7 @@ class GradleLintPatchAction extends GradleLintViolationAction {
         }
     }
 
-    static determinePatchType(List<GradleLintFix> patchFixes) {
+    private static determinePatchType(List<GradleLintFix> patchFixes) {
         if (patchFixes.size() == 1 && patchFixes.get(0) instanceof GradleLintDeleteFile)
             return Delete
         else if (patchFixes.size() == 1 && patchFixes.get(0) instanceof GradleLintCreateFile) {
@@ -49,11 +49,11 @@ class GradleLintPatchAction extends GradleLintViolationAction {
         }
     }
 
-    static readFileOrSymlink(File file, FileMode mode) {
+    private static readFileOrSymlink(File file, FileMode mode) {
         return mode == Symlink ? [readSymbolicLink(file.toPath()).toString()] : file.readLines()
     }
 
-    static diffHints(String relativePath, PatchType patchType, FileMode fileMode) {
+    private static diffHintsWithMargin(String relativePath, PatchType patchType, FileMode fileMode) {
         def headers = ["diff --git a/$relativePath b/$relativePath"]
         switch (patchType) {
             case Create:
@@ -73,41 +73,32 @@ class GradleLintPatchAction extends GradleLintViolationAction {
         List<List<GradleLintFix>> patchSets = []
 
         fixes.groupBy { it.affectedFile }.each { file, fileFixes ->  // internal ordering of fixes per file is maintained (file order does not)
-            List<GradleLintFix> curPatch = []
-
-            def (individualFixes, maybeCombinedFixes) = fileFixes.split { it instanceof RequiresOwnPatchset }
-            individualFixes.each { patchSets.add([it] as List<GradleLintFix>) }
-
-            GradleLintFix last = null
-            for (f in maybeCombinedFixes.sort { f1, f2 -> f1.from() <=> f2.from() ?: f1.to() <=> f2.to() ?: f1.changes() <=> f2.changes() }) {
-                if (!last || f.from() - last.to() <= MIN_LINES_CONTEXT * 2) {
-                    // if context lines would overlap or abut, put these fixes in the same patch
-                    curPatch += f
-                } else {
-                    patchSets.add(curPatch)
-                    curPatch = [f] as List<GradleLintFix>
-                }
-                last = f
+            def (individualFixes, combinedFixes) = fileFixes.split { it instanceof RequiresOwnPatchset }
+            individualFixes.each {
+                patchSets.add([it] as List<GradleLintFix>)
             }
 
-            if (!curPatch.empty)
-                patchSets.add(curPatch)
+            if(combinedFixes)
+                patchSets.add((combinedFixes as List<GradleLintFix>).sort { it.from() })
         }
 
         for(patchSet in patchSets) {
-            patchSet.eachWithIndex{ fix, i ->
-                if(i < patchSet.size() - 1) {
-                    def next = patchSet[i+1]
-                    def multipleInsertionsAtSameLine = fix.from() > fix.to() && next.from() > next.to()
+            boolean overlap = true
+            while(overlap) {
+                patchSet.eachWithIndex { fix, i ->
+                    if (i < patchSet.size() - 1) {
+                        def next = patchSet[i + 1]
+                        def involvesAnInsertion = fix.from() > fix.to() || next.from() > next.to()
 
-                    if ((fix.from() <= next.from() && fix.to() >= next.to() ||
-                            next.from() <= fix.from() && next.to() >= fix.to()) &&
-                            !multipleInsertionsAtSameLine) {
-                        next.markAsUnfixed(UnfixedViolationReason.OverlappingPatch)
+                        if ((fix.from() <= next.from() && fix.to() >= next.to() ||
+                                next.from() <= fix.from() && next.to() >= fix.to()) &&
+                                !involvesAnInsertion) {
+                            next.markAsUnfixed(UnfixedViolationReason.OverlappingPatch)
+                        }
                     }
                 }
+                overlap = patchSet.retainAll { it.reasonForNotFixing == null }
             }
-            patchSet.retainAll { it.reasonForNotFixing == null }
         }
 
         String combinedPatch = ''
@@ -137,14 +128,24 @@ class GradleLintPatchAction extends GradleLintViolationAction {
 
                 // 'before' context
                 if (fix.from() > 0) {
-                    int minBeforeLines = (j == 0 ? 3 : Math.min(3, Math.max(fix.from() - patchFixes[j - 1].to() - 3, 0)))
+                    def beforeContext
+                    if(j == 0) {
+                        def firstLine = Math.max(fix.from() - 3, 1)
+                        beforeContext = lines.subList(firstLine, fix.from())
+                    }
+                    else {
+                        try {
+                            beforeContext = lines.subList(patchFixes[j - 1].to() + 1, fix.from())
+                        } catch(IllegalArgumentException e) {
+                            throw new RuntimeException("tried to overlay patches with ranges [${patchFixes[j-1].from()}, ${patchFixes[j-1].to()}], [${fix.from()}, ${fix.to()}]", e)
+                        }
+                    }
 
-                    def firstLine = Math.max(fix.from() - minBeforeLines, 1)
-                    def beforeContext = lines.subList(firstLine, fix.from())
+                    beforeContext = beforeContext
                             .collect { line -> ' ' + line }
                             .dropWhile { String line -> j == 0 && StringUtils.isBlank(line) }
 
-                    if (j == 0) {
+                    if(j == 0) {
                         firstLineOfContext = fix.from() - beforeContext.size()
                     }
 
@@ -182,7 +183,7 @@ class GradleLintPatchAction extends GradleLintViolationAction {
                             def affected = lines[fix.to()]
                             line += affected.substring(replace.toColumn < 0 ? affected.length() + replace.toColumn + 1 : replace.toColumn - 1)
                         }
-                        !line.empty ? '+' + line : null
+                        StringUtils.isNotBlank(line) ? '+' + line : null
                     }
                     .findAll { it }
 
@@ -195,10 +196,8 @@ class GradleLintPatchAction extends GradleLintViolationAction {
                 }
 
                 // 'after' context
-                if (fix.to() < lines.size() - 1) {
-                    int maxAfterLines = lastFix ? 3 : Math.min(3, patchFixes[j + 1].from() - fix.to() - 1)
-
-                    def lastLineOfContext = Math.min(fix.to() + maxAfterLines + 1, lines.size())
+                if (fix.to() < lines.size() - 1 && lastFix) {
+                    def lastLineOfContext = Math.min(fix.to() + 3 + 1, lines.size())
                     def afterContext = lines.subList(fix.to() + 1, lastLineOfContext)
                             .collect { line -> ' ' + line }
                             .reverse()
@@ -210,7 +209,7 @@ class GradleLintPatchAction extends GradleLintViolationAction {
 
                     patch += afterContext
 
-                    if (lastFix && lastLineOfContext == lines.size() && !newlineAtEndOfOriginal) {
+                    if (lastLineOfContext == lines.size() && !newlineAtEndOfOriginal) {
                         patch += /\ No newline at end of file/
                     }
                 } else if (lastFix && fix.changes() && fix.changes()[-1] != '\n' && !newlineAtEndOfOriginal) {
@@ -224,7 +223,7 @@ class GradleLintPatchAction extends GradleLintViolationAction {
 
             def relativePath = project.rootDir.toPath().relativize(file.toPath()).toString()
             def diffHeader = """\
-                ${diffHints(relativePath, patchType, fileMode)}
+                ${diffHintsWithMargin(relativePath, patchType, fileMode)}
                 |--- ${patchType == Create ? '/dev/null' : 'a/' + relativePath}
                 |+++ ${patchType == Delete ? '/dev/null' : 'b/' + relativePath}
                 |@@ -${emptyFile ? 0 : firstLineOfContext},$beforeLineCount +${afterLineCount == 0 ? 0 : firstLineOfContext},$afterLineCount @@
