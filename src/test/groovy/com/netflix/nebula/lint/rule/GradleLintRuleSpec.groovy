@@ -135,8 +135,8 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         then:
         correct(rule) == """
             apply plugin: 'java'
-            apply plugin: 'nebula.javadoc-jar'
             apply plugin: 'nebula.source-jar'
+            apply plugin: 'nebula.javadoc-jar'
 
             dependencies {
                 compile 'com.google.guava:guava:18.0'
