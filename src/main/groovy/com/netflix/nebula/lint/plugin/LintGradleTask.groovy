@@ -38,7 +38,7 @@ class LintGradleTask extends DefaultTask {
 
     @TaskAction
     void lint() {
-        def violations = new GradleLintService().lint(project)
+        def violations = new LintService().lint(project).violations
         (listeners + new GradleLintPatchAction(project) + new GradleLintInfoBrokerAction(project) + consoleOutputAction).each {
             it.lintFinished(violations)
         }

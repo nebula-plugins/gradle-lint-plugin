@@ -26,7 +26,6 @@ class FixGradleLintTaskSpec extends TestKitSpecification {
         then:
         def results = runTasksSuccessfully('compileJava', 'fixGradleLint')
 
-        results.output.count('nothing to do  unused-dependency') == 1
         results.output.count('fixed          unused-dependency') == 1
         results.output.count('unfixed        dependency-parentheses') == 1
     }

@@ -16,19 +16,12 @@
 
 package com.netflix.nebula.lint.plugin
 
-import com.netflix.nebula.lint.GradleViolation
+import com.netflix.nebula.lint.Styling
 import org.codenarc.AnalysisContext
-import org.codenarc.analyzer.AbstractSourceAnalyzer
 import org.codenarc.report.HtmlReportWriter
 import org.codenarc.report.ReportWriter
 import org.codenarc.report.TextReportWriter
 import org.codenarc.report.XmlReportWriter
-import org.codenarc.results.DirectoryResults
-import org.codenarc.results.FileResults
-import org.codenarc.results.Results
-import org.codenarc.rule.Rule
-import org.codenarc.ruleset.RuleSet
-import org.codenarc.source.SourceString
 import org.gradle.api.DefaultTask
 import org.gradle.api.plugins.quality.CodeNarcReports
 import org.gradle.api.plugins.quality.internal.CodeNarcReportsImpl
@@ -38,12 +31,18 @@ import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.VerificationTask
 import org.gradle.internal.reflect.Instantiator
+import org.gradle.logging.StyledTextOutputFactory
 
 import javax.inject.Inject
 
 class GradleLintReportTask extends DefaultTask implements VerificationTask, Reporting<CodeNarcReports> {
     @Nested
     private final CodeNarcReportsImpl reports
+
+    @Inject
+    protected StyledTextOutputFactory getTextOutputFactory() {
+        null // see http://gradle.1045684.n5.nabble.com/injecting-dependencies-into-task-instances-td5712637.html
+    }
 
     /**
      * Whether or not the build should break when the verifications performed by this task fail.
@@ -52,39 +51,20 @@ class GradleLintReportTask extends DefaultTask implements VerificationTask, Repo
 
     GradleLintReportTask() {
         reports = instantiator.newInstance(CodeNarcReportsImpl, this)
-        finalizedBy 'lintGradle'
-    }
-
-    class ReportableAnalyzer extends AbstractSourceAnalyzer {
-        SourceString source
-
-        ReportableAnalyzer(String source) {
-            this.source = new SourceString(source)
-        }
-
-        Results analyze(RuleSet ruleSet) {
-            def results = new DirectoryResults(project.projectDir.absolutePath)
-            def violations = (collectViolations(source, ruleSet) as List<GradleViolation>)
-            violations*.fixes.flatten().groupBy { it.affectedFile }
-                .each { affectedFile, fixes ->
-                    results.addChild(new FileResults(affectedFile.absolutePath, fixes*.violation.unique(true)))
-                    results.numberOfFilesInThisDirectory++
-                }
-            results
-        }
-
-        List getSourceDirectories() {
-            []
-        }
+        outputs.upToDateWhen { false }
     }
 
     @TaskAction
     void generateReport() {
         if(reports.enabled) {
-            def lintExt = project.extensions.getByType(GradleLintExtension)
-            def registry = new LintRuleRegistry()
-            def ruleSet = RuleSetFactory.configureRuleSet(lintExt.rules.collect { registry.buildRules(it, project) }.flatten() as List<Rule>)
-            def results = new ReportableAnalyzer(project.buildFile.text).analyze(ruleSet)
+            def lintService = new LintService()
+            def results = lintService.lint(project)
+            def violationCount = results.violations.size()
+            def textOutput = textOutputFactory.create('lint')
+
+            textOutput.text('Generated a report containing information about ')
+            textOutput.style(Styling.Bold).text("$violationCount lint violation${violationCount == 1 ? '' : 's'}")
+            textOutput.println(' in this project')
 
             reports.enabled.each { Report r ->
                 ReportWriter writer = null
@@ -95,7 +75,7 @@ class GradleLintReportTask extends DefaultTask implements VerificationTask, Repo
                     case 'text': writer = new TextReportWriter(outputFile: r.destination); break
                 }
 
-                writer.writeReport(new AnalysisContext(ruleSet: ruleSet), results)
+                writer.writeReport(new AnalysisContext(ruleSet: lintService.ruleSet(project)), results)
             }
         }
     }

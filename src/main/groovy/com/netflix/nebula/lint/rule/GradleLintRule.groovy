@@ -43,7 +43,8 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
 
     @Override
     final int getPriority() {
-        return gradleViolations.isEmpty() ? DEFAULT_LEVEL.priority : gradleViolations.max { it.level.priority }.level.priority
+        // in CodeNarc terms, the lower the priority level, the higher the severity
+        return gradleViolations.isEmpty() ? DEFAULT_LEVEL.priority : gradleViolations.min { it.level.priority }.level.priority
     }
 
     @Override

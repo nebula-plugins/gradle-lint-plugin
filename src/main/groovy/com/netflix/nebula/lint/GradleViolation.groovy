@@ -50,7 +50,7 @@ class GradleViolation extends Violation {
     }
 
     static enum Level {
-        Info(0), Trivial(1), Warning(2), Error(3)
+        Info(4), Trivial(3), Warning(2), Error(1)
 
         int priority
         Level(int priority) { this.priority = priority }
