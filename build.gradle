@@ -69,6 +69,8 @@ dependencies {
         transitive = false
     }
 
+    plugin 'org.codehaus.gpars:gpars:1.2.1'
+
     // these two dependencies exist so we can provide a test harness
     // to proprietary rule implementations packed in other jars, but are considered provided
     plugin ('org.spockframework:spock-core:latest.release') { transitive = false }

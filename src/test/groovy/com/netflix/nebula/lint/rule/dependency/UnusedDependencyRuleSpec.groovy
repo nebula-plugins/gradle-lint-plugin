@@ -290,7 +290,7 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
         dependencies(buildFile, 'testCompile') == ['junit:junit:4.12']
     }
 
-    def 'dependencies with no classes should be moved to runtime'() {
+    def 'webjars should be moved to runtime'() {
         when:
         buildFile.text = """
             plugins {

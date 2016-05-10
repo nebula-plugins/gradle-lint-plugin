@@ -22,7 +22,8 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
         dependencyService = DependencyService.forProject(project)
     }
 
-    private String replaceDependencyWith(MethodCallExpression call, String conf, ModuleVersionIdentifier dep) {
+    private static String replaceDependencyWith(MethodCallExpression call, String conf, ModuleVersionIdentifier dep) {
+        // TODO deal with call expressions that may have closure arguments or map arguments
         return "$conf '$dep'"
     }
 
@@ -31,7 +32,11 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
         def mvid = dep.toModuleVersion()
         if(!dependencyService.isRuntime(conf)) {
             def jarContents = dependencyService.jarContents(mvid)
-            if(jarContents.nothingButMetaInf) {
+            if(jarContents.isWebjar) {
+                addBuildLintViolation('webjars should be in the runtime configuration', call)
+                    .replaceWith(call, replaceDependencyWith(call, 'runtime', mvid))
+            }
+            else if(jarContents.nothingButMetaInf) {
                 addBuildLintViolation('this dependency should be removed since its artifact is empty', call)
                     .delete(call)
             }

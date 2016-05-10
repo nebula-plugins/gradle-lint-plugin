@@ -3,6 +3,7 @@ package com.netflix.nebula.lint.rule.dependency
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimaps
 import groovy.transform.Memoized
+import groovyx.gpars.GParsPool
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ModuleVersionIdentifier
@@ -50,8 +51,6 @@ class DependencyService {
      */
     @Memoized
     Map<String, Collection<ResolvedArtifact>> artifactsByClass(Configuration conf) {
-        def artifactsByClass = Multimaps.synchronizedMultimap(HashMultimap.<String, ResolvedArtifact>create())
-
         // we go up the configuration hierarchy here, because we want to identify dependencies that were defined in
         // higher configurations but belong here (e.g. defined in runtime, but in use in compile)
         List<Configuration> terminalConfs = []
@@ -66,20 +65,23 @@ class DependencyService {
         }
         extendingConfs(conf)
 
+        def artifactsByClass = Multimaps.synchronizedMultimap(HashMultimap.<String, ResolvedArtifact>create())
+
         def artifactsToScan = terminalConfs*.resolvedConfiguration*.resolvedArtifacts.flatten().toSet() as Set<ResolvedArtifact>
 
-        artifactsToScan
-            .findAll {
-                it.file.name.endsWith('.jar') &&
-                        !it.file.name.endsWith('-sources.jar') &&
-                        !it.file.name.endsWith('-javadoc.jar')
-            }
-            .parallelStream()
-            .forEach { artifact ->
-                jarContents(artifact.file).classes.each { clazz ->
-                    artifactsByClass.put(clazz, artifact)
-                }
-            }
+        GParsPool.withPool {
+            artifactsToScan
+                    .findAll {
+                        it.file.name.endsWith('.jar') &&
+                                !it.file.name.endsWith('-sources.jar') &&
+                                !it.file.name.endsWith('-javadoc.jar')
+                    }
+                    .eachParallel { ResolvedArtifact artifact ->
+                        jarContents(artifact.file).classes.each { clazz ->
+                            artifactsByClass.put(clazz, artifact)
+                        }
+                    }
+        }
 
         return artifactsByClass.asMap()
     }

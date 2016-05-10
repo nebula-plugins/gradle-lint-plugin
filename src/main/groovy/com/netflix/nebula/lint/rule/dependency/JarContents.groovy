@@ -14,4 +14,5 @@ class JarContents {
 
     @Lazy boolean isServiceProvider = entryNames.any { it == 'META-INF/services/' }
     @Lazy boolean nothingButMetaInf = !entryNames.any { !it.startsWith('META-INF') }
+    @Lazy boolean isWebjar = entryNames.any { it == 'META-INF/resources/webjars/' }
 }
