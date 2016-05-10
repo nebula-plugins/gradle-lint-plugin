@@ -36,18 +36,7 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
 
     // TODO look in web.xml for things like <filter-class>com.google.inject.servlet.GuiceFilter</filter-class>
 
-    // TODO sort first order dependencies to be added
-
-    // TODO should we be on the lookout for common runtime dependencies like xerces generally marked as compile?
-
     // TODO match indentation when adding dependencies
-
-    // TODO move dependencies from runtime to compile if the dependency is required at compile time (possible if
-    // the dependency is also being sourced transitively from a compile time dependency)
-
-    // TODO if a dependency is not used at compile but has META-INF/services, move to runtime
-
-    // TODO if we identify junit as an unused dependency but have not compiled the test source set, move it to testCompile optimistically
 
     @Unroll
     def 'unused compile dependencies are marked for deletion'() {
@@ -358,5 +347,63 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
 
         dependencies(buildFile, 'compile') == []
         dependencies(buildFile, 'testCompile') == ['junit:junit:4.11']
+    }
+
+    def 'service providers are moved to the runtime configuration if their classes are unused at compile time'() {
+        when:
+        buildFile.text = """
+            plugins {
+                id 'nebula.lint'
+                id 'java'
+            }
+
+            gradleLint.rules = ['unused-dependency']
+
+            repositories { mavenCentral() }
+
+            dependencies {
+                compile 'mysql:mysql-connector-java:6.0.2'
+            }
+        """
+
+        createJavaSourceFile('public class Main {}')
+
+        then:
+        runTasksSuccessfully('compileJava', 'fixGradleLint')
+
+        dependencies(buildFile, 'compile') == []
+        dependencies(buildFile, 'runtime') == ['mysql:mysql-connector-java:6.0.2']
+    }
+
+    def 'remove \'family\' jars in favor of the components that make them up'() {
+        when:
+        buildFile.text = """
+            plugins {
+                id 'nebula.lint'
+                id 'java'
+            }
+
+            gradleLint.rules = ['unused-dependency']
+
+            repositories { mavenCentral() }
+
+            dependencies {
+                compile 'com.amazonaws:aws-java-sdk:1.10.76'
+            }
+        """
+
+        createJavaSourceFile('''\
+            import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+            public class Main {
+                Object provider = new DefaultAWSCredentialsProviderChain();
+            }''')
+
+        then:
+        def results = runTasksSuccessfully('compileJava', 'fixGradleLint')
+        println(results.output)
+
+
+        dependencies(buildFile, 'compile') == ['com.amazonaws:aws-java-sdk-core:1.10.76']
+        dependencies(buildFile, 'runtime') == []
     }
 }

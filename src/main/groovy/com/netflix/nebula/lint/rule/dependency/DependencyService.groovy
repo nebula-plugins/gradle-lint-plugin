@@ -76,7 +76,7 @@ class DependencyService {
             }
             .parallelStream()
             .forEach { artifact ->
-                classes(artifact.file).each { clazz ->
+                jarContents(artifact.file).classes.each { clazz ->
                     artifactsByClass.put(clazz, artifact)
                 }
             }
@@ -86,34 +86,44 @@ class DependencyService {
 
     /**
      * @param id
-     * @return the classes contained in an artifact matching this module version, or <code>null</code> if no such
+     * @return the contents of an artifact matching this module version, or <code>null</code> if no such
      * artifact was found on the resolved classpath
      */
-    Collection<String> classes(ModuleVersionIdentifier id) {
+    JarContents jarContents(ModuleVersionIdentifier id) {
         for(Configuration conf in project.configurations) {
-            def artifact = conf.resolvedConfiguration.resolvedArtifacts.find { it.moduleVersion.id == id }
+            def artifact = conf.resolvedConfiguration.resolvedArtifacts.find { it.moduleVersion.id.module == id.module }
             if(artifact)
-                return classes(artifact.file)
+                return jarContents(artifact.file)
         }
         return null
     }
 
     @Memoized
-    static Collection<String> classes(File file) {
-        def classes = []
+    static JarContents jarContents(File file) {
+        def entryNames = []
         new JarFile(file).withCloseable { jarFile ->
             def allEntries = jarFile.entries()
             while (allEntries.hasMoreElements()) {
-                def entry = allEntries.nextElement() as JarEntry
-                if (entry.name.endsWith('.class'))
-                    classes += entry.name.replaceAll(/\.class$/, '')
+                entryNames += (allEntries.nextElement() as JarEntry).name
             }
         }
-        classes
+        return new JarContents(entryNames: entryNames)
+    }
+
+    final static Comparator<ModuleVersionIdentifier> DEPENDENCY_COMPARATOR = new Comparator<ModuleVersionIdentifier>() {
+        @Override
+        int compare(ModuleVersionIdentifier m1, ModuleVersionIdentifier m2) {
+            if (m1.group != m2.group)
+                return m1.group.compareTo(m2.group)
+            else if (m1.name != m2.name)
+                return m1.name.compareTo(m2.name)
+            else
+                return new DefaultVersionComparator().asStringComparator().compare(m1.version, m2.version)
+        }
     }
 
     @Memoized
-    DependencyReferences classReferences(SourceSet sourceSet) {
+    private DependencyReferences classReferences(SourceSet sourceSet) {
         if(!sourceSet || !sourceSet.output.classesDir.exists())
             return null
 
@@ -157,7 +167,7 @@ class DependencyService {
 
         def declared = conf.resolvedConfiguration.firstLevelModuleDependencies.collect { it.module.id }
 
-        return (required - declared).toSet()
+        return (required - declared).toSorted(DEPENDENCY_COMPARATOR).toSet()
     }
 
     /**
@@ -307,7 +317,7 @@ class DependencyService {
         return extendsFromRecurse(conf)
     }
 
-    class DependencyReferences {
+    private class DependencyReferences {
         Set<ResolvedArtifact> direct = new HashSet()
         Set<ResolvedArtifact> indirect = new HashSet()
     }

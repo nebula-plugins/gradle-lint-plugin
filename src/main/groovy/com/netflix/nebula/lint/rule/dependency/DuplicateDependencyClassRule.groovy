@@ -15,11 +15,11 @@ class DuplicateDependencyClassRule extends GradleLintRule implements GradleModel
         def mvid = dep.toModuleVersion()
         def dependencyService = DependencyService.forProject(project)
 
-        def dependencyClasses = dependencyService.classes(mvid)
+        def dependencyClasses = dependencyService.jarContents(mvid).classes
         def dupeDependencyClasses = dependencyService.artifactsByClass(conf)
                 .findAll { dependencyClasses.contains(it.key) && it.value.size() > 1 }
 
-        def dupeClassesByDependency = new TreeMap<ModuleVersionIdentifier, Set<String>>(dependencyComparator).withDefault { [] as Set }
+        def dupeClassesByDependency = new TreeMap<ModuleVersionIdentifier, Set<String>>(DependencyService.DEPENDENCY_COMPARATOR).withDefault { [] as Set }
         dupeDependencyClasses.each { className, resolvedArtifacts ->
             resolvedArtifacts.each { artifact ->
                 dupeClassesByDependency.get(artifact.moduleVersion.id).add(className)
@@ -32,18 +32,6 @@ class DuplicateDependencyClassRule extends GradleLintRule implements GradleModel
                     addBuildLintViolation("$mvid in configuration '$conf' has ${classes.size()} classes duplicated by ${resolvedMvid}")
                 }
             }
-        }
-    }
-
-    protected Comparator<ModuleVersionIdentifier> dependencyComparator = new Comparator<ModuleVersionIdentifier>() {
-        @Override
-        int compare(ModuleVersionIdentifier m1, ModuleVersionIdentifier m2) {
-            if (m1.group != m2.group)
-                return m1.group.compareTo(m2.group)
-            else if (m1.name != m2.name)
-                return m1.name.compareTo(m2.name)
-            else
-                return new DefaultVersionComparator().asStringComparator().compare(m1.version, m2.version)
         }
     }
 }
