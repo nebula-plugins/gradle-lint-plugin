@@ -48,8 +48,6 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
         createJavaSourceFile('public class Main {}')
         def result = runTasksSuccessfully('compileJava', 'lintGradle')
 
-        println(result.output)
-
         then:
         result.output.contains(message)
         result.output.contains("✖ build.gradle: 1 problem (0 errors, 1 warning)")

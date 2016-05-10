@@ -91,8 +91,6 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
 
         then:
         runTasksSuccessfully('compileJava', 'fixGradleLint')
-        println(buildFile.text)
-
         dependencies(buildFile) == [guava]
 
         where:
@@ -283,9 +281,6 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
 
         then:
         runTasksSuccessfully('compileTestJava', 'fixGradleLint')
-
-        println(buildFile.text)
-
         dependencies(buildFile, 'compile') == []
         dependencies(buildFile, 'testCompile') == ['junit:junit:4.12']
     }
@@ -400,9 +395,6 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
 
         then:
         def results = runTasksSuccessfully('compileJava', 'fixGradleLint')
-        println(results.output)
-
-
         dependencies(buildFile, 'compile') == ['com.amazonaws:aws-java-sdk-core:1.10.76']
         dependencies(buildFile, 'runtime') == []
     }

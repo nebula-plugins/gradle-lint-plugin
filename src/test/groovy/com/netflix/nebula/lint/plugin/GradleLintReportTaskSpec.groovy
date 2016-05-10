@@ -26,7 +26,6 @@ class GradleLintReportTaskSpec extends TestKitSpecification {
 
         then:
         def results = runTasksSuccessfully('generateGradleLintReport')
-        println(results.output)
 
         when:
         def report = new File(projectDir, 'build/reports/gradleLint').listFiles().find { it.name.endsWith('.txt') }
