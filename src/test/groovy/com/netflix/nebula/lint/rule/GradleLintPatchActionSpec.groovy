@@ -419,6 +419,35 @@ class GradleLintPatchActionSpec extends Specification {
             '''.substring(1).stripIndent()
     }
 
+    def 'patches whose starts overlap'() {
+        setup:
+        def f = temp.newFile('my.txt')
+
+        f.text = '''\
+        a
+        b
+        c
+        '''.stripIndent()
+
+        when:
+        def fix1 = new GradleLintReplaceWith(violation, f, 2..3, 1, 2, 'd')
+        def fix2 = new GradleLintInsertBefore(violation, f, 2, '*')
+        def patch = new GradleLintPatchAction(project).patch([fix1, fix2])
+
+        then:
+        patch == '''
+            diff --git a/my.txt b/my.txt
+            --- a/my.txt
+            +++ b/my.txt
+            @@ -1,3 +1,3 @@
+             a
+            +*
+            -b
+            -c
+            +d
+            '''.substring(1).stripIndent()
+    }
+
     def 'patches that overlap by one line'() {
         setup:
         def f = temp.newFile('my.txt')

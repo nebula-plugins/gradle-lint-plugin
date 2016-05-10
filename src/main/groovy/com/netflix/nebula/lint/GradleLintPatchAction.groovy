@@ -29,7 +29,6 @@ class GradleLintPatchAction extends GradleLintViolationAction {
     Project project
 
     static final String PATCH_NAME = 'lint.patch'
-    private final int MIN_LINES_CONTEXT = 3
 
     @Override
     void lintFinished(Collection<GradleViolation> violations) {
@@ -123,7 +122,7 @@ class GradleLintPatchAction extends GradleLintViolationAction {
             if (!emptyFile) lines += readFileOrSymlink(file, fileMode)
 
             def patch = []
-            patchFixes.eachWithIndex { fix, j ->
+            patchFixes.sort { f1, f2 -> f1.from().compareTo(f2.from()) ?: f1.to().compareTo(f2.to()) }.eachWithIndex { fix, j ->
                 def lastFix = j == patchFixes.size() - 1
 
                 // 'before' context

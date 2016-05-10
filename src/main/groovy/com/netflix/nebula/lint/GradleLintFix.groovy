@@ -37,12 +37,12 @@ abstract class GradleLintFix {
     /**
      * @return 1-based, inclusive
      */
-    abstract int from()
+    abstract Integer from()
 
     /**
      * @return 1-based, inclusive
      */
-    abstract int to()
+    abstract Integer to()
 
     abstract String changes()
 
@@ -55,13 +55,12 @@ abstract class GradleLintMultilineFix extends GradleLintFix {
     Range<Integer> affectedLines // 1-based, inclusive
 
     @Override
-    int from() { affectedLines.from }
+    Integer from() { affectedLines.from }
 
     @Override
-    int to() { affectedLines.to }
+    Integer to() { affectedLines.to }
 }
 
-@Canonical
 class GradleLintReplaceWith extends GradleLintMultilineFix {
     Integer fromColumn // the first affected column of the first line (1-based, inclusive)
     Integer toColumn // the last affected column of the last line (1-based, exclusive)
@@ -81,7 +80,6 @@ class GradleLintReplaceWith extends GradleLintMultilineFix {
     String changes() { changes }
 }
 
-@Canonical
 class GradleLintDeleteLines extends GradleLintMultilineFix {
 
     GradleLintDeleteLines(GradleViolation violation, File affectedFile, Range<Integer> affectedLines) {
@@ -94,7 +92,6 @@ class GradleLintDeleteLines extends GradleLintMultilineFix {
     String changes() { null }
 }
 
-@Canonical
 class GradleLintInsertAfter extends GradleLintFix {
     Integer afterLine // 1-based
     String changes
@@ -107,16 +104,15 @@ class GradleLintInsertAfter extends GradleLintFix {
     }
 
     @Override
-    int from() { afterLine+1 }
+    Integer from() { afterLine+1 }
 
     @Override
-    int to() { afterLine }
+    Integer to() { afterLine }
 
     @Override
     String changes() { changes }
 }
 
-@Canonical
 class GradleLintInsertBefore extends GradleLintFix {
     Integer beforeLine // 1-based
     String changes
@@ -129,16 +125,15 @@ class GradleLintInsertBefore extends GradleLintFix {
     }
 
     @Override
-    int from() { beforeLine }
+    Integer from() { beforeLine }
 
     @Override
-    int to() { beforeLine-1 }
+    Integer to() { beforeLine-1 }
 
     @Override
     String changes() { changes }
 }
 
-@Canonical
 class GradleLintDeleteFile extends GradleLintMultilineFix implements RequiresOwnPatchset {
     GradleLintDeleteFile(GradleViolation violation, File affectedFile) {
         this.violation = violation
@@ -151,7 +146,6 @@ class GradleLintDeleteFile extends GradleLintMultilineFix implements RequiresOwn
     String changes() { null }
 }
 
-@Canonical
 class GradleLintCreateFile extends GradleLintInsertBefore implements RequiresOwnPatchset {
     FileMode fileMode
 
