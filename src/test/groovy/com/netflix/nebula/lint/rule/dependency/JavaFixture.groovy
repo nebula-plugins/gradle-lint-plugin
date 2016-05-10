@@ -26,8 +26,23 @@ import javax.tools.*
 class JavaFixture {
     List<SimpleJavaFileObject> sources = []
     def compiler = ToolProvider.getSystemJavaCompiler()
+    def diagnostics = new DiagnosticCollector<JavaFileObject>()
 
-    byte[] compile(String sourceStr) {
+    void compileToClassesDir(String sourceStr, File classesDir, String... options) {
+        def bytecodes = compile(sourceStr, options)
+        def nameParts = fullyQualifiedName(sourceStr).split(/\./)
+
+        def dir
+        if(nameParts.size() > 1)
+            dir = new File(classesDir, nameParts[0..-1].join('/'))
+        else
+            dir = new File(classesDir, nameParts[0])
+
+        dir.mkdirs()
+        new File(dir, nameParts[-1]).text = bytecodes
+    }
+
+    byte[] compile(String sourceStr, String... options) {
         def className = fullyQualifiedName(sourceStr)
 
         if(className) {
@@ -35,8 +50,7 @@ class JavaFixture {
                 @Override CharSequence getCharContent(boolean ignoreEncodingErrors) { sourceStr.trim() }
             })
 
-            def diagnostics = new DiagnosticCollector<JavaFileObject>()
-            if(!compiler.getTask(null, inMemoryClassFileManager, diagnostics, null, null, sources).call()) {
+            if(!compiler.getTask(null, inMemoryClassFileManager, diagnostics, options.toList(), null, sources).call()) {
                 for(d in diagnostics.diagnostics) {
                     println "line $d.lineNumber: ${d.getMessage(Locale.default)}"
                 }
@@ -86,7 +100,7 @@ class JavaFixture {
         }
     }
 
-    def inMemoryClassFileManager = new ForwardingJavaFileManager(compiler.getStandardFileManager(null, null, null)) {
+    def inMemoryClassFileManager = new ForwardingJavaFileManager(compiler.getStandardFileManager(diagnostics, null, null)) {
         Map<String, JavaClassObject> classesByName = [:]
 
         byte[] classBytes(String className) { classesByName[className]?.bos?.toByteArray() }

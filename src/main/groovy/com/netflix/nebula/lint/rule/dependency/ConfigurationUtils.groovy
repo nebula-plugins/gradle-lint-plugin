@@ -40,7 +40,7 @@ class ConfigurationUtils {
                 }
 
                 hierarchyAtOrBelowCompile(p.configurations.getByName(it)).find { configurations.contains(it.name) }
-            } catch(UnknownConfigurationException e) {
+            } catch(UnknownConfigurationException ignored) {
                 null
             }
         }

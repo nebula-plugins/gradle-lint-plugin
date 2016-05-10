@@ -77,7 +77,7 @@ class FixGradleLintTask extends DefaultTask {
 
             def completelyFixed = 0
 
-            violations.groupBy { it.buildFile }.each { buildFile, projectViolations ->
+            violations.groupBy { it.file }.each { buildFile, projectViolations ->
                 def buildFilePath = project.rootDir.toURI().relativize(buildFile.toURI()).toString()
 
                 projectViolations.each { v ->

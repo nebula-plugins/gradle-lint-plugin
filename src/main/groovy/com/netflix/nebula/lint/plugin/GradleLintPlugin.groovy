@@ -52,7 +52,7 @@ class GradleLintPlugin implements Plugin<Project> {
                 if(task.getPath() != null) {
                     try {
                         rootLint.shouldRunAfter task
-                    } catch(Throwable t) {
+                    } catch(Throwable ignored) {
                         // just quietly DON'T add rootLint to run after this task, it will probably still run because
                         // it will be hung on some other task as a shouldRunAfter
                     }

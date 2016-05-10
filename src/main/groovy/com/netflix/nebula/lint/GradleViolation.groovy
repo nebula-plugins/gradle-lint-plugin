@@ -28,16 +28,16 @@ import java.util.concurrent.atomic.AtomicInteger
 @EqualsAndHashCode(includes = 'id')
 class GradleViolation extends Violation {
     Level level
-    File buildFile
+    File file
     List<GradleLintFix> fixes = []
     int id
 
     static AtomicInteger nextId = new AtomicInteger(0)
 
-    public GradleViolation(Level level, File buildFile, Rule rule, Integer lineNumber,
+    public GradleViolation(Level level, File file, Rule rule, Integer lineNumber,
                            String sourceLine, String message) {
         this.level = level
-        this.buildFile = buildFile
+        this.file = file
         this.rule = rule
         this.lineNumber = lineNumber
         this.sourceLine = sourceLine
@@ -57,12 +57,12 @@ class GradleViolation extends Violation {
     }
 
     GradleViolation insertAfter(ASTNode node, String changes) {
-        fixes += new GradleLintInsertAfter(this, buildFile, node.lastLineNumber, changes)
+        fixes += new GradleLintInsertAfter(this, file, node.lastLineNumber, changes)
         this
     }
 
     GradleViolation insertBefore(ASTNode node, String changes) {
-        fixes += new GradleLintInsertBefore(this, buildFile, node.lineNumber, changes)
+        fixes += new GradleLintInsertBefore(this, file, node.lineNumber, changes)
         this
     }
 
@@ -89,7 +89,7 @@ class GradleViolation extends Violation {
                         .collect { line -> ''.padRight(closure.lastColumnNumber + 1) + line }
                         .join('\n')
 
-                fixes += new GradleLintInsertAfter(this, buildFile, closure.lineNumber, indentedChanges)
+                fixes += new GradleLintInsertAfter(this, file, closure.lineNumber, indentedChanges)
             }
         }
 
@@ -97,13 +97,13 @@ class GradleViolation extends Violation {
     }
 
     GradleViolation replaceWith(ASTNode node, String changes) {
-        fixes += new GradleLintReplaceWith(this, buildFile, node.lineNumber..node.lastLineNumber, node.columnNumber,
+        fixes += new GradleLintReplaceWith(this, file, node.lineNumber..node.lastLineNumber, node.columnNumber,
             node.lastColumnNumber, changes)
         this
     }
 
     GradleViolation delete(ASTNode node) {
-        fixes += new GradleLintReplaceWith(this, buildFile, node.lineNumber..node.lastLineNumber, node.columnNumber, node.lastColumnNumber, '')
+        fixes += new GradleLintReplaceWith(this, file, node.lineNumber..node.lastLineNumber, node.columnNumber, node.lastColumnNumber, '')
         this
     }
 

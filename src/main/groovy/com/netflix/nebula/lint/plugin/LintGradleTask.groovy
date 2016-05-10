@@ -64,7 +64,7 @@ class LintGradleTask extends DefaultTask {
                 }
             }
 
-            violations.groupBy { it.buildFile }.each { buildFile, violationsByFile ->
+            violations.groupBy { it.file }.each { buildFile, violationsByFile ->
                 def buildFilePath = project.rootDir.toURI().relativize(buildFile.toURI()).toString()
 
                 violationsByFile.each { v ->

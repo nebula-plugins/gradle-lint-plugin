@@ -61,6 +61,7 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
     @Override void visitConfigurationExclude(MethodCallExpression call, String conf, GradleDependency exclude) {}
     @Override void visitExtensionProperty(ExpressionStatement expression, String extension, String prop, String value) {}
     @Override void visitExtensionProperty(ExpressionStatement expression, String extension, String prop) {}
+    @Override void visitDependencies(MethodCallExpression call) {}
 
     protected boolean isIgnored() {
         globalIgnoreOn || rulesToIgnore.collect { LintRuleRegistry.findRules(it) }.flatten().contains(ruleId)
@@ -210,6 +211,7 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
                 if (methodName == 'dependencies') {
                     inDependenciesBlock = true
                     super.visitMethodCallExpression(call)
+                    GradleLintRule.this.visitDependencies(call)
                     inDependenciesBlock = false
                 } else if (methodName == 'configurations') {
                     inConfigurationsBlock = true

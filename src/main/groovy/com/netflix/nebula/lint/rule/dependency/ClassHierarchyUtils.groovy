@@ -28,7 +28,7 @@ class ClassHierarchyUtils {
     static Collection<String> typeHierarchy(Class<?> clazz) {
         try {
             return typeHierarchyRecursive(clazz) - clazz.name
-        } catch(Throwable t) {
+        } catch(Throwable ignored) {
             logger.debug("Unable to load super type or interfaces of $clazz.name")
             return []
         }

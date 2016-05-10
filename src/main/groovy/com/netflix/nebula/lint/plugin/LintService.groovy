@@ -28,6 +28,7 @@ import org.codenarc.ruleset.ListRuleSet
 import org.codenarc.ruleset.RuleSet
 import org.codenarc.source.SourceString
 import org.gradle.api.Project
+import org.gradle.api.UnknownDomainObjectException
 
 class LintService {
     def registry = new LintRuleRegistry()
@@ -46,11 +47,12 @@ class LintService {
         Results analyze(String source, RuleSet ruleSet) {
             def violations = (collectViolations(new SourceString(source), ruleSet) as List<GradleViolation>)
 
-            violations*.fixes.flatten().groupBy { it.affectedFile }
-                    .each { affectedFile, fixes ->
-                        results.addChild(new FileResults(affectedFile.absolutePath, fixes*.violation.unique(true)))
-                        results.numberOfFilesInThisDirectory++
-                    }
+            violations.groupBy { it.file }
+                .each { file, fileViolations ->
+                    results.addChild(new FileResults(file.absolutePath, violations))
+                    results.numberOfFilesInThisDirectory++
+                }
+
             results
         }
 
@@ -69,7 +71,7 @@ class LintService {
             def extension
             try {
                 extension = p.extensions.getByType(GradleLintExtension)
-            } catch (UnknownDomainObjectException) {
+            } catch (UnknownDomainObjectException ignored) {
                 // if the subproject has not applied lint, use the extension configuration from the root project
                 extension = p.rootProject.extensions.getByType(GradleLintExtension)
             }

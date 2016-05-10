@@ -1,67 +1,80 @@
-/*
- * Copyright 2015-2016 Netflix, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.netflix.nebula.lint.rule.dependency
 
 import com.netflix.nebula.lint.rule.GradleDependency
-import org.codehaus.groovy.ast.expr.ClosureExpression
+import com.netflix.nebula.lint.rule.GradleLintRule
+import com.netflix.nebula.lint.rule.GradleModelAware
+import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.ast.expr.MethodCallExpression
-import org.codehaus.groovy.ast.stmt.BlockStatement
-import org.gradle.api.artifacts.ResolvedDependency
+import org.gradle.api.artifacts.ModuleVersionIdentifier
+import org.gradle.api.plugins.JavaPluginConvention
 
-class UnusedDependencyRule extends AbstractDependencyReportRule {
+class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
     String description = 'remove unused dependencies, relocate dependencies to the correct configuration, and ensure that directly used transitives are declared as first order dependencies'
+    static final List<String> shouldBeRuntime = ['xerces', 'xercesImpl', 'xml-apis']
+
+    Map<ModuleVersionIdentifier, MethodCallExpression> runtimeDependencyDefinitions = [:]
+    DependencyService dependencyService
+
+    @Override
+    protected void beforeApplyTo() {
+        dependencyService = DependencyService.forProject(project)
+    }
 
     @Override
     void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
-        def matchesGradleDep = { ResolvedDependency d -> d.module.id.group == dep.group && d.module.id.name == dep.name }
-        def match
+        def mvid = dep.toModuleVersion()
+        if(!dependencyService.isRuntime(conf)) {
+            if(dependencyService.classes(mvid)?.isEmpty() ?: false) {
+                addBuildLintViolation("this dependency should be moved to the runtime configuration since it has no classes", call)
+                        .replaceWith(call, "runtime '$mvid'")
+            }
+            else if(shouldBeRuntime.contains(dep.name)) {
+                addBuildLintViolation("this dependency should be moved to the runtime configuration", call)
+                        .replaceWith(call, "runtime '$mvid'")
+            }
+            else if(dependencyService.unusedDependencies(conf).contains(mvid)) {
+                def requiringSourceSet = dependencyService.parentSourceSetConfigurations(conf)
+                        .find { parent -> dependencyService.usedDependencies(parent.name).contains(mvid) }
 
-        if ((match = report.firstOrderDependenciesWithNoClasses.find(matchesGradleDep))) {
-            addBuildLintViolation("this dependency should be moved to the runtime configuration since it has no classes", call)
-                    .replaceWith(call, "runtime '$match.module.id'")
-        } else if (report.firstOrderDependenciesToRemove.find(matchesGradleDep)) {
-            addBuildLintViolation('this dependency is unused and can be removed', call)
-                    .delete(call)
-
-        } else if ((match = report.firstOrderDependenciesWhoseConfigurationNeedsToChange.keySet().find(matchesGradleDep))) {
-            def toConf = report.firstOrderDependenciesWhoseConfigurationNeedsToChange[match]
-            addBuildLintViolation("this dependency should be moved to configuration $toConf", call)
-                    .replaceWith(call, "$toConf '$match.module.id'")
+                // is there some extending configuration that needs this dependency?
+                if(requiringSourceSet && !dependencyService.firstLevelDependenciesInConf(requiringSourceSet).contains(mvid)) {
+                    addBuildLintViolation("this dependency should be moved to configuration $requiringSourceSet.name", call)
+                            .replaceWith(call, "$requiringSourceSet.name '$mvid'")
+                }
+                else {
+                    addBuildLintViolation('this dependency is unused and can be removed', call)
+                            .delete(call)
+                }
+            }
+        } else {
+            runtimeDependencyDefinitions[mvid] = call
         }
     }
 
     @Override
-    void visitMethodCallExpression(MethodCallExpression call) {
-        if (call.methodAsString == 'dependencies') {
-            // TODO match indentation of surroundings
-            def indentation = ''.padLeft(call.columnNumber + 3)
-            def transitiveSize = report.transitiveDependenciesToAddAsFirstOrder.size()
+    void visitDependencies(MethodCallExpression call) {
+        bookmark('dependencies', call)
+    }
 
-            if (transitiveSize == 1) {
-                def d = report.transitiveDependenciesToAddAsFirstOrder.first()
-                addBuildLintViolation('one or more classes in your transitive dependencies are required by your code directly')
-                        .insertIntoClosure(call, "${indentation}compile '${d.module.id}'")
-            } else if (transitiveSize > 1) {
-                def transitiveDeps = report.transitiveDependenciesToAddAsFirstOrder
-                        .toSorted(dependencyComparator)
-                        .inject('') { deps, d -> deps + "\n${indentation}compile '$d.module.id'" }
+    @Override
+    protected void visitClassComplete(ClassNode node) {
+        def dependenciesBlock = bookmark('dependencies')
 
-                addBuildLintViolation('one or more classes in your transitive dependencies are required by your code directly')
-                        .insertIntoClosure(call, transitiveDeps)
+        def convention = project.convention.findPlugin(JavaPluginConvention)
+        if(convention) {
+            convention.sourceSets.each { sourceSet ->
+                def conf = sourceSet.compileConfigurationName
+                dependencyService.undeclaredDependencies(conf).each { dep ->
+                    def runtimeDeclaration = runtimeDependencyDefinitions[dep]
+                    // TODO this may be too specialized, should we just be moving deps down conf hierarchies as necessary?
+                    if (runtimeDeclaration) {
+                        addBuildLintViolation("this dependency should be moved to configuration $conf", runtimeDeclaration)
+                                .replaceWith(runtimeDeclaration, "$conf '$dep'")
+                    } else {
+                        addBuildLintViolation("one or more classes in $dep are required by your code directly")
+                                .insertIntoClosure(dependenciesBlock, "$conf '$dep'")
+                    }
+                }
             }
         }
     }

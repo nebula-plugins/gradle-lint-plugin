@@ -81,7 +81,7 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
     }
 
     @Unroll
-    def 'runtime dependencies with \'#conf\' that are used at compile time are transformed into compile dependencies'() {
+    def 'runtime dependencies with configuration \'#conf\' that are used at compile time are transformed into compile dependencies'() {
         when:
         buildFile.text = """
             plugins {
@@ -94,7 +94,7 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             repositories { mavenCentral() }
 
             dependencies {
-                $conf 'com.google.guava:guava:18.0'
+                runtime 'com.google.guava:guava:18.0'
             }
         """
 
@@ -102,6 +102,8 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
 
         then:
         runTasksSuccessfully('compileJava', 'fixGradleLint')
+        println(buildFile.text)
+
         dependencies(buildFile) == [guava]
 
         where:
@@ -280,6 +282,8 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             }
         """
 
+        createJavaSourceFile('public class Main {}')
+
         createJavaTestFile(projectDir, '''
             import org.junit.Test;
             public class Test1 {
@@ -290,6 +294,9 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
 
         then:
         runTasksSuccessfully('compileTestJava', 'fixGradleLint')
+
+        println(buildFile.text)
+
         dependencies(buildFile, 'compile') == []
         dependencies(buildFile, 'testCompile') == ['junit:junit:4.12']
     }
@@ -316,5 +323,40 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
 
         dependencies(buildFile, 'compile') == []
         dependencies(buildFile, 'runtime') == ['org.webjars:acorn:0.5.0']
+    }
+
+    def 'dependencies present in more than one configuration as first order dependencies can be removed from one or more'() {
+        when:
+        buildFile.text = """
+            plugins {
+                id 'nebula.lint'
+                id 'java'
+            }
+
+            gradleLint.rules = ['unused-dependency']
+
+            repositories { mavenCentral() }
+
+            dependencies {
+                compile 'junit:junit:4.11'
+                testCompile 'junit:junit:4.11'
+            }
+        """
+
+        createJavaSourceFile('public class Main {}')
+
+        createJavaTestFile(projectDir, '''
+            import org.junit.Test;
+            public class Test1 {
+                @Test
+                public void test() {}
+            }
+        ''')
+
+        then:
+        runTasksSuccessfully('compileTestJava', 'fixGradleLint')
+
+        dependencies(buildFile, 'compile') == []
+        dependencies(buildFile, 'testCompile') == ['junit:junit:4.11']
     }
 }

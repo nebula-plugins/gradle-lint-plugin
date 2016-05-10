@@ -60,4 +60,6 @@ interface GradleAstVisitor {
     void bookmark(String label, ASTNode node)
 
     ASTNode bookmark(String label)
+
+    void visitDependencies(MethodCallExpression call)
 }

@@ -16,7 +16,7 @@
 
 package com.netflix.nebula.lint.rule.dependency
 
-import org.gradle.api.artifacts.ResolvedDependency
+import org.gradle.api.artifacts.ResolvedArtifact
 import org.objectweb.asm.*
 import org.objectweb.asm.signature.SignatureReader
 import org.objectweb.asm.signature.SignatureVisitor
@@ -24,12 +24,12 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 final class DependencyClassVisitor extends ClassVisitor {
-    private Map<String, Set<ResolvedDependency>> classOwners
+    private Map<String, Collection<ResolvedArtifact>> classOwners
     private String className
     private ClassLoader loader
     private Logger logger = LoggerFactory.getLogger(DependencyClassVisitor)
 
-    Set<ResolvedDependency> directReferences = new HashSet()
+    Set<ResolvedArtifact> directReferences = new HashSet()
 
     /**
      * References that are necessary at compile time (e.g. type hierarchy of implemented interfaces), but are satisfactory
@@ -38,9 +38,9 @@ final class DependencyClassVisitor extends ClassVisitor {
      * javax.servlet. In this case, we want to preserve a first order dependency on javax.servlet when
      * <code>GuiceServletContextListener</code> is extended somewhere in the code.
      */
-    Set<ResolvedDependency> indirectReferences = new HashSet()
+    Set<ResolvedArtifact> indirectReferences = new HashSet()
 
-    DependencyClassVisitor(Map<String, Set<ResolvedDependency>> classOwners, ClassLoader loader) {
+    DependencyClassVisitor(Map<String, Collection<ResolvedArtifact>> classOwners, ClassLoader loader) {
         super(Opcodes.ASM5)
         this.classOwners = classOwners
         this.loader = loader

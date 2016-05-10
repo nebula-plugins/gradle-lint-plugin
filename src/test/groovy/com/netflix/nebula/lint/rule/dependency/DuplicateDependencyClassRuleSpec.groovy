@@ -17,10 +17,8 @@
 package com.netflix.nebula.lint.rule.dependency
 
 import com.netflix.nebula.lint.TestKitSpecification
-import spock.lang.Ignore
 import spock.lang.Unroll
 
-@Ignore
 class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
     static def guava = 'com.google.guava:guava:18.0'
     static def collections = 'com.google.collections:google-collections:1.0'
@@ -33,8 +31,8 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
         given:
         buildFile.text = """
             plugins {
-                id 'nebula.lint'
                 id 'java'
+                id 'nebula.lint'
             }
 
             gradleLint.rules = ['duplicate-dependency-class']
@@ -50,14 +48,16 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
         createJavaSourceFile('public class Main {}')
         def result = runTasksSuccessfully('compileJava', 'lintGradle')
 
+        println(result.output)
+
         then:
         result.output.contains(message)
-        result.output.contains("✖ build.gradle: 3 problems (0 errors, 3 warnings)")
+        result.output.contains("✖ build.gradle: 1 problem (0 errors, 1 warning)")
 
         where:
-        deps | message
-        [guava, collections] | "$collections in configuration 'compile' has 310 classes duplicated by $guava"
+        deps                            | message
+        [guava, collections]            | "$collections in configuration 'compile' has 310 classes duplicated by $guava"
         [guava_transitive, collections] | "$collections in configuration 'compile' has 310 classes duplicated by $guava"
-        [asm, asm_asm] |  "$asm_asm in configuration 'compile' has 21 classes duplicated by $asm"
+        [asm, asm_asm]                  | "$asm_asm in configuration 'compile' has 21 classes duplicated by $asm"
     }
 }

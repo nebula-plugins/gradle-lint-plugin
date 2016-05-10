@@ -80,6 +80,10 @@ abstract class TestKitSpecification extends Specification {
         createJavaFile(projectDir, source, 'src/test/java')
     }
 
+    def createJavaTestFile(String source) {
+        createJavaTestFile(projectDir, source)
+    }
+
     def createJavaFile(File projectDir, String source, String sourceFolderPath) {
         def sourceFolder = new File(projectDir, sourceFolderPath)
         sourceFolder.mkdirs()

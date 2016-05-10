@@ -17,6 +17,8 @@
 package com.netflix.nebula.lint.rule
 
 import groovy.transform.Canonical
+import org.gradle.api.artifacts.ModuleVersionIdentifier
+import org.gradle.api.internal.artifacts.DefaultModuleVersionIdentifier
 
 @Canonical
 class GradleDependency {
@@ -31,5 +33,9 @@ class GradleDependency {
     enum Syntax {
         MapNotation,
         StringNotation
+    }
+
+    ModuleVersionIdentifier toModuleVersion() {
+        return new DefaultModuleVersionIdentifier(group, name, version)
     }
 }
