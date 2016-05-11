@@ -394,8 +394,37 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             }''')
 
         then:
-        def results = runTasksSuccessfully('compileJava', 'fixGradleLint')
+        runTasksSuccessfully('compileJava', 'fixGradleLint')
         dependencies(buildFile, 'compile') == ['com.amazonaws:aws-java-sdk-core:1.10.76']
         dependencies(buildFile, 'runtime') == []
+    }
+
+    def 'dependencies block in a root project which does not have the java plugin applied'() {
+        when:
+        buildFile.text = """
+            plugins {
+                id 'nebula.lint'
+            }
+
+            allprojects {
+                gradleLint.rules = ['unused-dependency']
+            }
+
+            subprojects {
+                apply plugin: 'java'
+                repositories { mavenCentral() }
+
+                dependencies {
+                    compile 'com.google.guava:guava:19.0'
+                }
+            }
+        """
+
+        def subproject = addSubproject('sub')
+        createJavaSourceFile(subproject, main)
+
+        then:
+        runTasksSuccessfully('sub:compileJava', 'fixGradleLint')
+        dependencies(buildFile, 'compile') == ['com.google.guava:guava:19.0']
     }
 }

@@ -48,16 +48,19 @@ abstract class TestKitSpecification extends Specification {
         result
     }
 
-    def addSubproject(String name) {
-        new File(projectDir, name).mkdirs()
+    File addSubproject(String name) {
+        def subprojectDir = new File(projectDir, name)
+        subprojectDir.mkdirs()
         settingsFile << "include '$name'\n"
+        return subprojectDir
     }
 
-    def addSubproject(String name, String buildGradleContents) {
+    File addSubproject(String name, String buildGradleContents) {
         def subprojectDir = new File(projectDir, name)
         subprojectDir.mkdirs()
         new File(subprojectDir, 'build.gradle').text = buildGradleContents
         settingsFile << "include '$name'\n"
+        return subprojectDir
     }
 
     def dependencies(File _buildFile, String... confs = ['compile', 'testCompile']) {
