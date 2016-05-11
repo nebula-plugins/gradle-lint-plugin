@@ -13,7 +13,37 @@ It assists a centralized build tools team in gently introducing and maintaining 
 
 ## Getting Started
 
-Read the [documentation](https://github.com/nebula-plugins/gradle-lint-plugin/wiki).
+Read the [full documentation](https://github.com/nebula-plugins/gradle-lint-plugin/wiki).
+
+To apply this plugin:
+
+    plugins {
+      id 'nebula.lint' version '0.26.1'
+    }
+
+Alternatively:
+
+    buildscript {
+      repositories { jcenter() }
+      dependencies {
+        classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
+      }
+    }
+
+    apply plugin: 'nebula.lint'
+
+Define which rules you would like to lint against:
+
+    gradleLint.rules = ['all-dependencies'] // add as many rules here as you'd like
+
+For an enterprise build, we recommend defining the lint rules in a `init.gradle` script or in a gradle script that is included via the Gradle `apply from` mechanism.
+
+For multimodule projects, we recommend applying the plugin in an allprojects block:
+
+    allprojects {
+      apply plugin: 'nebula.lint'
+      gradleLint.rules = ['all-dependencies'] // add as many rules here as you'd like
+    }
 
 ## License
 
