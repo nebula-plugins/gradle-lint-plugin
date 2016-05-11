@@ -29,46 +29,43 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
 
     @Override
     void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
-        def mvid = dep.toModuleVersion()
-        if(!dependencyService.isRuntime(conf)) {
-            def jarContents = dependencyService.jarContents(mvid)
-            if(jarContents.isWebjar) {
-                addBuildLintViolation('webjars should be in the runtime configuration', call)
-                    .replaceWith(call, replaceDependencyWith(call, 'runtime', mvid))
-            }
-            else if(jarContents.nothingButMetaInf) {
-                addBuildLintViolation('this dependency should be removed since its artifact is empty', call)
-                    .delete(call)
-            }
-            else if(jarContents.classes.isEmpty()) {
-                // webjars, resource bundles, etc
-                addBuildLintViolation("this dependency should be moved to the runtime configuration since it has no classes", call)
-                        .replaceWith(call, replaceDependencyWith(call, 'runtime', mvid))
-            }
-            else if(shouldBeRuntime.contains(dep.name)) {
-                addBuildLintViolation("this dependency should be moved to the runtime configuration", call)
-                        .replaceWith(call, replaceDependencyWith(call, 'runtime', mvid))
-            }
-            else if(dependencyService.unusedDependencies(conf).contains(mvid)) {
-                def requiringSourceSet = dependencyService.parentSourceSetConfigurations(conf)
-                        .find { parent -> dependencyService.usedDependencies(parent.name).contains(mvid) }
-
-                if(jarContents.isServiceProvider) {
-                    addBuildLintViolation("this dependency is a service provider unused at compile time and can be moved to the runtime configuration", call)
+        if(project.plugins.findPlugin(JavaPluginConvention)) {
+            def mvid = dep.toModuleVersion()
+            if (!dependencyService.isRuntime(conf)) {
+                def jarContents = dependencyService.jarContents(mvid)
+                if (jarContents.isWebjar) {
+                    addBuildLintViolation('webjars should be in the runtime configuration', call)
                             .replaceWith(call, replaceDependencyWith(call, 'runtime', mvid))
-                }
-                // is there some extending configuration that needs this dependency?
-                if(requiringSourceSet && !dependencyService.firstLevelDependenciesInConf(requiringSourceSet).contains(mvid)) {
-                    addBuildLintViolation("this dependency should be moved to configuration $requiringSourceSet.name", call)
-                            .replaceWith(call, replaceDependencyWith(call, requiringSourceSet.name, mvid))
-                }
-                else {
-                    addBuildLintViolation('this dependency is unused and can be removed', call)
+                } else if (jarContents.nothingButMetaInf) {
+                    addBuildLintViolation('this dependency should be removed since its artifact is empty', call)
                             .delete(call)
+                } else if (jarContents.classes.isEmpty()) {
+                    // webjars, resource bundles, etc
+                    addBuildLintViolation("this dependency should be moved to the runtime configuration since it has no classes", call)
+                            .replaceWith(call, replaceDependencyWith(call, 'runtime', mvid))
+                } else if (shouldBeRuntime.contains(dep.name)) {
+                    addBuildLintViolation("this dependency should be moved to the runtime configuration", call)
+                            .replaceWith(call, replaceDependencyWith(call, 'runtime', mvid))
+                } else if (dependencyService.unusedDependencies(conf).contains(mvid)) {
+                    def requiringSourceSet = dependencyService.parentSourceSetConfigurations(conf)
+                            .find { parent -> dependencyService.usedDependencies(parent.name).contains(mvid) }
+
+                    if (jarContents.isServiceProvider) {
+                        addBuildLintViolation("this dependency is a service provider unused at compile time and can be moved to the runtime configuration", call)
+                                .replaceWith(call, replaceDependencyWith(call, 'runtime', mvid))
+                    }
+                    // is there some extending configuration that needs this dependency?
+                    if (requiringSourceSet && !dependencyService.firstLevelDependenciesInConf(requiringSourceSet).contains(mvid)) {
+                        addBuildLintViolation("this dependency should be moved to configuration $requiringSourceSet.name", call)
+                                .replaceWith(call, replaceDependencyWith(call, requiringSourceSet.name, mvid))
+                    } else {
+                        addBuildLintViolation('this dependency is unused and can be removed', call)
+                                .delete(call)
+                    }
                 }
+            } else {
+                runtimeDependencyDefinitions[mvid] = call
             }
-        } else {
-            runtimeDependencyDefinitions[mvid] = call
         }
     }
 
