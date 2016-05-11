@@ -18,7 +18,7 @@ Read the [full documentation](https://github.com/nebula-plugins/gradle-lint-plug
 To apply this plugin:
 
     plugins {
-      id 'nebula.lint' version '0.26.2'
+      id 'nebula.lint' version '0.26.3'
     }
 
 Alternatively:
