@@ -93,7 +93,6 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         b.syntax == GradleDependency.Syntax.StringNotation
     }
 
-    @Ignore("Fails due to JGit bug. Can be re-instated once https://git.eclipse.org/r/#/c/70797/ is merged")
     def 'add violation with deletion'() {
         when:
         project.buildFile << "apply plugin: 'java'"

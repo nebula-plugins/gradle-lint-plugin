@@ -4,8 +4,6 @@ import com.netflix.nebula.lint.rule.GradleDependency
 import com.netflix.nebula.lint.rule.GradleLintRule
 import com.netflix.nebula.lint.rule.GradleModelAware
 import org.codehaus.groovy.ast.ClassNode
-import org.codehaus.groovy.ast.expr.MapEntryExpression
-import org.codehaus.groovy.ast.expr.MapExpression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.gradle.api.artifacts.ModuleVersionIdentifier
 import org.gradle.api.plugins.JavaPluginConvention
@@ -29,7 +27,7 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
 
     @Override
     void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
-        if(project.plugins.findPlugin(JavaPluginConvention)) {
+        if(project.convention.findPlugin(JavaPluginConvention)) {
             def mvid = dep.toModuleVersion()
             if (!dependencyService.isRuntime(conf)) {
                 def jarContents = dependencyService.jarContents(mvid)
