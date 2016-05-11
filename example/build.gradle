@@ -1,11 +1,10 @@
 buildscript {
     repositories {
-        maven { url 'https://oss.jfrog.org/oss-snapshot-local' }
-        mavenCentral()
+        jcenter()
     }
 
     dependencies {
-        classpath 'com.netflix.nebula:gradle-lint-plugin:+'
+        classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
     }
 }
 
