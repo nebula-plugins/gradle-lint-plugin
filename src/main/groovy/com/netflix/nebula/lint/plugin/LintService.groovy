@@ -49,7 +49,7 @@ class LintService {
 
             violations.groupBy { it.file }
                 .each { file, fileViolations ->
-                    results.addChild(new FileResults(file.absolutePath, violations))
+                    results.addChild(new FileResults(file.absolutePath, fileViolations))
                     results.numberOfFilesInThisDirectory++
                 }
 
