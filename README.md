@@ -34,7 +34,7 @@ Alternatively:
 
 Define which rules you would like to lint against:
 
-    gradleLint.rules = ['all-dependencies'] // add as many rules here as you'd like
+    gradleLint.rules = ['all-dependency'] // add as many rules here as you'd like
 
 For an enterprise build, we recommend defining the lint rules in a `init.gradle` script or in a gradle script that is included via the Gradle `apply from` mechanism.
 
@@ -42,7 +42,7 @@ For multimodule projects, we recommend applying the plugin in an allprojects blo
 
     allprojects {
       apply plugin: 'nebula.lint'
-      gradleLint.rules = ['all-dependencies'] // add as many rules here as you'd like
+      gradleLint.rules = ['all-dependency'] // add as many rules here as you'd like
     }
 
 ## License
