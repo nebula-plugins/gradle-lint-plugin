@@ -1,7 +1,5 @@
 package com.netflix.nebula.lint.rule.dependency
 
-import com.google.common.collect.HashMultimap
-import com.google.common.collect.Multimaps
 import groovy.transform.Memoized
 import groovyx.gpars.GParsPool
 import org.gradle.api.Project
@@ -65,8 +63,7 @@ class DependencyService {
         }
         extendingConfs(conf)
 
-        def artifactsByClass = Multimaps.synchronizedMultimap(HashMultimap.<String, ResolvedArtifact>create())
-
+        def artifactsByClass = [:].withDefault {[]}
         def artifactsToScan = terminalConfs*.resolvedConfiguration*.resolvedArtifacts.flatten().toSet() as Set<ResolvedArtifact>
 
         GParsPool.withPool {
@@ -78,12 +75,14 @@ class DependencyService {
                     }
                     .eachParallel { ResolvedArtifact artifact ->
                         jarContents(artifact.file).classes.each { clazz ->
-                            artifactsByClass.put(clazz, artifact)
+                            synchronized (artifactsByClass) {
+                                artifactsByClass.put(clazz, artifact)
+                            }
                         }
                     }
         }
 
-        return artifactsByClass.asMap()
+        return artifactsByClass
     }
 
     /**
