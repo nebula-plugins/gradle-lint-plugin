@@ -76,7 +76,7 @@ class DependencyService {
                     .eachParallel { ResolvedArtifact artifact ->
                         jarContents(artifact.file).classes.each { clazz ->
                             synchronized (artifactsByClass) {
-                                artifactsByClass.put(clazz, artifact)
+                                artifactsByClass[clazz] += artifact
                             }
                         }
                     }
