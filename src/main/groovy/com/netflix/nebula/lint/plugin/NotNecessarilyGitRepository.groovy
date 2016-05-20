@@ -21,6 +21,8 @@ import org.eclipse.jgit.errors.NoWorkTreeException
 import org.eclipse.jgit.lib.*
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 
+import static org.eclipse.jgit.util.FS.DETECTED
+
 /**
  * Repository implementation that doesn't require the root directory to actually be a git repository.
  * The git apply command which we use in the fix task is just a patch application tool that doesn't require
@@ -30,8 +32,9 @@ class NotNecessarilyGitRepository extends Repository {
     File workTree
 
     NotNecessarilyGitRepository(File gitDir) {
-        super(new FileRepositoryBuilder().setGitDir(gitDir))
+        super(new FileRepositoryBuilder().setGitDir(gitDir).setFS(DETECTED));
         workTree = gitDir
+
     }
 
     @Override
