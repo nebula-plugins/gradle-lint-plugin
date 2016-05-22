@@ -115,9 +115,14 @@ shadowJar {
     dependencies {
         include(dependency('org.eclipse.jgit:org.eclipse.jgit'))
         include(dependency('commons-lang:commons-lang'))
+        include(dependency('org.codenarc:CodeNarc'))
     }
     relocate 'org.eclipse.jgit', 'com.netflix.nebula.lint.jgit'
     relocate 'org.apache.commons.lang', 'com.netflix.nebula.lint.commons.lang'
+    relocate 'org.codenarc', 'com.netflix.nebula.lint.org.codenarc'
+
+    // powerassert is packed inside codenarc without relocation for some reason
+    relocate 'org.codehaus.groovy.transform.powerassert', 'com.netflix.nebula.lint.org.codehaus.groovy.transform.powerassert'
 }
 
 jar.deleteAllActions()
@@ -132,7 +137,7 @@ publishing {
                     .dependency
                     .findAll {
                         // JGit is shaded inside the distribution, and we want the others to act as 'provided'
-                        ['org.eclipse.jgit', 'spock-core', 'nebula-test'].contains(it.artifactId.text())
+                        ['org.eclipse.jgit', 'spock-core', 'nebula-test', 'CodeNarc'].contains(it.artifactId.text())
                     }
                     .each { it.parent().remove(it) }
             }
