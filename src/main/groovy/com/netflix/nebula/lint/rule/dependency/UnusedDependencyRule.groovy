@@ -44,9 +44,9 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
                 } else if (shouldBeRuntime.contains(dep.name)) {
                     addBuildLintViolation("this dependency should be moved to the runtime configuration", call)
                             .replaceWith(call, replaceDependencyWith(call, 'runtime', mvid))
-                } else if (dependencyService.unusedDependencies(conf).contains(mvid)) {
+                } else if (dependencyService.unusedDependencies(conf).contains(mvid.module)) {
                     def requiringSourceSet = dependencyService.parentSourceSetConfigurations(conf)
-                            .find { parent -> dependencyService.usedDependencies(parent.name).contains(mvid) }
+                            .find { parent -> dependencyService.usedDependencies(parent.name).contains(mvid.module) }
 
                     if (jarContents.isServiceProvider) {
                         addBuildLintViolation("this dependency is a service provider unused at compile time and can be moved to the runtime configuration", call)

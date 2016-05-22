@@ -4,6 +4,7 @@ import groovy.transform.Memoized
 import groovyx.gpars.GParsPool
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
+import org.gradle.api.artifacts.ModuleIdentifier
 import org.gradle.api.artifacts.ModuleVersionIdentifier
 import org.gradle.api.artifacts.ResolvedArtifact
 import org.gradle.api.artifacts.ResolvedDependency
@@ -235,10 +236,10 @@ class DependencyService {
     }
 
     @Memoized
-    Set<ModuleVersionIdentifier> usedDependencies(String confName) {
+    Set<ModuleIdentifier> usedDependencies(String confName) {
         def references = classReferences(sourceSetByConf(confName))
         return !references ? Collections.emptySet() :
-                (references.indirect + references.direct)*.moduleVersion*.id.toSet()
+                (references.indirect + references.direct)*.moduleVersion*.id*.module.toSet()
     }
 
     /**
@@ -247,7 +248,7 @@ class DependencyService {
      * source set to avoid false positives
      */
     @Memoized
-    Set<ModuleVersionIdentifier> unusedDependencies(String confName) {
+    Set<ModuleIdentifier> unusedDependencies(String confName) {
         def references = classReferences(sourceSetByConf(confName))
         if(!references)
             return Collections.emptySet()
@@ -268,7 +269,7 @@ class DependencyService {
             // remove all indirectly used dependencies
             unused.removeAll(neededBecauseOfAnIndirectRef)
 
-            return unused.toSet()
+            return unused.collect { it.module }.toSet()
         } catch(IllegalStateException ignored) {
             return [] as Set
         }
