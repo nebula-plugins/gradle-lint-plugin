@@ -83,11 +83,11 @@ class DependencyServiceSpec extends TestKitSpecification {
 
         then:
         runTasksSuccessfully('compileUnused')
-        new File(projectDir, 'compileUnused.txt').readLines() == ['commons-lang:commons-lang:2.6']
+        new File(projectDir, 'compileUnused.txt').readLines() == ['commons-lang:commons-lang']
 
         then:
         runTasksSuccessfully('testCompileUnused')
-        new File(projectDir, 'testCompileUnused.txt').readLines() == ['commons-lang:commons-lang:2.6']
+        new File(projectDir, 'testCompileUnused.txt').readLines() == ['commons-lang:commons-lang']
     }
 
     @Unroll
