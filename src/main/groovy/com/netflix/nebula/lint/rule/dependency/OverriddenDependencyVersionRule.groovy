@@ -5,6 +5,7 @@ import com.netflix.nebula.lint.rule.GradleLintRule
 import com.netflix.nebula.lint.rule.GradleModelAware
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.gradle.api.artifacts.ComponentMetadata
+import org.gradle.api.artifacts.ModuleIdentifier
 import org.gradle.api.artifacts.ModuleVersionIdentifier
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.DefaultVersionComparator
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.DefaultVersionSelectorScheme
@@ -14,18 +15,23 @@ class OverriddenDependencyVersionRule extends GradleLintRule implements GradleMo
 
     def selectorScheme = new DefaultVersionSelectorScheme(new DefaultVersionComparator())
 
+    Map<ModuleIdentifier, ComponentMetadata> metadataByModuleId = [:]
+
+    @Override
+    protected void beforeApplyTo() {
+        project.dependencies.components.all { details ->
+            metadataByModuleId[details.id.module] = new ComponentMetadataAdapter(id: details.id, status: details.status, statusScheme: details.statusScheme)
+        }
+    }
+
     @Override
     void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
-        ComponentMetadata metadata = null
-
-        // must be added before we re-resolve the configuration
-        project.dependencies.components.withModule(dep.toModuleVersion().module) { details ->
-            metadata = new ComponentMetadataAdapter(id: details.id, status: details.status, statusScheme: details.statusScheme)
-        }
-
+        // causes the component metadata rule to fire and capture all metadata by module id
         def resolved = project.configurations.getByName(conf).resolvedConfiguration.resolvedArtifacts.find {
             it.moduleVersion.id.group == dep.group && it.moduleVersion.id.name == dep.name
         }
+
+        ComponentMetadata metadata = metadataByModuleId[dep.toModuleVersion().module]
 
         if(!resolved || !metadata)
             return

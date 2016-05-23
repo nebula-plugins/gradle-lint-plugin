@@ -15,7 +15,10 @@ class DuplicateDependencyClassRule extends GradleLintRule implements GradleModel
         def mvid = dep.toModuleVersion()
         def dependencyService = DependencyService.forProject(project)
 
-        def dependencyClasses = dependencyService.jarContents(mvid).classes
+        def dependencyClasses = dependencyService.jarContents(mvid)?.classes
+        if(!dependencyClasses)
+            return
+
         def dupeDependencyClasses = dependencyService.artifactsByClass(conf)
                 .findAll { dependencyClasses.contains(it.key) && it.value.size() > 1 }
 
