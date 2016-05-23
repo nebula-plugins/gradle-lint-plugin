@@ -31,11 +31,11 @@ class OverriddenDependencyVersionRule extends GradleLintRule implements GradleMo
             it.moduleVersion.id.group == dep.group && it.moduleVersion.id.name == dep.name
         }
 
-        ComponentMetadata metadata = metadataByModuleId[dep.toModuleVersion().module] ?:
-                new ComponentMetadataAdapter(id: resolved.moduleVersion.id, status: 'unknown', statusScheme: ['unknown'])
-
         if(!resolved)
             return
+
+        ComponentMetadata metadata = metadataByModuleId[dep.toModuleVersion().module] ?:
+                new ComponentMetadataAdapter(id: resolved.moduleVersion.id, status: 'unknown', statusScheme: ['unknown'])
 
         if(!selectorScheme.parseSelector(dep.version).accept(metadata)) {
             addBuildLintViolation('this version is not being used because of a conflict resolution, force, or resolution strategy', call)
