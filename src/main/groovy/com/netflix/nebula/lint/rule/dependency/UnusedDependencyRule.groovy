@@ -31,6 +31,9 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
             def mvid = dep.toModuleVersion()
             if (!dependencyService.isRuntime(conf)) {
                 def jarContents = dependencyService.jarContents(mvid)
+                if (!jarContents) {
+                    return // dependency being substituted by resolution rule?
+                }
                 if (jarContents.isWebjar) {
                     addBuildLintViolation('webjars should be in the runtime configuration', call)
                             .replaceWith(call, replaceDependencyWith(call, 'runtime', mvid))
