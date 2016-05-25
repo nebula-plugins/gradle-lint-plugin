@@ -54,6 +54,66 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         pluginCount == 1
     }
 
+    def 'visit `task`'() {
+        when:
+        project.buildFile << '''
+            task(t1)
+            task('t2')
+            task(t3) {}
+            task('t4') {}
+            task t5
+            task t6 {}
+            task (t7,type: Wrapper)
+            task ('t8',type: Wrapper)
+            task t9(type: Wrapper)
+            task t10(type: Wrapper) {}
+            task([:], t11)
+            task([type: Wrapper], t12)
+            task([type: Wrapper], t13) {}
+            tasks.create([name: 't14'])
+            tasks.create([name: 't15']) {}
+            tasks.create('t16') {}
+            tasks.create('t17')
+            tasks.create('t18', Wrapper) {}
+            tasks.create('t19', Wrapper.class)
+        '''
+
+        def taskCount = 0
+        def calls = []
+        runRulesAgainst(new GradleLintRule() {
+            String description = 'test'
+
+            @Override
+            void visitTask(MethodCallExpression call, String name, Map<String, String> args) {
+                calls[taskCount] = [name: name, args: args]
+                taskCount++
+            }
+        })
+
+        then:
+        taskCount == 19
+        calls[0] == [ name: 't1', args: [:]]
+        calls[1] == [ name: 't2', args: [:]]
+        calls[2] == [ name: 't3', args: [:]]
+        calls[3] == [ name: 't4', args: [:]]
+        calls[4] == [ name: 't5', args: [:]]
+        calls[5] == [ name: 't6', args: [:]]
+        calls[6] == [ name: 't7', args: [type: 'Wrapper']]
+        calls[7] == [ name: 't8', args: [type: 'Wrapper']]
+        calls[8] == [ name: 't9', args: [type: 'Wrapper']]
+        calls[9] == [ name: 't10', args: [type: 'Wrapper']]
+        calls[10] == [ name: 't11', args: [:]]
+        calls[11] == [ name: 't12', args: [type: 'Wrapper']]
+        calls[12] == [ name: 't13', args: [type: 'Wrapper']]
+        calls[13] == [ name: 't14', args: [name: 't14']]
+        calls[14] == [ name: 't15', args: [name: 't15']]
+        calls[15] == [ name: 't16', args: [:]]
+        calls[16] == [ name: 't17', args: [:]]
+        calls[17] == [ name: 't18', args: [type: 'Wrapper']]
+        calls[18] == [ name: 't19', args: [type: 'Wrapper']]
+        calls.size() == taskCount
+    }
+
     def 'visit dependencies'() {
         when:
         project.buildFile << """

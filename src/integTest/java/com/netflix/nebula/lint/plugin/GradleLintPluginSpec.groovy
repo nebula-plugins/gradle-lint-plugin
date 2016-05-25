@@ -281,4 +281,30 @@ class GradleLintPluginSpec extends TestKitSpecification {
         console.any { it.contains('dependency-tuple') }
         new File(projectDir, "build/reports/gradleLint/${moduleName}.html").exists()
     }
+
+    def 'test wrapper rule on a single module project'() {
+        when:
+        buildFile << """
+            plugins {
+                id 'nebula.lint'
+                id 'java'
+            }
+
+            gradleLint.rules = ['archaic-wrapper']
+
+            task wrapper(type: Wrapper){
+                gradleVersion = '0.1'
+            }
+        """
+
+        then:
+        def results = runTasksSuccessfully('lintGradle')
+
+        when:
+        def console = results.output.readLines()
+
+        then:
+        console.findAll { it.startsWith('warning') }.size() == 1
+        console.any { it.contains('archaic-wrapper') }
+    }
 }

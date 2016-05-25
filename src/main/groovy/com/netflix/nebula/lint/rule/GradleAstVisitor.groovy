@@ -62,4 +62,6 @@ interface GradleAstVisitor {
     ASTNode bookmark(String label)
 
     void visitDependencies(MethodCallExpression call)
+
+    void visitTask(MethodCallExpression call, String name, Map<String, String> args)
 }
