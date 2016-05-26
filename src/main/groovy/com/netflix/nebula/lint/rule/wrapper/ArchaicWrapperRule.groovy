@@ -35,8 +35,8 @@ class ArchaicWrapperRule extends GradleLintRule implements GradleModelAware {
 
     private GradleVersion latestGradleVersion = null
     private GradleVersion wrapperGradleVersion = null
-    private boolean hasWrapperTask = false
-    private boolean hasGradleVersionProperty = false
+    private String wrapperTaskName = null
+    private List potentialExtensionGradleVersion = []
 
     int majorThreshold = 0
     int minorThreshold = 2
@@ -54,7 +54,7 @@ class ArchaicWrapperRule extends GradleLintRule implements GradleModelAware {
                 def json = new JsonSlurper().parseText(gradleCurrentVersion)
                 latestGradleVersion = GradleVersion.version(json.version)
             } catch (Exception ex) {
-                //TODO: add info log
+                //Continue gracefully
             }
         }
     }
@@ -62,26 +62,32 @@ class ArchaicWrapperRule extends GradleLintRule implements GradleModelAware {
     @Override
     void visitTask(MethodCallExpression call, String name, Map<String, String> args) {
         if (args.containsKey('type') && args.get('type') == 'Wrapper') {
-            hasWrapperTask = true
+            wrapperTaskName = name
             bookmark('wrapperTask', call)
         }
     }
 
     @Override
     void visitExtensionProperty(ExpressionStatement expression, String extension, String prop, String value) {
-        if (extension == 'wrapper' && prop == 'gradleVersion') {
-            hasGradleVersionProperty = true
+        if (prop == 'gradleVersion') {
+            // In cases of which the task is configured separately from the declaration, the evaluation order
+            // is task -> configuration, but when the task is declared and configured inline the evaluation order
+            // is configuration -> task, thus we cannot assume we will have the right extension name (the task name)
+            // present at the wrapperTaskName member at this point. So instead, keep all the potential relevant
+            // configurations until visitClassComplete.
+            // This will allow us to catch overriding configurations of the same wrapper task as violations.
+            potentialExtensionGradleVersion.add([extension: extension, value: value, expression: expression])
             wrapperGradleVersion = GradleVersion.version(value)
-            bookmark('gradleVersionExpression', expression)
         }
     }
 
     @Override
     protected void visitClassComplete(ClassNode node) {
-        if (!hasWrapperTask && !hasGradleVersionProperty) {
+        if (wrapperTaskName == null) {
             return
         }
-        if (hasWrapperTask && !hasGradleVersionProperty) {
+        def gradleVersionProperties = potentialExtensionGradleVersion.findAll { it['extension'] == wrapperTaskName }
+        if (gradleVersionProperties.isEmpty()) {
             def wrapperTask = bookmark('wrapperTask')
             def violation = addBuildLintViolation("the wrapper task is not properly configured, the 'gradleVersion' is missing.")
             if(wrapperTask && latestGradleVersion) {
@@ -89,7 +95,12 @@ class ArchaicWrapperRule extends GradleLintRule implements GradleModelAware {
             }
             return
         }
-        def versionExpression = bookmark('gradleVersionExpression')
+        if (gradleVersionProperties.size() > 1){
+            addBuildLintViolation("Encountered multiple gradleVersion properties in multiple locations associated with the $wrapperTaskName task.")
+            return
+        }
+
+        def versionExpression = gradleVersionProperties[0]['expression']
 
         GradleVersion executionGradleVersion = GradleVersion.version(project.gradle.getGradleVersion())
         if (wrapperGradleVersion > executionGradleVersion) {
