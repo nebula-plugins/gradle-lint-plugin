@@ -85,7 +85,75 @@ class ArchaicWrapperRuleSpec extends AbstractRuleSpec {
         results.violations.size() == 0
     }
 
+    def 'wrapper task with gradleVersion twice configured is a violation'() {
+        when:
+        project = new WrapperProjectBuilder().createProject(canonicalName, ourProjectDir)
+        project.gradle.version = GradleVersion.version('2.13')
+        project.buildFile << """
+            task wrapper(type: Wrapper)
+            wrapper {
+               gradleVersion = '2.12'
+            }
+            wrapper {
+               gradleVersion = '2.13'
+            }
+        """
 
+        def rule = new ArchaicWrapperRule()
+        rule.project = project
+        project.gradle.startParameter.setOffline(true)
+        rule.majorThreshold = 0
+        rule.minorThreshold = 2
+        def results = runRulesAgainst(rule)
+
+        then:
+        results.violations.size() == 1
+    }
+
+
+    def 'separately configured wrapper with a non standard task name is not a violation'() {
+        when:
+        project = new WrapperProjectBuilder().createProject(canonicalName, ourProjectDir)
+        project.gradle.version = GradleVersion.version('2.13')
+        project.buildFile << """
+            task wrap(type: Wrapper)
+            wrap {
+               gradleVersion = '2.13'
+            }
+        """
+
+        def rule = new ArchaicWrapperRule()
+        rule.project = project
+        project.gradle.startParameter.setOffline(true)
+        rule.majorThreshold = 0
+        rule.minorThreshold = 2
+        def results = runRulesAgainst(rule)
+
+        then:
+        results.violations.size() == 0
+    }
+
+    def 'wrapper task with a non standard task name not configured is a violation'() {
+        when:
+        project = new WrapperProjectBuilder().createProject(canonicalName, ourProjectDir)
+        project.gradle.version = GradleVersion.version('2.13')
+        project.buildFile << """
+            task wrap(type: Wrapper)
+            wrapper {
+               gradleVersion = '2.13'
+            }
+        """
+
+        def rule = new ArchaicWrapperRule()
+        rule.project = project
+        project.gradle.startParameter.setOffline(true)
+        rule.majorThreshold = 0
+        rule.minorThreshold = 2
+        def results = runRulesAgainst(rule)
+
+        then:
+        results.violations.size() == 1
+    }
 
     def 'wrapper defined with up to date version is not a violation'() {
         when:
@@ -106,6 +174,52 @@ class ArchaicWrapperRuleSpec extends AbstractRuleSpec {
 
         then:
         results.violations.size() == 0
+    }
+
+    def 'wrapper task with multiple gradleVersion is a violation'() {
+        when:
+        project = new WrapperProjectBuilder().createProject(canonicalName, ourProjectDir)
+        project.gradle.version = GradleVersion.version('2.13')
+        project.buildFile << """
+            task wrapper(type: Wrapper) {
+               gradleVersion = '2.12'
+               gradleVersion = '2.13'
+            }
+        """
+
+        def rule = new ArchaicWrapperRule()
+        rule.project = project
+        project.gradle.startParameter.setOffline(true)
+        rule.majorThreshold = 0
+        rule.minorThreshold = 2
+        def results = runRulesAgainst(rule)
+
+        then:
+        results.violations.size() == 1
+    }
+
+    def 'wrapper task with gradleVersion in default configuration and separate configuration is a violation'() {
+        when:
+        project = new WrapperProjectBuilder().createProject(canonicalName, ourProjectDir)
+        project.gradle.version = GradleVersion.version('2.13')
+        project.buildFile << """
+            task wrapper(type: Wrapper) {
+               gradleVersion = '2.12'
+            }
+            wrapper {
+               gradleVersion = '2.13'
+            }
+        """
+
+        def rule = new ArchaicWrapperRule()
+        rule.project = project
+        project.gradle.startParameter.setOffline(true)
+        rule.majorThreshold = 0
+        rule.minorThreshold = 2
+        def results = runRulesAgainst(rule)
+
+        then:
+        results.violations.size() == 1
     }
 
     def 'wrapper defined with a version within the threshold is not a violation'() {
