@@ -17,9 +17,10 @@ It assists a centralized build tools team in gently introducing and maintaining 
 Read the [full documentation](https://github.com/nebula-plugins/gradle-lint-plugin/wiki).
 
 To apply this plugin:
-
+    
+    buildscript { repositories { jcenter() } }
     plugins {
-      id 'nebula.lint' version '0.28.2'
+      id 'nebula.lint' version '0.30.0'
     }
 
 Alternatively:
