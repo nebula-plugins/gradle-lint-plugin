@@ -39,7 +39,7 @@ import org.gradle.util.GFileUtils;
 import java.io.File;
 
 /**
- * Created by Boaz Jan on 22/05/16.
+ * @author Boaz Jan
  *
  * A duplication of Gradle's ProjectBuilderImpl, but instead of using the DefaultGradle - use our custom gradle
  * that allows us to override the internal version. With this capability we can test various version related rules

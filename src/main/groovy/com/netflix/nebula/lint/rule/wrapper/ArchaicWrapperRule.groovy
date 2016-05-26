@@ -27,7 +27,7 @@ import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 /**
- * Created by Boaz Jan on 17/05/16.
+ * @author Boaz Jan
  */
 class ArchaicWrapperRule extends GradleLintRule implements GradleModelAware {
     private static
@@ -40,7 +40,6 @@ class ArchaicWrapperRule extends GradleLintRule implements GradleModelAware {
 
     int majorThreshold = 0
     int minorThreshold = 2
-    boolean offline = false
 
     @Override
     String getDescription() {
@@ -49,7 +48,7 @@ class ArchaicWrapperRule extends GradleLintRule implements GradleModelAware {
 
     @Override
     protected void beforeApplyTo() {
-        if (!offline) {
+        if (!project.gradle.startParameter.isOffline()) {
             try {
                 String gradleCurrentVersion = new URL('http://services.gradle.org/versions/current').text
                 def json = new JsonSlurper().parseText(gradleCurrentVersion)
@@ -58,7 +57,6 @@ class ArchaicWrapperRule extends GradleLintRule implements GradleModelAware {
                 //TODO: add info log
             }
         }
-        super.beforeApplyTo()
     }
 
     @Override
@@ -84,15 +82,18 @@ class ArchaicWrapperRule extends GradleLintRule implements GradleModelAware {
             return
         }
         if (hasWrapperTask && !hasGradleVersionProperty) {
-            addBuildLintViolation("The wrapper task is not properly configured, the 'gradleVersion' is missing.")
-            //TODO: auto fix?
+            def wrapperTask = bookmark('wrapperTask')
+            def violation = addBuildLintViolation("the wrapper task is not properly configured, the 'gradleVersion' is missing.")
+            if(wrapperTask && latestGradleVersion) {
+                violation.insertIntoClosure(wrapperTask, "gradleVersion = '$latestGradleVersion.version'")
+            }
             return
         }
         def versionExpression = bookmark('gradleVersionExpression')
 
         GradleVersion executionGradleVersion = GradleVersion.version(project.gradle.getGradleVersion())
         if (wrapperGradleVersion > executionGradleVersion) {
-            addBuildLintViolation("This build was executed with a Gradle version [$executionGradleVersion] older then the one defined by the build's wrapper [$wrapperGradleVersion]")
+            addBuildLintViolation("this build was executed with a Gradle version [$executionGradleVersion] older then the one defined by the build's wrapper [$wrapperGradleVersion]")
             return
         }
 
@@ -114,16 +115,16 @@ class ArchaicWrapperRule extends GradleLintRule implements GradleModelAware {
             def latestVersionParts = splitVersionParts(latestKnownGradleVersion)
             def wrapperVersionParts = splitVersionParts(wrapperGradleVersion)
             if (latestVersionParts['major'] - wrapperVersionParts['major'] > majorThreshold) {
-                addBuildLintViolation("The build's wrapper is more then $majorThreshold major versions behind the ${versionTitle} Gradle version")
+                addBuildLintViolation("the build's wrapper is more then $majorThreshold major versions behind the ${versionTitle} Gradle version")
                         .replaceWith(versionExpression, "gradleVersion = '${latestKnownGradleVersion.getVersion()}'")
             } else if (latestVersionParts['minor'] - wrapperVersionParts['minor'] > minorThreshold) {
-                addBuildLintViolation("The build's wrapper is more then $minorThreshold minor versions behind the ${versionTitle} Gradle version")
+                addBuildLintViolation("the build's wrapper is more then $minorThreshold minor versions behind the ${versionTitle} Gradle version")
                         .replaceWith(versionExpression, "gradleVersion = '${latestKnownGradleVersion.getVersion()}'")
             }
         }
     }
 
-    private def Map splitVersionParts(GradleVersion version) {
+    private static Map splitVersionParts(GradleVersion version) {
         Matcher matcher = VERSION_PATTERN.matcher(version.getVersion());
         if (!matcher.matches()) {
             throw new IllegalArgumentException("'${version.getVersion()}' is not a valid Gradle version string (examples: '1.0', '1.0-rc-1')")

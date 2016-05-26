@@ -18,10 +18,12 @@ package com.netflix.nebula.lint
 
 import groovy.transform.EqualsAndHashCode
 import org.codehaus.groovy.ast.ASTNode
+import org.codehaus.groovy.ast.expr.ArgumentListExpression
 import org.codehaus.groovy.ast.expr.ClosureExpression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.codenarc.rule.Rule
 import org.codenarc.rule.Violation
+import org.eclipse.jdt.internal.compiler.ast.Argument
 
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -70,6 +72,11 @@ class GradleViolation extends Violation {
         ClosureExpression closure = null
         if(node instanceof MethodCallExpression) {
             closure = node.arguments.find { it instanceof ClosureExpression } as ClosureExpression
+            if(!closure && node.arguments instanceof ArgumentListExpression) {
+                (node.arguments as ArgumentListExpression).expressions.each {
+                    insertIntoClosure(it, changes)
+                }
+            }
         }
         else if(node instanceof ClosureExpression) {
             closure = node

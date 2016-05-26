@@ -19,7 +19,7 @@ import com.netflix.nebula.lint.rule.test.AbstractRuleSpec
 import org.gradle.util.GradleVersion
 
 /**
- * Created by Boaz Jan on 20/05/16.
+ * @author Boaz Jan
  */
 class ArchaicWrapperRuleSpec extends AbstractRuleSpec {
 
@@ -33,7 +33,7 @@ class ArchaicWrapperRuleSpec extends AbstractRuleSpec {
 
         def rule = new ArchaicWrapperRule()
         rule.project = project
-        rule.offline = true
+        project.gradle.startParameter.setOffline(true)
         rule.majorThreshold = 0
         rule.minorThreshold = 2
         def results = runRulesAgainst(rule)
@@ -54,7 +54,7 @@ class ArchaicWrapperRuleSpec extends AbstractRuleSpec {
 
         def rule = new ArchaicWrapperRule()
         rule.project = project
-        rule.offline = true
+        project.gradle.startParameter.setOffline(true)
         rule.majorThreshold = 0
         rule.minorThreshold = 2
         def results = runRulesAgainst(rule)
@@ -76,7 +76,7 @@ class ArchaicWrapperRuleSpec extends AbstractRuleSpec {
 
         def rule = new ArchaicWrapperRule()
         rule.project = project
-        rule.offline = true
+        project.gradle.startParameter.setOffline(true)
         rule.majorThreshold = 0
         rule.minorThreshold = 2
         def results = runRulesAgainst(rule)
@@ -99,7 +99,7 @@ class ArchaicWrapperRuleSpec extends AbstractRuleSpec {
 
         def rule = new ArchaicWrapperRule()
         rule.project = project
-        rule.offline = true
+        project.gradle.startParameter.setOffline(true)
         rule.majorThreshold = 0
         rule.minorThreshold = 2
         def results = runRulesAgainst(rule)
@@ -120,7 +120,7 @@ class ArchaicWrapperRuleSpec extends AbstractRuleSpec {
 
         def rule = new ArchaicWrapperRule()
         rule.project = project
-        rule.offline = true
+        project.gradle.startParameter.setOffline(true)
         rule.majorThreshold = 0
         rule.minorThreshold = 2
         def results = runRulesAgainst(rule)
@@ -141,7 +141,7 @@ class ArchaicWrapperRuleSpec extends AbstractRuleSpec {
 
         def rule = new ArchaicWrapperRule()
         rule.project = project
-        rule.offline = true
+        project.gradle.startParameter.setOffline(true)
         rule.majorThreshold = 0
         rule.minorThreshold = 2
         def results = runRulesAgainst(rule)
@@ -162,7 +162,7 @@ class ArchaicWrapperRuleSpec extends AbstractRuleSpec {
 
         def rule = new ArchaicWrapperRule()
         rule.project = project
-        rule.offline = true
+        project.gradle.startParameter.setOffline(true)
         rule.majorThreshold = 0
         def results = runRulesAgainst(rule)
 
@@ -182,7 +182,7 @@ class ArchaicWrapperRuleSpec extends AbstractRuleSpec {
 
         def rule = new ArchaicWrapperRule()
         rule.project = project
-        rule.offline = true
+        project.gradle.startParameter.setOffline(true)
         rule.majorThreshold = 0
         rule.minorThreshold = 2
         def results = runRulesAgainst(rule)
