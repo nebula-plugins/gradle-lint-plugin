@@ -20,7 +20,7 @@ To apply this plugin:
     
     buildscript { repositories { jcenter() } }
     plugins {
-      id 'nebula.lint' version '0.30.0'
+      id 'nebula.lint' version '0.30.1'
     }
 
 Alternatively:
