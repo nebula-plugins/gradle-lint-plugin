@@ -62,6 +62,7 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
     @Override void visitExtensionProperty(ExpressionStatement expression, String extension, String prop, String value) {}
     @Override void visitExtensionProperty(ExpressionStatement expression, String extension, String prop) {}
     @Override void visitDependencies(MethodCallExpression call) {}
+    @Override void visitTask(MethodCallExpression call, String name, Map<String, String> args) {}
 
     protected boolean isIgnored() {
         globalIgnoreOn || rulesToIgnore.collect { LintRuleRegistry.findRules(it) }.flatten().contains(ruleId)
@@ -224,6 +225,9 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
                             visitApplyPlugin(call, entries.plugin)
                         }
                     }
+                } else if (methodName == 'task' ||
+                        (objectExpression == 'tasks' && methodName == 'create')) {
+                    analyzePotentialTaskDefinition(call, expressions)
                 } else if (!expressions.isEmpty() && expressions.last() instanceof ClosureExpression) {
                     closureStack.push(call)
                     super.visitMethodCallExpression(call)
@@ -235,6 +239,65 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
                     closureStack.pop()
                 } else {
                     super.visitMethodCallExpression(call)
+                }
+            }
+
+            /***
+             * Invokes visitTask upon encountering a task definition in the gradle script
+             * Supports the following definition forms:
+             * task(t1)
+             * task('t2')
+             * task(t3) {}
+             * task('t4') {}
+             * task t5
+             * task t6 {}
+             * task (t7,type: Wrapper)
+             * task ('t8',type: Wrapper)
+             * task t9(type: Wrapper)
+             * task t10(type: Wrapper) {}
+             * task([:], t11)
+             * task([type: Wrapper], t12)
+             * task([type: Wrapper], t13) {}
+             * tasks.create([name: 't14'])
+             * tasks.create([name: 't15']) {}
+             * tasks.create('t16') {}
+             * tasks.create('t17')
+             * tasks.create('t18', Wrapper) {}
+             * tasks.create('t19', Wrapper.class)
+             *
+             * @author Boaz Jan
+             * @param call
+             * @param expressions
+             */
+            private void analyzePotentialTaskDefinition(MethodCallExpression call, List expressions){
+                def taskName = null
+                def taskArgs = [:]
+                def possibleName = expressions.find {
+                    !(it instanceof MapExpression || it instanceof ClosureExpression)
+                }
+                if (possibleName == null) {
+                    taskArgs = GradleAstUtil.collectEntryExpressions(call)
+                    taskName = taskArgs.get('name')
+                } else if (possibleName instanceof VariableExpression) {
+                    taskName = possibleName.variable
+                    taskArgs = GradleAstUtil.collectEntryExpressions(call)
+                } else if (possibleName instanceof ConstantExpression) {
+                    taskName = possibleName.value
+                    taskArgs = GradleAstUtil.collectEntryExpressions(call)
+                    if (taskArgs.isEmpty() && expressions.size() > 1) {
+                        if (expressions[1] instanceof VariableExpression) {
+                            taskArgs['type'] = expressions[1].variable
+                        } else if (expressions[1] instanceof PropertyExpression) {
+                            taskArgs['type'] = expressions[1].objectExpression.variable
+                        }
+                    }
+                } else if (possibleName instanceof MethodCallExpression) {
+                    taskName = possibleName.methodAsString
+                    taskArgs = GradleAstUtil.collectEntryExpressions(possibleName)
+                }
+                super.visitMethodCallExpression(call)
+                if (taskName != null) {
+                    GradleLintRule.this.visitTask(call, taskName, taskArgs)
                 }
             }
 
