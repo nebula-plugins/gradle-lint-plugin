@@ -74,7 +74,7 @@ dependencies {
     // these two dependencies exist so we can provide a test harness
     // to proprietary rule implementations packed in other jars, but are considered provided
     plugin ('org.spockframework:spock-core:latest.release') { transitive = false }
-    plugin('com.netflix.nebula:nebula-test:4.2.0') { transitive = false }
+    plugin('com.netflix.nebula:nebula-test:3.1.0') { transitive = false }
 
     testCompile gradleTestKit()
     testCompile ('org.spockframework:spock-core:latest.release') {

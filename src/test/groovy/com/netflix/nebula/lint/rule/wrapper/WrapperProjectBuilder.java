@@ -15,7 +15,6 @@
  */
 package com.netflix.nebula.lint.rule.wrapper;
 
-import com.google.common.base.Throwables;
 import org.gradle.StartParameter;
 import org.gradle.api.Project;
 import org.gradle.api.internal.AsmBackedClassGenerator;
@@ -28,16 +27,16 @@ import org.gradle.api.internal.project.IProjectFactory;
 import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.initialization.DefaultProjectDescriptor;
 import org.gradle.initialization.DefaultProjectDescriptorRegistry;
-import org.gradle.internal.logging.services.LoggingServiceRegistry;
 import org.gradle.internal.nativeintegration.services.NativeServices;
 import org.gradle.internal.service.ServiceRegistry;
 import org.gradle.internal.service.ServiceRegistryBuilder;
 import org.gradle.internal.service.scopes.ServiceRegistryFactory;
+import org.gradle.logging.LoggingServiceRegistry;
 import org.gradle.testfixtures.internal.TestBuildScopeServices;
 import org.gradle.testfixtures.internal.TestGlobalScopeServices;
+import org.gradle.util.GFileUtils;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * @author Boaz Jan
@@ -96,11 +95,7 @@ public class WrapperProjectBuilder {
             // TODO deleteOnExit won't clean up non-empty directories (and it leaks memory for long-running processes).
             projectDir.deleteOnExit();
         } else {
-            try {
-                projectDir = projectDir.getCanonicalFile();
-            } catch (IOException e) {
-                Throwables.propagate(e);
-            }
+            projectDir = GFileUtils.canonicalise(projectDir);
         }
         return projectDir;
     }
