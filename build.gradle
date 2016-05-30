@@ -62,7 +62,6 @@ dependencies {
     plugin('org.codenarc:CodeNarc:latest.release') {
         transitive = false
     }
-    plugin 'org.eclipse.jdt:core:3.1.1'
     plugin 'com.netflix.nebula:gradle-info-plugin:3.0.4'
     plugin 'commons-lang:commons-lang:2.6'
 
@@ -72,11 +71,9 @@ dependencies {
 
     plugin 'org.codehaus.gpars:gpars:1.2.1'
 
-    // these dependencies exist so we can provide a test harness
+    // these two dependencies exist so we can provide a test harness
     // to proprietary rule implementations packed in other jars, but are considered provided
-    plugin ('org.spockframework:spock-core:latest.release') {
-        exclude module: 'groovy-all'
-    }
+    plugin ('org.spockframework:spock-core:latest.release') { transitive = false }
     plugin('com.netflix.nebula:nebula-test:4.2.0') { transitive = false }
 
     testCompile gradleTestKit()

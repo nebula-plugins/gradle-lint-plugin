@@ -16,7 +16,7 @@
 
 package com.netflix.nebula.lint
 
-import org.gradle.internal.logging.text.StyledTextOutput
+import org.gradle.logging.StyledTextOutput
 
 class Styling {
     static StyledTextOutput.Style Bold = StyledTextOutput.Style.UserInput
