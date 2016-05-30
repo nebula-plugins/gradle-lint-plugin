@@ -18,7 +18,7 @@ buildscript { repositories { jcenter() } } // Some plugin dependencies (namely J
 
 plugins {
     id 'com.gradle.plugin-publish' version '0.9.4'
-    id 'nebula.plugin-plugin' version '4.10.0'
+    id 'nebula.plugin-plugin' version '4.11.0'
     id 'com.github.johnrengelman.shadow' version '1.2.3'
 }
 
