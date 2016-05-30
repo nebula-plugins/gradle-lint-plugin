@@ -50,7 +50,7 @@ class LintGradleTask extends DefaultTask {
             def totalBySeverity = [(GradleViolation.Level.Warning): 0, (GradleViolation.Level.Error): 0] +
                     violations.countBy { it.level }
 
-            def textOutput = textOutputFactory.create('lint')
+            def textOutput = textOutputFactory.create(LintGradleTask)
 
             if (totalBySeverity[GradleViolation.Level.Error] > 0 || totalBySeverity[GradleViolation.Level.Warning] > 0) {
                 textOutput.withStyle(Styling.Bold).text('\nThis project contains lint violations. ')

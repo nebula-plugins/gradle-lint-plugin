@@ -63,8 +63,7 @@ class FixGradleLintTask extends DefaultTask {
     }
 
     final def consoleOutputAction = new GradleLintViolationAction() {
-
-        StyledTextOutput textOutput = textOutputFactory.create('lint')
+        StyledTextOutput textOutput = textOutputFactory.create(FixGradleLintTask)
 
         @Override
         void lintFixesApplied(Collection<GradleViolation> violations) {

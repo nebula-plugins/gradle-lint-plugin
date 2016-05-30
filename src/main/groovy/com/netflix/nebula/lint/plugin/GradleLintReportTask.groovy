@@ -60,7 +60,7 @@ class GradleLintReportTask extends DefaultTask implements VerificationTask, Repo
             def lintService = new LintService()
             def results = lintService.lint(project)
             def violationCount = results.violations.size()
-            def textOutput = textOutputFactory.create('lint')
+            def textOutput = textOutputFactory.create(GradleLintReportTask)
 
             textOutput.text('Generated a report containing information about ')
             textOutput.style(Styling.Bold).text("$violationCount lint violation${violationCount == 1 ? '' : 's'}")
