@@ -30,8 +30,8 @@ import org.gradle.api.reporting.Reporting
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.VerificationTask
+import org.gradle.internal.logging.text.StyledTextOutputFactory
 import org.gradle.internal.reflect.Instantiator
-import org.gradle.logging.StyledTextOutputFactory
 
 import javax.inject.Inject
 
