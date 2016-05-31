@@ -97,7 +97,7 @@ class OverriddenDependencyVersionRuleSpec extends TestKitSpecification {
         """
 
         then:
-        runTasksSuccessfully('fixGradleLint')
+        runTasksSuccessfully('assemble', 'fixGradleLint')
         dependencies(buildFile, 'compile') == ['com.google.guava:guava:latest.release']
     }
 }

@@ -9,20 +9,13 @@ import org.gradle.api.artifacts.ModuleIdentifier
 import org.gradle.api.artifacts.ModuleVersionIdentifier
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.DefaultVersionComparator
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.DefaultVersionSelectorScheme
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.LatestVersionSelector
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.VersionSelector
 
 class OverriddenDependencyVersionRule extends GradleLintRule implements GradleModelAware {
     String description = 'be declarative about first order dependency versions that are changed by conflict resolution'
 
     def selectorScheme = new DefaultVersionSelectorScheme(new DefaultVersionComparator())
-
-    Map<ModuleIdentifier, ComponentMetadata> metadataByModuleId = [:]
-
-    @Override
-    protected void beforeApplyTo() {
-        project.dependencies.components.all { details ->
-            metadataByModuleId[details.id.module] = new ComponentMetadataAdapter(id: details.id, status: details.status, statusScheme: details.statusScheme)
-        }
-    }
 
     @Override
     void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
@@ -34,10 +27,11 @@ class OverriddenDependencyVersionRule extends GradleLintRule implements GradleMo
         if(!resolved)
             return
 
-        ComponentMetadata metadata = metadataByModuleId[dep.toModuleVersion().module] ?:
-                new ComponentMetadataAdapter(id: resolved.moduleVersion.id, status: 'unknown', statusScheme: ['unknown'])
+        // status is discarded by Gradle after resolution, so we have no way of getting at it at this point
+        ComponentMetadata metadata = new ComponentMetadataAdapter(id: resolved.moduleVersion.id, status: 'unknown', statusScheme: Collections.emptyList())
 
-        if(!selectorScheme.parseSelector(dep.version).accept(metadata)) {
+        def selector = selectorScheme.parseSelector(dep.version)
+        if(!(selector instanceof LatestVersionSelector) && !selector.accept(metadata)) {
             addBuildLintViolation('this version is not being used because of a conflict resolution, force, or resolution strategy', call)
                     .replaceWith(call, "$conf '$resolved.moduleVersion.id'")
         }
