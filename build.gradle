@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-buildscript { repositories { jcenter() } } // Some plugin dependencies (namely JFrog) are not in Maven Central
 
 plugins {
     id 'com.gradle.plugin-publish' version '0.9.4'
