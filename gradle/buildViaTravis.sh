@@ -3,6 +3,8 @@
 
 SWITCHES="--info --stacktrace"
 
+GRADLE_VERSION=$(./gradlew -version | grep Gradle | cut -d ' ' -f 2)
+
 if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
   echo -e "Build Pull Request #$TRAVIS_PULL_REQUEST => Branch [$TRAVIS_BRANCH]"
   ./gradlew build $SWITCHES
@@ -23,3 +25,7 @@ else
   echo -e 'WARN: Should not be here => Branch ['$TRAVIS_BRANCH']  Tag ['$TRAVIS_TAG']  Pull Request ['$TRAVIS_PULL_REQUEST']'
   ./gradlew build $SWITCHES
 fi
+
+rm -f "$HOME/.gradle/caches/modules-2/modules-2.lock"
+rm -f "$HOME/.gradle/caches/$GRADLE_VERSION/plugin-resolution/cache.properties"
+rm -f "$HOME/.gradle/caches/$GRADLE_VERSION/plugin-resolution/cache.properties.lock"
