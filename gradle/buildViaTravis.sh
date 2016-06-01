@@ -26,6 +26,10 @@ else
   ./gradlew build $SWITCHES
 fi
 
+EXIT=$?
+
 rm -f "$HOME/.gradle/caches/modules-2/modules-2.lock"
 rm -f "$HOME/.gradle/caches/$GRADLE_VERSION/plugin-resolution/cache.properties"
 rm -f "$HOME/.gradle/caches/$GRADLE_VERSION/plugin-resolution/cache.properties.lock"
+
+exit $EXIT
