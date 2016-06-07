@@ -6,11 +6,15 @@
         },
         "com.netflix.nebula:nebula-test": {
             "locked": "4.2.1",
-            "requested": "latest.release"
+            "requested": "4.2.1"
         },
         "commons-lang:commons-lang": {
             "locked": "2.6",
             "requested": "2.6"
+        },
+        "junit:junit": {
+            "locked": "4.12",
+            "requested": "4.12"
         },
         "org.codehaus.gpars:gpars": {
             "locked": "1.2.1",
@@ -20,6 +24,10 @@
             "locked": "0.25.2",
             "requested": "latest.release"
         },
+        "org.eclipse.jdt:core": {
+            "locked": "3.1.1",
+            "requested": "3.1.1"
+        },
         "org.eclipse.jgit:org.eclipse.jgit": {
             "locked": "4.4.0-SNAPSHOT",
             "requested": "4.4.0-SNAPSHOT"
@@ -27,6 +35,10 @@
         "org.ow2.asm:asm": {
             "locked": "5.0.4",
             "requested": "5.0.4"
+        },
+        "org.spockframework:spock-core": {
+            "locked": "1.0-groovy-2.4",
+            "requested": "latest.release"
         }
     },
     "compileClasspath": {
@@ -36,11 +48,15 @@
         },
         "com.netflix.nebula:nebula-test": {
             "locked": "4.2.1",
-            "requested": "latest.release"
+            "requested": "4.2.1"
         },
         "commons-lang:commons-lang": {
             "locked": "2.6",
             "requested": "2.6"
+        },
+        "junit:junit": {
+            "locked": "4.12",
+            "requested": "4.12"
         },
         "org.codehaus.gpars:gpars": {
             "locked": "1.2.1",
@@ -50,6 +66,10 @@
             "locked": "0.25.2",
             "requested": "latest.release"
         },
+        "org.eclipse.jdt:core": {
+            "locked": "3.1.1",
+            "requested": "3.1.1"
+        },
         "org.eclipse.jgit:org.eclipse.jgit": {
             "locked": "4.4.0-SNAPSHOT",
             "requested": "4.4.0-SNAPSHOT"
@@ -57,6 +77,10 @@
         "org.ow2.asm:asm": {
             "locked": "5.0.4",
             "requested": "5.0.4"
+        },
+        "org.spockframework:spock-core": {
+            "locked": "1.0-groovy-2.4",
+            "requested": "latest.release"
         }
     },
     "compileOnly": {
@@ -66,11 +90,15 @@
         },
         "com.netflix.nebula:nebula-test": {
             "locked": "4.2.1",
-            "requested": "latest.release"
+            "requested": "4.2.1"
         },
         "commons-lang:commons-lang": {
             "locked": "2.6",
             "requested": "2.6"
+        },
+        "junit:junit": {
+            "locked": "4.12",
+            "requested": "4.12"
         },
         "org.codehaus.gpars:gpars": {
             "locked": "1.2.1",
@@ -80,6 +108,10 @@
             "locked": "0.25.2",
             "requested": "latest.release"
         },
+        "org.eclipse.jdt:core": {
+            "locked": "3.1.1",
+            "requested": "3.1.1"
+        },
         "org.eclipse.jgit:org.eclipse.jgit": {
             "locked": "4.4.0-SNAPSHOT",
             "requested": "4.4.0-SNAPSHOT"
@@ -87,6 +119,10 @@
         "org.ow2.asm:asm": {
             "locked": "5.0.4",
             "requested": "5.0.4"
+        },
+        "org.spockframework:spock-core": {
+            "locked": "1.0-groovy-2.4",
+            "requested": "latest.release"
         }
     },
     "default": {
@@ -96,11 +132,15 @@
         },
         "com.netflix.nebula:nebula-test": {
             "locked": "4.2.1",
-            "requested": "latest.release"
+            "requested": "4.2.1"
         },
         "commons-lang:commons-lang": {
             "locked": "2.6",
             "requested": "2.6"
+        },
+        "junit:junit": {
+            "locked": "4.12",
+            "requested": "4.12"
         },
         "org.codehaus.gpars:gpars": {
             "locked": "1.2.1",
@@ -110,6 +150,10 @@
             "locked": "0.25.2",
             "requested": "latest.release"
         },
+        "org.eclipse.jdt:core": {
+            "locked": "3.1.1",
+            "requested": "3.1.1"
+        },
         "org.eclipse.jgit:org.eclipse.jgit": {
             "locked": "4.4.0-SNAPSHOT",
             "requested": "4.4.0-SNAPSHOT"
@@ -117,6 +161,10 @@
         "org.ow2.asm:asm": {
             "locked": "5.0.4",
             "requested": "5.0.4"
+        },
+        "org.spockframework:spock-core": {
+            "locked": "1.0-groovy-2.4",
+            "requested": "latest.release"
         }
     },
     "jacocoAgent": {
@@ -136,11 +184,15 @@
         },
         "com.netflix.nebula:nebula-test": {
             "locked": "4.2.1",
-            "requested": "latest.release"
+            "requested": "4.2.1"
         },
         "commons-lang:commons-lang": {
             "locked": "2.6",
             "requested": "2.6"
+        },
+        "junit:junit": {
+            "locked": "4.12",
+            "requested": "4.12"
         },
         "org.codehaus.gpars:gpars": {
             "locked": "1.2.1",
@@ -150,6 +202,10 @@
             "locked": "0.25.2",
             "requested": "latest.release"
         },
+        "org.eclipse.jdt:core": {
+            "locked": "3.1.1",
+            "requested": "3.1.1"
+        },
         "org.eclipse.jgit:org.eclipse.jgit": {
             "locked": "4.4.0-SNAPSHOT",
             "requested": "4.4.0-SNAPSHOT"
@@ -157,6 +213,10 @@
         "org.ow2.asm:asm": {
             "locked": "5.0.4",
             "requested": "5.0.4"
+        },
+        "org.spockframework:spock-core": {
+            "locked": "1.0-groovy-2.4",
+            "requested": "latest.release"
         }
     },
     "runtime": {
@@ -166,11 +226,15 @@
         },
         "com.netflix.nebula:nebula-test": {
             "locked": "4.2.1",
-            "requested": "latest.release"
+            "requested": "4.2.1"
         },
         "commons-lang:commons-lang": {
             "locked": "2.6",
             "requested": "2.6"
+        },
+        "junit:junit": {
+            "locked": "4.12",
+            "requested": "4.12"
         },
         "org.codehaus.gpars:gpars": {
             "locked": "1.2.1",
@@ -180,6 +244,10 @@
             "locked": "0.25.2",
             "requested": "latest.release"
         },
+        "org.eclipse.jdt:core": {
+            "locked": "3.1.1",
+            "requested": "3.1.1"
+        },
         "org.eclipse.jgit:org.eclipse.jgit": {
             "locked": "4.4.0-SNAPSHOT",
             "requested": "4.4.0-SNAPSHOT"
@@ -187,6 +255,10 @@
         "org.ow2.asm:asm": {
             "locked": "5.0.4",
             "requested": "5.0.4"
+        },
+        "org.spockframework:spock-core": {
+            "locked": "1.0-groovy-2.4",
+            "requested": "latest.release"
         }
     },
     "testCompile": {
@@ -196,11 +268,15 @@
         },
         "com.netflix.nebula:nebula-test": {
             "locked": "4.2.1",
-            "requested": "latest.release"
+            "requested": "4.2.1"
         },
         "commons-lang:commons-lang": {
             "locked": "2.6",
             "requested": "2.6"
+        },
+        "junit:junit": {
+            "locked": "4.12",
+            "requested": "4.12"
         },
         "org.codehaus.gpars:gpars": {
             "locked": "1.2.1",
@@ -209,6 +285,10 @@
         "org.codenarc:CodeNarc": {
             "locked": "0.25.2",
             "requested": "latest.release"
+        },
+        "org.eclipse.jdt:core": {
+            "locked": "3.1.1",
+            "requested": "3.1.1"
         },
         "org.eclipse.jgit:org.eclipse.jgit": {
             "locked": "4.4.0-SNAPSHOT",
@@ -234,11 +314,15 @@
         },
         "com.netflix.nebula:nebula-test": {
             "locked": "4.2.1",
-            "requested": "latest.release"
+            "requested": "4.2.1"
         },
         "commons-lang:commons-lang": {
             "locked": "2.6",
             "requested": "2.6"
+        },
+        "junit:junit": {
+            "locked": "4.12",
+            "requested": "4.12"
         },
         "org.codehaus.gpars:gpars": {
             "locked": "1.2.1",
@@ -247,6 +331,10 @@
         "org.codenarc:CodeNarc": {
             "locked": "0.25.2",
             "requested": "latest.release"
+        },
+        "org.eclipse.jdt:core": {
+            "locked": "3.1.1",
+            "requested": "3.1.1"
         },
         "org.eclipse.jgit:org.eclipse.jgit": {
             "locked": "4.4.0-SNAPSHOT",
@@ -272,11 +360,15 @@
         },
         "com.netflix.nebula:nebula-test": {
             "locked": "4.2.1",
-            "requested": "latest.release"
+            "requested": "4.2.1"
         },
         "commons-lang:commons-lang": {
             "locked": "2.6",
             "requested": "2.6"
+        },
+        "junit:junit": {
+            "locked": "4.12",
+            "requested": "4.12"
         },
         "org.codehaus.gpars:gpars": {
             "locked": "1.2.1",
@@ -285,6 +377,10 @@
         "org.codenarc:CodeNarc": {
             "locked": "0.25.2",
             "requested": "latest.release"
+        },
+        "org.eclipse.jdt:core": {
+            "locked": "3.1.1",
+            "requested": "3.1.1"
         },
         "org.eclipse.jgit:org.eclipse.jgit": {
             "locked": "4.4.0-SNAPSHOT",
@@ -310,11 +406,15 @@
         },
         "com.netflix.nebula:nebula-test": {
             "locked": "4.2.1",
-            "requested": "latest.release"
+            "requested": "4.2.1"
         },
         "commons-lang:commons-lang": {
             "locked": "2.6",
             "requested": "2.6"
+        },
+        "junit:junit": {
+            "locked": "4.12",
+            "requested": "4.12"
         },
         "org.codehaus.gpars:gpars": {
             "locked": "1.2.1",
@@ -323,6 +423,10 @@
         "org.codenarc:CodeNarc": {
             "locked": "0.25.2",
             "requested": "latest.release"
+        },
+        "org.eclipse.jdt:core": {
+            "locked": "3.1.1",
+            "requested": "3.1.1"
         },
         "org.eclipse.jgit:org.eclipse.jgit": {
             "locked": "4.4.0-SNAPSHOT",
