@@ -85,13 +85,21 @@ final class DependencyClassVisitor extends ClassVisitor {
         interfaces.each { readObjectName(it) }
 
         if(superName) {
-            ClassHierarchyUtils.typeHierarchy(Class.forName(superName.replace('/', '.'), false, loader)).each {
-                readObjectName(it.replace('.', '/'), true)
+            try {
+                ClassHierarchyUtils.typeHierarchy(Class.forName(superName.replace('/', '.'), false, loader)).each {
+                    readObjectName(it.replace('.', '/'), true)
+                }
+            } catch(ClassNotFoundException ignored) {
+                // do nothing
             }
         }
         interfaces.each { intf ->
-            ClassHierarchyUtils.typeHierarchy(Class.forName(intf.replace('/', '.'), false, loader)).each {
-                readObjectName(it.replace('.', '/'), true)
+            try {
+                ClassHierarchyUtils.typeHierarchy(Class.forName(intf.replace('/', '.'), false, loader)).each {
+                    readObjectName(it.replace('.', '/'), true)
+                }
+            } catch(ClassNotFoundException ignored) {
+                // do nothing
             }
         }
 

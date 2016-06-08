@@ -185,4 +185,50 @@ class DependencyServiceSpec extends TestKitSpecification {
         expect:
         DependencyService.forProject(project).parentSourceSetConfigurations('compile')*.name == ['testCompile']
     }
+
+    @Unroll
+    def 'read jar contents of project dependencies'() {
+        setup:
+        def core = addSubproject('core')
+        def web = addSubproject('web')
+
+        buildFile << """
+            plugins {
+                id 'nebula.lint'
+            }
+
+            subprojects {
+                apply plugin: 'java'
+            }
+        """
+
+        new File(web, 'build.gradle').text = """
+            import com.netflix.nebula.lint.rule.dependency.*
+
+            dependencies {
+                compile project(':core')
+            }
+
+            task coreContents << {
+              new File(projectDir, "coreContents.txt").text = DependencyService.forProject(project)
+                .jarContents(configurations.compile.resolvedConfiguration.firstLevelModuleDependencies[0].module.id)
+                .classes
+                .join('\\n')
+            }
+        """
+
+        createJavaSourceFile(core, 'public class A {}')
+
+        when:
+        runTasksSuccessfully(*tasks)
+        def coreContents = new File(web, 'coreContents.txt')
+
+        then:
+        coreContents.readLines() == contents
+
+        where:
+        tasks                                   | contents
+        ['web:coreContents']                    | []
+        ['web:assemble', 'web:coreContents']    | ['A']
+    }
 }

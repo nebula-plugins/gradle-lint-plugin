@@ -102,6 +102,9 @@ class DependencyService {
 
     @Memoized
     static JarContents jarContents(File file) {
+        if(!file.exists())
+            return new JarContents(entryNames: Collections.emptyList())
+
         def entryNames = []
         new JarFile(file).withCloseable { jarFile ->
             def allEntries = jarFile.entries()
