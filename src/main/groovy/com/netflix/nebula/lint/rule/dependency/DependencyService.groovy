@@ -21,6 +21,7 @@ import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.jar.JarEntry
 import java.util.jar.JarFile
+import java.util.zip.ZipException
 
 class DependencyService {
     static Map<Project, DependencyService> instancesByProject = [:]
@@ -106,12 +107,18 @@ class DependencyService {
             return new JarContents(entryNames: Collections.emptyList())
 
         def entryNames = []
-        new JarFile(file).withCloseable { jarFile ->
-            def allEntries = jarFile.entries()
-            while (allEntries.hasMoreElements()) {
-                entryNames += (allEntries.nextElement() as JarEntry).name
+
+        try {
+            new JarFile(file).withCloseable { jarFile ->
+                def allEntries = jarFile.entries()
+                while (allEntries.hasMoreElements()) {
+                    entryNames += (allEntries.nextElement() as JarEntry).name
+                }
             }
+        } catch(ZipException ignored) {
+            // this is not a valid jar file
         }
+
         return new JarContents(entryNames: entryNames)
     }
 
