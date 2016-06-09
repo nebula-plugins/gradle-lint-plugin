@@ -39,6 +39,8 @@ class LintGradleTask extends DefaultTask {
     @TaskAction
     void lint() {
         def violations = new LintService().lint(project).violations
+                .unique { v1, v2 -> v1.is(v2) ? 0 : 1 }
+
         (listeners + new GradleLintPatchAction(project) + new GradleLintInfoBrokerAction(project) + consoleOutputAction).each {
             it.lintFinished(violations)
         }

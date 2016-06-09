@@ -47,6 +47,7 @@ class FixGradleLintTask extends DefaultTask {
     void lintCorrections() {
         // look at org.gradle.logging.internal.DefaultColorMap
         def violations = new LintService().lint(project).violations
+                .unique { v1, v2 -> v1.is(v2) ? 0 : 1 }
 
         (userDefinedListeners + infoBrokerAction + new GradleLintPatchAction(project)).each {
             it.lintFinished(violations)
