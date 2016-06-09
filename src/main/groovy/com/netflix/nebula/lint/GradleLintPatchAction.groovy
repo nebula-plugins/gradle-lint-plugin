@@ -100,6 +100,8 @@ class GradleLintPatchAction extends GradleLintViolationAction {
             }
         }
 
+        patchSets.removeAll { it.isEmpty() }
+
         String combinedPatch = ''
 
         def lastPathDeleted = null
