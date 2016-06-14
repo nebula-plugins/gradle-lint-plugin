@@ -17,6 +17,7 @@
 package com.netflix.nebula.lint.plugin
 
 import com.netflix.nebula.lint.GradleLintViolationAction
+import com.netflix.nebula.lint.GradleViolation
 import org.gradle.api.Incubating
 import org.gradle.api.InvalidUserDataException
 

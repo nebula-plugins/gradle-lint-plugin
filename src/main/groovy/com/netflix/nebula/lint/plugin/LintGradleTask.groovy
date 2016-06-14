@@ -77,6 +77,9 @@ class LintGradleTask extends DefaultTask {
                         case GradleViolation.Level.Error:
                             textOutput.withStyle(Styling.Red).text('error'.padRight(10))
                             break
+                        case GradleViolation.Level.Trivial:
+                            textOutput.withStyle(Styling.Yellow).text('trivial'.padRight(10))
+                            break
                         case GradleViolation.Level.Info:
                             textOutput.withStyle(Styling.Yellow).text('info'.padRight(10))
                             break

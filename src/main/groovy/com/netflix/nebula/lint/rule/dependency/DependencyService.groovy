@@ -8,6 +8,7 @@ import org.gradle.api.artifacts.ModuleIdentifier
 import org.gradle.api.artifacts.ModuleVersionIdentifier
 import org.gradle.api.artifacts.ResolvedArtifact
 import org.gradle.api.artifacts.ResolvedDependency
+import org.gradle.api.artifacts.UnknownConfigurationException
 import org.gradle.api.internal.artifacts.DefaultModuleIdentifier
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.DefaultVersionComparator
 import org.gradle.api.plugins.JavaPluginConvention
@@ -143,12 +144,13 @@ class DependencyService {
         def artifactsByClass = artifactsByClass(conf)
         def references = new DependencyReferences()
 
+        def compiledSourceClassLoader = new URLClassLoader((sourceSet.compileClasspath + sourceSet.output.classesDir)
+                .collect { it.toURI().toURL() } as URL[], null as ClassLoader)
+
         Files.walkFileTree(sourceSet.output.classesDir.toPath(), new SimpleFileVisitor<Path>() {
             @Override
             FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 if (file.toFile().name.endsWith('.class')) {
-                    def compiledSourceClassLoader = new URLClassLoader((sourceSet.compileClasspath + sourceSet.output.classesDir)
-                            .collect { it.toURI().toURL() } as URL[])
                     def visitor = new DependencyClassVisitor(artifactsByClass, compiledSourceClassLoader)
                     new ClassReader(file.newInputStream()).accept(visitor, ClassReader.SKIP_DEBUG)
 
@@ -313,6 +315,13 @@ class DependencyService {
         }
         recurseTransitives(dep.children)
         return transitives
+    }
+
+    boolean isResolved(String conf) {
+        try {
+            project.configurations.getByName(conf).state == Configuration.State.RESOLVED
+        } catch(UnknownConfigurationException ignored) {
+        }
     }
 
     SourceSet sourceSetByConf(String conf) {

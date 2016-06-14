@@ -27,6 +27,10 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
 
     @Override
     void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
+        if(!dependencyService.isResolved(conf)) {
+            return // we won't slow down the build by resolving the configuration if it hasn't been already
+        }
+
         if(project.convention.findPlugin(JavaPluginConvention)) {
             def mvid = dep.toModuleVersion()
             if (!dependencyService.isRuntime(conf)) {
