@@ -18,6 +18,25 @@ class DependencyServiceSpec extends TestKitSpecification {
         }
     }
 
+    def 'check if configuration is resolved'() {
+        setup:
+        project.with {
+            apply plugin: 'war'
+            dependencies {
+                compile 'com.google.guava:guava:latest.release'
+                providedCompile 'commons-lang:commons-lang:latest.release'
+            }
+        }
+
+        when:
+        def service = DependencyService.forProject(project)
+        project.configurations.compile.resolve()
+
+        then:
+        service.isResolved('compile')
+        service.isResolved('providedCompile')
+    }
+
     def 'transitive dependencies with a cycle'() {
         setup:
         def service = DependencyService.forProject(project)

@@ -319,9 +319,16 @@ class DependencyService {
 
     boolean isResolved(String conf) {
         try {
-            project.configurations.getByName(conf).state == Configuration.State.RESOLVED
+            return isResolved(project.configurations.getByName(conf))
         } catch(UnknownConfigurationException ignored) {
+            return false
         }
+    }
+
+    boolean isResolved(Configuration conf) {
+        // Gradle does not properly propagate the resolved state down configuration hierarchies
+        conf.state == Configuration.State.RESOLVED ?:
+                project.configurations.findAll { it.extendsFrom.contains(conf) }.any { isResolved(it) }
     }
 
     SourceSet sourceSetByConf(String conf) {
