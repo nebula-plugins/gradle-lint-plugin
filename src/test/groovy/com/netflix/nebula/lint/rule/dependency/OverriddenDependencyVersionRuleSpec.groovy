@@ -63,6 +63,23 @@ class OverriddenDependencyVersionRuleSpec extends TestKitSpecification {
         dependencies(buildFile, 'compile') == ['com.google.guava:guava:19.0']
     }
 
+    def "interpolated values are left unchanged"() {
+        when:
+        buildFile << """
+            ext.GUAVA_VERSION = '18.0'
+
+            dependencies {
+                compile "com.google.guava:guava:\$GUAVA_VERSION"
+            }
+        """
+
+        createJavaSourceFile('public class Main {}')
+
+        then:
+        runTasksSuccessfully('assemble', 'fixGradleLint')
+        dependencies(buildFile, 'compile') == ['com.google.guava:guava:$GUAVA_VERSION']
+    }
+
     @Unroll
     def "dynamic versions like '#version' that can't match the resolved version are changed"() {
         when:

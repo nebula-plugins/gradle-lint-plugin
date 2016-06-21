@@ -67,7 +67,7 @@ abstract class TestKitSpecification extends Specification {
         _buildFile.text.readLines()
                 .collect { it.trim() }
                 .findAll { line -> confs.any { c -> line.startsWith(c) } }
-                .collect { it.split(/\s+/)[1].replaceAll(/'/, '') }
+                .collect { it.split(/\s+/)[1].replaceAll(/['"]/, '') }
                 .sort()
     }
 
