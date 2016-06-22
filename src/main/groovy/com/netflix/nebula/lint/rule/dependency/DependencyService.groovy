@@ -327,7 +327,7 @@ class DependencyService {
 
     boolean isResolved(Configuration conf) {
         // Gradle does not properly propagate the resolved state down configuration hierarchies
-        conf.state == Configuration.State.RESOLVED ?:
+        conf.state == Configuration.State.RESOLVED ||
                 project.configurations.findAll { it.extendsFrom.contains(conf) }.any { isResolved(it) }
     }
 

@@ -30,7 +30,7 @@ class DependencyServiceSpec extends TestKitSpecification {
 
         when:
         def service = DependencyService.forProject(project)
-        project.configurations.runtime.resolve()
+        project.configurations.compileClasspath.resolve()
 
         then:
         service.isResolved('compile')
