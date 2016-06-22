@@ -19,6 +19,7 @@ plugins {
     id 'com.gradle.plugin-publish' version '0.9.4'
     id 'nebula.plugin-plugin' version '4.22.0'
     id 'com.github.johnrengelman.shadow' version '1.2.3'
+    id 'java-gradle-plugin'
 }
 
 description 'Pluggable and configurable linter tool for identifying and reporting on patterns of misuse or deprecations in Gradle scripts'
@@ -37,20 +38,6 @@ repositories {
     mavenCentral()
 }
 
-// Write the lint plugin's classes to a file to share with testKit
-task createClasspathManifest {
-    def outputDir = file("$buildDir/$name")
-
-    inputs.files sourceSets.main.runtimeClasspath
-    outputs.dir outputDir
-
-    doLast {
-        outputDir.mkdirs()
-        file("$outputDir/plugin-classpath.txt").text =
-                sourceSets.main.runtimeClasspath.findAll { !it.name.contains('xerces') }.join('\n')
-    }
-}
-
 configurations {
     plugin.description = 'The compile dependencies for the plugin, excluding the local dependencies to avoid problems with Shadow'
     compile.extendsFrom plugin
@@ -67,10 +54,9 @@ dependencies {
     plugin ('org.eclipse.jgit:org.eclipse.jgit:4.4.0-SNAPSHOT') {
         transitive = false
     }
+    plugin 'org.eclipse.jdt:core:3.1.1'
 
     plugin 'org.codehaus.gpars:gpars:1.2.1'
-
-    plugin 'org.eclipse.jdt:core:3.1.1'
 
     // these two dependencies exist so we can provide a test harness
     // to proprietary rule implementations packed in other jars, but are considered provided
@@ -83,9 +69,6 @@ dependencies {
         exclude module: 'groovy-all'
     }
     testCompile 'org.ow2.asm:asm-util:5.0.4'
-
-    // Add the classpath file to the test runtime classpath
-    testRuntime files(createClasspathManifest)
 }
 
 pluginBundle {
