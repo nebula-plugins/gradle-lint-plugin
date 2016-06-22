@@ -71,15 +71,17 @@ class GradleLintPatchAction extends GradleLintViolationAction {
     String patch(List<GradleLintFix> fixes) {
         List<List<GradleLintFix>> patchSets = []
 
-        fixes.groupBy { it.affectedFile }.each { file, fileFixes ->  // internal ordering of fixes per file is maintained (file order does not)
-            def (individualFixes, combinedFixes) = fileFixes.split { it instanceof RequiresOwnPatchset }
-            individualFixes.each {
-                patchSets.add([it] as List<GradleLintFix>)
-            }
+        fixes
+            .unique { f1, f2 -> f1.is(f2) ? 0 : 1 }
+            .groupBy { it.affectedFile }.each { file, fileFixes ->  // internal ordering of fixes per file is maintained (file order does not)
+                def (individualFixes, combinedFixes) = fileFixes.split { it instanceof RequiresOwnPatchset }
+                individualFixes.each {
+                    patchSets.add([it] as List<GradleLintFix>)
+                }
 
-            if(combinedFixes)
-                patchSets.add((combinedFixes as List<GradleLintFix>).sort { it.from() })
-        }
+                if(combinedFixes)
+                    patchSets.add((combinedFixes as List<GradleLintFix>).sort { it.from() })
+            }
 
         for(patchSet in patchSets) {
             boolean overlap = true
@@ -99,6 +101,8 @@ class GradleLintPatchAction extends GradleLintViolationAction {
                 overlap = patchSet.retainAll { it.reasonForNotFixing == null }
             }
         }
+
+        patchSets.removeAll { it.isEmpty() }
 
         String combinedPatch = ''
 

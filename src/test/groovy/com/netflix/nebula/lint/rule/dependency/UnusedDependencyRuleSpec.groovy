@@ -218,7 +218,7 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
         createJavaSourceFile(main)
 
         then:
-        runTasksSuccessfully('compileJava', 'fixGradleLint')
+        runTasksSuccessfully('assemble', 'fixGradleLint')
 
         // also, provided dependencies are NOT moved to compile
         dependencies(buildFile, 'providedCompile') == [guava]
@@ -302,8 +302,10 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             }
         """
 
+        createJavaSourceFile('public class Main {}')
+
         then:
-        runTasksSuccessfully('compileTestJava', 'fixGradleLint')
+        runTasksSuccessfully('assemble', 'fixGradleLint')
 
         dependencies(buildFile, 'compile') == []
         dependencies(buildFile, 'runtime') == ['org.webjars:acorn:0.5.0']

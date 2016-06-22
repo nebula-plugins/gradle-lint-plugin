@@ -5,12 +5,10 @@ import com.netflix.nebula.lint.rule.GradleLintRule
 import com.netflix.nebula.lint.rule.GradleModelAware
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.gradle.api.artifacts.ComponentMetadata
-import org.gradle.api.artifacts.ModuleIdentifier
 import org.gradle.api.artifacts.ModuleVersionIdentifier
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.DefaultVersionComparator
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.DefaultVersionSelectorScheme
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.LatestVersionSelector
-import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.VersionSelector
 
 class OverriddenDependencyVersionRule extends GradleLintRule implements GradleModelAware {
     String description = 'be declarative about first order dependency versions that are changed by conflict resolution'
@@ -19,6 +17,10 @@ class OverriddenDependencyVersionRule extends GradleLintRule implements GradleMo
 
     @Override
     void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
+        if(!DependencyService.forProject(project).isResolved(conf)) {
+            return // we won't slow down the build by resolving the configuration if it hasn't been already
+        }
+
         // causes the component metadata rule to fire and capture all metadata by module id
         def resolved = project.configurations.getByName(conf).resolvedConfiguration.resolvedArtifacts.find {
             it.moduleVersion.id.group == dep.group && it.moduleVersion.id.name == dep.name
@@ -31,7 +33,7 @@ class OverriddenDependencyVersionRule extends GradleLintRule implements GradleMo
         ComponentMetadata metadata = new ComponentMetadataAdapter(id: resolved.moduleVersion.id, status: 'unknown', statusScheme: Collections.emptyList())
 
         def selector = selectorScheme.parseSelector(dep.version)
-        if(!(selector instanceof LatestVersionSelector) && !selector.accept(metadata)) {
+        if(!(selector instanceof LatestVersionSelector) && !dep.version.startsWith('$') && !selector.accept(metadata)) {
             addBuildLintViolation('this version is not being used because of a conflict resolution, force, or resolution strategy', call)
                     .replaceWith(call, "$conf '$resolved.moduleVersion.id'")
         }

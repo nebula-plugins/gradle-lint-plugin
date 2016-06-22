@@ -8,6 +8,7 @@ import org.gradle.api.artifacts.ModuleIdentifier
 import org.gradle.api.artifacts.ModuleVersionIdentifier
 import org.gradle.api.artifacts.ResolvedArtifact
 import org.gradle.api.artifacts.ResolvedDependency
+import org.gradle.api.artifacts.UnknownConfigurationException
 import org.gradle.api.internal.artifacts.DefaultModuleIdentifier
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.DefaultVersionComparator
 import org.gradle.api.plugins.JavaPluginConvention
@@ -21,6 +22,7 @@ import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.jar.JarEntry
 import java.util.jar.JarFile
+import java.util.zip.ZipException
 
 class DependencyService {
     static Map<Project, DependencyService> instancesByProject = [:]
@@ -102,13 +104,22 @@ class DependencyService {
 
     @Memoized
     static JarContents jarContents(File file) {
+        if(!file.exists())
+            return new JarContents(entryNames: Collections.emptyList())
+
         def entryNames = []
-        new JarFile(file).withCloseable { jarFile ->
-            def allEntries = jarFile.entries()
-            while (allEntries.hasMoreElements()) {
-                entryNames += (allEntries.nextElement() as JarEntry).name
+
+        try {
+            new JarFile(file).withCloseable { jarFile ->
+                def allEntries = jarFile.entries()
+                while (allEntries.hasMoreElements()) {
+                    entryNames += (allEntries.nextElement() as JarEntry).name
+                }
             }
+        } catch(ZipException ignored) {
+            // this is not a valid jar file
         }
+
         return new JarContents(entryNames: entryNames)
     }
 
@@ -133,12 +144,13 @@ class DependencyService {
         def artifactsByClass = artifactsByClass(conf)
         def references = new DependencyReferences()
 
+        def compiledSourceClassLoader = new URLClassLoader((sourceSet.compileClasspath + sourceSet.output.classesDir)
+                .collect { it.toURI().toURL() } as URL[], null as ClassLoader)
+
         Files.walkFileTree(sourceSet.output.classesDir.toPath(), new SimpleFileVisitor<Path>() {
             @Override
             FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 if (file.toFile().name.endsWith('.class')) {
-                    def compiledSourceClassLoader = new URLClassLoader((sourceSet.compileClasspath + sourceSet.output.classesDir)
-                            .collect { it.toURI().toURL() } as URL[])
                     def visitor = new DependencyClassVisitor(artifactsByClass, compiledSourceClassLoader)
                     new ClassReader(file.newInputStream()).accept(visitor, ClassReader.SKIP_DEBUG)
 
@@ -303,6 +315,20 @@ class DependencyService {
         }
         recurseTransitives(dep.children)
         return transitives
+    }
+
+    boolean isResolved(String conf) {
+        try {
+            return isResolved(project.configurations.getByName(conf))
+        } catch(UnknownConfigurationException ignored) {
+            return false
+        }
+    }
+
+    boolean isResolved(Configuration conf) {
+        // Gradle does not properly propagate the resolved state down configuration hierarchies
+        conf.state == Configuration.State.RESOLVED ?:
+                project.configurations.findAll { it.extendsFrom.contains(conf) }.any { isResolved(it) }
     }
 
     SourceSet sourceSetByConf(String conf) {

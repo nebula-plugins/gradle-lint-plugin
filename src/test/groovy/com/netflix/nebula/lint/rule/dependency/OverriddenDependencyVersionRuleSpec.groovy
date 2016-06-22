@@ -31,8 +31,10 @@ class OverriddenDependencyVersionRuleSpec extends TestKitSpecification {
             }
         """
 
+        createJavaSourceFile('public class Main {}')
+
         then:
-        runTasksSuccessfully('fixGradleLint')
+        runTasksSuccessfully('assemble', 'fixGradleLint')
         dependencies(buildFile, 'compile') == ['com.google.guava:guava:19.0']
     }
 
@@ -54,9 +56,28 @@ class OverriddenDependencyVersionRuleSpec extends TestKitSpecification {
             }
         """
 
+        createJavaSourceFile('public class Main {}')
+
         then:
-        runTasksSuccessfully('fixGradleLint')
+        runTasksSuccessfully('assemble', 'fixGradleLint')
         dependencies(buildFile, 'compile') == ['com.google.guava:guava:19.0']
+    }
+
+    def "interpolated values are left unchanged"() {
+        when:
+        buildFile << """
+            ext.GUAVA_VERSION = '18.0'
+
+            dependencies {
+                compile "com.google.guava:guava:\$GUAVA_VERSION"
+            }
+        """
+
+        createJavaSourceFile('public class Main {}')
+
+        then:
+        runTasksSuccessfully('assemble', 'fixGradleLint')
+        dependencies(buildFile, 'compile') == ['com.google.guava:guava:$GUAVA_VERSION']
     }
 
     @Unroll
@@ -74,8 +95,10 @@ class OverriddenDependencyVersionRuleSpec extends TestKitSpecification {
             }
         """
 
+        createJavaSourceFile('public class Main {}')
+
         then:
-        runTasksSuccessfully('fixGradleLint')
+        runTasksSuccessfully('assemble', 'fixGradleLint')
         dependencies(buildFile, 'compile') == ['com.google.guava:guava:18.0']
 
         where:

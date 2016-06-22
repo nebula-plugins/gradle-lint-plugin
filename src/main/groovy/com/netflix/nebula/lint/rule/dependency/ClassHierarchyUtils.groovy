@@ -16,6 +16,7 @@
 
 package com.netflix.nebula.lint.rule.dependency
 
+import groovy.transform.Memoized
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -25,6 +26,7 @@ class ClassHierarchyUtils {
     /**
      * @return All types in the type hierarchy, including parameterizations at every level
      */
+    @Memoized
     static Collection<String> typeHierarchy(Class<?> clazz) {
         try {
             return typeHierarchyRecursive(clazz) - clazz.name

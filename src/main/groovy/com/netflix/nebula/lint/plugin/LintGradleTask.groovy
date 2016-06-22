@@ -39,6 +39,8 @@ class LintGradleTask extends DefaultTask {
     @TaskAction
     void lint() {
         def violations = new LintService().lint(project).violations
+                .unique { v1, v2 -> v1.is(v2) ? 0 : 1 }
+
         (listeners + new GradleLintPatchAction(project) + new GradleLintInfoBrokerAction(project) + consoleOutputAction).each {
             it.lintFinished(violations)
         }
@@ -74,6 +76,9 @@ class LintGradleTask extends DefaultTask {
                             break
                         case GradleViolation.Level.Error:
                             textOutput.withStyle(Styling.Red).text('error'.padRight(10))
+                            break
+                        case GradleViolation.Level.Trivial:
+                            textOutput.withStyle(Styling.Yellow).text('trivial'.padRight(10))
                             break
                         case GradleViolation.Level.Info:
                             textOutput.withStyle(Styling.Yellow).text('info'.padRight(10))

@@ -28,7 +28,7 @@ class GradleLintInfoBrokerAction extends GradleLintViolationAction {
     LintReportItem buildReportItem(GradleViolation v) {
         def buildFilePath = project.rootDir.toURI().relativize(v.file.toURI()).toString()
         new LintReportItem(buildFilePath, v.rule.ruleId as String, v.level.toString(),
-                v.lineNumber ?: -1, v.sourceLine ?: 'unspecified')
+                v.lineNumber ?: -1, v.sourceLine ?: 'unspecified', v.message ?: "")
     }
 }
 
@@ -39,4 +39,5 @@ class LintReportItem {
     String severity
     Integer lineNumber
     String sourceLine
+    String message
 }

@@ -1,8 +1,5 @@
 package com.netflix.nebula.lint.rule.dependency
 
-import groovy.transform.Canonical
-
-
 class JarContents {
     Set<String> entryNames
 

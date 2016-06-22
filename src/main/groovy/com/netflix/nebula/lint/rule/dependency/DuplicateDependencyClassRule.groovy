@@ -15,6 +15,10 @@ class DuplicateDependencyClassRule extends GradleLintRule implements GradleModel
         def mvid = dep.toModuleVersion()
         def dependencyService = DependencyService.forProject(project)
 
+        if(!dependencyService.isResolved(conf)) {
+            return // we won't slow down the build by resolving the configuration if it hasn't been already
+        }
+
         def dependencyClasses = dependencyService.jarContents(mvid)?.classes
         if(!dependencyClasses)
             return

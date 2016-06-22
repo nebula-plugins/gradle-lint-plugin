@@ -25,6 +25,7 @@ import org.codehaus.groovy.ast.stmt.*
 import org.codehaus.groovy.classgen.BytecodeExpression
 import org.codenarc.rule.*
 import org.codenarc.source.SourceCode
+import org.gradle.api.Project
 
 
 abstract class GradleLintRule extends AbstractAstVisitor implements Rule, GradleAstVisitor {
@@ -370,9 +371,13 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
                                 entries.ext,
                                 entries.conf,
                                 GradleDependency.Syntax.MapNotation))
-                    } else if (call.arguments.expressions.any { it instanceof ConstantExpression }) {
+                    } else if (call.arguments.expressions.any { it instanceof ConstantExpression || it instanceof GStringExpression }) {
                         def expr = call.arguments.expressions.findResult {
-                            it instanceof ConstantExpression ? it.value : null
+                            if(it instanceof ConstantExpression)
+                                return it.value
+                            if(it instanceof GStringExpression)
+                                return it.text
+                            return null
                         }
                         def matcher = expr =~ /(?<group>[^:]+):(?<name>[^:]+):(?<version>[^@:]+)(?<classifier>:[^@]+)?(?<ext>@.+)?/
                         if (matcher.matches()) {
@@ -766,5 +771,3 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
         }
     }
 }
-
-import org.gradle.api.Project

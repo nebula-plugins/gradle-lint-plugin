@@ -23,7 +23,6 @@ import com.netflix.nebula.lint.rule.GradleLintRule
 import nebula.test.ProjectSpec
 import org.codenarc.analyzer.StringSourceAnalyzer
 import org.codenarc.results.Results
-import org.codenarc.ruleregistry.RuleRegistryInitializer
 import org.codenarc.ruleset.CompositeRuleSet
 import org.codenarc.ruleset.RuleSet
 import org.eclipse.jgit.api.ApplyCommand
@@ -34,8 +33,6 @@ abstract class AbstractRuleSpec extends ProjectSpec {
     }
 
     private static RuleSet configureRuleSet(GradleLintRule... rules) {
-        new RuleRegistryInitializer().initializeRuleRegistry()
-
         def ruleSet = new CompositeRuleSet()
         rules.each { ruleSet.addRule(it) }
         ruleSet
