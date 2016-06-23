@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-
 plugins {
     id 'com.gradle.plugin-publish' version '0.9.4'
-    id 'nebula.plugin-plugin' version '4.22.0'
+    id 'nebula.plugin-plugin' version '4.21.0'
     id 'com.github.johnrengelman.shadow' version '1.2.3'
     id 'java-gradle-plugin'
 }
