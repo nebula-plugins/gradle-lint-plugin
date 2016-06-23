@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+buildscript {
+    configurations.classpath {
+        force 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.6'
+    }
+}
+
 plugins {
     id 'com.gradle.plugin-publish' version '0.9.4'
     id 'nebula.plugin-plugin' version '4.21.0'
