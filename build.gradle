@@ -44,7 +44,7 @@ configurations {
 
 dependencies {
     plugin 'org.ow2.asm:asm:5.0.4'
-    plugin('org.codenarc:CodeNarc:latest.release') {
+    plugin('org.codenarc:CodeNarc:0.25.2') {
         transitive = false
     }
     plugin 'com.netflix.nebula:gradle-info-plugin:3.0.4'
@@ -59,12 +59,12 @@ dependencies {
 
     // these two dependencies exist so we can provide a test harness
     // to proprietary rule implementations packed in other jars, but are considered provided
-    plugin ('org.spockframework:spock-core:latest.release') { transitive = false }
+    plugin ('org.spockframework:spock-core:1.0-groovy-2.4') { transitive = false }
     plugin ('junit:junit:4.12')
     plugin ('com.netflix.nebula:nebula-test:4.2.1') { transitive = false }
 
     testCompile gradleTestKit()
-    testCompile ('org.spockframework:spock-core:latest.release') {
+    testCompile ('org.spockframework:spock-core:1.0-groovy-2.4') {
         exclude module: 'groovy-all'
     }
     testCompile 'org.ow2.asm:asm-util:5.0.4'
