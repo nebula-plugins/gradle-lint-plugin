@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-rootProject.name = 'gradle-lint-plugin'
+rootProject.name = 'nebula-lint-plugin'
