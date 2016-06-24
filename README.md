@@ -14,7 +14,7 @@ It assists a centralized build tools team in gently introducing and maintaining 
 
 ## Getting Started
 
-Read the [full documentation](https://github.com/nebula-plugins/gradle-lint-plugin/wiki).
+Read the [full documentation](https://github.com/nebula-plugins/gradle-lint-plugin/wiki). 
 
 To apply this plugin:
     
@@ -22,6 +22,8 @@ To apply this plugin:
     plugins {
       id 'nebula.lint' version '0.30.12'
     }
+    
+*Important:* For now, in a multi-module build you **must** apply lint to the root project, at a minimum.
 
 Alternatively:
 
