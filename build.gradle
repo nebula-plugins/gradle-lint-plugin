@@ -114,7 +114,7 @@ jar.dependsOn shadowJar
 
 publishing {
     publications {
-        nebula(MavenPublication) {
+        withType(MavenPublication) {
             pom.withXml {
                 asNode()
                     .dependencies

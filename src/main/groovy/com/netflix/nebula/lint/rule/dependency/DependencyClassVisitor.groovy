@@ -91,6 +91,8 @@ final class DependencyClassVisitor extends ClassVisitor {
                 }
             } catch(ClassNotFoundException ignored) {
                 // do nothing
+            } catch(NoClassDefFoundError ignored) {
+                // do nothing
             }
         }
         interfaces.each { intf ->

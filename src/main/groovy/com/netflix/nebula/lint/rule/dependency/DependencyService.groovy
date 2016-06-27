@@ -3,12 +3,7 @@ package com.netflix.nebula.lint.rule.dependency
 import groovy.transform.Memoized
 import groovyx.gpars.GParsPool
 import org.gradle.api.Project
-import org.gradle.api.artifacts.Configuration
-import org.gradle.api.artifacts.ModuleIdentifier
-import org.gradle.api.artifacts.ModuleVersionIdentifier
-import org.gradle.api.artifacts.ResolvedArtifact
-import org.gradle.api.artifacts.ResolvedDependency
-import org.gradle.api.artifacts.UnknownConfigurationException
+import org.gradle.api.artifacts.*
 import org.gradle.api.internal.artifacts.DefaultModuleIdentifier
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.DefaultVersionComparator
 import org.gradle.api.plugins.JavaPluginConvention
@@ -136,18 +131,21 @@ class DependencyService {
     }
 
     @Memoized
-    private DependencyReferences classReferences(SourceSet sourceSet) {
-        if(!sourceSet || !sourceSet.output.classesDir.exists())
+    private DependencyReferences classReferences(String confName) {
+        def conf = project.configurations.getByName(confName)
+        def classpath = sourceSetClasspath(confName)
+        def output = sourceSetOutput(confName)
+        
+        if(!output || !output.exists())
             return null
-
-        def conf = project.configurations.getByName(sourceSet.compileConfigurationName)
+        
         def artifactsByClass = artifactsByClass(conf)
         def references = new DependencyReferences()
 
-        def compiledSourceClassLoader = new URLClassLoader((sourceSet.compileClasspath + sourceSet.output.classesDir)
+        def compiledSourceClassLoader = new URLClassLoader((classpath + output)
                 .collect { it.toURI().toURL() } as URL[], null as ClassLoader)
 
-        Files.walkFileTree(sourceSet.output.classesDir.toPath(), new SimpleFileVisitor<Path>() {
+        Files.walkFileTree(output.toPath(), new SimpleFileVisitor<Path>() {
             @Override
             FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 if (file.toFile().name.endsWith('.class')) {
@@ -166,7 +164,7 @@ class DependencyService {
 
     @Memoized
     Set<ModuleVersionIdentifier> undeclaredDependencies(String confName) {
-        def references = classReferences(sourceSetByConf(confName))
+        def references = classReferences(confName)
         if(!references)
             return Collections.emptySet()
 
@@ -215,7 +213,7 @@ class DependencyService {
         }
         confPaths(project.configurations.getByName(confName), [])
 
-        def sourceSetConfs = project.convention.getPlugin(JavaPluginConvention).sourceSets*.compileConfigurationName
+        def sourceSetConfs = sourceSetCompileConfigurations()
 
         // if any configuration path does NOT contain a sourceSet conf in it somewhere, it is a runtime-only concern
         return terminalPaths.any { path ->
@@ -236,7 +234,7 @@ class DependencyService {
         def extendingConfs
         extendingConfs = { Configuration c ->
             for(Configuration subconf in project.configurations.findAll { it.extendsFrom.any { it == c } }) {
-                def sourceSet = project.convention.getPlugin(JavaPluginConvention).sourceSets.find { it.compileConfigurationName == subconf.name }
+                def sourceSet = sourceSetCompileConfigurations().find { it == subconf.name }
                 if(sourceSet)
                     sourceSetConfs.add(subconf)
                 extendingConfs(subconf)
@@ -249,7 +247,7 @@ class DependencyService {
 
     @Memoized
     Set<ModuleIdentifier> usedDependencies(String confName) {
-        def references = classReferences(sourceSetByConf(confName))
+        def references = classReferences(confName)
         return !references ? Collections.emptySet() :
                 (references.indirect + references.direct)*.moduleVersion*.id*.module.toSet()
     }
@@ -261,7 +259,7 @@ class DependencyService {
      */
     @Memoized
     Set<ModuleIdentifier> unusedDependencies(String confName) {
-        def references = classReferences(sourceSetByConf(confName))
+        def references = classReferences(confName)
         if(!references)
             return Collections.emptySet()
 
@@ -331,13 +329,6 @@ class DependencyService {
                 project.configurations.findAll { it.extendsFrom.contains(conf) }.any { isResolved(it) }
     }
 
-    SourceSet sourceSetByConf(String conf) {
-        return project.convention.getPlugin(JavaPluginConvention).sourceSets.find { sourceSet ->
-            def sourceSetConf = project.configurations.getByName(sourceSet.compileConfigurationName)
-            sourceSetConf.name == conf || allExtendsFrom(sourceSetConf).find { it.name == conf }
-        }
-    }
-
     private Set<Configuration> allExtendsFrom(Configuration conf) {
         def extendsFromRecurse = { Configuration c ->
             c.extendsFrom + c.extendsFrom.collect { owner.call(it) }.flatten()
@@ -348,5 +339,47 @@ class DependencyService {
     private class DependencyReferences {
         Set<ResolvedArtifact> direct = new HashSet()
         Set<ResolvedArtifact> indirect = new HashSet()
+    }
+    
+    private Iterable<String> sourceSetCompileConfigurations() {
+        (project.convention.getPlugin(JavaPluginConvention).sourceSets + 
+                (project.getExtensions().findByName('android')?.sourceSets ?: []))*.compileConfigurationName
+    }
+    
+    SourceSet sourceSetByConf(String conf) {
+        project.convention.getPlugin(JavaPluginConvention).sourceSets.find { sourceSet ->
+            def sourceSetConf = project.configurations.getByName(sourceSet.compileConfigurationName)
+            sourceSetConf.name == conf || allExtendsFrom(sourceSetConf).find { it.name == conf }
+        }        
+    }
+    
+    private Iterable<File> sourceSetClasspath(String conf) {
+        def sourceSet = sourceSetByConf(conf)
+        if(sourceSet) return sourceSet.compileClasspath
+
+        // android
+        if(conf.startsWith('test'))
+            return project.tasks.findByName('compileReleaseUnitTestJavaWithJavac')?.classpath
+        return project.tasks.findByName('compileReleaseJavaWithJavac')?.classpath
+    }
+
+    private File sourceSetOutput(String conf) {
+        def sourceSet = sourceSetByConf(conf)
+        if(sourceSet) return sourceSet.output.classesDir
+
+        // all android confs get squashed into either debug or release output dir?
+        if(conf.startsWith('test')) {
+            def androidTestDebugOutput = project.tasks.findByName('compileDebugUnitTestJavaWithJavac')?.destinationDir
+            if(androidTestDebugOutput && androidTestDebugOutput.exists()) return androidTestDebugOutput
+            
+            def androidTestReleaseOutput = project.tasks.findByName('compileReleaseUnitTestJavaWithJavac')?.destinationDir
+            return androidTestReleaseOutput
+        }
+        
+        def androidDebugOutput = project.tasks.findByName('compileDebugJavaWithJavac')?.destinationDir
+        if (androidDebugOutput && androidDebugOutput.exists()) return androidDebugOutput
+
+        def androidReleaseOutput = project.tasks.findByName('compileReleaseJavaWithJavac')?.destinationDir
+        return androidReleaseOutput
     }
 }
