@@ -5,6 +5,7 @@ import org.gradle.api.Project
 import org.gradle.api.internal.artifacts.DefaultModuleVersionIdentifier
 import org.gradle.api.internal.artifacts.DefaultResolvedDependency
 import org.gradle.testfixtures.ProjectBuilder
+import spock.lang.Issue
 import spock.lang.Unroll
 
 class DependencyServiceSpec extends TestKitSpecification {
@@ -57,7 +58,7 @@ class DependencyServiceSpec extends TestKitSpecification {
         then:
         transitives == [b1] as Set
     }
-
+    
     @Unroll
     def 'find unused dependencies'() {
         when:
@@ -183,6 +184,42 @@ class DependencyServiceSpec extends TestKitSpecification {
         service.sourceSetByConf('compile')?.name == 'main'
         service.sourceSetByConf('providedCompile')?.name == 'main'
         service.sourceSetByConf('deeper')?.name == 'main'
+    }
+
+    @Issue('39')
+    def 'compile sourceSet is not mixed up with integTest class output'() {
+        setup:
+        buildFile.text = """
+            import com.netflix.nebula.lint.rule.dependency.*
+
+            plugins {
+                id 'java'
+                id 'nebula.integtest' version '3.2.1'
+                id 'nebula.lint'
+            }
+            
+            task compileSourceSetOutput << {
+                println('@@' + DependencyService.forProject(project).sourceSetByConf('compile').output.classesDir)
+            }
+            
+            task integTestSourceSetOutput << {
+                println('@@' + DependencyService.forProject(project).sourceSetByConf('integTestCompile').output.classesDir)
+            }
+        """
+
+        when:
+        def results = runTasksSuccessfully('compileSourceSetOutput')
+        def dir = results.output.readLines().find { it.startsWith('@@')}.substring(2)
+
+        then:
+        dir.split('/')[-1] == 'main'
+
+        when:
+        results = runTasksSuccessfully('integTestSourceSetOutput')
+        dir = results.output.readLines().find { it.startsWith('@@')}.substring(2)
+
+        then:
+        dir.split('/')[-1] == 'integTest'        
     }
 
     def 'identify configurations used at runtime (not in the compile scope of one of the project\'s source sets)'() {

@@ -345,13 +345,22 @@ class DependencyService {
         (project.convention.getPlugin(JavaPluginConvention).sourceSets + 
                 (project.getExtensions().findByName('android')?.sourceSets ?: []))*.compileConfigurationName
     }
-    
+
     SourceSet sourceSetByConf(String conf) {
-        project.convention.getPlugin(JavaPluginConvention).sourceSets.find { sourceSet ->
-            def sourceSetConf = project.configurations.getByName(sourceSet.compileConfigurationName)
-            sourceSetConf.name == conf || allExtendsFrom(sourceSetConf).find { it.name == conf }
-        }        
+        project.convention.findPlugin(JavaPluginConvention)?.sourceSets?.find { it.compileConfigurationName == conf } ?:
+                project.configurations.findAll { it.extendsFrom.contains(project.configurations.getByName(conf)) }
+                        .collect { sourceSetByConf(it.name) }
+                        .find { true } // get the first source set, if one is available that matches
     }
+    
+    /*
+        private Set<Configuration> allExtendsFrom(Configuration conf) {
+            def extendsFromRecurse = { Configuration c ->
+                c.extendsFrom + c.extendsFrom.collect { owner.call(it) }.flatten()
+            }
+            return extendsFromRecurse(conf)
+        }
+     */
     
     private Iterable<File> sourceSetClasspath(String conf) {
         def sourceSet = sourceSetByConf(conf)

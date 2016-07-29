@@ -1,4 +1,4 @@
-package com.netflix.nebula.lint.issue37
+package com.netflix.nebula.lint.issues
 
 import com.netflix.nebula.lint.plugin.NotNecessarilyGitRepository
 import org.eclipse.jgit.api.ApplyCommand
