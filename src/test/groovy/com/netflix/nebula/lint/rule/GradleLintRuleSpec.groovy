@@ -26,7 +26,6 @@ import org.codehaus.groovy.ast.stmt.ExpressionStatement
 import org.gradle.api.plugins.JavaPlugin
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
-import spock.lang.Ignore
 import spock.lang.Unroll
 
 class GradleLintRuleSpec extends AbstractRuleSpec {
@@ -70,7 +69,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
 
             @Override
             void visitMethodCallExpression(MethodCallExpression call) {
-                if(call.methodAsString == 'targetCompatibility') {
+                if (call.methodAsString == 'targetCompatibility') {
                     println call
                 }
             }
@@ -118,25 +117,25 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
 
         then:
         taskCount == 19
-        calls[0] == [ name: 't1', args: [:]]
-        calls[1] == [ name: 't2', args: [:]]
-        calls[2] == [ name: 't3', args: [:]]
-        calls[3] == [ name: 't4', args: [:]]
-        calls[4] == [ name: 't5', args: [:]]
-        calls[5] == [ name: 't6', args: [:]]
-        calls[6] == [ name: 't7', args: [type: 'Wrapper']]
-        calls[7] == [ name: 't8', args: [type: 'Wrapper']]
-        calls[8] == [ name: 't9', args: [type: 'Wrapper']]
-        calls[9] == [ name: 't10', args: [type: 'Wrapper']]
-        calls[10] == [ name: 't11', args: [:]]
-        calls[11] == [ name: 't12', args: [type: 'Wrapper']]
-        calls[12] == [ name: 't13', args: [type: 'Wrapper']]
-        calls[13] == [ name: 't14', args: [name: 't14']]
-        calls[14] == [ name: 't15', args: [name: 't15']]
-        calls[15] == [ name: 't16', args: [:]]
-        calls[16] == [ name: 't17', args: [:]]
-        calls[17] == [ name: 't18', args: [type: 'Wrapper']]
-        calls[18] == [ name: 't19', args: [type: 'Wrapper']]
+        calls[0] == [name: 't1', args: [:]]
+        calls[1] == [name: 't2', args: [:]]
+        calls[2] == [name: 't3', args: [:]]
+        calls[3] == [name: 't4', args: [:]]
+        calls[4] == [name: 't5', args: [:]]
+        calls[5] == [name: 't6', args: [:]]
+        calls[6] == [name: 't7', args: [type: 'Wrapper']]
+        calls[7] == [name: 't8', args: [type: 'Wrapper']]
+        calls[8] == [name: 't9', args: [type: 'Wrapper']]
+        calls[9] == [name: 't10', args: [type: 'Wrapper']]
+        calls[10] == [name: 't11', args: [:]]
+        calls[11] == [name: 't12', args: [type: 'Wrapper']]
+        calls[12] == [name: 't13', args: [type: 'Wrapper']]
+        calls[13] == [name: 't14', args: [name: 't14']]
+        calls[14] == [name: 't15', args: [name: 't15']]
+        calls[15] == [name: 't16', args: [:]]
+        calls[16] == [name: 't17', args: [:]]
+        calls[17] == [name: 't18', args: [type: 'Wrapper']]
+        calls[18] == [name: 't19', args: [type: 'Wrapper']]
         calls.size() == taskCount
     }
 
@@ -216,11 +215,11 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
 
             @Override
             void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
-                if(bookmark('lastApplyPlugin')) {
+                if (bookmark('lastApplyPlugin')) {
                     addBuildLintViolation('should generate source jar', call)
-                        .insertAfter(bookmark('lastApplyPlugin'), "apply plugin: 'nebula.source-jar'")
+                            .insertAfter(bookmark('lastApplyPlugin'), "apply plugin: 'nebula.source-jar'")
                     addBuildLintViolation('should generate javadoc jar', call)
-                        .insertAfter(bookmark('lastApplyPlugin'), "apply plugin: 'nebula.javadoc-jar'")
+                            .insertAfter(bookmark('lastApplyPlugin'), "apply plugin: 'nebula.javadoc-jar'")
                 }
             }
         }
@@ -266,11 +265,11 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         result.violates() == violates
 
         where:
-        rules                               |  violates
-        /'no-plugins-allowed'/              |  false
-        /'other-rule'/                      |  true
-        /'no-plugins-allowed','other-rule'/ |  false
-        ''                                  |  false
+        rules                               | violates
+        /'no-plugins-allowed'/              | false
+        /'other-rule'/                      | true
+        /'no-plugins-allowed','other-rule'/ | false
+        ''                                  | false
     }
 
     def 'ignore closure properly delegates'() {
@@ -316,7 +315,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
 
             @Override
             void visitExtensionProperty(ExpressionStatement expression, String extension, String prop) {
-                if(extension == 'nebula' && prop == 'moduleOwner')
+                if (extension == 'nebula' && prop == 'moduleOwner')
                     addBuildLintViolation('moduleOwner is deprecated and should be removed', expression)
             }
         }
@@ -342,7 +341,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
 
             @Override
             void visitExpressionStatement(ExpressionStatement statement) {
-                if(statement.expression instanceof VariableExpression)
+                if (statement.expression instanceof VariableExpression)
                     parent = parentClosure()
             }
         })
@@ -364,7 +363,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
 
             @Override
             void visitMethodCallExpression(MethodCallExpression call) {
-                if(call.methodAsString == 'multiline')
+                if (call.methodAsString == 'multiline')
                     addBuildLintViolation('this block can be deleted', call).delete(call)
             }
         })

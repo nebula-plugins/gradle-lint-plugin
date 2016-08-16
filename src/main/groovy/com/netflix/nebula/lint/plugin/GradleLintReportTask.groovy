@@ -22,6 +22,7 @@ import org.codenarc.report.HtmlReportWriter
 import org.codenarc.report.ReportWriter
 import org.codenarc.report.TextReportWriter
 import org.codenarc.report.XmlReportWriter
+import org.gradle.api.Action
 import org.gradle.api.DefaultTask
 import org.gradle.api.plugins.quality.CodeNarcReports
 import org.gradle.api.plugins.quality.internal.CodeNarcReportsImpl
@@ -30,8 +31,8 @@ import org.gradle.api.reporting.Reporting
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.VerificationTask
+import org.gradle.internal.logging.text.StyledTextOutputFactory
 import org.gradle.internal.reflect.Instantiator
-import org.gradle.logging.StyledTextOutputFactory
 
 import javax.inject.Inject
 
@@ -56,7 +57,7 @@ class GradleLintReportTask extends DefaultTask implements VerificationTask, Repo
 
     @TaskAction
     void generateReport() {
-        if(reports.enabled) {
+        if (reports.enabled) {
             def lintService = new LintService()
             def results = lintService.lint(project)
             def violationCount = results.violations.size()
@@ -99,5 +100,10 @@ class GradleLintReportTask extends DefaultTask implements VerificationTask, Repo
     @Override
     CodeNarcReports reports(Closure closure) {
         reports.configure(closure)
+    }
+
+    @Override
+    CodeNarcReports reports(Action<? super CodeNarcReports> action) {
+        action.execute(reports)
     }
 }
