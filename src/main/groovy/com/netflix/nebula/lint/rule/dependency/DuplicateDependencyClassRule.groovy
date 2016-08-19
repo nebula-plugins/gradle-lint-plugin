@@ -55,7 +55,7 @@ class DuplicateDependencyClassRule extends GradleLintRule implements GradleModel
                     // don't count artifacts that have the same ModuleIdentifier, which are different versions of the same
                     // module coming from extended configurations that are ultimately conflict resolved away anyway
                     Collection<ResolvedArtifact> artifacts = it.value
-                    dependencyClasses.contains(it.key) && artifacts.count { it.moduleVersion.id.module != mvid.module } > 1
+                    dependencyClasses.contains(it.key) && artifacts.any { it.moduleVersion.id.module != mvid.module }
                 }
 
         def dupeClassesByDependency = new TreeMap<ModuleVersionIdentifier, Set<String>>(DependencyService.DEPENDENCY_COMPARATOR).withDefault {
