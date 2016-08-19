@@ -353,15 +353,6 @@ class DependencyService {
                         .find { true } // get the first source set, if one is available that matches
     }
     
-    /*
-        private Set<Configuration> allExtendsFrom(Configuration conf) {
-            def extendsFromRecurse = { Configuration c ->
-                c.extendsFrom + c.extendsFrom.collect { owner.call(it) }.flatten()
-            }
-            return extendsFromRecurse(conf)
-        }
-     */
-    
     private Iterable<File> sourceSetClasspath(String conf) {
         def sourceSet = sourceSetByConf(conf)
         if(sourceSet) return sourceSet.compileClasspath

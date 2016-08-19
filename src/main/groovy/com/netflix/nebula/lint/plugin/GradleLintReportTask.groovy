@@ -16,7 +16,7 @@
 
 package com.netflix.nebula.lint.plugin
 
-import com.netflix.nebula.lint.Styling
+import com.netflix.nebula.lint.StyledTextService
 import org.codenarc.AnalysisContext
 import org.codenarc.report.HtmlReportWriter
 import org.codenarc.report.ReportWriter
@@ -31,19 +31,14 @@ import org.gradle.api.reporting.Reporting
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.VerificationTask
-import org.gradle.internal.logging.text.StyledTextOutputFactory
 import org.gradle.internal.reflect.Instantiator
+import static com.netflix.nebula.lint.StyledTextService.Styling.*
 
 import javax.inject.Inject
 
 class GradleLintReportTask extends DefaultTask implements VerificationTask, Reporting<CodeNarcReports> {
     @Nested
     private final CodeNarcReportsImpl reports
-
-    @Inject
-    protected StyledTextOutputFactory getTextOutputFactory() {
-        null // see http://gradle.1045684.n5.nabble.com/injecting-dependencies-into-task-instances-td5712637.html
-    }
 
     /**
      * Whether or not the build should break when the verifications performed by this task fail.
@@ -61,10 +56,10 @@ class GradleLintReportTask extends DefaultTask implements VerificationTask, Repo
             def lintService = new LintService()
             def results = lintService.lint(project)
             def violationCount = results.violations.size()
-            def textOutput = textOutputFactory.create(GradleLintReportTask)
-
+            def textOutput = new StyledTextService(getServices())
+            
             textOutput.text('Generated a report containing information about ')
-            textOutput.style(Styling.Bold).text("$violationCount lint violation${violationCount == 1 ? '' : 's'}")
+            textOutput.withStyle(Bold).text("$violationCount lint violation${violationCount == 1 ? '' : 's'}")
             textOutput.println(' in this project')
 
             reports.enabled.each { Report r ->
@@ -104,6 +99,6 @@ class GradleLintReportTask extends DefaultTask implements VerificationTask, Repo
 
     @Override
     CodeNarcReports reports(Action<? super CodeNarcReports> action) {
-        action.execute(reports)
+        return action.execute(reports)
     }
 }
