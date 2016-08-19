@@ -62,6 +62,33 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
         [asm, asm_asm]                  | "$asm_asm in configuration 'compile' has 21 classes duplicated by $asm"
     }
     
+    @Issue('47')
+    def 'duplicate classes arising from different versions of the module selected in different configurations are not marked as duplicate'() {
+        given:
+        buildFile.text = """
+            plugins {
+                id 'java'
+                id 'nebula.lint'
+            }
+
+            gradleLint.rules = ['duplicate-dependency-class']
+
+            repositories { mavenCentral() }
+
+            dependencies {
+                compile 'log4j:log4j:1.2.16'
+                testCompile 'org.slf4j:slf4j-log4j12:1.7.7' // transitively depends on log4j:1.2.17
+            }
+        """
+
+        when:
+        createJavaTestFile('public class Main {}')
+        def result = runTasksSuccessfully('compileTestJava', 'lintGradle')
+
+        then:
+        !result.output.contains("log4j:log4j:1.2.16 in configuration 'compile'")
+    }
+    
     @Issue('42')
     def 'detect duplicate classes when dependency syntax is defined in an extension property'() {
         setup:

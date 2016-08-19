@@ -6,6 +6,7 @@ import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ModuleVersionIdentifier
+import org.gradle.api.artifacts.ResolvedArtifact
 
 class DuplicateDependencyClassRule extends GradleLintRule implements GradleModelAware {
     String description = 'classpaths with duplicate classes may break unpredictably depending on the order in which dependencies are provided to the classpath'
@@ -37,7 +38,7 @@ class DuplicateDependencyClassRule extends GradleLintRule implements GradleModel
                 continue
 
             conf.resolvedConfiguration.firstLevelModuleDependencies.each { resolved ->
-                checkForDuplicates (resolved.module.id, conf.name)
+                checkForDuplicates(resolved.module.id, conf.name)
             }
         }
     }
@@ -50,7 +51,12 @@ class DuplicateDependencyClassRule extends GradleLintRule implements GradleModel
             return
 
         def dupeDependencyClasses = dependencyService.artifactsByClass(conf)
-                .findAll { dependencyClasses.contains(it.key) && it.value.size() > 1 }
+                .findAll {
+                    // don't count artifacts that have the same ModuleIdentifier, which are different versions of the same
+                    // module coming from extended configurations that are ultimately conflict resolved away anyway
+                    Collection<ResolvedArtifact> artifacts = it.value
+                    dependencyClasses.contains(it.key) && artifacts.count { it.moduleVersion.id.module != mvid.module } > 1
+                }
 
         def dupeClassesByDependency = new TreeMap<ModuleVersionIdentifier, Set<String>>(DependencyService.DEPENDENCY_COMPARATOR).withDefault {
             [] as Set
