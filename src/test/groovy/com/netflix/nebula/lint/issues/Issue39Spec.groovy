@@ -33,7 +33,5 @@ class Issue39Spec extends TestKitSpecification {
                 
         then:
         runTasksSuccessfully('compileIntegTestJava', 'fixGradleLint')
-        
-        println(buildFile.text)
     }
 }

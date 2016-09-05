@@ -55,30 +55,6 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
 
     abstract class GradleProjectLintRule extends GradleLintRule implements GradleModelAware {}
 
-    def 'evaluate interpolated strings in the context of the project model'() {
-        when:
-        new File(projectDir, 'gradle.properties').text = 'version=1.7'
-
-        project.buildFile << '''
-            apply plugin: 'java'
-            targetCompatibility "$version"
-        '''
-
-        runRulesAgainst(new GradleProjectLintRule() {
-            String description = 'test'
-
-            @Override
-            void visitMethodCallExpression(MethodCallExpression call) {
-                if (call.methodAsString == 'targetCompatibility') {
-                    println call
-                }
-            }
-        })
-
-        then:
-        true
-    }
-
     def 'visit `task`'() {
         when:
         project.buildFile << '''
