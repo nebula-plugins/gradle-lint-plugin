@@ -88,9 +88,9 @@ class DependencyService {
      * @return the contents of an artifact matching this module version, or <code>null</code> if no such
      * artifact was found on the resolved classpath
      */
-    JarContents jarContents(ModuleVersionIdentifier id) {
+    JarContents jarContents(ModuleIdentifier id) {
         for(Configuration conf in project.configurations) {
-            def artifact = conf.resolvedConfiguration.resolvedArtifacts.find { it.moduleVersion.id.module == id.module }
+            def artifact = conf.resolvedConfiguration.resolvedArtifacts.find { it.moduleVersion.id.module == id }
             if(artifact)
                 return jarContents(artifact.file)
         }

@@ -361,16 +361,18 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
                 def methodName = call.methodAsString
                 def args = call.arguments.expressions as List
                 if (!args.empty && configurations.contains(methodName)) {
+                    def dependency = null
+                    
                     if (call.arguments.expressions.any { it instanceof MapExpression }) {
                         def entries = GradleAstUtil.collectEntryExpressions(call)
-                        visitGradleDependency(call, methodName, new GradleDependency(
+                        dependency = new GradleDependency(
                                 entries.group,
                                 entries.name,
                                 entries.version,
                                 entries.classifier,
                                 entries.ext,
                                 entries.conf,
-                                GradleDependency.Syntax.MapNotation))
+                                GradleDependency.Syntax.MapNotation)
                     } else if (call.arguments.expressions.any { it instanceof ConstantExpression || it instanceof GStringExpression }) {
                         def expr = call.arguments.expressions.findResult {
                             if(it instanceof ConstantExpression)
@@ -379,17 +381,21 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
                                 return it.text
                             return null
                         }
-                        def matcher = expr =~ /(?<group>[^:]+):(?<name>[^:]+):(?<version>[^@:]+)(?<classifier>:[^@]+)?(?<ext>@.+)?/
+                        def matcher = expr =~ /((?<group>[^:]+):)?(?<name>[^:]+)(:(?<version>[^@:]+)(?<classifier>:[^@]+)?(?<ext>@.+)?)?/
                         if (matcher.matches()) {
-                            visitGradleDependency(call, methodName, new GradleDependency(
+                            dependency = new GradleDependency(
                                     matcher.group('group'),
                                     matcher.group('name'),
                                     matcher.group('version'),
                                     matcher.group('classifier'),
                                     matcher.group('ext'),
                                     null,
-                                    GradleDependency.Syntax.StringNotation))
+                                    GradleDependency.Syntax.StringNotation)
                         }
+                    }
+                    
+                    if(dependency) {
+                        visitGradleDependency(call, methodName, dependency)
                     }
                 }
             }

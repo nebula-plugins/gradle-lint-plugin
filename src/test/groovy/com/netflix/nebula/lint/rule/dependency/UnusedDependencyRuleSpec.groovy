@@ -311,7 +311,7 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
         dependencies(buildFile, 'runtime') == ['org.webjars:acorn:0.5.0']
     }
 
-    def 'dependencies present in more than one configuration as first order dependencies can be removed from one or more'() {
+    def 'dependencies present in more than one configuration as first order dependencies can be removed from one of them'() {
         when:
         buildFile.text = """
             plugins {

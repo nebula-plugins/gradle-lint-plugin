@@ -267,7 +267,7 @@ class DependencyServiceSpec extends TestKitSpecification {
 
             task coreContents << {
               new File(projectDir, "coreContents.txt").text = DependencyService.forProject(project)
-                .jarContents(configurations.compile.resolvedConfiguration.firstLevelModuleDependencies[0].module.id)
+                .jarContents(configurations.compile.resolvedConfiguration.firstLevelModuleDependencies[0].module.id.module)
                 .classes
                 .join('\\n')
             }

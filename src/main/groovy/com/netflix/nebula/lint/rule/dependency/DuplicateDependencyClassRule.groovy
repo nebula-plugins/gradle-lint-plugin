@@ -56,7 +56,7 @@ class DuplicateDependencyClassRule extends GradleLintRule implements GradleModel
         if(ignoredDependencies.contains(mvid))
             return
         
-        def dependencyClasses = dependencyService.jarContents(mvid)?.classes
+        def dependencyClasses = dependencyService.jarContents(mvid.module)?.classes
         if (!dependencyClasses)
             return
 

@@ -115,13 +115,21 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         calls.size() == taskCount
     }
 
-    def 'visit dependencies'() {
+    private class DependencyVisitingRule extends GradleLintRule {
+        final String description = 'visit dependencies'
+        List<GradleDependency> deps = []
+        
+        @Override
+        void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
+            deps += dep
+        }
+        
+        DependencyVisitingRule run() { runRulesAgainst(this); this }
+    }
+    
+    def 'visit dependencies in subprojects block'() {
         when:
         project.buildFile << """
-            dependencies {
-               compile group: 'a', name: 'a', version: '1'
-            }
-
             subprojects {
                 dependencies {
                    compile 'b:b:1'
@@ -129,29 +137,43 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
             }
         """
 
-        def visited = []
+        def b = new DependencyVisitingRule().run().deps.find { it.name == 'b' }
 
-        runRulesAgainst(new GradleLintRule() {
-            String description = 'test'
-
-            @Override
-            void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
-                visited += dep
+        then:
+        b
+        b.syntax == GradleDependency.Syntax.StringNotation
+    }
+    
+    def 'visit dependencies that are defined with map notation'() {
+        when:
+        project.buildFile << """
+            dependencies {
+               compile group: 'a', name: 'a', version: '1'
             }
-        })
+        """
 
-        def a = visited.find { it.name == 'a' }
-        def b = visited.find { it.name == 'b' }
+        def a = new DependencyVisitingRule().run().deps.find { it.name == 'a' }
 
         then:
         a
         a.group == 'a'
         a.version == '1'
         a.syntax == GradleDependency.Syntax.MapNotation
+    }
+    
+    def 'visit dependency with no version'() {
+        when:
+        project.buildFile << """
+            dependencies {
+               compile 'a:a'
+            }
+        """
+
+        def a = new DependencyVisitingRule().run().deps.find { it.name == 'a' }
 
         then:
-        b
-        b.syntax == GradleDependency.Syntax.StringNotation
+        a
+        a.version == null
     }
 
     def 'add violation with deletion'() {
