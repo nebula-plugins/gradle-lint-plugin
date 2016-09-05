@@ -1,0 +1,11 @@
+machine:
+  java:
+    version: openjdk7
+test:
+  pre:
+    - gpg --passphrase $KEY --output gradle.properties --decrypt gradle.properties.enc
+  override:
+    - ./gradle/ciBuild.sh
+general:
+  artifacts:
+    - "build/reports"
