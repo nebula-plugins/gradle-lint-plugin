@@ -194,6 +194,9 @@ class DependencyService {
      */
     @Memoized
     boolean isRuntime(String confName) {
+        if(confName == 'compileOnly')
+            return false
+        
         if(confName == 'providedCompile' && project.plugins.hasPlugin('war')) {
             // Gradle should not have made providedRuntime extend from providedCompile, since the runtime conf would already
             // have inherited providedCompile dependencies via the compile -> providedCompile extension
@@ -354,7 +357,7 @@ class DependencyService {
     }
     
     private Iterable<File> sourceSetClasspath(String conf) {
-        def sourceSet = sourceSetByConf(conf)
+        def sourceSet = sourceSetByConf(conf == 'compileOnly' ? 'compile' : conf)
         if(sourceSet) return sourceSet.compileClasspath
 
         // android
@@ -364,7 +367,7 @@ class DependencyService {
     }
 
     private File sourceSetOutput(String conf) {
-        def sourceSet = sourceSetByConf(conf)
+        def sourceSet = sourceSetByConf(conf == 'compileOnly' ? 'compile' : conf)
         if(sourceSet) return sourceSet.output.classesDir
 
         // all android confs get squashed into either debug or release output dir?

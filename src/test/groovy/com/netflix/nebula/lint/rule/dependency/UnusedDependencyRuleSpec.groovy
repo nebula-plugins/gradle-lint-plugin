@@ -17,6 +17,7 @@
 package com.netflix.nebula.lint.rule.dependency
 
 import com.netflix.nebula.lint.TestKitSpecification
+import spock.lang.Issue
 import spock.lang.Unroll
 
 class UnusedDependencyRuleSpec extends TestKitSpecification {
@@ -428,5 +429,60 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
         then:
         runTasksSuccessfully('sub:compileJava', 'fixGradleLint')
         dependencies(buildFile, 'compile') == ['com.google.guava:guava:19.0']
+    }
+
+    @Issue('46')
+    def 'do not move compileOnly dependencies to other configurations'() {
+        when:
+        buildFile.text = """
+            plugins {
+                id 'nebula.lint'
+                id 'war'
+            }
+
+            gradleLint.rules = ['unused-dependency']
+
+            repositories { mavenCentral() }
+
+            dependencies {
+                compileOnly 'com.google.guava:guava:19.0'
+            }
+        """
+
+        createJavaSourceFile('''
+            import com.google.common.collect.*;
+            public class A {
+                Object m = HashMultimap.create();
+            }
+        ''')
+
+        then:
+        def results = runTasksSuccessfully('compileJava', 'lintGradle')
+        !results.output.contains('unused-dependency')
+    }
+
+    @Issue('46')
+    def 'remove unused compileOnly dependencies'() {
+        when:
+        buildFile.text = """
+            plugins {
+                id 'nebula.lint'
+                id 'war'
+            }
+
+            gradleLint.rules = ['unused-dependency']
+
+            repositories { mavenCentral() }
+
+            dependencies {
+                compileOnly 'com.google.guava:guava:19.0'
+            }
+        """
+
+        createJavaSourceFile('public class A {}')
+
+        then:
+        def results = runTasksSuccessfully('compileJava', 'lintGradle')
+        results.output.contains('unused-dependency')
     }
 }

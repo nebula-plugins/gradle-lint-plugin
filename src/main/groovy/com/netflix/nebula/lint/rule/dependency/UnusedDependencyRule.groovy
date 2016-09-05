@@ -13,6 +13,8 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
     static final List<String> shouldBeRuntime = ['xerces', 'xercesImpl', 'xml-apis']
 
     Map<ModuleIdentifier, MethodCallExpression> runtimeDependencyDefinitions = [:]
+    Set<ModuleIdentifier> compileOnlyDependencies = [] as Set
+    
     DependencyService dependencyService
 
     @Override
@@ -28,6 +30,11 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
 
         if(project.convention.findPlugin(JavaPluginConvention)) {
             def mid = dep.toModule()
+
+            if(conf == 'compileOnly') {
+                compileOnlyDependencies.add(mid)
+            }
+            
             if (!dependencyService.isRuntime(conf)) {
                 def jarContents = dependencyService.jarContents(mid)
                 if (!jarContents) {
@@ -56,7 +63,8 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
                     }
                     // is there some extending configuration that needs this dependency?
                     if (requiringSourceSet && !dependencyService.firstLevelDependenciesInConf(requiringSourceSet)
-                            .collect { it.module }.contains(mid)) {
+                            .collect { it.module }.contains(mid) && conf != 'compileOnly') {
+                        // never move compileOnly dependencies
                         addBuildLintViolation("this dependency should be moved to configuration $requiringSourceSet.name", call)
                                 .replaceWith(call, "${requiringSourceSet.name} '${dep.toNotation()}'")
                     } else {
@@ -64,7 +72,7 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
                                 .delete(call)
                     }
                 }
-            } else {
+            } else if(conf != 'compileOnly') {
                 runtimeDependencyDefinitions[mid] = call
             }
         }
@@ -89,7 +97,7 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
                     if (runtimeDeclaration) {
                         addBuildLintViolation("this dependency should be moved to configuration $conf", runtimeDeclaration)
                                 .replaceWith(runtimeDeclaration, "$conf '$undeclared'")
-                    } else {
+                    } else if(!compileOnlyDependencies.contains(undeclared.module)) {
                         addBuildLintViolation("one or more classes in $undeclared are required by your code directly")
                                 .insertIntoClosure(dependenciesBlock, "$conf '$undeclared'")
                     }
