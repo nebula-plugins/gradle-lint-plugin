@@ -79,8 +79,13 @@ class LintGradleTask extends DefaultTask {
                     }
 
                     textOutput.text(v.rule.ruleId.padRight(35))
-                    textOutput.withStyle(Yellow).println(v.message)
 
+                    textOutput.withStyle(Yellow).print(v.message)
+                    if(v.fixes.isEmpty()) {
+                        textOutput.withStyle(Yellow).print(' (no auto-fix available)')
+                    }
+                    textOutput.println()
+                    
                     if (v.lineNumber)
                         textOutput.withStyle(Bold).println(buildFilePath + ':' + v.lineNumber)
                     if (v.sourceLine)
