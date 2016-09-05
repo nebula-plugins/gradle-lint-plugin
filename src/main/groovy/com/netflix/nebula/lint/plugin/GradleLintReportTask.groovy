@@ -97,7 +97,6 @@ class GradleLintReportTask extends DefaultTask implements VerificationTask, Repo
         reports.configure(closure)
     }
 
-    @Override
     CodeNarcReports reports(Action<? super CodeNarcReports> action) {
         return action.execute(reports)
     }
