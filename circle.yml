@@ -9,3 +9,9 @@ test:
 general:
   artifacts:
     - "build/reports"
+deployment:
+  release:
+    tag: /v.*/
+    owner: nebula-plugins
+    commands:
+      - ./gradle/ciBuild.sh
