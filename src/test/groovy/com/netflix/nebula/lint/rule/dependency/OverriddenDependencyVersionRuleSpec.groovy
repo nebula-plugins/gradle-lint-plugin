@@ -1,6 +1,7 @@
 package com.netflix.nebula.lint.rule.dependency
 
 import com.netflix.nebula.lint.TestKitSpecification
+import spock.lang.Issue
 import spock.lang.Unroll
 
 class OverriddenDependencyVersionRuleSpec extends TestKitSpecification {
@@ -122,5 +123,29 @@ class OverriddenDependencyVersionRuleSpec extends TestKitSpecification {
         then:
         runTasksSuccessfully('assemble', 'fixGradleLint')
         dependencies(buildFile, 'compile') == ['com.google.guava:guava:latest.release']
+    }
+
+    @Issue('55')
+    def 'leave dependencies without a version alone'() {
+        when:
+        buildFile << """
+            configurations.all {
+                resolutionStrategy {
+                    eachDependency { DependencyResolveDetails details ->
+                        details.useVersion '19.0'
+                    }
+                }
+            }
+
+            dependencies {
+                compile 'com.google.guava:guava'
+            }
+        """
+
+        createJavaSourceFile('public class Main {}')
+
+        then:
+        runTasksSuccessfully('assemble', 'fixGradleLint')
+        dependencies(buildFile, 'compile') == ['com.google.guava:guava']
     }
 }

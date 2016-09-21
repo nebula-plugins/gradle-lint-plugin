@@ -20,6 +20,10 @@ class OverriddenDependencyVersionRule extends GradleLintRule implements GradleMo
         if(!DependencyService.forProject(project).isResolved(conf)) {
             return // we won't slow down the build by resolving the configuration if it hasn't been already
         }
+        
+        if(!dep.version) {
+            return // we assume that anything recommending this version is behaving correctly
+        }
 
         // causes the component metadata rule to fire and capture all metadata by module id
         def resolved = project.configurations.getByName(conf).resolvedConfiguration.resolvedArtifacts.find {
