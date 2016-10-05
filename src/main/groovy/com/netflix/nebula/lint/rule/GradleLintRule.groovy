@@ -59,10 +59,12 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
 
     @Override void visitApplyPlugin(MethodCallExpression call, String plugin) {}
     @Override void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {}
+    @Override void visitGradlePlugin(MethodCallExpression call, String conf, GradlePlugin plugin) {}
     @Override void visitConfigurationExclude(MethodCallExpression call, String conf, GradleDependency exclude) {}
     @Override void visitExtensionProperty(ExpressionStatement expression, String extension, String prop, String value) {}
     @Override void visitExtensionProperty(ExpressionStatement expression, String extension, String prop) {}
     @Override void visitDependencies(MethodCallExpression call) {}
+    @Override void visitPlugins(MethodCallExpression call) {}
     @Override void visitTask(MethodCallExpression call, String name, Map<String, String> args) {}
 
     protected boolean isIgnored() {
@@ -178,6 +180,7 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
 
             boolean inDependenciesBlock = false
             boolean inConfigurationsBlock = false
+            boolean inPluginsBlock = false
 
             @Override
             final void visitMethodCallExpression(MethodCallExpression call) {
@@ -208,6 +211,8 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
                     visitMethodCallInDependencies(call)
                 } else if (inConfigurationsBlock) {
                     visitMethodCallInConfigurations(call)
+                } else if (inPluginsBlock) {
+                    visitMethodCallInPlugins(call)
                 }
 
                 if (methodName == 'dependencies') {
@@ -215,6 +220,11 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
                     super.visitMethodCallExpression(call)
                     GradleLintRule.this.visitDependencies(call)
                     inDependenciesBlock = false
+                } else if (methodName == 'plugins') {
+                    inPluginsBlock = true
+                    super.visitMethodCallExpression(call)
+                    GradleLintRule.this.visitPlugins(call)
+                    inPluginsBlock = false
                 } else if (methodName == 'configurations') {
                     inConfigurationsBlock = true
                     super.visitMethodCallExpression(call)
@@ -399,6 +409,30 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
                     }
                 }
             }
+
+            private void visitMethodCallInPlugins(MethodCallExpression call) {
+                // https://docs.gradle.org/current/javadoc/org/gradle/plugin/use/PluginDependenciesSpec.html
+                def args = call.arguments.expressions as List
+                if (!args.empty) {
+                    def plugin = null
+                    if (args.any {
+                        it instanceof ConstantExpression || it instanceof GStringExpression
+                    }) {
+                        def expr = args.findResult {
+                            if (it instanceof ConstantExpression)
+                                return it.value
+                            if (it instanceof GStringExpression)
+                                return it.text
+                            return null
+                        }
+                        plugin = new GradlePlugin(expr)
+                    }
+
+                    if(plugin) {
+                        visitGradlePlugin(call, call.methodAsString, plugin)
+                    }
+                }
+                }
         }
 
         @Override

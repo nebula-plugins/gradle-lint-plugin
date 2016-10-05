@@ -31,6 +31,19 @@ class PluginRenamedRuleSpec extends AbstractRuleSpec {
         results.violations.size() == 1
     }
 
+    def 'deprecated plugin names (using plugins DSL) are recorded as violations'() {
+        when:
+        project.buildFile << """
+            plugins {
+             id 'ye-olde-plugin'
+            }
+        """
+
+        def results = runRulesAgainst(new PluginRenamedRule('ye-olde-plugin', 'shiny-new-plugin'))
+
+        then:
+        results.violations.size() == 1
+    }
     def 'deprecated plugin names are replaced with new names'() {
         when:
         project.buildFile << """

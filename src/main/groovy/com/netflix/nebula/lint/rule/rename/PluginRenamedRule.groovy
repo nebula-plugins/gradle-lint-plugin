@@ -17,6 +17,7 @@
 package com.netflix.nebula.lint.rule.rename
 
 import com.netflix.nebula.lint.rule.GradleLintRule
+import com.netflix.nebula.lint.rule.GradlePlugin
 import groovy.transform.Canonical
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 
@@ -36,6 +37,14 @@ class PluginRenamedRule extends GradleLintRule {
             addBuildLintViolation("plugin $deprecatedPluginName has been renamed to $pluginName", call)
                 .replaceWith(call, "apply plugin: '$pluginName'")
 
+        }
+    }
+
+    @Override
+    void visitGradlePlugin(MethodCallExpression call, String conf, GradlePlugin plugin) {
+        if (plugin.id == deprecatedPluginName) {
+            addBuildLintViolation("plugin $deprecatedPluginName has been renamed to $pluginName", call)
+                .replaceWith(call, "id '$pluginName'")
         }
     }
 }

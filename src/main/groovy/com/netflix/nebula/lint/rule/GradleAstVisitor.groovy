@@ -25,6 +25,8 @@ interface GradleAstVisitor {
 
     void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep)
 
+    void visitGradlePlugin(MethodCallExpression call, String conf, GradlePlugin plugin)
+
     void visitConfigurationExclude(MethodCallExpression call, String conf, GradleDependency exclude)
 
     /**
@@ -62,6 +64,8 @@ interface GradleAstVisitor {
     ASTNode bookmark(String label)
 
     void visitDependencies(MethodCallExpression call)
+
+    void visitPlugins(MethodCallExpression call)
 
     void visitTask(MethodCallExpression call, String name, Map<String, String> args)
 }
