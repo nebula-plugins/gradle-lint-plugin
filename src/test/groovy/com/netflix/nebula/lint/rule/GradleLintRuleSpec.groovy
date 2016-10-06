@@ -76,6 +76,35 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         pluginCount == 1
     }
 
+    def 'visit `buildScript`'() {
+        when:
+        project.buildFile << """
+            buildscript {
+                repositories {
+                    maven { url 'https://plugins.gradle.org/m2/' }
+                }
+
+                dependencies {
+                    classpath 'com.gradle:build-scan-plugin:1.1.1'
+                }
+            }
+        """
+
+        def dependenciesCount = 0
+
+        runRulesAgainst(new GradleLintRule() {
+            String description = 'test'
+
+            @Override
+            void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
+                dependenciesCount++
+            }
+        })
+
+        then:
+        dependenciesCount == 1
+    }
+
     abstract class GradleProjectLintRule extends GradleLintRule implements GradleModelAware {}
 
     def 'visit `task`'() {

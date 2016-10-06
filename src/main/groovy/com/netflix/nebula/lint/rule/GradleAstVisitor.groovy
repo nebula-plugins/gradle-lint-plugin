@@ -68,4 +68,6 @@ interface GradleAstVisitor {
     void visitPlugins(MethodCallExpression call)
 
     void visitTask(MethodCallExpression call, String name, Map<String, String> args)
+
+    void visitBuildscript(MethodCallExpression call)
 }
