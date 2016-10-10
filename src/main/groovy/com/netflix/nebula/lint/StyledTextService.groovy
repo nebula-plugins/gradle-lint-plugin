@@ -14,7 +14,7 @@ class StyledTextService {
         try {
             factoryClass = Class.forName('org.gradle.internal.logging.text.StyledTextOutputFactory')
         } catch(ClassNotFoundException ignore) {
-            factoryClass = Class.forName('org.gradle.logging')
+            factoryClass = Class.forName('org.gradle.logging.StyledTextOutputFactory')
         }
 
         def textOutputFactory = registry.get(factoryClass)

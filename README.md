@@ -20,7 +20,7 @@ To apply this plugin:
     
     buildscript { repositories { jcenter() } }
     plugins {
-      id 'nebula.lint' version '5.1.0'
+      id 'nebula.lint' version '5.1.3'
     }
     
 *Important:* For now, in a multi-module build you **must** apply lint to the root project, at a minimum.

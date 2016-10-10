@@ -29,4 +29,22 @@ class FixGradleLintTaskSpec extends TestKitSpecification {
         results.output.count('fixed          unused-dependency') == 1
         results.output.count('unfixed        dependency-parentheses') == 1
     }
+
+    def 'Make sure logging works on older gradle version'() {
+        buildFile << """\
+            plugins {
+                id 'nebula.lint'
+                id 'java'
+            }
+
+            gradleLint.rules = ['all-dependencies']
+            """.stripIndent()
+
+        when:
+        def results = runTasksSuccessfullyWithGradleVersion('2.13', 'assemble', 'lintGradle')
+
+        then:
+        println results?.output
+        noExceptionThrown()
+    }
 }
