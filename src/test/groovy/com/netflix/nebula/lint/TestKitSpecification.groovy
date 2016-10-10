@@ -14,6 +14,7 @@ abstract class TestKitSpecification extends Specification {
     File projectDir
     File buildFile
     File settingsFile
+    Boolean debug = true
 
     def setup() {
         projectDir = temp.root
@@ -23,9 +24,19 @@ abstract class TestKitSpecification extends Specification {
 
     def runTasksSuccessfully(String... tasks) {
         return GradleRunner.create()
-                .withDebug(true)
+                .withDebug(debug)
                 .withProjectDir(projectDir)
                 .withArguments(*(tasks + '--stacktrace'))
+                .withPluginClasspath()
+                .build()
+    }
+
+    def runTasksSuccessfullyWithGradleVersion(String gradleVersion, String... tasks) {
+        return GradleRunner.create()
+                .withDebug(debug)
+                .withProjectDir(projectDir)
+                .withArguments(*(tasks + '--stacktrace'))
+                .withGradleVersion(gradleVersion)
                 .withPluginClasspath()
                 .build()
     }
