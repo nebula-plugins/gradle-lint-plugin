@@ -31,7 +31,7 @@ import java.util.regex.Pattern
  */
 class ArchaicWrapperRule extends GradleLintRule implements GradleModelAware {
     private static
-    final Pattern VERSION_PATTERN = Pattern.compile("((\\d+)\\.(\\d+)+)(-(\\p{Alpha}+)-(\\d+[a-z]?))?(-(\\d{14}([-+]\\d{4})?))?");
+    final Pattern VERSION_PATTERN = Pattern.compile("((\\d+)\\.(\\d+)+)(\\.(\\d+)+)?(-(\\p{Alpha}+)-(\\d+[a-z]?))?(-(\\d{14}([-+]\\d{4})?))?");
 
     private GradleVersion latestGradleVersion = null
     private GradleVersion wrapperGradleVersion = null
