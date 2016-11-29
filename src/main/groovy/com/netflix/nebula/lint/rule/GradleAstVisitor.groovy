@@ -25,6 +25,8 @@ interface GradleAstVisitor {
 
     void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep)
 
+    void visitGradlePlugin(MethodCallExpression call, String conf, GradlePlugin plugin)
+
     void visitConfigurationExclude(MethodCallExpression call, String conf, GradleDependency exclude)
 
     /**
@@ -63,5 +65,9 @@ interface GradleAstVisitor {
 
     void visitDependencies(MethodCallExpression call)
 
+    void visitPlugins(MethodCallExpression call)
+
     void visitTask(MethodCallExpression call, String name, Map<String, String> args)
+
+    void visitBuildscript(MethodCallExpression call)
 }
