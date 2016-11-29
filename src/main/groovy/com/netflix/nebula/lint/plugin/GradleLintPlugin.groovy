@@ -43,18 +43,20 @@ class GradleLintPlugin implements Plugin<Project> {
 
         // ensure that lint runs
         project.tasks.whenTaskAdded { task ->
-            def rootLint = project.rootProject.tasks.getByName('lintGradle')
-            if (task != rootLint && !exemptTasks.contains(task.name)) {
-                // when running a lint-eligible task on a subproject, we want to lint the whole project
-                task.finalizedBy rootLint
+            if(lintExt.alwaysRun) {
+                def rootLint = project.rootProject.tasks.getByName('lintGradle')
+                if (task != rootLint && !exemptTasks.contains(task.name)) {
+                    // when running a lint-eligible task on a subproject, we want to lint the whole project
+                    task.finalizedBy rootLint
 
-                // because technically you can override path in a Gradle task implementation and cause path to be null!
-                if(task.getPath() != null) {
-                    try {
-                        rootLint.shouldRunAfter task
-                    } catch(Throwable ignored) {
-                        // just quietly DON'T add rootLint to run after this task, it will probably still run because
-                        // it will be hung on some other task as a shouldRunAfter
+                    // because technically you can override path in a Gradle task implementation and cause path to be null!
+                    if (task.getPath() != null) {
+                        try {
+                            rootLint.shouldRunAfter task
+                        } catch (Throwable ignored) {
+                            // just quietly DON'T add rootLint to run after this task, it will probably still run because
+                            // it will be hung on some other task as a shouldRunAfter
+                        }
                     }
                 }
             }

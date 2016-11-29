@@ -24,6 +24,7 @@ import org.gradle.api.InvalidUserDataException
 class GradleLintExtension {
     List<String> rules = []
     String reportFormat = 'html'
+    boolean alwaysRun = true
 
     @Incubating
     List<GradleLintViolationAction> listeners = []

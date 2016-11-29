@@ -17,6 +17,7 @@
 package com.netflix.nebula.lint.plugin
 
 import com.netflix.nebula.lint.TestKitSpecification
+import spock.lang.Issue
 import spock.lang.Unroll
 
 class GradleLintPluginSpec extends TestKitSpecification {
@@ -306,5 +307,35 @@ class GradleLintPluginSpec extends TestKitSpecification {
         then:
         console.findAll { it.startsWith('warning') }.size() == 1
         console.any { it.contains('archaic-wrapper') }
+    }
+
+    @Issue('#68')
+    def 'lint task does not run when alwaysRun is off'() {
+        when:
+        buildFile << """
+            plugins {
+                id 'nebula.lint'
+                id 'java'
+            }
+
+            gradleLint {
+                rules = ['archaic-wrapper']
+                alwaysRun = false
+            }
+
+            task wrapper(type: Wrapper){
+                gradleVersion = '0.1'
+            }
+        """
+
+        then:
+        // build would normally trigger lintGradle, but will not when alwaysRun = false
+        def results = runTasksSuccessfully('build')
+
+        when:
+        def console = results.output.readLines()
+
+        then:
+        !console.any { it.contains('archaic-wrapper') }
     }
 }
