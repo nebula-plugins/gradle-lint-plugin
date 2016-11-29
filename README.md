@@ -1,6 +1,6 @@
 # Gradle Lint Plugin
 
-![Support Status](https://img.shields.io/badge/nebula-incubating-yellow.svg)
+![Support Status](https://img.shields.io/badge/nebula-supported-brightgreen.svg)
 [![Build Status](https://circleci.com/gh/nebula-plugins/gradle-lint-plugin.svg?style=svg)](https://circleci.com/gh/nebula-plugins/gradle-lint-plugin)
 [![Coverage Status](https://coveralls.io/repos/github/nebula-plugins/gradle-lint-plugin/badge.svg?branch=master)](https://coveralls.io/github/nebula-plugins/gradle-lint-plugin?branch=master)
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/nebula-plugins/gradle-lint-plugin?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
