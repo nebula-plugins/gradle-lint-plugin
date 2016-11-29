@@ -1,5 +1,7 @@
 package com.netflix.nebula.lint
 
+import groovy.transform.TupleConstructor
+import org.gradle.internal.logging.text.StyledTextOutput
 import org.gradle.internal.service.ServiceRegistry
 
 /**
@@ -21,7 +23,7 @@ class StyledTextService {
         textOutput = textOutputFactory.create("gradle-lint")
     }
 
-    StyledTextService withStyle(Styling styling) {
+    VersionNeutralTextOutput withStyle(Styling styling) {
         Class<?> styleClass
         try {
             styleClass = Class.forName('org.gradle.internal.logging.text.StyledTextOutput$Style')
@@ -30,26 +32,23 @@ class StyledTextService {
         }
         
         styleClass.enumConstants
-        def styleByName = { String name -> styleClass.enumConstants.find { it.name() == name } }
+        def styleByName = { String name ->
+            styleClass.enumConstants.find { it.name() == name }
+        }
         
         switch (styling) {
             case Styling.Bold:
-                textOutput.withStyle(styleByName('UserInput'))
-                break
+                return new VersionNeutralTextOutput(textOutput.withStyle(styleByName('UserInput')))
             case Styling.Green:
-                textOutput.withStyle(styleByName('Identifier'))
-                break
+                return new VersionNeutralTextOutput(textOutput.withStyle(styleByName('Identifier')))
             case Styling.Yellow:
-                textOutput.withStyle(styleByName('Description'))
-                break
+                return new VersionNeutralTextOutput(textOutput.withStyle(styleByName('Description')))
             case Styling.Red:
-                textOutput.withStyle(styleByName('Failure'))
-                break
+                return new VersionNeutralTextOutput(textOutput.withStyle(styleByName('Failure')))
         }
-        return this
     }
 
-    def text = { String text ->
+    StyledTextService text(String text) {
         textOutput.text(text)
         return this
     }
@@ -62,4 +61,12 @@ class StyledTextService {
     static enum Styling {
         Bold, Green, Yellow, Red
     }
+}
+
+@TupleConstructor
+class VersionNeutralTextOutput {
+    def textOutput
+
+    void text(Object v) { textOutput.text(v) }
+    void println(Object v) { textOutput.println(v) }
 }
