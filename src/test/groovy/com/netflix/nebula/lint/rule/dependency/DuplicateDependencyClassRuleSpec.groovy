@@ -53,7 +53,7 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
 
         then:
         result.output.contains(message)
-        result.output.contains("✖ build.gradle: 1 problem (0 errors, 1 warning)")
+        result.output.contains("✖ 1 problem (0 errors, 1 warning)")
 
         where:
         deps                            | message
