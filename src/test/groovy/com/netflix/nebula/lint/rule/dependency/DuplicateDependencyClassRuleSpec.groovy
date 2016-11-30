@@ -186,4 +186,35 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
         def results = runTasksSuccessfully('compileJava', 'lintGradle')
         !results.output.contains('duplicate-dependency-class')
     }
+
+    @Issue('#67')
+    def 'ignore dependencies that are provided by extension properties'() {
+        setup:
+        buildFile.text = """
+            plugins {
+                id 'java'
+                id 'nebula.lint'
+            }
+
+            gradleLint.rules = ['duplicate-dependency-class']
+
+            repositories { mavenCentral() }
+
+            ext.deps = [ guava: '$guava' ]
+
+            dependencies {
+                gradleLint.ignore('duplicate-dependency-class') {
+                    compile deps.guava
+                }
+                compile '$collections'
+            }
+        """
+
+        when:
+        createJavaSourceFile('public class Main{}')
+        def result = runTasksSuccessfully('compileJava', 'lintGradle')
+
+        then:
+        !result.output.contains("$collections in configuration 'compile' has 310 classes duplicated by $guava")
+    }
 }

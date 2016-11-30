@@ -34,7 +34,8 @@ class GradleDependency {
 
     enum Syntax {
         MapNotation,
-        StringNotation
+        StringNotation,
+        EvaluatedArbitraryCode
     }
 
     ModuleVersionIdentifier toModuleVersion() {

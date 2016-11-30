@@ -212,7 +212,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         a.version == '1'
         a.syntax == GradleDependency.Syntax.MapNotation
     }
-    
+
     def 'visit dependency with no version'() {
         when:
         project.buildFile << """

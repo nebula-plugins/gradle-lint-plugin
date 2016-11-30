@@ -25,7 +25,8 @@ import org.codehaus.groovy.classgen.BytecodeExpression
 import org.codenarc.rule.*
 import org.codenarc.source.SourceCode
 import org.gradle.api.Project
-
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 abstract class GradleLintRule extends AbstractAstVisitor implements Rule, GradleAstVisitor {
     int _priority
@@ -33,6 +34,8 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
     File buildFile
     SourceCode sourceCode
     List<GradleViolation> gradleViolations = []
+
+    private static Logger logger = LoggerFactory.getLogger(GradleLintRule)
 
     // a little convoluted, but will be set by LintRuleRegistry automatically so that name is derived from
     // the properties file resource that makes this rule available for use
@@ -105,7 +108,7 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
     }
 
     public GradleViolation addBuildLintViolation(String message, ASTNode node) {
-        def v = new GradleViolation(buildFile, rule, node?.lineNumber, formattedViolation(node), message)
+        def v = new GradleViolation(buildFile, rule, node?.lineNumber, sourceCode(node), message)
         if(!isIgnored())
             gradleViolations.add(v)
         return v
@@ -130,8 +133,8 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
 
     @Override
     final List<Violation> applyTo(SourceCode sourceCode) {
-        beforeApplyTo()
         this.sourceCode = sourceCode
+        beforeApplyTo()
         rule.applyTo(sourceCode)
     }
 
@@ -140,7 +143,7 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
      * @return a single or multi-line code snippet stripped of indentation, code that exists on the starting line
      * prior to the starting column, and code that exists on the last line after the ending column
      */
-    private final String formattedViolation(ASTNode node) {
+    private final String sourceCode(ASTNode node) {
         if(!node) return null
 
         // make a copy of violating lines so they can be formatted for display in a report
@@ -185,7 +188,7 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
             final void visitMethodCallExpression(MethodCallExpression call) {
                 def methodName = call.methodAsString
 
-                if (methodName == 'runScript' && project) {
+                if (methodName == 'runScript' && project && !project.configurations.empty) {
                     configurations = project.configurations.collect { it.name }
                 }
 
@@ -372,13 +375,28 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
                 }
             }
 
+            private GradleDependency dependencyFromConstant(Object expr) {
+                def matcher = expr =~ /((?<group>[^:]+):)?(?<name>[^:]+)(:(?<version>[^@:]+)(?<classifier>:[^@]+)?(?<ext>@.+)?)?/
+                if (matcher.matches()) {
+                    return new GradleDependency(
+                            matcher.group('group'),
+                            matcher.group('name'),
+                            matcher.group('version'),
+                            matcher.group('classifier'),
+                            matcher.group('ext'),
+                            null,
+                            GradleDependency.Syntax.StringNotation)
+                }
+                return null
+            }
+
             private void visitMethodCallInDependencies(MethodCallExpression call) {
                 // https://docs.gradle.org/current/javadoc/org/gradle/api/artifacts/dsl/DependencyHandler.html
                 def methodName = call.methodAsString
                 def args = call.arguments.expressions as List
                 if (!args.empty && (configurations.contains(methodName) || methodName == 'classpath')) {
                     def dependency = null
-                    
+
                     if (call.arguments.expressions.any { it instanceof MapExpression }) {
                         def entries = GradleAstUtil.collectEntryExpressions(call)
                         dependency = new GradleDependency(
@@ -397,16 +415,17 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
                                 return it.text
                             return null
                         }
-                        def matcher = expr =~ /((?<group>[^:]+):)?(?<name>[^:]+)(:(?<version>[^@:]+)(?<classifier>:[^@]+)?(?<ext>@.+)?)?/
-                        if (matcher.matches()) {
-                            dependency = new GradleDependency(
-                                    matcher.group('group'),
-                                    matcher.group('name'),
-                                    matcher.group('version'),
-                                    matcher.group('classifier'),
-                                    matcher.group('ext'),
-                                    null,
-                                    GradleDependency.Syntax.StringNotation)
+                        dependency = dependencyFromConstant(expr)
+                    } else if(call.arguments.expressions.any { it instanceof PropertyExpression } && project != null) {
+                        def shell = new GroovyShell()
+                        shell.setVariable('project', project as Project)
+                        try {
+                            Object dep = shell.evaluate('project.' + sourceCode(call.arguments))
+                            dependency = dependencyFromConstant(dep)
+                            dependency.syntax = GradleDependency.Syntax.EvaluatedArbitraryCode
+                        } catch(Throwable t) {
+                            // if we cannot evaluate this expression, just give up
+                            logger.debug("Unable to evaluate dependency expression ${sourceCode(call.arguments)}", t)
                         }
                     }
                     
