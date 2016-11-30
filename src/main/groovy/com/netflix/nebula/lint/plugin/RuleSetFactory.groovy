@@ -23,9 +23,6 @@ import org.codenarc.ruleset.RuleSet
 
 class RuleSetFactory {
     static RuleSet configureRuleSet(List<Rule> rules) {
-        // for now there is no need to try to load codenarc rules
-//        new RuleRegistryInitializer().initializeRuleRegistry()
-
         def ruleSet = new CompositeRuleSet()
         rules.each { ruleSet.addRule(it) }
         ruleSet

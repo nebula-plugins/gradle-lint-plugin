@@ -22,8 +22,10 @@ import org.codenarc.report.HtmlReportWriter
 import org.codenarc.report.ReportWriter
 import org.codenarc.report.TextReportWriter
 import org.codenarc.report.XmlReportWriter
+import org.codenarc.rule.Violation
 import org.gradle.api.Action
 import org.gradle.api.DefaultTask
+import org.gradle.api.GradleException
 import org.gradle.api.plugins.quality.CodeNarcReports
 import org.gradle.api.plugins.quality.internal.CodeNarcReportsImpl
 import org.gradle.api.reporting.Report
@@ -72,6 +74,11 @@ class GradleLintReportTask extends DefaultTask implements VerificationTask, Repo
                 }
 
                 writer.writeReport(new AnalysisContext(ruleSet: lintService.ruleSet(project)), results)
+            }
+
+            int errors = results.violations.count { Violation v -> v.rule.priority == 1 }
+            if(errors > 0) {
+                throw new GradleException("This build contains $errors critical lint violation ${errors == 1 ? '' : 's'}")
             }
         }
     }

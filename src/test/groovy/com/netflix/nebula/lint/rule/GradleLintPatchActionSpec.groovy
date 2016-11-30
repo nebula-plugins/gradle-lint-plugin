@@ -33,7 +33,7 @@ class GradleLintPatchActionSpec extends Specification {
 
     def setup() {
         project = [getRootDir: { temp.root }] as Project
-        violation = new GradleViolation(GradleViolation.Level.Warning,
+        violation = new GradleViolation(
                 temp.root, // does not matter
                 null, // does not matter
                 1, // does not matter

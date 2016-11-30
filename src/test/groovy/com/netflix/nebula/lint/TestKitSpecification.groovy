@@ -31,6 +31,15 @@ abstract class TestKitSpecification extends Specification {
                 .build()
     }
 
+    def runTasksFail(String... tasks) {
+        return GradleRunner.create()
+                .withDebug(debug)
+                .withProjectDir(projectDir)
+                .withArguments(*(tasks))
+                .withPluginClasspath()
+                .buildAndFail()
+    }
+
     def runTasksSuccessfullyWithGradleVersion(String gradleVersion, String... tasks) {
         return GradleRunner.create()
                 .withDebug(debug)

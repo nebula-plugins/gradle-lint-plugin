@@ -21,6 +21,8 @@ import com.netflix.nebula.lint.GradleLintPatchAction
 import com.netflix.nebula.lint.GradleLintViolationAction
 import com.netflix.nebula.lint.GradleViolation
 import com.netflix.nebula.lint.StyledTextService
+import org.gradle.api.GradleException
+
 import static com.netflix.nebula.lint.StyledTextService.Styling.*
 import org.eclipse.jgit.api.ApplyCommand
 import org.gradle.api.DefaultTask
@@ -79,25 +81,32 @@ class FixGradleLintTask extends DefaultTask implements VerificationTask {
                     textOutput.println('A complete listing of my attempt to fix them follows. Please review and commit the changes.\n')
                 }
 
-                def completelyFixed = 0
+                int completelyFixed = 0
+                int unfixedCriticalViolations = 0
 
                 violations.groupBy { it.file }.each { buildFile, projectViolations ->
-                    def buildFilePath = project.rootDir.toURI().relativize(buildFile.toURI()).toString()
+                    String buildFilePath = project.rootDir.toURI().relativize(buildFile.toURI()).toString()
 
                     projectViolations.each { v ->
                         def unfixed = v.fixes.findAll { it.reasonForNotFixing != null }
-                        if(v.fixes.isEmpty()) {
+                        if(v.fixes.empty) {
                             textOutput.withStyle(Yellow).text('nothing to do'.padRight(15))
                         }
-                        else if(unfixed.isEmpty()) {
+                        else if(unfixed.empty) {
                             textOutput.withStyle(Green).text('fixed'.padRight(15))
                             completelyFixed++
                         }
                         else if(unfixed.size() == v.fixes.size()) {
                             textOutput.withStyle(Yellow).text('unfixed'.padRight(15))
+                            if(v.rule.priority == 1) {
+                                unfixedCriticalViolations++
+                            }
                         }
                         else {
                             textOutput.withStyle(Yellow).text('semi-fixed'.padRight(15))
+                            if(v.rule.priority == 1) {
+                                unfixedCriticalViolations++
+                            }
                         }
 
                         textOutput.text(v.rule.ruleId.padRight(35))
@@ -108,7 +117,7 @@ class FixGradleLintTask extends DefaultTask implements VerificationTask {
                         if (v.sourceLine)
                             textOutput.println(v.sourceLine)
 
-                        if(!unfixed.isEmpty()) {
+                        if(!unfixed.empty) {
                             textOutput.withStyle(Bold).println('reason not fixed: ')
                             unfixed.collect { it.reasonForNotFixing }.unique().each { textOutput.println(it.message) }
                         }
@@ -118,6 +127,11 @@ class FixGradleLintTask extends DefaultTask implements VerificationTask {
                 }
 
                 textOutput.withStyle(Green).println("Corrected $completelyFixed lint problems\n")
+
+                if(unfixedCriticalViolations > 0) {
+                    throw new GradleException("This build contains $unfixedCriticalViolations critical lint violation" +
+                            "${unfixedCriticalViolations == 1 ? '' : 's'} that could not be automatically fixed")
+                }
             }
         }
     }

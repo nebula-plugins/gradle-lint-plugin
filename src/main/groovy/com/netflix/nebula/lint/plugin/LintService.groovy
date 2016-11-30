@@ -75,8 +75,12 @@ class LintService {
                 // if the subproject has not applied lint, use the extension configuration from the root project
                 extension = p.rootProject.extensions.getByType(GradleLintExtension)
             }
-            return RuleSetFactory.configureRuleSet(extension.rules.collect { registry.buildRules(it, p) }
-                    .flatten() as List<Rule>)
+            return RuleSetFactory.configureRuleSet(
+                    (extension.rules + extension.criticalRules)
+                            .unique()
+                            .collect { registry.buildRules(it, p, extension.criticalRules.contains(it)) }
+                            .flatten() as List<Rule>
+            )
         }
         return new ListRuleSet([])
     }

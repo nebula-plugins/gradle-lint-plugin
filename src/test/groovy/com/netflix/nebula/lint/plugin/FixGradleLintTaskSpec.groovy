@@ -12,7 +12,7 @@ class FixGradleLintTaskSpec extends TestKitSpecification {
                 id 'java'
             }
 
-            gradleLint.rules = ['unused-dependency', 'dependency-parentheses']
+            gradleLint.criticalRules = ['unused-dependency', 'dependency-parentheses']
 
             repositories { mavenCentral() }
 
@@ -24,7 +24,7 @@ class FixGradleLintTaskSpec extends TestKitSpecification {
         createJavaSourceFile('public class Main {}')
 
         then:
-        def results = runTasksSuccessfully('compileJava', 'fixGradleLint')
+        def results = runTasksFail('compileJava', 'fixGradleLint')
 
         results.output.count('fixed          unused-dependency') == 1
         results.output.count('unfixed        dependency-parentheses') == 1

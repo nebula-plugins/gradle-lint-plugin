@@ -1,6 +1,8 @@
 package com.netflix.nebula.lint.plugin
 
 import com.netflix.nebula.lint.TestKitSpecification
+import org.gradle.testkit.runner.UnexpectedBuildFailure
+import org.gradle.testkit.runner.UnexpectedBuildResultException
 
 class LintGradleTaskSpec extends TestKitSpecification {
 
@@ -28,5 +30,26 @@ class LintGradleTaskSpec extends TestKitSpecification {
 
         then:
         result.output.contains('(no auto-fix available)')
+    }
+
+    def 'critical rule failures cause build failure'() {
+        when:
+        buildFile.text = """
+            plugins {
+                id 'java'
+                id 'nebula.lint'
+            }
+
+            gradleLint.criticalRules = ['dependency-parentheses']
+
+            repositories { mavenCentral() }
+
+            dependencies {
+                compile('com.google.guava:guava:18.0')
+            }
+        """
+
+        then:
+        runTasksFail('lintGradle')
     }
 }

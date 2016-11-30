@@ -34,7 +34,29 @@ class GradleLintReportTaskSpec extends TestKitSpecification {
         report.text.contains('Violation: Rule=dependency-parentheses')
         report.text.contains('TotalFiles=1')
     }
-    
+
+    def 'critical rules fail task'() {
+        when:
+        buildFile.text = """
+            plugins {
+                id 'java'
+                id 'nebula.lint'
+            }
+
+            gradleLint.criticalRules = ['dependency-parentheses']
+
+            repositories { mavenCentral() }
+
+            dependencies {
+                compile('com.google.guava:guava:18.0')
+            }
+        """
+
+        then:
+        def results = runTasksFail('generateGradleLintReport')
+        println results.output
+    }
+
     def 'generate a report for a multi-module project'() {
         when:
         buildFile.text = """

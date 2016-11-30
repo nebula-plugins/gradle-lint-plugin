@@ -29,33 +29,19 @@ import java.util.concurrent.atomic.AtomicInteger
 
 @EqualsAndHashCode(includes = 'id')
 class GradleViolation extends Violation {
-    Level level
     File file
     List<GradleLintFix> fixes = []
     int id
 
     static AtomicInteger nextId = new AtomicInteger(0)
 
-    public GradleViolation(Level level, File file, Rule rule, Integer lineNumber,
-                           String sourceLine, String message) {
-        this.level = level
+    public GradleViolation(File file, Rule rule, Integer lineNumber, String sourceLine, String message) {
         this.file = file
         this.rule = rule
         this.lineNumber = lineNumber
         this.sourceLine = sourceLine
         this.message = message
         this.id = nextId.getAndIncrement()
-    }
-
-    Level getLevel() {
-        this.level ?: rule.defaultLevel
-    }
-
-    static enum Level {
-        Info(4), Trivial(3), Warning(2), Error(1)
-
-        int priority
-        Level(int priority) { this.priority = priority }
     }
 
     GradleViolation insertAfter(ASTNode node, String changes) {

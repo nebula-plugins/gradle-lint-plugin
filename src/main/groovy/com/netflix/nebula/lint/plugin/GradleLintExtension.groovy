@@ -23,6 +23,12 @@ import org.gradle.api.InvalidUserDataException
 
 class GradleLintExtension {
     List<String> rules = []
+
+    /**
+     * Rules that, when violated, cause the build to fail
+     */
+    List<String> criticalRules = []
+
     String reportFormat = 'html'
     boolean alwaysRun = true
 

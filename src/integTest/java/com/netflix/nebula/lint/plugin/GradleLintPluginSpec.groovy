@@ -272,6 +272,7 @@ class GradleLintPluginSpec extends TestKitSpecification {
 
         then:
         def results = runTasksSuccessfully('generateGradleLintReport')
+        println results.output
 
         when:
         def console = results.output.readLines()
