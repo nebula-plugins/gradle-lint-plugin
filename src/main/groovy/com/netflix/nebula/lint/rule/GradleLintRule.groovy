@@ -35,8 +35,6 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
     SourceCode sourceCode
     List<GradleViolation> gradleViolations = []
 
-    private static Logger logger = LoggerFactory.getLogger(GradleLintRule)
-
     // a little convoluted, but will be set by LintRuleRegistry automatically so that name is derived from
     // the properties file resource that makes this rule available for use
     String ruleId
@@ -174,6 +172,7 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
     @Delegate final Rule rule = new AbstractAstVisitorRule() {
 
         Stack<MethodCallExpression> closureStack = new Stack<MethodCallExpression>()
+        private Logger logger = LoggerFactory.getLogger(GradleLintRule)
 
         AbstractAstVisitor gradleAstVisitor = new AbstractAstVisitor() {
             // fall back on some common configurations in case the rule is not GradleModelAware
