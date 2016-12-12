@@ -449,7 +449,8 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
                                 return it.text
                             return null
                         }
-                        plugin = new GradlePlugin(expr)
+                        if(expr instanceof String)
+                            plugin = new GradlePlugin(expr)
                     }
 
                     if(plugin) {
