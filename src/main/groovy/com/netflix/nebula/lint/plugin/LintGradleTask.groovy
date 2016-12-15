@@ -72,9 +72,9 @@ class LintGradleTask extends DefaultTask {
 
                     textOutput.text(v.rule.ruleId.padRight(35))
 
-                    textOutput.withStyle(Yellow).print(v.message)
+                    textOutput.withStyle(Yellow).text(v.message)
                     if(v.fixes.empty) {
-                        textOutput.withStyle(Yellow).print(' (no auto-fix available)')
+                        textOutput.withStyle(Yellow).text(' (no auto-fix available)')
                     }
                     textOutput.println()
                     
