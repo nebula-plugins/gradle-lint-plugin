@@ -58,6 +58,12 @@ class StyledTextService {
         return this
     }
 
+    StyledTextService println() {
+        // the no-arg form is a dangerous overload on Groovy's println() metaclass extension of Object
+        textOutput.println('')
+        return this
+    }
+
     static enum Styling {
         Bold, Green, Yellow, Red
     }
@@ -69,4 +75,5 @@ class VersionNeutralTextOutput {
 
     void text(Object v) { textOutput.text(v) }
     void println(Object v) { textOutput.println(v) }
+    void println() { textOutput.println('') }
 }
