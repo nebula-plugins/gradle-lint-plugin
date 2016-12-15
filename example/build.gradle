@@ -1,10 +1,15 @@
 buildscript {
     repositories {
+        mavenLocal()
         jcenter()
     }
 
     dependencies {
         classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
+    }
+
+    configurations.classpath.resolutionStrategy {
+        cacheDynamicVersionsFor 0, 'seconds'
     }
 }
 
