@@ -1,8 +1,22 @@
+/*
+ * Copyright 2016-2017 Netflix, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.netflix.nebula.lint.plugin
 
 import com.netflix.nebula.lint.TestKitSpecification
-import org.gradle.testkit.runner.UnexpectedBuildFailure
-import org.gradle.testkit.runner.UnexpectedBuildResultException
+import org.gradle.testkit.runner.TaskOutcome
 
 class LintGradleTaskSpec extends TestKitSpecification {
 
@@ -51,5 +65,23 @@ class LintGradleTaskSpec extends TestKitSpecification {
 
         then:
         runTasksFail('lintGradle')
+    }
+
+    def 'lintGradle always depends on compileJava'() {
+        given:
+        buildFile.text = """\
+            plugins {
+                id 'java'
+                id 'nebula.lint'
+            }
+            
+            gradleLint.rules = ['dependency-parentheses']
+            """.stripIndent()
+
+        when:
+        def result = runTasksSuccessfully('lintGradle')
+
+        then:
+        result.task(':compileJava').outcome == TaskOutcome.UP_TO_DATE
     }
 }
