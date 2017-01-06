@@ -21,7 +21,7 @@ elif [ $CIRCLE_TAG ]; then
   esac
 else
   echo -e 'WARN: Should not be here => Branch ['$CIRCLE_BRANCH']  Tag ['$CIRCLE_TAG']  Pull Request ['$CIRCLE_PR_NUMBER']'
-  ./gradlew build $SWITCHES --refresh-dependencies
+  ./gradlew build $SWITCHES
 fi
 
 EXIT=$?
