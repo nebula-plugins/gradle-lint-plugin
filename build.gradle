@@ -44,7 +44,7 @@ dependencies {
     plugin('org.codenarc:CodeNarc:0.25.2') {
         transitive = false
     }
-    plugin 'com.netflix.nebula:gradle-info-plugin:3.4.1'
+    plugin 'com.netflix.nebula:gradle-info-plugin:3.3.5'
     plugin 'commons-lang:commons-lang:2.6'
 
     plugin ('org.eclipse.jgit:org.eclipse.jgit:4.5.0.201609210915-r') {
