@@ -20,7 +20,7 @@ To apply this plugin:
     
     buildscript { repositories { jcenter() } }
     plugins {
-      id 'nebula.lint' version '6.1.4'
+      id 'nebula.lint' version '6.2.0'
     }
     
 *Important:* For now, in a multi-module build you **must** apply lint to the root project, at a minimum.
@@ -51,7 +51,7 @@ For multimodule projects, we recommend applying the plugin in an allprojects blo
 
 ## License
 
-Copyright 2015-2016 Netflix, Inc.
+Copyright 2015-2017 Netflix, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

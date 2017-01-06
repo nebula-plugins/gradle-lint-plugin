@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Netflix, Inc.
+ * Copyright 2015-2017 Netflix, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.netflix.nebula.lint.plugin
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.Task
+import org.gradle.api.plugins.JavaBasePlugin
+import org.gradle.api.tasks.StopExecutionException
+import org.gradle.api.tasks.compile.AbstractCompile
 
 class GradleLintPlugin implements Plugin<Project> {
     private final exemptTasks = ['help', 'tasks', 'dependencies', 'dependencyInsight',
-        'components', 'model', 'projects', 'properties', 'fixGradleLint']
+        'components', 'model', 'projects', 'properties', 'lintGradle', 'fixGradleLint', 'fixLintGradle']
 
     @Override
     void apply(Project project) {
@@ -29,20 +32,30 @@ class GradleLintPlugin implements Plugin<Project> {
         def lintExt = project.extensions.create('gradleLint', GradleLintExtension)
 
         if (project.rootProject == project) {
-            def lintTask = project.tasks.create('lintGradle', LintGradleTask)
+            def lintTask = project.tasks.create('autoLintGradle', LintGradleTask)
             lintTask.listeners = lintExt.listeners
+
+
+            def runLintTask = project.tasks.create('lintGradle')
+            runLintTask.group = 'lint'
+            runLintTask.dependsOn(lintTask)
 
             def fixTask = project.tasks.create('fixGradleLint', FixGradleLintTask)
             fixTask.userDefinedListeners = lintExt.listeners
 
             def fixTask2 = project.tasks.create('fixLintGradle', FixGradleLintTask)
             fixTask2.userDefinedListeners = lintExt.listeners
+
+            lintTask.doFirst {
+                if (project.gradle.taskGraph.allTasks.contains(fixTask) || project.gradle.taskGraph.allTasks.contains(fixTask2)) {
+                    throw new StopExecutionException()
+                }
+            }
         }
 
         configureReportTask(project, lintExt)
 
-        // ensure that lint runs
-        project.tasks.whenTaskAdded { task ->
+        def finalizeByLint = { task ->
             if(lintExt.alwaysRun) {
                 def rootLint = project.rootProject.tasks.getByName('lintGradle')
                 if (task != rootLint && !exemptTasks.contains(task.name)) {
@@ -59,6 +72,18 @@ class GradleLintPlugin implements Plugin<Project> {
                         }
                     }
                 }
+            }
+        }
+
+        // ensure that lint runs
+        project.tasks.each { finalizeByLint(it) }
+        project.tasks.whenTaskAdded { finalizeByLint(it) }
+
+        project.plugins.withType(JavaBasePlugin) {
+            project.tasks.withType(AbstractCompile) { task ->
+                project.rootProject.tasks.getByName('fixGradleLint').dependsOn(task)
+                project.rootProject.tasks.getByName('lintGradle').dependsOn(task)
+                project.rootProject.tasks.getByName('fixLintGradle').dependsOn(task)
             }
         }
     }

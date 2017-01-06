@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Netflix, Inc.
+ * Copyright 2015-2017 Netflix, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.netflix.nebula.lint.plugin
 
 import com.netflix.nebula.lint.GradleLintInfoBrokerAction
@@ -29,6 +28,10 @@ import static com.netflix.nebula.lint.StyledTextService.Styling.*
 
 class LintGradleTask extends DefaultTask {
     List<GradleLintViolationAction> listeners = []
+
+    LintGradleTask() {
+        group = 'lint'
+    }
 
     @TaskAction
     void lint() {

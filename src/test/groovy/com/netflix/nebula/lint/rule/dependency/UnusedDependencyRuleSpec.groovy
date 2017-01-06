@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Netflix, Inc.
+ * Copyright 2015-2017 Netflix, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.netflix.nebula.lint.rule.dependency
 
 import com.netflix.nebula.lint.TestKitSpecification
@@ -313,7 +312,7 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
     }
 
     def 'dependencies present in more than one configuration as first order dependencies can be removed from one of them'() {
-        when:
+        given:
         buildFile.text = """
             plugins {
                 id 'nebula.lint'
@@ -340,9 +339,10 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             }
         ''')
 
-        then:
-        runTasksSuccessfully('compileTestJava', 'fixGradleLint')
+        when:
+        runTasksSuccessfully('fixGradleLint')
 
+        then:
         dependencies(buildFile, 'compile') == []
         dependencies(buildFile, 'testCompile') == ['junit:junit:4.11']
     }
