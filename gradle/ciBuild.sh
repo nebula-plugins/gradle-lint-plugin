@@ -8,20 +8,20 @@ if [ $CIRCLE_PR_NUMBER ]; then
   ./gradlew clean build $SWITCHES
 elif [ -z $CIRCLE_TAG ]; then
   echo -e 'Build Branch with Snapshot => Branch ['$CIRCLE_BRANCH']'
-  ./gradlew -Prelease.disableGitChecks=true clean snapshot $SWITCHES
+  ./gradlew -Prelease.disableGitChecks=true snapshot $SWITCHES
 elif [ $CIRCLE_TAG ]; then
   echo -e 'Build Branch for Release => Branch ['$CIRCLE_BRANCH']  Tag ['$CIRCLE_TAG']'
   case "$CIRCLE_TAG" in
   *-rc\.*)
-    ./gradlew -Prelease.disableGitChecks=true -Prelease.useLastTag=true clean candidate $SWITCHES
+    ./gradlew -Prelease.disableGitChecks=true -Prelease.useLastTag=true candidate $SWITCHES
     ;;
   *)
-    ./gradlew -Prelease.disableGitChecks=true -Prelease.useLastTag=true clean final $SWITCHES
+    ./gradlew -Prelease.disableGitChecks=true -Prelease.useLastTag=true final $SWITCHES
     ;;
   esac
 else
   echo -e 'WARN: Should not be here => Branch ['$CIRCLE_BRANCH']  Tag ['$CIRCLE_TAG']  Pull Request ['$CIRCLE_PR_NUMBER']'
-  ./gradlew clean build $SWITCHES
+  ./gradlew build $SWITCHES --refresh-dependencies
 fi
 
 EXIT=$?
