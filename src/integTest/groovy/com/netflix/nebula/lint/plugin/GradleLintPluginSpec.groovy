@@ -24,8 +24,10 @@ class GradleLintPluginSpec extends TestKitSpecification {
     def 'run multiple rules on a single module project'() {
         when:
         buildFile << """
-            apply plugin: 'java'
-            apply plugin: ${GradleLintPlugin.name}
+            plugins {
+                id 'nebula.lint'
+                id 'java'
+            }
 
             gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
 
@@ -52,12 +54,16 @@ class GradleLintPluginSpec extends TestKitSpecification {
     def 'run rules on multi-module project where one of the subprojects has no build.gradle'() {
         when:
         buildFile << """
-            allprojects {
-                plugins {
-                    id 'nebula.lint'
-                    id 'java'
-                }
+            plugins {
+                id 'nebula.lint'
+            }
 
+            subprojects {
+                apply plugin: 'nebula.lint'
+                apply plugin: 'java'
+            }
+
+            allprojects {
                 gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
             }
         """
@@ -71,11 +77,15 @@ class GradleLintPluginSpec extends TestKitSpecification {
     def 'run rules on multi-module project where one of the subprojects does not apply gradle lint'() {
         when:
         buildFile << """
-            allprojects {
-                apply plugin: 'java'
+            plugins {
+                id 'nebula.lint'
             }
 
-            apply plugin: ${GradleLintPlugin.name}
+            subprojects {
+                apply plugin: 'java'
+                apply plugin: 'nebula.lint'
+            }
+
             gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
         """
 
@@ -103,8 +113,6 @@ class GradleLintPluginSpec extends TestKitSpecification {
             dependencies {
                 compile('com.google.guava:guava:18.0')
             }
-
-            configurations { }
         """
 
         then:
@@ -121,7 +129,6 @@ class GradleLintPluginSpec extends TestKitSpecification {
             dependencies {
                 compile 'com.google.guava:guava:18.0'
             }
-
         """.toString()
 
         where:
@@ -132,10 +139,12 @@ class GradleLintPluginSpec extends TestKitSpecification {
     def 'auto correct all violations on a multi-module project with task #taskName'() {
         when:
         buildFile.text = """
+            plugins {
+                id 'nebula.lint'
+            }
+
             allprojects {
-                plugins {
-                    id 'nebula.lint'
-                }
+                apply plugin: 'nebula.lint'
                 gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
             }
 
@@ -158,31 +167,10 @@ class GradleLintPluginSpec extends TestKitSpecification {
         """)
 
         then:
-        runTasksSuccessfully(":sub:$taskName") // prove that this links to the root project task
+        runTasksSuccessfully(taskName)
 
-        buildFile.text == """
-            allprojects {
-                plugins {
-                    id 'nebula.lint'
-                }
-                gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
-            }
-
-            subprojects {
-                apply plugin: 'java'
-                dependencies {
-                    compile 'com.google.guava:guava:18.0'
-                }
-            }
-        """.toString()
-
-        new File(subDir, 'build.gradle').text == """
-            dependencies {
-                testCompile 'junit:junit:4.11'
-            }
-
-            task taskA {}
-        """
+        buildFile.text.contains("compile 'com.google.guava:guava:18.0'")
+        new File(subDir, 'build.gradle').text.contains("testCompile 'junit:junit:4.11'")
 
         where:
         taskName << ['fixGradleLint', 'fixLintGradle']
@@ -200,6 +188,8 @@ class GradleLintPluginSpec extends TestKitSpecification {
 
         addSubproject('sub', """
             apply plugin: 'java'
+            apply plugin: 'nebula.lint'
+            
             dependencies {
                 compile('a:a:1')
             }
@@ -215,15 +205,18 @@ class GradleLintPluginSpec extends TestKitSpecification {
     def 'rules relative to each project'() {
         when:
         buildFile.text = """
+            plugins {
+                id 'nebula.lint'
+            }
+
             allprojects {
-                plugins {
-                    id 'nebula.lint'
-                }
+                apply plugin: 'nebula.lint'
                 gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
             }
 
             subprojects {
                 apply plugin: 'java'
+                
                 dependencies {
                     compile('com.google.guava:guava:18.0')
                 }
@@ -281,7 +274,7 @@ class GradleLintPluginSpec extends TestKitSpecification {
         console.findAll { it.startsWith('warning') }.size() == 2
         console.any { it.contains('dependency-parentheses') }
         console.any { it.contains('dependency-tuple') }
-        new File(projectDir, "build/reports/gradleLint/${moduleName}.html").exists()
+        new File(projectDir, "build/reports/gradleLint/${projectDir.name}.html").exists()
     }
 
     def 'test wrapper rule on a single module project'() {

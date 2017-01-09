@@ -32,13 +32,11 @@ class GradleLintPlugin implements Plugin<Project> {
         def lintExt = project.extensions.create('gradleLint', GradleLintExtension)
 
         if (project.rootProject == project) {
-            def lintTask = project.tasks.create('autoLintGradle', LintGradleTask)
-            lintTask.listeners = lintExt.listeners
+            def autoLintTask = project.tasks.create('autoLintGradle', LintGradleTask)
+            autoLintTask.listeners = lintExt.listeners
 
-
-            def runLintTask = project.tasks.create('lintGradle')
-            runLintTask.group = 'lint'
-            runLintTask.dependsOn(lintTask)
+            def manualLintTask = project.tasks.create('lintGradle', LintGradleTask)
+            manualLintTask.group = 'lint'
 
             def fixTask = project.tasks.create('fixGradleLint', FixGradleLintTask)
             fixTask.userDefinedListeners = lintExt.listeners
@@ -46,8 +44,8 @@ class GradleLintPlugin implements Plugin<Project> {
             def fixTask2 = project.tasks.create('fixLintGradle', FixGradleLintTask)
             fixTask2.userDefinedListeners = lintExt.listeners
 
-            lintTask.doFirst {
-                if (project.gradle.taskGraph.allTasks.contains(fixTask) || project.gradle.taskGraph.allTasks.contains(fixTask2)) {
+            autoLintTask.doFirst {
+                if (project.gradle.taskGraph.allTasks.any { it == fixTask || it == fixTask2 || it == manualLintTask } ) {
                     throw new StopExecutionException()
                 }
             }
@@ -57,7 +55,7 @@ class GradleLintPlugin implements Plugin<Project> {
 
         def finalizeByLint = { task ->
             if(lintExt.alwaysRun) {
-                def rootLint = project.rootProject.tasks.getByName('lintGradle')
+                def rootLint = project.rootProject.tasks.getByName('autoLintGradle')
                 if (task != rootLint && !exemptTasks.contains(task.name)) {
                     // when running a lint-eligible task on a subproject, we want to lint the whole project
                     task.finalizedBy rootLint
@@ -76,8 +74,9 @@ class GradleLintPlugin implements Plugin<Project> {
         }
 
         // ensure that lint runs
-        project.tasks.each { finalizeByLint(it) }
-        project.tasks.whenTaskAdded { finalizeByLint(it) }
+        project.afterEvaluate {
+            project.tasks.each { finalizeByLint(it) }
+        }
 
         project.plugins.withType(JavaBasePlugin) {
             project.tasks.withType(AbstractCompile) { task ->
