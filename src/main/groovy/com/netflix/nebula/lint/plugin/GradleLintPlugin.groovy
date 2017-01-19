@@ -17,6 +17,7 @@ package com.netflix.nebula.lint.plugin
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.ProjectState
 import org.gradle.api.Task
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.tasks.StopExecutionException
@@ -44,10 +45,11 @@ class GradleLintPlugin implements Plugin<Project> {
             def fixTask2 = project.tasks.create('fixLintGradle', FixGradleLintTask)
             fixTask2.userDefinedListeners = lintExt.listeners
 
-            autoLintTask.doFirst {
-                if (project.gradle.taskGraph.allTasks.any { it == fixTask || it == fixTask2 || it == manualLintTask } ) {
-                    throw new StopExecutionException()
-                }
+            autoLintTask.onlyIf {
+                def allTasks = project.gradle.taskGraph.allTasks
+                def hasFailedTask = allTasks.any { it.state.failure != null }
+                def hasExplicitLintTask = allTasks.any { it == fixTask || it == fixTask2 || it == manualLintTask }
+                !hasFailedTask && !hasExplicitLintTask
             }
         }
 

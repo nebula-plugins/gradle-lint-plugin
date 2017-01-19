@@ -19,7 +19,6 @@ import com.netflix.nebula.lint.TestKitSpecification
 import org.gradle.testkit.runner.TaskOutcome
 
 class LintGradleTaskSpec extends TestKitSpecification {
-
     def 'mark violations that have no auto-remediation'() {
         given:
         buildFile.text = """
@@ -83,5 +82,31 @@ class LintGradleTaskSpec extends TestKitSpecification {
 
         then:
         result.task(':compileJava').outcome == TaskOutcome.UP_TO_DATE
+    }
+
+    def 'auto lint does not run on build failure'() {
+        given:
+        buildFile.text = """
+            plugins {
+                id 'java'
+                id 'nebula.lint'
+            }
+
+            gradleLint.rules = ['duplicate-dependency-class']
+
+            repositories { mavenCentral() }
+
+            dependencies {
+                compile 'com.google.guava:guava:18.0'
+                compile 'com.google.collections:google-collections:1.0'
+            }
+        """
+
+        when:
+        createJavaSourceFile('public class Main { uhoh! }')
+        def result = runTasksFail('compileJava')
+
+        then:
+        result.task(':autoLintGradle').outcome == TaskOutcome.SKIPPED
     }
 }
