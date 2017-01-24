@@ -31,6 +31,7 @@ class GradleLintExtension {
 
     String reportFormat = 'html'
     boolean alwaysRun = true
+    boolean runAfterFailure = true
 
     @Incubating
     List<GradleLintViolationAction> listeners = []

@@ -47,7 +47,7 @@ class GradleLintPlugin implements Plugin<Project> {
 
             autoLintTask.onlyIf {
                 def allTasks = project.gradle.taskGraph.allTasks
-                def hasFailedTask = allTasks.any { it.state.failure != null }
+                def hasFailedTask = !lintExt.runAfterFailure && allTasks.any { it.state.failure != null }
                 def hasExplicitLintTask = allTasks.any { it == fixTask || it == fixTask2 || it == manualLintTask }
                 !hasFailedTask && !hasExplicitLintTask
             }
