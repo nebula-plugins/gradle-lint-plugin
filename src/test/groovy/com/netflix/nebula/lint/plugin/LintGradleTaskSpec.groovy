@@ -84,7 +84,7 @@ class LintGradleTaskSpec extends TestKitSpecification {
         result.task(':compileJava').outcome == TaskOutcome.UP_TO_DATE
     }
 
-    def 'auto lint does not run on build failure'() {
+    def 'auto lint runs on build failure'() {
         given:
         buildFile.text = """
             plugins {
@@ -93,6 +93,36 @@ class LintGradleTaskSpec extends TestKitSpecification {
             }
 
             gradleLint.rules = ['duplicate-dependency-class']
+
+            repositories { mavenCentral() }
+
+            dependencies {
+                compile 'com.google.guava:guava:18.0'
+                compile 'com.google.collections:google-collections:1.0'
+            }
+        """
+
+        when:
+        createJavaSourceFile('public class Main { uhoh! }')
+        def result = runTasksFail('compileJava')
+
+        then:
+        result.task(':autoLintGradle').outcome == TaskOutcome.SUCCESS
+    }
+
+
+    def 'auto lint does not run on build failure when autoLintAfterFailure is false'() {
+        given:
+        buildFile.text = """
+            plugins {
+                id 'java'
+                id 'nebula.lint'
+            }
+
+            gradleLint {
+                rules = ['duplicate-dependency-class']
+                autoLintAfterFailure = false
+            }
 
             repositories { mavenCentral() }
 
