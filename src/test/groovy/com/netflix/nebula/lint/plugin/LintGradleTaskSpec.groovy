@@ -81,7 +81,7 @@ class LintGradleTaskSpec extends TestKitSpecification {
         def result = runTasksSuccessfully('lintGradle')
 
         then:
-        result.task(':compileJava').outcome == TaskOutcome.UP_TO_DATE
+        result.task(':compileJava').outcome == TaskOutcome.NO_SOURCE
     }
 
     def 'auto lint runs on build failure'() {

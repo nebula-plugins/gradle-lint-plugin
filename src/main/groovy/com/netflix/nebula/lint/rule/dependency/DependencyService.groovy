@@ -52,7 +52,7 @@ class DependencyService {
         List<Configuration> terminalConfs = []
         def extendingConfs
         extendingConfs = { Configuration c ->
-            def subconfs = project.configurations.findAll { it.extendsFrom.any { it == c } }
+            def subconfs = resolvableConfigurations().findAll { it.extendsFrom.any { it == c } }
             for(Configuration subconf in subconfs)
                 extendingConfs(subconf)
             if(subconfs.isEmpty()) {
@@ -89,12 +89,17 @@ class DependencyService {
      * artifact was found on the resolved classpath
      */
     JarContents jarContents(ModuleIdentifier id) {
-        for(Configuration conf in project.configurations) {
+        def configurations = resolvableConfigurations()
+        for(Configuration conf in configurations) {
             def artifact = conf.resolvedConfiguration.resolvedArtifacts.find { it.moduleVersion.id.module == id }
             if(artifact)
                 return jarContents(artifact.file)
         }
         return null
+    }
+
+    Set<Configuration> resolvableConfigurations() {
+        return project.configurations.findAll { isResolvable(it) }
     }
 
     @Memoized
@@ -331,6 +336,23 @@ class DependencyService {
         conf.state == Configuration.State.RESOLVED ||
                 project.configurations.findAll { it.extendsFrom.contains(conf) }.any { isResolved(it) }
     }
+
+    boolean isResolvable(String conf) {
+        try {
+            return isResolvable(project.configurations.getByName(conf))
+        } catch(UnknownConfigurationException ignored) {
+            return false
+        }
+    }
+
+
+    boolean isResolvable(Configuration conf) {
+        if (Configuration.class.declaredMethods.any { it.name == 'isCanBeResolved' }) {
+            return conf.canBeResolved
+        }
+        return true
+    }
+
 
     private Set<Configuration> allExtendsFrom(Configuration conf) {
         def extendsFromRecurse = { Configuration c ->
