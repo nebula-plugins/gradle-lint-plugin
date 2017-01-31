@@ -25,7 +25,7 @@ import org.gradle.api.tasks.compile.AbstractCompile
 
 class GradleLintPlugin implements Plugin<Project> {
     private final exemptTasks = ['help', 'tasks', 'dependencies', 'dependencyInsight',
-        'components', 'model', 'projects', 'properties', 'lintGradle', 'fixGradleLint', 'fixLintGradle']
+        'components', 'model', 'projects', 'properties', 'wrapper', 'lintGradle', 'fixGradleLint', 'fixLintGradle']
 
     @Override
     void apply(Project project) {
