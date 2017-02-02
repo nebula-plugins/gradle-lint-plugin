@@ -256,6 +256,6 @@ class DependencyClassVisitorSpec extends Specification {
     }
 
     static DefaultResolvedDependency gav(String g, String a, String v) {
-        new DefaultResolvedDependency(0, new ResolvedConfigurationIdentifier(new DefaultModuleVersionIdentifier(g, a, v), 'compile'))
+        new DefaultResolvedDependency(new DefaultModuleVersionIdentifier(g, a, v), 'compile')
     }
 }
