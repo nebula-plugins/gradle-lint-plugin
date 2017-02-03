@@ -35,7 +35,7 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
                 compileOnlyDependencies.add(mid)
             }
             
-            if (!dependencyService.isRuntime(conf)) {
+            if (!dependencyService.isRuntime(conf) && dependencyService.isResolvable(conf)) {
                 def jarContents = dependencyService.jarContents(mid)
                 if (!jarContents) {
                     return // dependency being substituted by resolution rule?

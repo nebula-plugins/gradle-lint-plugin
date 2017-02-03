@@ -8,6 +8,8 @@ import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.Issue
 import spock.lang.Unroll
 
+import static com.netflix.nebula.lint.rule.dependency.DependencyClassVisitorSpec.gav
+
 class DependencyServiceSpec extends TestKitSpecification {
     Project project
 
@@ -44,14 +46,14 @@ class DependencyServiceSpec extends TestKitSpecification {
 
         def resolvedDependency = { String dep ->
             def (group, name, version) = dep.split(':')
-            new DefaultResolvedDependency(new DefaultModuleVersionIdentifier(group, name, version), 'compile')
+            gav(group, name, version)
         }
 
         when:
-        def a1 = resolvedDependency('a:a:1')
-        def b1 = resolvedDependency('b:b:1')
-        a1.children.add(b1)
-        b1.children.add(a1)
+        DefaultResolvedDependency a1 = resolvedDependency('a:a:1')
+        DefaultResolvedDependency b1 = resolvedDependency('b:b:1')
+        a1.addChild(b1)
+        b1.addChild(a1)
 
         def transitives = service.transitiveDependencies(a1)
 

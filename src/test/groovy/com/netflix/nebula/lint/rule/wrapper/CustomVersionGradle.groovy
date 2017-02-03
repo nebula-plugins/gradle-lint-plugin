@@ -16,6 +16,7 @@
 package com.netflix.nebula.lint.rule.wrapper
 
 import org.gradle.StartParameter
+import org.gradle.api.internal.GradleInternal
 import org.gradle.api.invocation.Gradle
 import org.gradle.internal.service.scopes.ServiceRegistryFactory
 import org.gradle.invocation.DefaultGradle
@@ -27,7 +28,7 @@ import org.gradle.util.GradleVersion
 class CustomVersionGradle extends DefaultGradle {
     GradleVersion version = GradleVersion.current()
 
-    public CustomVersionGradle(Gradle parent, StartParameter startParameter, ServiceRegistryFactory parentRegistry) {
+    public CustomVersionGradle(GradleInternal parent, StartParameter startParameter, ServiceRegistryFactory parentRegistry) {
         super(parent, startParameter, parentRegistry)
     }
 

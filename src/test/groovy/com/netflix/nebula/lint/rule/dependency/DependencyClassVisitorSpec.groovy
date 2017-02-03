@@ -19,6 +19,7 @@ package com.netflix.nebula.lint.rule.dependency
 import org.gradle.api.artifacts.ResolvedDependency
 import org.gradle.api.internal.artifacts.DefaultModuleVersionIdentifier
 import org.gradle.api.internal.artifacts.DefaultResolvedDependency
+import org.gradle.api.internal.artifacts.ResolvedConfigurationIdentifier
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -254,7 +255,7 @@ class DependencyClassVisitorSpec extends Specification {
         java.containsReferenceTo('b.B', ['a/AException': [a1].toSet()], a1)
     }
 
-    ResolvedDependency gav(String g, String a, String v) {
+    static DefaultResolvedDependency gav(String g, String a, String v) {
         new DefaultResolvedDependency(new DefaultModuleVersionIdentifier(g, a, v), 'compile')
     }
 }
