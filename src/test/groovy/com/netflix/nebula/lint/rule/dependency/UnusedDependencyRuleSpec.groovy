@@ -91,7 +91,7 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
         createJavaSourceFile(main)
 
         then:
-        runTasksSuccessfully('-m', 'fixGradleLint')
+        runTasksSuccessfully('fixGradleLint')
         dependencies(buildFile) == [guava]
 
         where:
