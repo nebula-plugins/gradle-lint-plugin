@@ -40,7 +40,7 @@ configurations {
 }
 
 dependencies {
-    plugin 'org.ow2.asm:asm:5.0.4'
+    plugin 'org.ow2.asm:asm:5.2'
     plugin('org.codenarc:CodeNarc:0.25.2') {
         transitive = false
     }
@@ -64,7 +64,7 @@ dependencies {
     testCompile ('org.spockframework:spock-core:1.0-groovy-2.4') {
         exclude module: 'groovy-all'
     }
-    testCompile 'org.ow2.asm:asm-util:5.0.4'
+    testCompile 'org.ow2.asm:asm-util:5.2'
 }
 
 pluginBundle {

@@ -9,6 +9,8 @@ import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.DefaultV
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.SourceSet
 import org.objectweb.asm.ClassReader
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
@@ -21,6 +23,7 @@ import java.util.zip.ZipException
 
 class DependencyService {
     static Map<Project, DependencyService> instancesByProject = [:]
+    private final Logger logger = LoggerFactory.getLogger(DependencyService)
 
     static synchronized DependencyService forProject(Project project) {
         def inst = instancesByProject[project]
@@ -154,11 +157,18 @@ class DependencyService {
             @Override
             FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 if (file.toFile().name.endsWith('.class')) {
-                    def visitor = new DependencyClassVisitor(artifactsByClass, compiledSourceClassLoader)
-                    new ClassReader(file.newInputStream()).accept(visitor, ClassReader.SKIP_DEBUG)
+                    try {
+                        def visitor = new DependencyClassVisitor(artifactsByClass, compiledSourceClassLoader)
+                        new ClassReader(file.newInputStream()).accept(visitor, ClassReader.SKIP_DEBUG)
 
-                    references.direct.addAll(visitor.directReferences)
-                    references.indirect.addAll(visitor.indirectReferences)
+                        references.direct.addAll(visitor.directReferences)
+                        references.indirect.addAll(visitor.indirectReferences)
+                    } catch(Throwable t) {
+                        // see https://github.com/nebula-plugins/gradle-lint-plugin/issues/88
+                        // type annotations can cause ArrayIndexOutOfBounds in ASM:
+                        // http://forge.ow2.org/tracker/index.php?func=detail&aid=317615&group_id=23&atid=100023
+                        logger.debug("unable to read class ${file.toFile().name}", t)
+                    }
                 }
                 return FileVisitResult.CONTINUE
             }
