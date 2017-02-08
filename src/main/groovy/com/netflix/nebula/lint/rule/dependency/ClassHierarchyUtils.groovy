@@ -30,8 +30,8 @@ class ClassHierarchyUtils {
     static Collection<String> typeHierarchy(Class<?> clazz) {
         try {
             return typeHierarchyRecursive(clazz) - clazz.name
-        } catch(Throwable ignored) {
-            logger.debug("Unable to load super type or interfaces of $clazz.name")
+        } catch(Throwable t) {
+            logger.debug("Unable to load super type or interfaces", t)
             return []
         }
     }
