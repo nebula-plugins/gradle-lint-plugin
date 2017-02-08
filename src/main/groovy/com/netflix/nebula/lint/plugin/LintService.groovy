@@ -76,7 +76,7 @@ class LintService {
                 extension = p.rootProject.extensions.getByType(GradleLintExtension)
             }
 
-            def rules = p.property('gradleLint.rules')?.toString()?.split(',')?.toList() ?:
+            def rules = p.findProperty('gradleLint.rules')?.toString()?.split(',')?.toList() ?:
                     extension.rules + extension.criticalRules
 
             return RuleSetFactory.configureRuleSet(rules.unique()
