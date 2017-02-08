@@ -17,37 +17,46 @@ It assists a centralized build tools team in gently introducing and maintaining 
 Read the [full documentation](https://github.com/nebula-plugins/gradle-lint-plugin/wiki). 
 
 To apply this plugin:
-    
-    buildscript { repositories { jcenter() } }
-    plugins {
-      id 'nebula.lint' version '6.3.0'
-    }
+
+```groovy
+buildscript { repositories { jcenter() } }
+plugins {
+  id 'nebula.lint' version '6.3.0'
+}
+```
     
 *Important:* For now, in a multi-module build you **must** apply lint to the root project, at a minimum.
 
 Alternatively:
 
-    buildscript {
-      repositories { jcenter() }
-      dependencies {
-        classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
-      }
-    }
+```groovy
+buildscript {
+  repositories { jcenter() }
+  dependencies {
+    classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
+  }
+}
 
-    apply plugin: 'nebula.lint'
+
+apply plugin: 'nebula.lint'
+```
 
 Define which rules you would like to lint against:
 
-    gradleLint.rules = ['all-dependency'] // add as many rules here as you'd like
+```groovy
+gradleLint.rules = ['all-dependency'] // add as many rules here as you'd like
+```
 
 For an enterprise build, we recommend defining the lint rules in a `init.gradle` script or in a gradle script that is included via the Gradle `apply from` mechanism.
 
 For multimodule projects, we recommend applying the plugin in an allprojects block:
 
-    allprojects {
-      apply plugin: 'nebula.lint'
-      gradleLint.rules = ['all-dependency'] // add as many rules here as you'd like
-    }
+```groovy
+allprojects {
+  apply plugin: 'nebula.lint'
+  gradleLint.rules = ['all-dependency'] // add as many rules here as you'd like
+}
+```
 
 ## License
 
