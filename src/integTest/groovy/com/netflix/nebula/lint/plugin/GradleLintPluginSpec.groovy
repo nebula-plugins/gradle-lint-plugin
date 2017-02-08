@@ -350,4 +350,30 @@ class GradleLintPluginSpec extends TestKitSpecification {
         then:
         results.task(':autoLintGradle').outcome == TaskOutcome.SUCCESS
     }
+
+    def 'override rule set with a gradle property'() {
+        createJavaSourceFile('public class Main { }')
+        buildFile << """\
+            plugins {
+                id 'java'
+                id 'nebula.lint'
+            }
+            
+            repositories {
+                mavenCentral()
+            }
+            
+            dependencies {
+                compile('com.google.guava:guava:21.0')
+            }
+            """.stripIndent()
+
+        when:
+        def results = runTasksSuccessfully('fixGradleLint',
+                '-PgradleLint.rules=dependency-parentheses')
+
+        then:
+        results.task(':fixGradleLint').outcome == TaskOutcome.SUCCESS
+        buildFile.text.contains("compile 'com.google.guava:guava:21.0'")
+    }
 }
