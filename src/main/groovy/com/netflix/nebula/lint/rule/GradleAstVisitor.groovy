@@ -17,6 +17,7 @@
 package com.netflix.nebula.lint.rule
 
 import org.codehaus.groovy.ast.ASTNode
+import org.codehaus.groovy.ast.expr.Expression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.codehaus.groovy.ast.stmt.ExpressionStatement
 
@@ -70,4 +71,6 @@ interface GradleAstVisitor {
     void visitTask(MethodCallExpression call, String name, Map<String, String> args)
 
     void visitBuildscript(MethodCallExpression call)
+
+    void visitGradleResolutionStrategyForce(MethodCallExpression call, String conf, Map<GradleDependency, Expression> forces)
 }

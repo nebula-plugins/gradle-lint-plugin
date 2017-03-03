@@ -23,7 +23,6 @@ import org.codehaus.groovy.ast.expr.ClosureExpression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.codenarc.rule.Rule
 import org.codenarc.rule.Violation
-import org.eclipse.jdt.internal.compiler.ast.Argument
 
 import java.util.concurrent.atomic.AtomicInteger
 

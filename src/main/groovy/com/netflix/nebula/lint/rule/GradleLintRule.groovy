@@ -65,6 +65,7 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
     @Override void visitPlugins(MethodCallExpression call) {}
     @Override void visitTask(MethodCallExpression call, String name, Map<String, String> args) {}
     @Override void visitBuildscript(MethodCallExpression call) {}
+    @Override void visitGradleResolutionStrategyForce(MethodCallExpression call, String conf, Map<GradleDependency, Expression> forces) {}
 
     protected boolean isIgnored() {
         globalIgnoreOn || rulesToIgnore.collect { LintRuleRegistry.findRules(it) }.flatten().contains(ruleId)
@@ -182,6 +183,7 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
             boolean inConfigurationsBlock = false
             boolean inPluginsBlock = false
             boolean inBuildscriptBlock = false
+            boolean inResolutionStrategyBlock = false
 
             @Override
             final void visitMethodCallExpression(MethodCallExpression call) {
@@ -216,6 +218,8 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
                     visitMethodCallInPlugins(call)
                 } else if (inBuildscriptBlock) {
                     visitMethodCallInDependencies(call)
+                } else if (inResolutionStrategyBlock) {
+                    visitMethodCallInResolutionStrategy(call)
                 }
 
                 if (methodName == 'buildscript') {
@@ -237,6 +241,10 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
                     inConfigurationsBlock = true
                     super.visitMethodCallExpression(call)
                     inConfigurationsBlock = false
+                } else if (methodName == 'resolutionStrategy') {
+                    inResolutionStrategyBlock = true
+                    super.visitMethodCallExpression(call)
+                    inResolutionStrategyBlock = false
                 } else if (methodName == 'apply') {
                     if (expressions.any { it instanceof MapExpression }) {
                         def entries = GradleAstUtil.collectEntryExpressions(call)
@@ -374,21 +382,6 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
                 }
             }
 
-            private GradleDependency dependencyFromConstant(Object expr) {
-                def matcher = expr =~ /((?<group>[^:]+):)?(?<name>[^:]+)(:(?<version>[^@:]+)(?<classifier>:[^@]+)?(?<ext>@.+)?)?/
-                if (matcher.matches()) {
-                    return new GradleDependency(
-                            matcher.group('group'),
-                            matcher.group('name'),
-                            matcher.group('version'),
-                            matcher.group('classifier'),
-                            matcher.group('ext'),
-                            null,
-                            GradleDependency.Syntax.StringNotation)
-                }
-                return null
-            }
-
             private void visitMethodCallInDependencies(MethodCallExpression call) {
                 // https://docs.gradle.org/current/javadoc/org/gradle/api/artifacts/dsl/DependencyHandler.html
                 def methodName = call.methodAsString
@@ -414,13 +407,13 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
                                 return it.text
                             return null
                         }
-                        dependency = dependencyFromConstant(expr)
+                        dependency = GradleDependency.fromConstant(expr)
                     } else if(call.arguments.expressions.any { it instanceof PropertyExpression } && project != null) {
                         def shell = new GroovyShell()
                         shell.setVariable('project', project as Project)
                         try {
                             Object dep = shell.evaluate('project.' + sourceCode(call.arguments))
-                            dependency = dependencyFromConstant(dep)
+                            dependency = GradleDependency.fromConstant(dep)
                             dependency.syntax = GradleDependency.Syntax.EvaluatedArbitraryCode
                         } catch(Throwable t) {
                             // if we cannot evaluate this expression, just give up
@@ -456,6 +449,22 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
                     if(plugin) {
                         visitGradlePlugin(call, call.methodAsString, plugin)
                     }
+                }
+            }
+
+            private void visitMethodCallInResolutionStrategy(MethodCallExpression call) {
+                // https://docs.gradle.org/current/dsl/org.gradle.api.artifacts.ResolutionStrategy.html
+                if(call.methodAsString == 'force') {
+                    def forces = (call.arguments.expressions as List).findResults {
+                        if(it instanceof ConstantExpression)
+                            return [GradleDependency.fromConstant(it.value), it]
+                        if(it instanceof GStringExpression)
+                            return [GradleDependency.fromConstant(it.text), it]
+                        return null
+                    }.flatten()
+
+                    def conf = closureStack.peek().methodAsString
+                    visitGradleResolutionStrategyForce(call, conf, forces.toSpreadMap())
                 }
             }
         }

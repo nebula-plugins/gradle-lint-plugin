@@ -20,6 +20,7 @@ import com.netflix.nebula.lint.GradleViolation
 import com.netflix.nebula.lint.plugin.GradleLintPlugin
 import com.netflix.nebula.lint.plugin.LintRuleRegistry
 import com.netflix.nebula.lint.rule.test.AbstractRuleSpec
+import org.codehaus.groovy.ast.expr.Expression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.codehaus.groovy.ast.expr.VariableExpression
 import org.codehaus.groovy.ast.stmt.ExpressionStatement
@@ -424,5 +425,35 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
               'this is a multiline'
             }
         '''.stripIndent().trim()
+    }
+
+    def 'visit resolution strategy forces'() {
+        when:
+        project.buildFile << """
+            apply plugin: 'java'
+            
+            configurations {
+                all {
+                    resolutionStrategy {
+                        force 'com.google.guava:guava:19.0'
+                    }
+                }
+            }
+        """
+
+        def foundForces = []
+        def rule = new GradleLintRule() {
+            String description = 'test'
+
+            @Override
+            void visitGradleResolutionStrategyForce(MethodCallExpression call, String conf, Map<GradleDependency, Expression> forces) {
+                foundForces = forces.values()
+            }
+        }
+
+        runRulesAgainst(rule)
+
+        then:
+        !foundForces.isEmpty()
     }
 }

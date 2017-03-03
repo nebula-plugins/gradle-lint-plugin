@@ -15,11 +15,7 @@
  */
 package com.netflix.nebula.lint.plugin
 
-import com.netflix.nebula.lint.GradleLintInfoBrokerAction
-import com.netflix.nebula.lint.GradleLintPatchAction
-import com.netflix.nebula.lint.GradleLintViolationAction
-import com.netflix.nebula.lint.GradleViolation
-import com.netflix.nebula.lint.StyledTextService
+import com.netflix.nebula.lint.*
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.tasks.TaskAction

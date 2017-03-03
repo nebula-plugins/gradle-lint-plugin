@@ -18,7 +18,6 @@ package com.netflix.nebula.lint.plugin
 
 import com.netflix.nebula.lint.GradleViolation
 import org.codenarc.analyzer.AbstractSourceAnalyzer
-import org.codenarc.analyzer.StringSourceAnalyzer
 import org.codenarc.results.DirectoryResults
 import org.codenarc.results.FileResults
 import org.codenarc.results.Results

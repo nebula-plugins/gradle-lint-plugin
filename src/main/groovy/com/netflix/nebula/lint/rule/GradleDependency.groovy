@@ -56,4 +56,19 @@ class GradleDependency {
         
         return notation
     }
+
+    static GradleDependency fromConstant(Object expr) {
+        def matcher = expr =~ /(?<group>[^:]+)?(:(?<name>[^:]+))(:(?<version>[^@:]+)(?<classifier>:[^@]+)?(?<ext>@.+)?)?/
+        if (matcher.matches()) {
+            return new GradleDependency(
+                    matcher.group('group'),
+                    matcher.group('name'),
+                    matcher.group('version'),
+                    matcher.group('classifier')?.substring(1), // strip the leading `:`
+                    matcher.group('ext')?.substring(1), // strip the leading `@`
+                    null,
+                    GradleDependency.Syntax.StringNotation)
+        }
+        return null
+    }
 }

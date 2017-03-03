@@ -16,8 +16,6 @@
 
 package com.netflix.nebula.lint
 
-import groovy.transform.Canonical
-
 import java.nio.file.Files
 
 /**

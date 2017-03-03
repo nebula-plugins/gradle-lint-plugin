@@ -355,14 +355,13 @@ class DependencyService {
         }
     }
 
-
     boolean isResolvable(Configuration conf) {
+        // isCanBeResolved was added in Gradle 3.3. Previously, all configurations were resolvable
         if (Configuration.class.declaredMethods.any { it.name == 'isCanBeResolved' }) {
             return conf.canBeResolved
         }
         return true
     }
-
 
     private Set<Configuration> allExtendsFrom(Configuration conf) {
         def extendsFromRecurse = { Configuration c ->

@@ -1,7 +1,6 @@
 package com.netflix.nebula.lint
 
 import groovy.transform.TupleConstructor
-import org.gradle.internal.logging.text.StyledTextOutput
 import org.gradle.internal.service.ServiceRegistry
 
 /**

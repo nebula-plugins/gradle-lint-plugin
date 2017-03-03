@@ -17,10 +17,7 @@ package com.netflix.nebula.lint.plugin
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.ProjectState
-import org.gradle.api.Task
 import org.gradle.api.plugins.JavaBasePlugin
-import org.gradle.api.tasks.StopExecutionException
 import org.gradle.api.tasks.compile.AbstractCompile
 
 class GradleLintPlugin implements Plugin<Project> {

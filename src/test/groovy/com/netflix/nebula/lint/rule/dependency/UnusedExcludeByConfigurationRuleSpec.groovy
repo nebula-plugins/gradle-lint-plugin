@@ -25,6 +25,22 @@ class UnusedExcludeByConfigurationRuleSpec extends AbstractRuleSpec {
         rule = new UnusedExcludeByConfigurationRule(project: project)
     }
 
+    def 'unused exclude violates (no closure)'() {
+        when:
+        // trivial case: no dependencies
+        project.buildFile << """
+            apply plugin: 'java'
+            configurations.all*.exclude group: 'com.google.guava', module: 'guava'
+        """
+
+        project.apply plugin: 'java'
+
+        def results = runRulesAgainst(rule)
+
+        then:
+        results.violates()
+    }
+
     def 'unused exclude violates'() {
         when:
         // trivial case: no dependencies
