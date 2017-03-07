@@ -393,7 +393,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
             @Override
             void visitExpressionStatement(ExpressionStatement statement) {
                 if (statement.expression instanceof VariableExpression)
-                    parent = parentClosure()
+                    parent = parentNode()
             }
         })
 

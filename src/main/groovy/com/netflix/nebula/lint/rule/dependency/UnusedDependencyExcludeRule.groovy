@@ -28,21 +28,21 @@ class UnusedDependencyExcludeRule extends GradleLintRule implements GradleModelA
     String description = 'excludes that have no effect on the classpath should be removed for clarity'
 
     GradleDependency dependency
+    MethodCallExpression dependencyCall
 
     @Override
     void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
         dependency = dep
-        super.visitMethodCallExpression(call)
-        dependency = null
+        dependencyCall = call
     }
 
     @Override
     void visitMethodCallExpression(MethodCallExpression call) {
-        if(dependency) {
+        if(callStack.contains(dependencyCall)) {
             // https://docs.gradle.org/current/javadoc/org/gradle/api/artifacts/ModuleDependency.html#exclude(java.util.Map)
-            if(call.methodAsString == 'exclude') {
+            if (call.methodAsString == 'exclude') {
                 def entries = GradleAstUtil.collectEntryExpressions(call)
-                if(isExcludeUnnecessary(entries.group, entries.module)) {
+                if (isExcludeUnnecessary(entries.group, entries.module)) {
                     addBuildLintViolation("the excluded dependency is not a transitive of $dependency.group:$dependency.name:$dependency.version, so has no effect", call)
                             .delete(call)
                 }

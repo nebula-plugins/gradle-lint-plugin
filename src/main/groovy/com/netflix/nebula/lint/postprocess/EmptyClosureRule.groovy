@@ -19,12 +19,19 @@ package com.netflix.nebula.lint.postprocess
 import com.netflix.nebula.lint.rule.GradleLintRule
 import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.ast.expr.ClosureExpression
+import org.codehaus.groovy.ast.expr.Expression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 
+/**
+ * DSL blocks made empty by the deletion of their contents by other rules should be purged altogether.
+ * This rule cannot distinguish between blocks made empty by other rules and those that were already empty,
+ * but (while imperfect) doesn't do any harm by removing unused cruft incidentally.
+ */
 class EmptyClosureRule extends GradleLintRule {
     String description = 'empty closures should be removed'
 
-    def potentialDeletes = [] as List<MethodCallExpression>
+    def emptyClosureCalls = [] as List<MethodCallExpression>
+    def taskNames = [] as List<Expression>
 
     @Override
     void visitMethodCallExpression(MethodCallExpression call) {
@@ -33,20 +40,19 @@ class EmptyClosureRule extends GradleLintRule {
         expressions.each {
             // prevents empty tasks from being deleted that take this form:
             // task taskA {}
-            potentialDeletes.remove(it)
+            taskNames.add(it)
         }
 
         if (expressions.size == 1 && expressions.last() instanceof ClosureExpression) {
-            def closure = expressions.last() as ClosureExpression
-            if(closure.code.empty) {
-                potentialDeletes.add(call)
+            if(expressions.last().code.empty) {
+                emptyClosureCalls.add(call)
             }
         }
     }
 
     @Override
     protected void visitClassComplete(ClassNode node) {
-        potentialDeletes.unique().each {
+        (emptyClosureCalls - taskNames).unique().each {
             addBuildLintViolation('this is an empty configuration closure that can be removed', it)
                 .delete(it)
         }

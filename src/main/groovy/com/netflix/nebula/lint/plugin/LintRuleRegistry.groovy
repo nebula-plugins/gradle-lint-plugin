@@ -69,9 +69,8 @@ class LintRuleRegistry {
                 if(r instanceof GradleLintRule) {
                     r.ruleId = ruleId
                     r.buildFile = project.buildFile
+                    r.critical = critical
                 }
-
-                r.priority = critical ? 1 : 2
 
                 return included + r
             } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {

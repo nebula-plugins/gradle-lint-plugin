@@ -12,31 +12,16 @@ import org.gradle.api.artifacts.ResolvedArtifact
 class DuplicateDependencyClassRule extends GradleLintRule implements GradleModelAware {
     String description = 'classpaths with duplicate classes may break unpredictably depending on the order in which dependencies are provided to the classpath'
 
-    boolean inDependencies = false
     Set<Configuration> directlyUsedConfigurations = [] as Set
     Set<ModuleVersionIdentifier> ignoredDependencies = [] as Set
     
     @Override
-    void visitDependencies(MethodCallExpression call) {
-        inDependencies = true
-        visitMethodCallExpression(call)
-        inDependencies = false
-    }
-
-    @Override
-    void visitMethodCallExpression(MethodCallExpression call) {
-        if(inDependencies) {
-            def conf = project.configurations.findByName(call.methodAsString)
-            if(conf) 
-                directlyUsedConfigurations.add(conf)
-        }
-        super.visitMethodCallExpression(call)
-    }
-
-    @Override
     void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
         if(ignored)
             ignoredDependencies.add(dep.toModuleVersion())
+        else {
+            directlyUsedConfigurations.add(project.configurations.findByName(conf))
+        }
     }
 
     @Override

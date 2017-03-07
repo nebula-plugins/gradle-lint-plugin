@@ -25,12 +25,14 @@ class MinimumDependencyVersionRule extends GradleLintRule implements GradleModel
     private Comparator<String> versionComparator = new DefaultVersionComparator().asStringComparator()
 
     @Lazy List<GradleDependency> minimumVersions = {
-        project.findProperty('gradleLint.minVersions')?.
-                toString()?.
-                split(',')?.
-                collect { GradleDependency.fromConstant(it) }?.
-                findAll { it != null } ?:
-                []
+        if(project.hasProperty('gradleLint.minVersions')) {
+            project.property('gradleLint.minVersions')?.
+                    toString()?.
+                    split(',')?.
+                    collect { GradleDependency.fromConstant(it) }?.
+                    findAll { it != null } ?:
+                    []
+        } else []
     }()
 
     @Override

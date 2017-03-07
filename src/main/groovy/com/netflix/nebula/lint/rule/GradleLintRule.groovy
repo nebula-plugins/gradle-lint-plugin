@@ -18,107 +18,120 @@ package com.netflix.nebula.lint.rule
 
 import com.netflix.nebula.lint.GradleViolation
 import com.netflix.nebula.lint.plugin.LintRuleRegistry
-import org.codehaus.groovy.ast.*
+import org.codehaus.groovy.ast.ASTNode
 import org.codehaus.groovy.ast.expr.*
-import org.codehaus.groovy.ast.stmt.*
-import org.codehaus.groovy.classgen.BytecodeExpression
+import org.codehaus.groovy.ast.stmt.ExpressionStatement
 import org.codenarc.rule.*
 import org.codenarc.source.SourceCode
 import org.gradle.api.Project
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import sun.tools.tree.MethodExpression
 
-abstract class GradleLintRule extends AbstractAstVisitor implements Rule, GradleAstVisitor {
-    int _priority
+abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
     Project project // will be non-null if type is GradleModelAware, otherwise null
     File buildFile
     SourceCode sourceCode
     List<GradleViolation> gradleViolations = []
+    boolean critical = false
+
+    /**
+     * Shared state of the method nesting context between gradleAstVisitor and our rule definition.
+     */
+    Stack<MethodCallExpression> callStack = new Stack()
 
     // a little convoluted, but will be set by LintRuleRegistry automatically so that name is derived from
     // the properties file resource that makes this rule available for use
     String ruleId
-
-    boolean globalIgnoreOn = false
-    List<String> rulesToIgnore = []
 
     @Override
     final String getName() {
         return ruleId
     }
 
-    void setPriority(int priority) {
-        _priority = priority
-    }
-
     abstract String getDescription()
 
     private Map<String, ASTNode> bookmarks = [:]
 
-    @Override void visitApplyPlugin(MethodCallExpression call, String plugin) {}
-    @Override void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {}
-    @Override void visitGradlePlugin(MethodCallExpression call, String conf, GradlePlugin plugin) {}
-    @Override void visitConfigurationExclude(MethodCallExpression call, String conf, GradleDependency exclude) {}
-    @Override void visitExtensionProperty(ExpressionStatement expression, String extension, String prop, String value) {}
-    @Override void visitExtensionProperty(ExpressionStatement expression, String extension, String prop) {}
-    @Override void visitDependencies(MethodCallExpression call) {}
-    @Override void visitPlugins(MethodCallExpression call) {}
-    @Override void visitTask(MethodCallExpression call, String name, Map<String, String> args) {}
-    @Override void visitBuildscript(MethodCallExpression call) {}
-    @Override void visitGradleResolutionStrategyForce(MethodCallExpression call, String conf, Map<GradleDependency, Expression> forces) {}
+    // Gradle DSL specific visitor methods
+    void visitApplyPlugin(MethodCallExpression call, String plugin) {}
+    void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {}
+    void visitGradlePlugin(MethodCallExpression call, String conf, GradlePlugin plugin) {}
+    void visitConfigurationExclude(MethodCallExpression call, String conf, GradleDependency exclude) {}
+    void visitExtensionProperty(ExpressionStatement expression, String extension, String prop, String value) {}
+    void visitExtensionProperty(ExpressionStatement expression, String extension, String prop) {}
+    void visitDependencies(MethodCallExpression call) {}
+    void visitPlugins(MethodCallExpression call) {}
+    void visitTask(MethodCallExpression call, String name, Map<String, String> args) {}
+    void visitBuildscript(MethodCallExpression call) {}
+    void visitGradleResolutionStrategyForce(MethodCallExpression call, String conf, Map<GradleDependency, Expression> forces) {}
 
     protected boolean isIgnored() {
-        globalIgnoreOn || rulesToIgnore.collect { LintRuleRegistry.findRules(it) }.flatten().contains(ruleId)
+        callStack.any { call ->
+            if (call.methodAsString == 'ignore' && call.objectExpression.text == 'gradleLint') {
+                List<String> rulesToIgnore = call.arguments.expressions.findAll { it instanceof ConstantExpression }.collect { it.text }
+                if (rulesToIgnore.isEmpty())
+                    true
+                else {
+                    rulesToIgnore.collect { LintRuleRegistry.findRules(it) }.flatten().contains(ruleId)
+                }
+            }
+            else false
+        }
     }
 
-    @Override
-    final MethodCallExpression parentClosure() {
-        rule.closureStack.isEmpty() ? null : rule.closureStack.peek()
+    final Expression parentNode() {
+        callStack.isEmpty() ? null : callStack.peek()
     }
 
-    @Override
-    final List<MethodCallExpression> closureStack() {
-        new ArrayList<MethodCallExpression>(rule.closureStack as List)
+    final List<String> dslStack() {
+        dslStack(callStack)
+    }
+
+    final List<String> dslStack(List<MethodCallExpression> calls) {
+        def _dslStack
+        _dslStack = { Expression expr ->
+            if(expr instanceof PropertyExpression)
+                _dslStack(expr.objectExpression) + expr.propertyAsString
+            else if(expr instanceof MethodCallExpression)
+                _dslStack(expr.objectExpression) + expr.methodAsString
+            else if(expr instanceof VariableExpression)
+                expr.text == 'this' ? [] : [expr.text]
+            else []
+        }
+
+        calls.collect { call -> _dslStack(call) }.flatten() as List<String>
+    }
+
+    private final String containingConfiguration(MethodCallExpression call) {
+        def stackStartingWithConfName = dslStack(callStack + call).dropWhile { it != 'configurations' }.drop(1)
+        stackStartingWithConfName.isEmpty() ? null : stackStartingWithConfName[0]
     }
 
     /**
      * Used to preserve the location of a block of code so that it can be affected in some way
      * later in the AST visit
      */
-    @Override
     void bookmark(String label, ASTNode node) {
         bookmarks[label] = node
     }
 
-    @Override
     ASTNode bookmark(String label) {
         bookmarks[label]
     }
 
-    @SuppressWarnings("GrDeprecatedAPIUsage")
-    @Override
-    protected final void addViolation(ASTNode node) {
-        throw new UnsupportedOperationException("use either addLintViolation or one of the addBuildFileViolation* methods to create a lint violation")
-    }
-
-    @Override
-    protected final void addViolation(ASTNode node, String message) {
-        throw new UnsupportedOperationException("use either addLintViolation or one of the addBuildFileViolation* methods to create a lint violation")
-    }
-
-    public GradleViolation addBuildLintViolation(String message, ASTNode node) {
+    GradleViolation addBuildLintViolation(String message, ASTNode node) {
         def v = new GradleViolation(buildFile, rule, node?.lineNumber, sourceCode(node), message)
         if(!isIgnored())
             gradleViolations.add(v)
         return v
     }
 
-
-    public GradleViolation addBuildLintViolation(String message) {
+    GradleViolation addBuildLintViolation(String message) {
         addBuildLintViolation(message, null)
     }
 
-    public GradleViolation addLintViolation(String message, File file, Integer lineNumber) {
+    GradleViolation addLintViolation(String message, File file, Integer lineNumber) {
         def v = new GradleViolation(file, rule, lineNumber, null, message)
         if(!isIgnored())
             gradleViolations.add(v)
@@ -135,6 +148,7 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
         this.sourceCode = sourceCode
         beforeApplyTo()
         rule.applyTo(sourceCode)
+        gradleViolations
     }
 
     /**
@@ -157,7 +171,6 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
         def findMinimumLeadingSpaces = { Integer count, String line ->
             int index
             for(index = 0; index < line.length() && index < count && Character.isWhitespace(line.charAt(index)); ++index) {
-                ;
             }
             index
         }
@@ -168,27 +181,21 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
     }
 
     /**
-     * Invert the relationship between rule and visitor to simplify rule creation
+     * See the comment on compositeVisitor below for why we are visiting the AST separately independently of our rule definition.
      */
     @Delegate final Rule rule = new AbstractAstVisitorRule() {
+        @Override
+        AstVisitor getAstVisitor() { new CompositeGroovyAstVisitor(visitors: [gradleAstVisitor, GradleLintRule.this], callStack: callStack) }
 
-        Stack<MethodCallExpression> closureStack = new Stack<MethodCallExpression>()
         private Logger logger = LoggerFactory.getLogger(GradleLintRule)
 
-        AbstractAstVisitor gradleAstVisitor = new AbstractAstVisitor() {
+        GroovyAstVisitor gradleAstVisitor = new GroovyAstVisitor() {
             // fall back on some common configurations in case the rule is not GradleModelAware
             Collection<String> configurations = ['archives', 'default', 'compile', 'runtime', 'testCompile', 'testRuntime']
 
-            boolean inDependenciesBlock = false
-            boolean inConfigurationsBlock = false
-            boolean inPluginsBlock = false
-            boolean inBuildscriptBlock = false
-            boolean inResolutionStrategyBlock = false
-
             @Override
-            final void visitMethodCallExpression(MethodCallExpression call) {
+            void visitMethodCallExpression(MethodCallExpression call) {
                 def methodName = call.methodAsString
-
                 if (methodName == 'runScript' && project && !project.configurations.empty) {
                     configurations = project.configurations.collect { it.name }
                 }
@@ -197,54 +204,22 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
                 def objectExpression = call.objectExpression.text
 
                 if (methodName == 'ignore' && objectExpression == 'gradleLint') {
-                    rulesToIgnore = expressions.findAll { it instanceof ConstantExpression }.collect { it.text }
-                    if (rulesToIgnore.isEmpty())
-                        globalIgnoreOn = true
-
-                    super.visitMethodCallExpression(call)
-                    GradleLintRule.this.visitMethodCallExpression(call)
-
-                    rulesToIgnore.clear()
-                    globalIgnoreOn = false
-
-                    return
+                    return // short-circuit ignore calls
                 }
 
-                if (inDependenciesBlock) {
-                    visitMethodCallInDependencies(call)
-                } else if (inConfigurationsBlock) {
-                    visitMethodCallInConfigurations(call)
-                } else if (inPluginsBlock) {
-                    visitMethodCallInPlugins(call)
-                } else if (inBuildscriptBlock) {
-                    visitMethodCallInDependencies(call)
-                } else if (inResolutionStrategyBlock) {
-                    visitMethodCallInResolutionStrategy(call)
-                }
+                def inMethod = { name -> dslStack(callStack + call).contains(name) }
+
+                if(inMethod('dependencies')) visitMethodCallInDependencies(call)
+                if(inMethod('configurations')) visitMethodCallInConfigurations(call)
+                if(inMethod('plugins')) visitMethodCallInPlugins(call)
+                if(inMethod('resolutionStrategy')) visitMethodCallInResolutionStrategy(call)
 
                 if (methodName == 'buildscript') {
-                    inBuildscriptBlock = true
-                    super.visitMethodCallExpression(call)
                     GradleLintRule.this.visitBuildscript(call)
-                    inBuildscriptBlock = false
                 } else if (methodName == 'dependencies') {
-                    inDependenciesBlock = true
-                    super.visitMethodCallExpression(call)
                     GradleLintRule.this.visitDependencies(call)
-                    inDependenciesBlock = false
                 } else if (methodName == 'plugins') {
-                    inPluginsBlock = true
-                    super.visitMethodCallExpression(call)
                     GradleLintRule.this.visitPlugins(call)
-                    inPluginsBlock = false
-                } else if (methodName == 'configurations') {
-                    inConfigurationsBlock = true
-                    super.visitMethodCallExpression(call)
-                    inConfigurationsBlock = false
-                } else if (methodName == 'resolutionStrategy') {
-                    inResolutionStrategyBlock = true
-                    super.visitMethodCallExpression(call)
-                    inResolutionStrategyBlock = false
                 } else if (methodName == 'apply') {
                     if (expressions.any { it instanceof MapExpression }) {
                         def entries = GradleAstUtil.collectEntryExpressions(call)
@@ -252,20 +227,8 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
                             visitApplyPlugin(call, entries.plugin)
                         }
                     }
-                } else if (methodName == 'task' ||
-                        (objectExpression == 'tasks' && methodName == 'create')) {
-                    analyzePotentialTaskDefinition(call, expressions)
-                } else if (!expressions.isEmpty() && expressions.last() instanceof ClosureExpression) {
-                    closureStack.push(call)
-                    super.visitMethodCallExpression(call)
-
-                    // because closureStack is state that is shared with GradleLintRule, we need to pre-empt the composite
-                    // visitor and call out to the rule now before popping the stack
-                    GradleLintRule.this.visitMethodCallExpression(call)
-
-                    closureStack.pop()
-                } else {
-                    super.visitMethodCallExpression(call)
+                } else if (methodName == 'task' || (objectExpression == 'tasks' && methodName == 'create')) {
+                    visitPossibleTaskDefinition(call, expressions as List)
                 }
             }
 
@@ -296,15 +259,15 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
              * @param call
              * @param expressions
              */
-            private void analyzePotentialTaskDefinition(MethodCallExpression call, List expressions){
+            private void visitPossibleTaskDefinition(MethodCallExpression call, List expressions){
                 def taskName = null
-                def taskArgs = [:]
+                def taskArgs = [:] as Map<String, String>
                 def possibleName = expressions.find {
                     !(it instanceof MapExpression || it instanceof ClosureExpression)
                 }
                 if (possibleName == null) {
                     taskArgs = GradleAstUtil.collectEntryExpressions(call)
-                    taskName = taskArgs.get('name')
+                    taskName = taskArgs['name']
                 } else if (possibleName instanceof VariableExpression) {
                     taskName = possibleName.variable
                     taskArgs = GradleAstUtil.collectEntryExpressions(call)
@@ -322,17 +285,20 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
                     taskName = possibleName.methodAsString
                     taskArgs = GradleAstUtil.collectEntryExpressions(possibleName)
                 }
-                super.visitMethodCallExpression(call)
                 if (taskName != null) {
-                    GradleLintRule.this.visitTask(call, taskName, taskArgs)
+                    GradleLintRule.this.visitTask(call, taskName as String, taskArgs)
                 }
             }
 
             @Override
             void visitExpressionStatement(ExpressionStatement statement) {
                 def expression = statement.expression
-                if (!closureStack.isEmpty()) {
-                    def closureName = closureStack.peek().methodAsString
+                if (!callStack.isEmpty()) {
+                    def closureName = null
+                    switch(callStack.peek()) {
+                        case MethodCallExpression: closureName = callStack.peek().methodAsString; break
+                        case PropertyExpression: closureName = callStack.peek().text; break
+                    }
 
                     if (expression instanceof BinaryExpression) {
                         if (expression.rightExpression instanceof ConstantExpression) { // STYLE: nebula { moduleOwner = 'me' }
@@ -368,12 +334,11 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
                     // STYLE: nebula.moduleOwner trim('me')
                     visitExtensionProperty(statement, extension, prop)
                 }
-                super.visitExpressionStatement(statement)
             }
 
             private void visitMethodCallInConfigurations(MethodCallExpression call) {
                 def methodName = call.methodAsString
-                def conf = call.objectExpression.text
+                def conf = containingConfiguration(call)
 
                 // https://docs.gradle.org/current/javadoc/org/gradle/api/artifacts/ModuleDependency.html#exclude(java.util.Map)
                 if ((configurations.contains(conf) || conf == 'all') && methodName == 'exclude') {
@@ -463,385 +428,31 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
                         return null
                     }.flatten()
 
-                    def conf = closureStack.peek().methodAsString
-                    visitGradleResolutionStrategyForce(call, conf, forces.toSpreadMap())
+                    def conf = containingConfiguration(call)
+                    if(conf)
+                        visitGradleResolutionStrategyForce(call, conf, forces.toSpreadMap())
                 }
             }
         }
 
         @Override
-        AstVisitor getAstVisitor() { compositeVisitor }
-
-        /**
-         * AST visitor that delegates to both the gradleAstVisitor and the user-defined rule in that order.
-         * Keeping them separate helps prevent user-defined visitors from inadvertently breaking the assumptions of
-         * gradleAstVisitor
-         */
-        AstVisitor compositeVisitor = new AbstractAstVisitor() {
-            @Override
-            List<Violation> getViolations() {
-                return GradleLintRule.this.gradleViolations
-            }
-
-            void both(Closure c) {
-                c(gradleAstVisitor)
-                c(GradleLintRule.this)
-            }
-
-            @Override
-            protected void visitClassEx(ClassNode node) {
-                both { it.visitClassEx(node) }
-            }
-
-            @Override
-            protected void visitClassComplete(ClassNode node) {
-                both { it.visitClassComplete(node) }
-            }
-
-            @Override
-            protected void visitMethodComplete(MethodNode node) {
-                both { it.visitMethodComplete(node) }
-            }
-
-            @Override
-            protected void visitMethodEx(MethodNode node) {
-                both { it.visitMethodEx(node) }
-            }
-
-            @Override
-            protected void visitObjectInitializerStatements(ClassNode node) {
-                both { it.visitObjectInitializerStatements(node) }
-            }
-
-            @Override
-            void visitPackage(PackageNode node) {
-                both { it.visitPackage(node) }
-            }
-
-            @Override
-            void visitImports(ModuleNode node) {
-                both { it.visitImports(node) }
-            }
-
-            @Override
-            void visitAnnotations(AnnotatedNode node) {
-                both { it.visitAnnotations(node) }
-            }
-
-            @Override
-            protected void visitClassCodeContainer(Statement code) {
-                both { it.visitClassCodeContainer(code) }
-            }
-
-            @Override
-            void visitDeclarationExpression(DeclarationExpression expression) {
-                both { it.visitDeclarationExpression(expression) }
-            }
-
-            @Override
-            protected void visitConstructorOrMethod(MethodNode node, boolean isConstructor) {
-                both { it.visitConstructorOrMethod(node, isConstructor) }
-            }
-
-            @Override
-            void visitConstructor(ConstructorNode node) {
-                both { it.visitConstructor(node) }
-            }
-
-            @Override
-            void visitField(FieldNode node) {
-                both { it.visitField(node) }
-            }
-
-            @Override
-            void visitProperty(PropertyNode node) {
-                both { it.visitProperty(node) }
-            }
-
-            @Override
-            protected void visitStatement(Statement statement) {
-                both { it.visitStatement(statement) }
-            }
-
-            @Override
-            void visitAssertStatement(AssertStatement statement) {
-                both { it.visitAssertStatement(statement) }
-            }
-
-            @Override
-            void visitBlockStatement(BlockStatement block) {
-                both { it.visitBlockStatement(block) }
-            }
-
-            @Override
-            void visitBreakStatement(BreakStatement statement) {
-                both { it.visitBreakStatement(statement) }
-            }
-
-            @Override
-            void visitCaseStatement(CaseStatement statement) {
-                both { it.visitCaseStatement(statement) }
-            }
-
-            @Override
-            void visitCatchStatement(CatchStatement statement) {
-                both { it.visitCatchStatement(statement) }
-            }
-
-            @Override
-            void visitContinueStatement(ContinueStatement statement) {
-                both { it.visitContinueStatement(statement) }
-            }
-
-            @Override
-            void visitDoWhileLoop(DoWhileStatement loop) {
-                both { it.visitDoWhileLoop(loop) }
-            }
-
-            @Override
-            void visitExpressionStatement(ExpressionStatement statement) {
-                both { it.visitExpressionStatement(statement) }
-            }
-
-            @Override
-            void visitForLoop(ForStatement forLoop) {
-                both { it.visitForLoop(forLoop) }
-            }
-
-            @Override
-            void visitIfElse(IfStatement ifElse) {
-                both { it.visitIfElse(ifElse) }
-            }
-
-            @Override
-            void visitReturnStatement(ReturnStatement statement) {
-                both { it.visitReturnStatement(statement) }
-            }
-
-            @Override
-            void visitSwitch(SwitchStatement statement) {
-                both { it.visitSwitch(statement) }
-            }
-
-            @Override
-            void visitSynchronizedStatement(SynchronizedStatement statement) {
-                both { it.visitSynchronizedStatement(statement) }
-            }
-
-            @Override
-            void visitThrowStatement(ThrowStatement statement) {
-                both { it.visitThrowStatement(statement) }
-            }
-
-            @Override
-            void visitTryCatchFinally(TryCatchStatement statement) {
-                both { it.visitTryCatchFinally(statement) }
-            }
-
-            @Override
-            void visitWhileLoop(WhileStatement loop) {
-                both { it.visitWhileLoop(loop) }
-            }
-
-            @Override
-            protected void visitEmptyStatement(EmptyStatement statement) {
-                both { it.visitEmptyStatement(statement) }
-            }
-
-            @Override
-            void visitMethodCallExpression(MethodCallExpression call) {
-                both { it.visitMethodCallExpression(call) }
-            }
-
-            @Override
-            void visitStaticMethodCallExpression(StaticMethodCallExpression call) {
-                both { it.visitStaticMethodCallExpression(call) }
-            }
-
-            @Override
-            void visitConstructorCallExpression(ConstructorCallExpression call) {
-                both { it.visitConstructorCallExpression(call) }
-            }
-
-            @Override
-            void visitBinaryExpression(BinaryExpression expression) {
-                both { it.visitBinaryExpression(expression) }
-            }
-
-            @Override
-            void visitTernaryExpression(TernaryExpression expression) {
-                both { it.visitTernaryExpression(expression) }
-            }
-
-            @Override
-            void visitShortTernaryExpression(ElvisOperatorExpression expression) {
-                both { it.visitShortTernaryExpression(expression) }
-            }
-
-            @Override
-            void visitPostfixExpression(PostfixExpression expression) {
-                both { it.visitPostfixExpression(expression) }
-            }
-
-            @Override
-            void visitPrefixExpression(PrefixExpression expression) {
-                both { it.visitPrefixExpression(expression) }
-            }
-
-            @Override
-            void visitBooleanExpression(BooleanExpression expression) {
-                both { it.visitBooleanExpression(expression) }
-            }
-
-            @Override
-            void visitNotExpression(NotExpression expression) {
-                both { it.visitNotExpression(expression) }
-            }
-
-            @Override
-            void visitClosureExpression(ClosureExpression expression) {
-                both { it.visitClosureExpression(expression) }
-            }
-
-            @Override
-            void visitTupleExpression(TupleExpression expression) {
-                both { it.visitTupleExpression(expression) }
-            }
-
-            @Override
-            void visitListExpression(ListExpression expression) {
-                both { it.visitListExpression(expression) }
-            }
-
-            @Override
-            void visitArrayExpression(ArrayExpression expression) {
-                both { it.visitArrayExpression(expression) }
-            }
-
-            @Override
-            void visitMapExpression(MapExpression expression) {
-                both { it.visitMapExpression(expression) }
-            }
-
-            @Override
-            void visitMapEntryExpression(MapEntryExpression expression) {
-                both { it.visitMapEntryExpression(expression) }
-            }
-
-            @Override
-            void visitRangeExpression(RangeExpression expression) {
-                both { it.visitRangeExpression(expression) }
-            }
-
-            @Override
-            void visitSpreadExpression(SpreadExpression expression) {
-                both { it.visitSpreadExpression(expression) }
-            }
-
-            @Override
-            void visitSpreadMapExpression(SpreadMapExpression expression) {
-                both { it.visitSpreadMapExpression(expression) }
-            }
-
-            @Override
-            void visitMethodPointerExpression(MethodPointerExpression expression) {
-                both { it.visitMethodPointerExpression(expression) }
-            }
-
-            @Override
-            void visitUnaryMinusExpression(UnaryMinusExpression expression) {
-                both { it.visitUnaryMinusExpression(expression) }
-            }
-
-            @Override
-            void visitUnaryPlusExpression(UnaryPlusExpression expression) {
-                both { it.visitUnaryPlusExpression(expression) }
-            }
-
-            @Override
-            void visitBitwiseNegationExpression(BitwiseNegationExpression expression) {
-                both { it.visitBitwiseNegationExpression(expression) }
-            }
-
-            @Override
-            void visitCastExpression(CastExpression expression) {
-                both { it.visitCastExpression(expression) }
-            }
-
-            @Override
-            void visitConstantExpression(ConstantExpression expression) {
-                both { it.visitConstantExpression(expression) }
-            }
-
-            @Override
-            void visitClassExpression(ClassExpression expression) {
-                both { it.visitClassExpression(expression) }
-            }
-
-            @Override
-            void visitVariableExpression(VariableExpression expression) {
-                both { it.visitVariableExpression(expression) }
-            }
-
-            @Override
-            void visitPropertyExpression(PropertyExpression expression) {
-                both { it.visitPropertyExpression(expression) }
-            }
-
-            @Override
-            void visitAttributeExpression(AttributeExpression expression) {
-                both { it.visitAttributeExpression(expression) }
-            }
-
-            @Override
-            void visitFieldExpression(FieldExpression expression) {
-                both { it.visitFieldExpression(expression) }
-            }
-
-            @Override
-            void visitGStringExpression(GStringExpression expression) {
-                both { it.visitGStringExpression(expression) }
-            }
-
-            @Override
-            protected void visitListOfExpressions(List<? extends Expression> list) {
-                both { it.visitListOfExpressions(list) }
-            }
-
-            @Override
-            void visitArgumentlistExpression(ArgumentListExpression ale) {
-                both { it.visitArgumentlistExpression(ale) }
-            }
-
-            @Override
-            void visitClosureListExpression(ClosureListExpression cle) {
-                both { it.visitClosureListExpression(cle) }
-            }
-
-            @Override
-            void visitBytecodeExpression(BytecodeExpression cle) {
-                both { it.visitBytecodeExpression(cle) }
-            }
-        }
-
-        @Override
         String getName() {
-            return GradleLintRule.this.getName()
+            GradleLintRule.this.name
         }
 
         @Override
         void setName(String name) {
-            // irrelevant, as the name always comes from the parent class
+            // unused
         }
 
         @Override
         int getPriority() {
-            return _priority
+            critical ? 1 : 2
         }
 
         @Override
         void setPriority(int priority) {
-            // irrelevant, as the priority always comes from the parent class
+            // unused
         }
     }
 }
