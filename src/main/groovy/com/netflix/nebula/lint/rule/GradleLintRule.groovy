@@ -26,7 +26,6 @@ import org.codenarc.source.SourceCode
 import org.gradle.api.Project
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import sun.tools.tree.MethodExpression
 
 abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
     Project project // will be non-null if type is GradleModelAware, otherwise null
