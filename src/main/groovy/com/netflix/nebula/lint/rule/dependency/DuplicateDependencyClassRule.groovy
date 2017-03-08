@@ -20,7 +20,9 @@ class DuplicateDependencyClassRule extends GradleLintRule implements GradleModel
         if(ignored)
             ignoredDependencies.add(dep.toModuleVersion())
         else {
-            directlyUsedConfigurations.add(project.configurations.findByName(conf))
+            def confModel = project.configurations.findByName(conf)
+            if(confModel)
+                directlyUsedConfigurations.add(confModel)
         }
     }
 
