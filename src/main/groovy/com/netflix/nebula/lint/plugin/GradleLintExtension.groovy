@@ -51,4 +51,11 @@ class GradleLintExtension {
     void ignore(String r1, String r2, String r3, Closure c) { c() }
     void ignore(String r1, String r2, String r3, String r4, Closure c) { c() }
     void ignore(String r1, String r2, String r3, String r4, String r5, Closure c) { c() }
+
+    void fixme(String ignoreUntil, Closure c) { c() }
+    void fixme(String ignoreUntil, String ruleName, Closure c) { c() }
+    void fixme(String ignoreUntil, String r1, String r2, Closure c) { c() }
+    void fixme(String ignoreUntil, String r1, String r2, String r3, Closure c) { c() }
+    void fixme(String ignoreUntil, String r1, String r2, String r3, String r4, Closure c) { c() }
+    void fixme(String ignoreUntil, String r1, String r2, String r3, String r4, String r5, Closure c) { c() }
 }

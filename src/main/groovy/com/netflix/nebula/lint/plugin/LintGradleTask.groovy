@@ -69,7 +69,7 @@ class LintGradleTask extends DefaultTask {
                         textOutput.withStyle(Red).text('warning'.padRight(10))
                     }
 
-                    textOutput.text(v.rule.ruleId.padRight(35))
+                    textOutput.text(v.rule.name.padRight(35))
 
                     textOutput.withStyle(Yellow).text(v.message)
                     if(v.fixes.empty) {

@@ -65,6 +65,7 @@ dependencies {
         exclude module: 'groovy-all'
     }
     testCompile 'org.ow2.asm:asm-util:5.2'
+    testCompile 'joda-time:joda-time:latest.release'
 }
 
 pluginBundle {

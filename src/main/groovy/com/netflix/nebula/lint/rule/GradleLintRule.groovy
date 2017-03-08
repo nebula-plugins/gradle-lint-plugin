@@ -21,11 +21,16 @@ import com.netflix.nebula.lint.plugin.LintRuleRegistry
 import org.codehaus.groovy.ast.ASTNode
 import org.codehaus.groovy.ast.expr.*
 import org.codehaus.groovy.ast.stmt.ExpressionStatement
-import org.codenarc.rule.*
+import org.codenarc.rule.AbstractAstVisitorRule
+import org.codenarc.rule.AstVisitor
+import org.codenarc.rule.Rule
+import org.codenarc.rule.Violation
 import org.codenarc.source.SourceCode
 import org.gradle.api.Project
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+
+import java.text.ParseException
 
 abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
     Project project // will be non-null if type is GradleModelAware, otherwise null
@@ -67,8 +72,12 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
 
     protected boolean isIgnored() {
         callStack.any { call ->
-            if (call.methodAsString == 'ignore' && call.objectExpression.text == 'gradleLint') {
-                List<String> rulesToIgnore = call.arguments.expressions.findAll { it instanceof ConstantExpression }.collect { it.text }
+            def methodName = call.methodAsString
+            if ((methodName == 'ignore' || methodName == 'fixme') && call.objectExpression.text == 'gradleLint') {
+                // for fixm-e, the first argument is the predicate that determines whether to fail the build or not
+                def ruleNameExpressions = methodName == 'ignore' ? call.arguments.expressions : call.arguments.expressions.drop(1)
+
+                List<String> rulesToIgnore = ruleNameExpressions.findAll { it instanceof ConstantExpression }.collect { it.text }
                 if (rulesToIgnore.isEmpty())
                     true
                 else {
@@ -204,6 +213,10 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
 
                 if (methodName == 'ignore' && objectExpression == 'gradleLint') {
                     return // short-circuit ignore calls
+                }
+
+                if (methodName == 'fixme' && objectExpression == 'gradleLint') {
+                    visitFixme(call)
                 }
 
                 def inMethod = { name -> dslStack(callStack + call).contains(name) }
@@ -430,6 +443,32 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                     def conf = containingConfiguration(call)
                     if(conf)
                         visitGradleResolutionStrategyForce(call, conf, forces.toSpreadMap())
+                }
+            }
+
+            private void visitFixme(MethodCallExpression call) {
+                def predicate = call.arguments.expressions[0]
+                switch(predicate) {
+                    case ConstantExpression:
+                        def succesfullyComparedDate = ['yyyy-M-d', 'M/d/yy', 'M/d/yyyy'].any { pattern ->
+                            try {
+                                def date = Date.parse(pattern, predicate.value as String)
+                                if (!date) false
+                                else if (date < new Date()) {
+                                    gradleViolations.add(new GradleViolation(buildFile, new FixmeRule(), call?.lineNumber, sourceCode(call),
+                                            'this fixme has expired -- remove it and address the underlying lint issue that caused it to be added'))
+                                    true
+                                } else true
+                            } catch(ParseException ignored) {
+                                false
+                            }
+                        }
+
+                        if(!succesfullyComparedDate) {
+                            gradleViolations.add(new GradleViolation(buildFile, new FixmeRule(), call?.lineNumber, sourceCode(call),
+                                    'this fixme contains an unparseable date, use the yyyy-M-d format'))
+                        }
+                        break
                 }
             }
         }

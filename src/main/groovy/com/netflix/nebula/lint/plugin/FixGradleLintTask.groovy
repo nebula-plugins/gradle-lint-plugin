@@ -109,7 +109,7 @@ class FixGradleLintTask extends DefaultTask implements VerificationTask {
                             }
                         }
 
-                        textOutput.text(v.rule.ruleId.padRight(35))
+                        textOutput.text(v.rule.name.padRight(35))
                         textOutput.withStyle(Yellow).println(v.message)
 
                         if(v.lineNumber)

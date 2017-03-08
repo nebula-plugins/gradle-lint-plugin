@@ -66,6 +66,29 @@ class LintGradleTaskSpec extends TestKitSpecification {
         runTasksFail('lintGradle')
     }
 
+    def 'expired fixmes cause build failure'() {
+        when:
+        buildFile.text = """
+            plugins {
+                id 'java'
+                id 'nebula.lint'
+            }
+            
+            gradleLint.rules = ['dependency-parentheses']
+
+            repositories { mavenCentral() }
+
+            dependencies {
+                gradleLint.fixme('2010-1-1') {
+                    compile('com.google.guava:guava:18.0')
+                }
+            }
+        """
+
+        then:
+        runTasksFail('lintGradle')
+    }
+
     def 'lintGradle always depends on compileJava'() {
         given:
         buildFile.text = """\

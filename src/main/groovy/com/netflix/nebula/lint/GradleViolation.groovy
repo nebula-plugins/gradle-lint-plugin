@@ -34,7 +34,7 @@ class GradleViolation extends Violation {
 
     static AtomicInteger nextId = new AtomicInteger(0)
 
-    public GradleViolation(File file, Rule rule, Integer lineNumber, String sourceLine, String message) {
+    GradleViolation(File file, Rule rule, Integer lineNumber, String sourceLine, String message) {
         this.file = file
         this.rule = rule
         this.lineNumber = lineNumber

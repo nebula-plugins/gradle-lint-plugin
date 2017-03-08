@@ -24,7 +24,10 @@ import org.codehaus.groovy.ast.expr.Expression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.codehaus.groovy.ast.expr.VariableExpression
 import org.codehaus.groovy.ast.stmt.ExpressionStatement
+import org.gradle.api.GradleException
 import org.gradle.api.plugins.JavaPlugin
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Unroll
@@ -290,27 +293,14 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
     @Unroll
     def 'violations suppression inside of ignore blocks when ignored rule(s) is `#rules`'() {
         setup:
-        def rule = new GradleLintRule() {
-            String description = 'test'
-
-            @Override
-            void visitApplyPlugin(MethodCallExpression call, String plugin) {
-                addBuildLintViolation('no plugins allowed', call)
-            }
-        }
-        rule.ruleId = 'no-plugins-allowed'
-
-        new File(temp.root, 'META-INF/lint-rules').mkdirs()
-        def noPluginsProp = temp.newFile("META-INF/lint-rules/no-plugins-allowed.properties")
-        noPluginsProp << "implementation-class=${rule.class.name}"
-        LintRuleRegistry.classLoader = new URLClassLoader([temp.root.toURI().toURL()] as URL[], getClass().getClassLoader())
+        def noPluginsRule = setupNoPluginsRule()
 
         when:
         project.buildFile << """
             gradleLint.ignore($rules) { apply plugin: 'java' }
         """
 
-        def result = runRulesAgainst(rule)
+        def result = runRulesAgainst(noPluginsRule)
 
         then:
         result.violates() == violates
@@ -337,6 +327,50 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
 
         then:
         project.configurations.compile.dependencies.any { it.name == 'guava' }
+    }
+
+    @Unroll
+    def "fixme is treated like an ignore if its predicate is a future date #inTheFuture"() {
+        setup:
+        def noPluginsRule = setupNoPluginsRule()
+
+        when:
+        project.buildFile << """
+            gradleLint.fixme('$inTheFuture' ${rules.isEmpty() ? '' : ','} $rules) { apply plugin: 'java' }
+        """
+
+        def result = runRulesAgainst(noPluginsRule)
+
+        then:
+        result.violates() == violates
+
+        where:
+        rules                               | violates
+        /'no-plugins-allowed'/              | false
+        /'other-rule'/                      | true
+        /'no-plugins-allowed','other-rule'/ | false
+        ''                                  | false
+
+        inTheFuture = DateTime.now().plusMonths(1).toString(DateTimeFormat.forPattern('MM/d/yyyy'))
+    }
+
+    @Unroll
+    def 'fixme fails the build if its predicate is a date in the past or is unparseable (#oldDate)'() {
+        setup:
+        def noPluginsRule = setupNoPluginsRule()
+
+        when:
+        project.buildFile << """
+            gradleLint.fixme('$oldDate') { apply plugin: 'java' }
+        """
+
+        def results = runRulesAgainst(noPluginsRule)
+
+        then:
+        results.violates()
+
+        where:
+        oldDate << ['unparseable', '2010-12-1', '12/1/2010', '12/1/10']
     }
 
     def 'visit extension properties'() {
@@ -455,5 +489,28 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
 
         then:
         !foundForces.isEmpty()
+    }
+
+    /**
+     * @returns A simple rule barring the use of any `apply plugin` statements that
+     * we can use in this test harness.
+     */
+    GradleLintRule setupNoPluginsRule() {
+        def noPluginsRule = new GradleLintRule() {
+            String description = 'test'
+
+            @Override
+            void visitApplyPlugin(MethodCallExpression call, String plugin) {
+                addBuildLintViolation('no plugins allowed', call)
+            }
+        }
+        noPluginsRule.ruleId = 'no-plugins-allowed'
+
+        new File(temp.root, 'META-INF/lint-rules').mkdirs()
+        def noPluginsProp = temp.newFile("META-INF/lint-rules/no-plugins-allowed.properties")
+        noPluginsProp << "implementation-class=${noPluginsRule.class.name}"
+        LintRuleRegistry.classLoader = new URLClassLoader([temp.root.toURI().toURL()] as URL[], getClass().getClassLoader())
+
+        noPluginsRule
     }
 }
