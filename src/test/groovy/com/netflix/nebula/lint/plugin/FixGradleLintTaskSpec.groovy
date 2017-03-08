@@ -16,6 +16,7 @@
 package com.netflix.nebula.lint.plugin
 
 import com.netflix.nebula.lint.TestKitSpecification
+import spock.lang.Issue
 
 class FixGradleLintTaskSpec extends TestKitSpecification {
 
@@ -45,6 +46,32 @@ class FixGradleLintTaskSpec extends TestKitSpecification {
         results.output.count('unfixed        dependency-parentheses') == 1
     }
 
+    @Issue('#37')
+    def 'patches involving carriage returns apply'() {
+        when:
+        buildFile.text = """\
+plugins {\r
+    id 'nebula.lint'\r
+    id 'java'\r
+}\r
+\r
+gradleLint.rules = ['dependency-parentheses']\r
+\r
+repositories { mavenCentral() }\r
+\r
+dependencies {\r
+    compile('com.google.guava:guava:18.0')\r
+}"""
+
+        then:
+        runTasksSuccessfully('fixGradleLint')
+        buildFile.text.contains("compile 'com.google.guava:guava:18.0")
+    }
+
+    /**
+     * Because Gradle changed the internal APIs we are using to performed stylized text logging...
+     * This verifies that our reflection hack continues to be backwards compatible
+     */
     def 'Make sure logging works on older gradle version'() {
         buildFile << """\
             plugins {
