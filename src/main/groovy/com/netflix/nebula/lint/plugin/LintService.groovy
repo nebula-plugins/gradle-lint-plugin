@@ -17,6 +17,7 @@
 package com.netflix.nebula.lint.plugin
 
 import com.netflix.nebula.lint.GradleViolation
+import com.netflix.nebula.lint.rule.GradleLintRule
 import org.codenarc.analyzer.AbstractSourceAnalyzer
 import org.codenarc.results.DirectoryResults
 import org.codenarc.results.FileResults
@@ -67,7 +68,7 @@ class LintService {
 
     private RuleSet ruleSetForProject(Project p) {
         if (p.buildFile.exists()) {
-            def extension
+            GradleLintExtension extension
             try {
                 extension = p.extensions.getByType(GradleLintExtension)
             } catch (UnknownDomainObjectException ignored) {
@@ -78,10 +79,16 @@ class LintService {
             def rules = (p.hasProperty('gradleLint.rules') ? p.property('gradleLint.rules') : null)?.toString()?.split(',')?.toList() ?:
                     extension.rules + extension.criticalRules
 
-            return RuleSetFactory.configureRuleSet(rules.unique()
-                            .collect { registry.buildRules(it, p, extension.criticalRules.contains(it)) }
-                            .flatten() as List<Rule>
-            )
+            def includedRules = rules.unique()
+                    .collect { registry.buildRules(it, p, extension.criticalRules.contains(it)) }
+                    .flatten() as List<Rule>
+
+            def excludedRules = (p.hasProperty('gradleLint.excludedRules') ?
+                    p.property('gradleLint.excludedRules').toString().split(',').toList() : []) + extension.excludedRules
+            if(!excludedRules.isEmpty())
+                includedRules.retainAll { !excludedRules.contains(it.name) }
+
+            return RuleSetFactory.configureRuleSet(includedRules)
         }
         return new ListRuleSet([])
     }

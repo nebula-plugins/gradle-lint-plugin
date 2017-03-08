@@ -376,4 +376,32 @@ class GradleLintPluginSpec extends TestKitSpecification {
         results.task(':fixGradleLint').outcome == TaskOutcome.SUCCESS
         buildFile.text.contains("compile 'com.google.guava:guava:21.0'")
     }
+
+    def 'exclude individual rules with a gradle property or gradleLint.excludedRules'() {
+        when:
+        buildFile << """\
+            plugins {
+                id 'java'
+                id 'nebula.lint'
+            }
+            
+            gradleLint.criticalRules = ['all-dependency', 'dependency-parentheses']
+            
+            // realistically, we wouldn't exclude something we just directly included...
+            gradleLint.excludedRules = ['dependency-parentheses']
+            
+            repositories {
+                mavenCentral()
+            }
+            
+            dependencies {
+                compile('com.google.guava:guava:21.0')
+            }
+            """.stripIndent()
+
+        createJavaSourceFile('public class Main { }')
+
+        then:
+        runTasksSuccessfully('lintGradle', '-PgradleLint.excludedRules=unused-dependency')
+    }
 }

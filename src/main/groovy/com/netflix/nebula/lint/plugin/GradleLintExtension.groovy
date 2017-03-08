@@ -25,6 +25,11 @@ class GradleLintExtension {
     List<String> rules = []
 
     /**
+     * Allows for the exclusion of individual rules when we include rule sets
+     */
+    List<String> excludedRules = []
+
+    /**
      * Rules that, when violated, cause the build to fail
      */
     List<String> criticalRules = []
