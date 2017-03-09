@@ -17,6 +17,7 @@
 package com.netflix.nebula.lint.rule.dependency
 
 import com.netflix.nebula.lint.rule.test.AbstractRuleSpec
+import spock.lang.Issue
 
 class UnusedDependencyExcludeRuleSpec extends AbstractRuleSpec {
     def rule
@@ -83,5 +84,36 @@ class UnusedDependencyExcludeRuleSpec extends AbstractRuleSpec {
 
         then:
         results.doesNotViolate()
+    }
+
+    @Issue('#57')
+    def 'exclude on a dependency that is unresolvable is considered unapplicable'() {
+        when:
+        // trivial case: no dependencies
+        project.buildFile << """
+            apply plugin: 'java'
+            dependencies {
+                compile('dne:dne:1.0') {
+                    exclude group: 'com.google.guava', module: 'guava'
+                }
+            }
+        """
+
+        project.with {
+            apply plugin: 'java'
+            repositories {
+                mavenCentral()
+            }
+            dependencies {
+                compile('dne:dne:1.0') {
+                    exclude group: 'com.google.guava', module: 'guava'
+                }
+            }
+        }
+
+        def results = runRulesAgainst(rule)
+
+        then:
+        results.violates()
     }
 }
