@@ -363,7 +363,7 @@ class DependencyService {
         return true
     }
 
-    private Set<Configuration> allExtendsFrom(Configuration conf) {
+    Set<Configuration> allExtendsFrom(Configuration conf) {
         def extendsFromRecurse = { Configuration c ->
             c.extendsFrom + c.extendsFrom.collect { owner.call(it) }.flatten()
         }

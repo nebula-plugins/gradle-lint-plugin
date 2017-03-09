@@ -486,4 +486,67 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
         def results = runTasksSuccessfully('compileJava', 'lintGradle')
         results.output.contains('unused-dependency')
     }
+
+    @Issue('53')
+    def 'only one violation reported when a dependency is unused by multiple configurations'() {
+        when:
+        buildFile << '''
+            plugins {
+                id 'nebula.lint'
+                id 'java'
+                id 'nebula.integtest' version '3.3.0'
+            }
+            
+            repositories { mavenCentral() }
+            
+            dependencies {
+                testCompile 'junit:junit:4.11'
+            }
+            
+            gradleLint.rules = ['all-dependency']
+        '''
+
+        createJavaSourceFile('''
+            public class Calculator {
+                public int add(int x, int y) {
+                    return x + y;
+                }
+            }
+        ''')
+        createJavaTestFile('''
+            import org.junit.Test;
+            
+            import static org.hamcrest.core.Is.is;
+            import static org.junit.Assert.assertThat;
+            
+            public class CalculatorTest {
+            
+                @Test
+                public void shouldAdd() {
+                    Calculator calc = new Calculator();
+                    int actual = calc.add(4, 10);
+                    assertThat(actual, is(14));
+                }
+            }
+        ''')
+        createJavaFile(projectDir, '''
+            import org.junit.Test;
+            import static org.hamcrest.core.Is.is;
+            import static org.junit.Assert.assertThat;
+            
+            public class CalculatorIntegrationTest {
+                @Test
+                public void shouldAdd() {
+                    Calculator calc = new Calculator();
+                    int actual = calc.add(4, 10);
+                    assertThat(actual, is(14));
+                }
+            }
+        ''', 'src/integTest/java')
+
+        then:
+        def results = runTasksSuccessfully('lintGradle')
+        println(results.output)
+        results.output.readLines().count { it.contains('unused-dependency') } == 1
+    }
 }

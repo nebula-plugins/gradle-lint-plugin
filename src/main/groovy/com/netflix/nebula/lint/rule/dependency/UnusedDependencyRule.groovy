@@ -6,7 +6,9 @@ import com.netflix.nebula.lint.rule.GradleModelAware
 import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.gradle.api.artifacts.ModuleIdentifier
+import org.gradle.api.artifacts.ModuleVersionIdentifier
 import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.tasks.SourceSet
 
 class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
     String description = 'remove unused dependencies, relocate dependencies to the correct configuration, and ensure that directly used transitives are declared as first order dependencies'
@@ -87,19 +89,40 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
     protected void visitClassComplete(ClassNode node) {
         def dependenciesBlock = bookmark('dependencies')
 
+        Set<ModuleVersionIdentifier> insertedDependencies = [] as Set
+
         def convention = project.convention.findPlugin(JavaPluginConvention)
         if(convention) {
-            convention.sourceSets.each { sourceSet ->
-                def conf = sourceSet.compileConfigurationName
-                dependencyService.undeclaredDependencies(conf).each { undeclared ->
+            // sort the sourceSets from least dependent to most dependent, e.g. [main, test, integTest]
+            def sortedSourceSets = convention.sourceSets.sort(false, new Comparator<SourceSet>() {
+                @Override
+                int compare(SourceSet s1, SourceSet s2) {
+                    def c1 = project.configurations.findByName(s1.compileConfigurationName)
+                    def c2 = project.configurations.findByName(s2.compileConfigurationName)
+
+                    if(dependencyService.allExtendsFrom(c1).contains(c2))
+                        1
+                    if(dependencyService.allExtendsFrom(c2).contains(c1))
+                        -1
+                    // secondary sorting if there is no relationship between these source sets
+                    else c1.name <=> c2.name
+                }
+            })
+
+            sortedSourceSets.each { sourceSet ->
+                def confName = sourceSet.compileConfigurationName
+                dependencyService.undeclaredDependencies(confName).each { undeclared ->
                     def runtimeDeclaration = runtimeDependencyDefinitions[undeclared.module]
                     // TODO this may be too specialized, should we just be moving deps down conf hierarchies as necessary?
                     if (runtimeDeclaration) {
-                        addBuildLintViolation("this dependency should be moved to configuration $conf", runtimeDeclaration)
-                                .replaceWith(runtimeDeclaration, "$conf '$undeclared'")
+                        addBuildLintViolation("this dependency should be moved to configuration $confName", runtimeDeclaration)
+                                .replaceWith(runtimeDeclaration, "$confName '$undeclared'")
                     } else if(!compileOnlyDependencies.contains(undeclared.module)) {
-                        addBuildLintViolation("one or more classes in $undeclared are required by your code directly")
-                                .insertIntoClosure(dependenciesBlock, "$conf '$undeclared'")
+                        // only add the dependency in the lowest configuration that requires it
+                        if(insertedDependencies.add(undeclared)) {
+                            addBuildLintViolation("one or more classes in $undeclared are required by your code directly")
+                                    .insertIntoClosure(dependenciesBlock, "$confName '$undeclared'")
+                        }
                     }
                 }
             }
