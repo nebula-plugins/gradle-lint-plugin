@@ -34,7 +34,8 @@ class GradleLintPatchAction extends GradleLintViolationAction {
     void lintFinished(Collection<GradleViolation> violations) {
         project.buildDir.mkdirs()
         new File(project.buildDir, PATCH_NAME).withWriter { w ->
-            w.write(patch(violations*.fixes.flatten() as List<GradleLintFix>))
+            def patch = patch(violations*.fixes.flatten() as List<GradleLintFix>)
+            w.write(patch)
         }
     }
 

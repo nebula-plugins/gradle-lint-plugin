@@ -17,7 +17,13 @@
 package com.netflix.nebula.lint.plugin
 
 import com.netflix.nebula.lint.GradleViolation
+import com.netflix.nebula.lint.rule.GradleAstUtil
 import com.netflix.nebula.lint.rule.GradleLintRule
+import org.codehaus.groovy.ast.ClassCodeVisitorSupport
+import org.codehaus.groovy.ast.builder.AstBuilder
+import org.codehaus.groovy.ast.expr.MethodCallExpression
+import org.codehaus.groovy.ast.stmt.BlockStatement
+import org.codehaus.groovy.control.SourceUnit
 import org.codenarc.analyzer.AbstractSourceAnalyzer
 import org.codenarc.results.DirectoryResults
 import org.codenarc.results.FileResults
@@ -105,10 +111,48 @@ class LintService {
         ([project] + project.subprojects).each { p ->
             def ruleSet = ruleSetForProject(p)
             if(!ruleSet.rules.isEmpty()) {
-                analyzer.analyze(p.buildFile.text, ruleSet)
+                filesToLint(p).each { f ->
+                    // establish which file we are linting for each rule
+                    ruleSet.rules.each { rule ->
+                        if(rule instanceof GradleLintRule)
+                            rule.buildFile = f
+                    }
+
+                    analyzer.analyze(f.text, ruleSet)
+                }
             }
         }
 
         return analyzer.results
+    }
+
+    List<File> filesToLint(Project p) {
+        def files = [p.buildFile]
+
+        def buildAst = new AstBuilder().buildFromString(p.buildFile.text)[0]
+        if(buildAst instanceof BlockStatement) {
+            new ClassCodeVisitorSupport() {
+                @Override
+                void visitMethodCallExpression(MethodCallExpression call) {
+                    if (call.methodAsString == 'apply') {
+                        def args = GradleAstUtil.collectEntryExpressions(call)
+                        if(args['from']) {
+                            def applyFrom = new File(p.projectDir, args['from'])
+                            if(applyFrom.exists()) {
+                                files += applyFrom
+                            }
+                        }
+                    }
+                    super.visitMethodCallExpression(call)
+                }
+
+                @Override
+                protected SourceUnit getSourceUnit() {
+                    return null // irrelevant
+                }
+            }.visitBlockStatement(buildAst as BlockStatement)
+        }
+
+        files
     }
 }
