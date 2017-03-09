@@ -52,7 +52,7 @@ class GradleLintPatchAction extends GradleLintViolationAction {
     private static readFileOrSymlink(File file, FileMode mode) {
         return mode == Symlink ? [readSymbolicLink(file.toPath()).toString()] :
                 // careful, because file.readLines() strips carriage returns
-                file.text.split('\n').toList()
+                file.text.isEmpty() ? [] : file.text.split('\n').toList()
     }
 
     private static diffHintsWithMargin(String relativePath, PatchType patchType, FileMode fileMode) {
