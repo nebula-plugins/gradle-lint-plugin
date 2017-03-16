@@ -112,7 +112,7 @@ class DependencyService {
     }
 
     @Memoized
-    static JarContents jarContents(File file) {
+    JarContents jarContents(File file) {
         if (!file.exists())
             return new JarContents(entryNames: Collections.emptyList())
 
