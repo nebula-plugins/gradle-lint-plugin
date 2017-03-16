@@ -32,8 +32,8 @@ class DuplicateDependencyClassRule extends GradleLintRule implements GradleModel
             if(!DependencyService.forProject(project).isResolved(conf))
                 continue
 
-            conf.resolvedConfiguration.firstLevelModuleDependencies.each { resolved ->
-                checkForDuplicates(resolved.module.id, conf.name)
+            conf.resolvedConfiguration.resolvedArtifacts.each { resolved ->
+                checkForDuplicates(resolved.moduleVersion.id, conf.name)
             }
         }
     }
