@@ -131,7 +131,7 @@ class OverriddenDependencyVersionRuleSpec extends TestKitSpecification {
         buildFile << """
             configurations.all {
                 resolutionStrategy {
-                    eachDependency { DependencyResolveDetails details ->
+                    eachDependency { details ->
                         details.useVersion '19.0'
                     }
                 }
