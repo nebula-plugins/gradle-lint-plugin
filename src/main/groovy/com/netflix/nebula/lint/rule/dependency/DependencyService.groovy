@@ -22,16 +22,22 @@ import java.util.jar.JarFile
 import java.util.zip.ZipException
 
 class DependencyService {
-    static Map<Project, DependencyService> instancesByProject = [:]
-    private final Logger logger = LoggerFactory.getLogger(DependencyService)
+    private static final String EXTENSION_NAME = "gradleLintDependencyService"
 
     static synchronized DependencyService forProject(Project project) {
-        def inst = instancesByProject[project]
-        if(inst) return inst
-        inst = new DependencyService(project)
-        instancesByProject[project] = inst
-        return inst
+        def extension = project.extensions.findByType(DependencyServiceExtension)
+        if (!extension) {
+            extension = project.extensions.create(EXTENSION_NAME, DependencyServiceExtension)
+            extension.dependencyService = new DependencyService(project)
+        }
+        return extension.dependencyService
     }
+
+    static class DependencyServiceExtension {
+        DependencyService dependencyService
+    }
+
+    private final Logger logger = LoggerFactory.getLogger(DependencyService)
 
     Project project
 
@@ -56,31 +62,31 @@ class DependencyService {
         def extendingConfs
         extendingConfs = { Configuration c ->
             def subconfs = resolvableConfigurations().findAll { it.extendsFrom.any { it == c } }
-            for(Configuration subconf in subconfs)
+            for (Configuration subconf in subconfs)
                 extendingConfs(subconf)
-            if(subconfs.isEmpty()) {
+            if (subconfs.isEmpty()) {
                 terminalConfs.add(c)
             }
         }
         extendingConfs(conf)
 
-        def artifactsByClass = [:].withDefault {[]}
+        def artifactsByClass = [:].withDefault { [] }
         def artifactsToScan = terminalConfs*.resolvedConfiguration*.resolvedArtifacts.flatten().toSet() as Set<ResolvedArtifact>
 
         GParsPool.withPool {
             artifactsToScan
                     .findAll {
-                        it.file.name.endsWith('.jar') &&
-                                !it.file.name.endsWith('-sources.jar') &&
-                                !it.file.name.endsWith('-javadoc.jar')
+                it.file.name.endsWith('.jar') &&
+                        !it.file.name.endsWith('-sources.jar') &&
+                        !it.file.name.endsWith('-javadoc.jar')
+            }
+            .eachParallel { ResolvedArtifact artifact ->
+                jarContents(artifact.file).classes.each { clazz ->
+                    synchronized (artifactsByClass) {
+                        artifactsByClass[clazz] += artifact
                     }
-                    .eachParallel { ResolvedArtifact artifact ->
-                        jarContents(artifact.file).classes.each { clazz ->
-                            synchronized (artifactsByClass) {
-                                artifactsByClass[clazz] += artifact
-                            }
-                        }
-                    }
+                }
+            }
         }
 
         return artifactsByClass
@@ -93,9 +99,9 @@ class DependencyService {
      */
     JarContents jarContents(ModuleIdentifier id) {
         def configurations = resolvableConfigurations()
-        for(Configuration conf in configurations) {
+        for (Configuration conf in configurations) {
             def artifact = conf.resolvedConfiguration.resolvedArtifacts.find { it.moduleVersion.id.module == id }
-            if(artifact)
+            if (artifact)
                 return jarContents(artifact.file)
         }
         return null
@@ -107,7 +113,7 @@ class DependencyService {
 
     @Memoized
     static JarContents jarContents(File file) {
-        if(!file.exists())
+        if (!file.exists())
             return new JarContents(entryNames: Collections.emptyList())
 
         def entryNames = []
@@ -119,7 +125,7 @@ class DependencyService {
                     entryNames += (allEntries.nextElement() as JarEntry).name
                 }
             }
-        } catch(ZipException ignored) {
+        } catch (ZipException ignored) {
             // this is not a valid jar file
         }
 
@@ -143,10 +149,10 @@ class DependencyService {
         def conf = project.configurations.getByName(confName)
         def classpath = sourceSetClasspath(confName)
         def output = sourceSetOutput(confName)
-        
-        if(!output || !output.exists())
+
+        if (!output || !output.exists())
             return null
-        
+
         def artifactsByClass = artifactsByClass(conf)
         def references = new DependencyReferences()
 
@@ -163,7 +169,7 @@ class DependencyService {
 
                         references.direct.addAll(visitor.directReferences)
                         references.indirect.addAll(visitor.indirectReferences)
-                    } catch(Throwable t) {
+                    } catch (Throwable t) {
                         // see https://github.com/nebula-plugins/gradle-lint-plugin/issues/88
                         // type annotations can cause ArrayIndexOutOfBounds in ASM:
                         // http://forge.ow2.org/tracker/index.php?func=detail&aid=317615&group_id=23&atid=100023
@@ -180,7 +186,7 @@ class DependencyService {
     @Memoized
     Set<ModuleVersionIdentifier> undeclaredDependencies(String confName) {
         def references = classReferences(confName)
-        if(!references)
+        if (!references)
             return Collections.emptySet()
 
         def conf = project.configurations.getByName(confName)
@@ -188,9 +194,9 @@ class DependencyService {
                 .groupBy { it.module }
                 .values()
                 .collect {
-                    it.sort { d1, d2 -> versionComparator.compare(d2.version, d1.version) }.first()
-                }
-                .toSet()
+            it.sort { d1, d2 -> versionComparator.compare(d2.version, d1.version) }.first()
+        }
+        .toSet()
 
         def declared = conf.resolvedConfiguration.firstLevelModuleDependencies.collect { it.module.id }
 
@@ -209,10 +215,10 @@ class DependencyService {
      */
     @Memoized
     boolean isRuntime(String confName) {
-        if(confName == 'compileOnly')
+        if (confName == 'compileOnly')
             return false
-        
-        if(confName == 'providedCompile' && project.plugins.hasPlugin('war')) {
+
+        if (confName == 'providedCompile' && project.plugins.hasPlugin('war')) {
             // Gradle should not have made providedRuntime extend from providedCompile, since the runtime conf would already
             // have inherited providedCompile dependencies via the compile -> providedCompile extension
             return false
@@ -223,9 +229,9 @@ class DependencyService {
         def confPaths
         confPaths = { Configuration c, List<Configuration> path ->
             def subconfs = project.configurations.findAll { it.extendsFrom.any { it == c } }
-            for(Configuration subconf in subconfs)
+            for (Configuration subconf in subconfs)
                 confPaths(subconf, path + [c])
-            if(subconfs.isEmpty()) {
+            if (subconfs.isEmpty()) {
                 terminalPaths.add(path + [c])
             }
         }
@@ -251,9 +257,9 @@ class DependencyService {
         List<Configuration> sourceSetConfs = []
         def extendingConfs
         extendingConfs = { Configuration c ->
-            for(Configuration subconf in project.configurations.findAll { it.extendsFrom.any { it == c } }) {
+            for (Configuration subconf in project.configurations.findAll { it.extendsFrom.any { it == c } }) {
                 def sourceSet = sourceSetCompileConfigurations().find { it == subconf.name }
-                if(sourceSet)
+                if (sourceSet)
                     sourceSetConfs.add(subconf)
                 extendingConfs(subconf)
             }
@@ -278,7 +284,7 @@ class DependencyService {
     @Memoized
     Set<ModuleIdentifier> unusedDependencies(String confName) {
         def references = classReferences(confName)
-        if(!references)
+        if (!references)
             return Collections.emptySet()
 
         def conf = project.configurations.getByName(confName)
@@ -298,7 +304,7 @@ class DependencyService {
             unused.removeAll(neededBecauseOfAnIndirectRef)
 
             return unused.collect { it.module }.toSet()
-        } catch(IllegalStateException ignored) {
+        } catch (IllegalStateException ignored) {
             return [] as Set
         }
     }
@@ -325,8 +331,8 @@ class DependencyService {
         def transitives = new HashSet()
         def recurseTransitives = { Collection<ResolvedDependency> ds ->
             ds.each { d ->
-                if(d.module.id != dep.module.id && transitives.add(d))
-                   owner.call(d.children)
+                if (d.module.id != dep.module.id && transitives.add(d))
+                    owner.call(d.children)
             }
         }
         recurseTransitives(dep.children)
@@ -336,7 +342,7 @@ class DependencyService {
     boolean isResolved(String conf) {
         try {
             return isResolved(project.configurations.getByName(conf))
-        } catch(UnknownConfigurationException ignored) {
+        } catch (UnknownConfigurationException ignored) {
             return false
         }
     }
@@ -350,7 +356,7 @@ class DependencyService {
     boolean isResolvable(String conf) {
         try {
             return isResolvable(project.configurations.getByName(conf))
-        } catch(UnknownConfigurationException ignored) {
+        } catch (UnknownConfigurationException ignored) {
             return false
         }
     }
@@ -374,9 +380,9 @@ class DependencyService {
         Set<ResolvedArtifact> direct = new HashSet()
         Set<ResolvedArtifact> indirect = new HashSet()
     }
-    
+
     private Iterable<String> sourceSetCompileConfigurations() {
-        (project.convention.getPlugin(JavaPluginConvention).sourceSets + 
+        (project.convention.getPlugin(JavaPluginConvention).sourceSets +
                 (project.getExtensions().findByName('android')?.sourceSets ?: []))*.compileConfigurationName
     }
 
@@ -386,30 +392,30 @@ class DependencyService {
                         .collect { sourceSetByConf(it.name) }
                         .find { true } // get the first source set, if one is available that matches
     }
-    
+
     private Iterable<File> sourceSetClasspath(String conf) {
         def sourceSet = sourceSetByConf(conf == 'compileOnly' ? 'compile' : conf)
-        if(sourceSet) return sourceSet.compileClasspath
+        if (sourceSet) return sourceSet.compileClasspath
 
         // android
-        if(conf.startsWith('test'))
+        if (conf.startsWith('test'))
             return project.tasks.findByName('compileReleaseUnitTestJavaWithJavac')?.classpath
         return project.tasks.findByName('compileReleaseJavaWithJavac')?.classpath
     }
 
     private File sourceSetOutput(String conf) {
         def sourceSet = sourceSetByConf(conf == 'compileOnly' ? 'compile' : conf)
-        if(sourceSet) return sourceSet.output.classesDir
+        if (sourceSet) return sourceSet.output.classesDir
 
         // all android confs get squashed into either debug or release output dir?
-        if(conf.startsWith('test')) {
+        if (conf.startsWith('test')) {
             def androidTestDebugOutput = project.tasks.findByName('compileDebugUnitTestJavaWithJavac')?.destinationDir
-            if(androidTestDebugOutput && androidTestDebugOutput.exists()) return androidTestDebugOutput
-            
+            if (androidTestDebugOutput && androidTestDebugOutput.exists()) return androidTestDebugOutput
+
             def androidTestReleaseOutput = project.tasks.findByName('compileReleaseUnitTestJavaWithJavac')?.destinationDir
             return androidTestReleaseOutput
         }
-        
+
         def androidDebugOutput = project.tasks.findByName('compileDebugJavaWithJavac')?.destinationDir
         if (androidDebugOutput && androidDebugOutput.exists()) return androidDebugOutput
 
