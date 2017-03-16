@@ -23,6 +23,7 @@ import org.codehaus.groovy.ast.ClassCodeVisitorSupport
 import org.codehaus.groovy.ast.builder.AstBuilder
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.codehaus.groovy.ast.stmt.BlockStatement
+import org.codehaus.groovy.control.CompilePhase
 import org.codehaus.groovy.control.SourceUnit
 import org.codenarc.analyzer.AbstractSourceAnalyzer
 import org.codenarc.results.DirectoryResults
@@ -129,7 +130,7 @@ class LintService {
     List<File> filesToLint(Project p) {
         def files = [p.buildFile]
 
-        def buildAst = new AstBuilder().buildFromString(p.buildFile.text)[0]
+        def buildAst = new AstBuilder().buildFromString(CompilePhase.CONVERSION, p.buildFile.text)[0]
         if(buildAst instanceof BlockStatement) {
             new ClassCodeVisitorSupport() {
                 @Override
