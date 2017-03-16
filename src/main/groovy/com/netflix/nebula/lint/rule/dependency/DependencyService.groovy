@@ -166,10 +166,12 @@ class DependencyService {
                 if (file.toFile().name.endsWith('.class')) {
                     try {
                         def visitor = new DependencyClassVisitor(artifactsByClass, compiledSourceClassLoader)
-                        new ClassReader(file.newInputStream()).accept(visitor, ClassReader.SKIP_DEBUG)
+                        file.newInputStream().withCloseable { inputStream ->
+                            new ClassReader(inputStream).accept(visitor, ClassReader.SKIP_DEBUG)
 
-                        references.direct.addAll(visitor.directReferences)
-                        references.indirect.addAll(visitor.indirectReferences)
+                            references.direct.addAll(visitor.directReferences)
+                            references.indirect.addAll(visitor.indirectReferences)
+                        }
                     } catch (Throwable t) {
                         // see https://github.com/nebula-plugins/gradle-lint-plugin/issues/88
                         // type annotations can cause ArrayIndexOutOfBounds in ASM:
