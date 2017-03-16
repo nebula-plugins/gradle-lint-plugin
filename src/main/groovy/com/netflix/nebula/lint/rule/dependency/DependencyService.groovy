@@ -111,6 +111,7 @@ class DependencyService {
         return project.configurations.findAll { isResolvable(it) }
     }
 
+    @SuppressWarnings("GrMethodMayBeStatic") // Static memoization will leak
     @Memoized
     JarContents jarContents(File file) {
         if (!file.exists())
