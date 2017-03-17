@@ -70,10 +70,11 @@ class DuplicateDependencyClassRule extends GradleLintRule implements GradleModel
             }
         }
 
+        def configuration = project.configurations.getByName(conf)
         if (!dupeClassesByDependency.isEmpty() && mvid == dupeClassesByDependency.keySet().first()) {
             dupeClassesByDependency.each { resolvedMvid, classes ->
                 if (mvid != resolvedMvid) {
-                    def message = "$mvid in configuration '$conf' has ${classes.size()} classes duplicated by ${resolvedMvid}"
+                    def message = "$mvid in $configuration has ${classes.size()} classes duplicated by ${resolvedMvid}"
                     logger.debug("$message. Duplicate classes:\n$classes")
                     addBuildLintViolation("$message (use --debug for detailed class list)")
                 }

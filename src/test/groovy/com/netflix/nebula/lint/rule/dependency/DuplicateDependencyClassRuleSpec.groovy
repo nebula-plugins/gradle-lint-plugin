@@ -57,9 +57,9 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
 
         where:
         deps                            | message
-        [guava, collections]            | "$collections in configuration 'compile' has 310 classes duplicated by $guava"
-        [guava_transitive, collections] | "$collections in configuration 'compile' has 310 classes duplicated by $guava"
-        [asm, asm_asm]                  | "$asm_asm in configuration 'compile' has 21 classes duplicated by $asm"
+        [guava, collections]            | "$collections in configuration ':compile' has 310 classes duplicated by $guava"
+        [guava_transitive, collections] | "$collections in configuration ':compile' has 310 classes duplicated by $guava"
+        [asm, asm_asm]                  | "$asm_asm in configuration ':compile' has 21 classes duplicated by $asm"
     }
     
     @Issue('47')
@@ -118,7 +118,7 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
         def result = runTasksSuccessfully('compileJava', 'lintGradle')
         
         then:
-        result.output.contains("$collections in configuration 'compile' has 310 classes duplicated by $guava")
+        result.output.contains("$collections in configuration ':compile' has 310 classes duplicated by $guava")
     }
 
     @Issue('43')
@@ -147,7 +147,7 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
         def result = runTasksSuccessfully('compileJava', 'lintGradle')
 
         then:
-        !result.output.contains("$collections in configuration 'compile' has 310 classes duplicated by $guava")
+        !result.output.contains("$collections in configuration ':compile' has 310 classes duplicated by $guava")
     }
 
     /**
@@ -215,7 +215,7 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
         def result = runTasksSuccessfully('compileJava', 'lintGradle')
 
         then:
-        !result.output.contains("$collections in configuration 'compile' has 310 classes duplicated by $guava")
+        !result.output.contains("$collections in configuration ':compile' has 310 classes duplicated by $guava")
     }
 
     @Issue('#98')
@@ -242,6 +242,6 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
         def result = runTasksSuccessfully('compileJava', 'lintGradle')
 
         then:
-        result.output.contains("com.google.collections:google-collections:1.0 in configuration 'compile' has 385 classes duplicated by com.google.guava:guava:10.0.1")
+        result.output.contains("com.google.collections:google-collections:1.0 in configuration ':compile' has 385 classes duplicated by com.google.guava:guava:10.0.1")
     }
 }
