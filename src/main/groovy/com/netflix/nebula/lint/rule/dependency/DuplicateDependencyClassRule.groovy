@@ -8,8 +8,12 @@ import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ModuleVersionIdentifier
 import org.gradle.api.artifacts.ResolvedArtifact
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 class DuplicateDependencyClassRule extends GradleLintRule implements GradleModelAware {
+    final Logger logger = LoggerFactory.getLogger(DuplicateDependencyClassRule)
+
     String description = 'classpaths with duplicate classes may break unpredictably depending on the order in which dependencies are provided to the classpath'
 
     Set<Configuration> directlyUsedConfigurations = [] as Set
@@ -69,7 +73,9 @@ class DuplicateDependencyClassRule extends GradleLintRule implements GradleModel
         if (!dupeClassesByDependency.isEmpty() && mvid == dupeClassesByDependency.keySet().first()) {
             dupeClassesByDependency.each { resolvedMvid, classes ->
                 if (mvid != resolvedMvid) {
-                    addBuildLintViolation("$mvid in configuration '$conf' has ${classes.size()} classes duplicated by ${resolvedMvid}")
+                    def message = "$mvid in configuration '$conf' has ${classes.size()} classes duplicated by ${resolvedMvid}"
+                    logger.debug("$message. Duplicate classes:\n$classes")
+                    addBuildLintViolation("$message (use --debug for detailed class list)")
                 }
             }
         }
