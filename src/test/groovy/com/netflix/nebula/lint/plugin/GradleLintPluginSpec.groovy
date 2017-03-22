@@ -435,4 +435,28 @@ class GradleLintPluginSpec extends TestKitSpecification {
         runTasksSuccessfully('fixGradleLint')
         applyFrom.text.contains("compile 'com.google.guava:guava:21.0'")
     }
+
+    @Issue('#100')
+    def 'empty build file lints successfully'() {
+        debug = true
+
+        when:
+        buildFile << """\
+            plugins {
+                id 'nebula.lint'
+            }
+
+            subprojects {
+                apply plugin: 'nebula.lint'
+                apply plugin: 'java'
+
+                gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
+            }
+            """.stripIndent()
+
+        new File(addSubproject('sub1'), 'build.gradle').createNewFile()
+
+        then:
+        runTasksSuccessfully('fixGradleLint')
+    }
 }

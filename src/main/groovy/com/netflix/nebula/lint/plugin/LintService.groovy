@@ -130,7 +130,12 @@ class LintService {
     List<File> filesToLint(Project p) {
         def files = [p.buildFile]
 
-        def buildAst = new AstBuilder().buildFromString(CompilePhase.CONVERSION, p.buildFile.text)[0]
+        def source = p.buildFile.text
+        if (source.isAllWhitespace()) {
+            return files
+        }
+
+        def buildAst = new AstBuilder().buildFromString(CompilePhase.CONVERSION, source)[0]
         if(buildAst instanceof BlockStatement) {
             new ClassCodeVisitorSupport() {
                 @Override
