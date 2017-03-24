@@ -54,7 +54,7 @@ abstract class AbstractDuplicateDependencyClassRule extends GradleLintRule imple
     }
 
     protected void checkForDuplicates(Configuration conf) {
-        moduleIds(conf).forEach {
+        moduleIds(conf).each {
             checkForDuplicates(it, conf.name)
         }
     }
