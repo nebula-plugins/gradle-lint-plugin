@@ -11,42 +11,55 @@ import org.gradle.api.artifacts.ResolvedArtifact
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class DuplicateDependencyClassRule extends GradleLintRule implements GradleModelAware {
-    final Logger logger = LoggerFactory.getLogger(DuplicateDependencyClassRule)
+abstract class AbstractDuplicateDependencyClassRule extends GradleLintRule implements GradleModelAware {
+    final Logger logger = LoggerFactory.getLogger(AbstractDuplicateDependencyClassRule)
 
     String description = 'classpaths with duplicate classes may break unpredictably depending on the order in which dependencies are provided to the classpath'
 
     Set<Configuration> directlyUsedConfigurations = [] as Set
     Set<ModuleVersionIdentifier> ignoredDependencies = [] as Set
 
+    abstract protected List<ModuleVersionIdentifier> moduleIds(Configuration conf)
+
+    protected static List<ModuleVersionIdentifier> firstOrderModuleIds(Configuration conf) {
+        return conf.resolvedConfiguration.firstLevelModuleDependencies.collect { it.module.id }
+    }
+
+    protected static List<ModuleVersionIdentifier> transitiveModuleIds(Configuration conf) {
+        // Classifier artifacts (javadoc/sources/etc.) can sometimes be resolved implicitly causing duplicates, we're interested only in distinct modules
+        return conf.resolvedConfiguration.resolvedArtifacts
+                .collect { it.moduleVersion.id }
+                .unique { it.module.toString() }
+    }
+
     @Override
     void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
-        if (ignored)
+        if (ignored) {
             ignoredDependencies.add(dep.toModuleVersion())
-        else {
+        } else {
             def confModel = project.configurations.findByName(conf)
-            if (confModel)
+            if (confModel) {
                 directlyUsedConfigurations.add(confModel)
+            }
         }
     }
 
     @Override
     protected void visitClassComplete(ClassNode node) {
         for (Configuration conf : directlyUsedConfigurations) {
-            if (!DependencyService.forProject(project).isResolved(conf))
-                continue
-
-            // Classifier artifacts (javadoc/sources/etc.) can sometimes be resolved implicitly causing duplicates, we're interested only in distinct modules
-            def uniqueMvids = conf.resolvedConfiguration.resolvedArtifacts
-                    .collect { it.moduleVersion.id }
-                    .unique { it.module.toString() }
-            uniqueMvids.each { mvid ->
-                checkForDuplicates(mvid, conf.name)
+            if (DependencyService.forProject(project).isResolved(conf)) {
+                checkForDuplicates(conf)
             }
         }
     }
 
-    private void checkForDuplicates(ModuleVersionIdentifier mvid, String conf) {
+    protected void checkForDuplicates(Configuration conf) {
+        moduleIds(conf).forEach {
+            checkForDuplicates(it, conf.name)
+        }
+    }
+
+    protected void checkForDuplicates(ModuleVersionIdentifier mvid, String conf) {
         def dependencyService = DependencyService.forProject(project)
         if (ignoredDependencies.contains(mvid))
             return
