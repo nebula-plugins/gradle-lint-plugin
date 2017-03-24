@@ -55,10 +55,10 @@ class LintService {
             def violations = (collectViolations(new SourceString(source), ruleSet) as List<GradleViolation>)
 
             violations.groupBy { it.file }
-                .each { file, fileViolations ->
-                    results.addChild(new FileResults(file.absolutePath, fileViolations))
-                    results.numberOfFilesInThisDirectory++
-                }
+                    .each { file, fileViolations ->
+                results.addChild(new FileResults(file.absolutePath, fileViolations))
+                results.numberOfFilesInThisDirectory++
+            }
 
             results
         }
@@ -92,7 +92,7 @@ class LintService {
 
             def excludedRules = (p.hasProperty('gradleLint.excludedRules') ?
                     p.property('gradleLint.excludedRules').toString().split(',').toList() : []) + extension.excludedRules
-            if(!excludedRules.isEmpty())
+            if (!excludedRules.isEmpty())
                 includedRules.retainAll { !excludedRules.contains(it.name) }
 
             return RuleSetFactory.configureRuleSet(includedRules)
@@ -111,54 +111,17 @@ class LintService {
 
         ([project] + project.subprojects).each { p ->
             def ruleSet = ruleSetForProject(p)
-            if(!ruleSet.rules.isEmpty()) {
-                filesToLint(p).each { f ->
-                    // establish which file we are linting for each rule
-                    ruleSet.rules.each { rule ->
-                        if(rule instanceof GradleLintRule)
-                            rule.buildFile = f
-                    }
-
-                    analyzer.analyze(f.text, ruleSet)
+            if (!ruleSet.rules.isEmpty()) {
+                // establish which file we are linting for each rule
+                ruleSet.rules.each { rule ->
+                    if (rule instanceof GradleLintRule)
+                        rule.buildFile = p.buildFile
                 }
+
+                analyzer.analyze(f.text, ruleSet)
             }
         }
 
         return analyzer.results
-    }
-
-    List<File> filesToLint(Project p) {
-        def files = [p.buildFile]
-
-        def source = p.buildFile.text
-        if (source.isAllWhitespace()) {
-            return files
-        }
-
-        def buildAst = new AstBuilder().buildFromString(CompilePhase.CONVERSION, source)[0]
-        if(buildAst instanceof BlockStatement) {
-            new ClassCodeVisitorSupport() {
-                @Override
-                void visitMethodCallExpression(MethodCallExpression call) {
-                    if (call.methodAsString == 'apply') {
-                        def args = GradleAstUtil.collectEntryExpressions(call)
-                        if(args['from']) {
-                            def applyFrom = new File(p.projectDir, args['from'])
-                            if(applyFrom.exists()) {
-                                files += applyFrom
-                            }
-                        }
-                    }
-                    super.visitMethodCallExpression(call)
-                }
-
-                @Override
-                protected SourceUnit getSourceUnit() {
-                    return null // irrelevant
-                }
-            }.visitBlockStatement(buildAst as BlockStatement)
-        }
-
-        files
     }
 }

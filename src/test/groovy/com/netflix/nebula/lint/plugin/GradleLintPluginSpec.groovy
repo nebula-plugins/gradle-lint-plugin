@@ -405,37 +405,6 @@ class GradleLintPluginSpec extends TestKitSpecification {
         runTasksSuccessfully('lintGradle', '-PgradleLint.excludedRules=unused-dependency')
     }
 
-    def 'lint Gradle sources included with `apply from`'() {
-        when:
-        buildFile << """\
-            plugins {
-                id 'java'
-                id 'nebula.lint'
-            }
-            
-            gradleLint.rules = ['dependency-parentheses']
-            
-            apply from: 'dependencies.gradle'
-            """.stripIndent()
-
-        def applyFrom = new File(projectDir, 'dependencies.gradle')
-        applyFrom.text = """\
-            repositories {
-                mavenCentral()
-            }
-            
-            dependencies {
-                compile('com.google.guava:guava:21.0')
-            }
-        """
-
-        createJavaSourceFile('public class Main { }')
-
-        then:
-        runTasksSuccessfully('fixGradleLint')
-        applyFrom.text.contains("compile 'com.google.guava:guava:21.0'")
-    }
-
     @Issue('#100')
     def 'empty build file lints successfully'() {
         debug = true
