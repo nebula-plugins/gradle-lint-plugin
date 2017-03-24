@@ -1,7 +1,7 @@
 #!/bin/bash
 # This script will build the project.
 
-SWITCHES="-s --console=plain"
+SWITCHES="-s --console=plain --info"
 
 if [ $CIRCLE_PR_NUMBER ]; then
   echo -e "Build Pull Request #$CIRCLE_PR_NUMBER => Branch [$CIRCLE_BRANCH]"
