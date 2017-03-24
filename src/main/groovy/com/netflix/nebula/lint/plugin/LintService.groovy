@@ -110,15 +110,16 @@ class LintService {
         def analyzer = new ReportableAnalyzer(project)
 
         ([project] + project.subprojects).each { p ->
+            def buildFile = p.buildFile
             def ruleSet = ruleSetForProject(p)
             if (!ruleSet.rules.isEmpty()) {
                 // establish which file we are linting for each rule
                 ruleSet.rules.each { rule ->
                     if (rule instanceof GradleLintRule)
-                        rule.buildFile = p.buildFile
+                        rule.buildFile = buildFile
                 }
 
-                analyzer.analyze(f.text, ruleSet)
+                analyzer.analyze(buildFile.text, ruleSet)
             }
         }
 
