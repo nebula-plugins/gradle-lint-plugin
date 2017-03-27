@@ -128,3 +128,7 @@ publishing {
         }
     }
 }
+
+tasks.withType(GroovyCompile).each {
+    it.groovyOptions.configurationScript = file("$rootDir/gradle/compiler-config.groovy")
+}

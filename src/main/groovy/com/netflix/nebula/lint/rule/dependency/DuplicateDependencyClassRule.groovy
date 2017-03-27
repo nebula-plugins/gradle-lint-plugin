@@ -70,8 +70,7 @@ abstract class AbstractDuplicateDependencyClassRule extends GradleLintRule imple
         if (!dependencyClasses)
             return
 
-        def dupeDependencyClasses = dependencyService.artifactsByClass(conf)
-                .findAll {
+        def dupeDependencyClasses = dependencyService.artifactsByClass(conf).findAll {
             // don't count artifacts that have the same ModuleIdentifier, which are different versions of the same
             // module coming from extended configurations that are ultimately conflict resolved away anyway
             Collection<ResolvedArtifact> artifacts = it.value
