@@ -3,6 +3,7 @@ package com.netflix.nebula.lint.rule.dependency
 import com.netflix.nebula.lint.rule.GradleDependency
 import com.netflix.nebula.lint.rule.GradleLintRule
 import com.netflix.nebula.lint.rule.GradleModelAware
+import groovy.transform.CompileStatic
 import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.gradle.api.artifacts.Configuration
@@ -11,6 +12,7 @@ import org.gradle.api.artifacts.ResolvedArtifact
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+@CompileStatic
 abstract class AbstractDuplicateDependencyClassRule extends GradleLintRule implements GradleModelAware {
     final Logger logger = LoggerFactory.getLogger(AbstractDuplicateDependencyClassRule)
 
