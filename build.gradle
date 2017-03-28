@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2015 Netflix, Inc.
+ * Copyright 2014-2017 Netflix, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,9 @@
  */
 
 plugins {
-    id 'com.gradle.plugin-publish' version '0.9.5'
-    id 'nebula.plugin-plugin' version '4.24.0'
+    id 'com.gradle.plugin-publish' version '0.9.7'
+    id 'nebula.plugin-plugin' version '5.1.1'
+    id 'nebula.kotlin' version '1.1.0'
     id 'com.github.johnrengelman.shadow' version '1.2.3'
     id 'java-gradle-plugin'
 }
@@ -30,16 +31,14 @@ contacts {
     }
 }
 
-repositories {
-    mavenCentral()
-}
-
 configurations {
     plugin.description = 'The compile dependencies for the plugin, excluding the local dependencies to avoid problems with Shadow'
     compile.extendsFrom plugin
 }
 
 dependencies {
+    compile 'com.netflix.nebula:nebula-gradle-interop:latest.release'
+
     plugin 'org.ow2.asm:asm:5.2'
     plugin('org.codenarc:CodeNarc:0.25.2') {
         transitive = false
@@ -128,3 +127,11 @@ publishing {
         }
     }
 }
+
+// Kotlin compiles first, stubbing Java dependencies, however it can't stub Groovy and we need to call Groovy code from Kotlin. For details see:
+// https://discuss.gradle.org/t/kotlin-groovy-and-java-compilation/14903/10
+
+compileGroovy.dependsOn = compileGroovy.taskDependencies.values - 'compileJava'
+compileKotlin.dependsOn compileGroovy
+compileKotlin.classpath += files(compileGroovy.destinationDir)
+classes.dependsOn compileKotlin

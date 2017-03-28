@@ -133,7 +133,7 @@ class DependencyService {
         return new JarContents(entryNames: entryNames)
     }
 
-    final static Comparator<ModuleVersionIdentifier> DEPENDENCY_COMPARATOR = new Comparator<ModuleVersionIdentifier>() {
+    public final static Comparator<ModuleVersionIdentifier> DEPENDENCY_COMPARATOR = new Comparator<ModuleVersionIdentifier>() {
         @Override
         int compare(ModuleVersionIdentifier m1, ModuleVersionIdentifier m2) {
             if (m1.group != m2.group)
