@@ -1,6 +1,6 @@
 machine:
   java:
-    version: openjdk7
+    version: openjdk8
 test:
   pre:
     - gpg --passphrase $KEY --output gradle.properties --decrypt gradle.properties.enc

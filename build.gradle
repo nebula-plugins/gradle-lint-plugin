@@ -36,6 +36,9 @@ configurations {
     compile.extendsFrom plugin
 }
 
+sourceCompatibility = JavaVersion.VERSION_1_7
+targetCompatibility = JavaVersion.VERSION_1_7
+
 dependencies {
     compile 'com.netflix.nebula:nebula-gradle-interop:latest.release'
 
