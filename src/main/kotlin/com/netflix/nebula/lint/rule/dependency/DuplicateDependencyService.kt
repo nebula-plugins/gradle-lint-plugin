@@ -10,10 +10,10 @@ import java.util.*
 class DuplicateDependencyService(val project: Project) {
     val logger: Logger = LoggerFactory.getLogger(DuplicateDependencyService::class.java)
 
-    fun checkForDuplicates(moduleIds: List<ModuleVersionIdentifier>, conf: Configuration, ignoredDependencies: Set<ModuleVersionIdentifier>): List<String> =
-            moduleIds.flatMap { checkForDuplicates(it, conf.name, ignoredDependencies) }
+    fun violationsForModules(moduleIds: List<ModuleVersionIdentifier>, conf: Configuration, ignoredDependencies: Set<ModuleVersionIdentifier>): List<String> =
+            moduleIds.flatMap { violationsForModule(it, conf.name, ignoredDependencies) }
 
-    fun checkForDuplicates(mvid: ModuleVersionIdentifier, conf: String, ignoredDependencies: Set<ModuleVersionIdentifier>): List<String> {
+    fun violationsForModule(mvid: ModuleVersionIdentifier, conf: String, ignoredDependencies: Set<ModuleVersionIdentifier>): List<String> {
         val dependencyService = DependencyService.forProject(project)
         if (ignoredDependencies.contains(mvid)) {
             return emptyList()
