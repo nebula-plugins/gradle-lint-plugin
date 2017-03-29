@@ -31,7 +31,7 @@ class DuplicateDependencyService(val project: Project) {
                 }
 
         val dupeClassesByDependency = TreeMap<ModuleVersionIdentifier, MutableSet<String>>(DependencyService.DEPENDENCY_COMPARATOR)
-        dupeDependencyClasses.forEach { className, resolvedArtifacts ->
+        dupeDependencyClasses.forEach { (className, resolvedArtifacts) ->
             resolvedArtifacts.forEach { artifact ->
                 val moduleId = artifact.moduleVersion.id
                 if (!dupeClassesByDependency.containsKey(moduleId)) {
@@ -44,7 +44,7 @@ class DuplicateDependencyService(val project: Project) {
         val violations = mutableListOf<String>()
         val configuration = project.configurations.getByName(conf)
         if (!dupeClassesByDependency.isEmpty() && mvid == dupeClassesByDependency.keys.first()) {
-            dupeClassesByDependency.forEach { resolvedMvid, classes ->
+            dupeClassesByDependency.forEach { (resolvedMvid, classes) ->
                 if (mvid != resolvedMvid) {
                     val message = "$mvid in $configuration has ${classes.size} classes duplicated by $resolvedMvid"
                     logger.info("$message. Duplicate classes: $classes")
