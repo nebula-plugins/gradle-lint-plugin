@@ -47,8 +47,8 @@ class DuplicateDependencyService(val project: Project) {
             dupeClassesByDependency.forEach { resolvedMvid, classes ->
                 if (mvid != resolvedMvid) {
                     val message = "$mvid in $configuration has ${classes.size} classes duplicated by $resolvedMvid"
-                    logger.debug("$message. Duplicate classes:\n$classes")
-                    violations.add("$message (use --debug for detailed class list)")
+                    logger.info("$message. Duplicate classes: $classes")
+                    violations.add("$message (use --info for detailed class list)")
                 }
             }
         }

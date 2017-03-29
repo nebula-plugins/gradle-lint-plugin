@@ -265,7 +265,7 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
 
         when:
         createJavaSourceFile('public class Main{}')
-        def result = runTasksSuccessfully('compileJava', 'lintGradle')
+        def result = runTasksSuccessfully('compileJava', 'lintGradle', '--info')
 
         then:
         result.output.contains("com.google.collections:google-collections:1.0 in configuration ':compile' has 385 classes duplicated by com.google.guava:guava:10.0.1")
