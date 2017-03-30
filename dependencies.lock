@@ -1,0 +1,786 @@
+{
+    "compile": {
+        "com.netflix.nebula:gradle-info-plugin": {
+            "locked": "3.3.5",
+            "requested": "3.3.5"
+        },
+        "com.netflix.nebula:nebula-gradle-interop": {
+            "locked": "0.4.0",
+            "requested": "latest.release"
+        },
+        "com.netflix.nebula:nebula-test": {
+            "locked": "4.2.1",
+            "requested": "4.2.1"
+        },
+        "commons-lang:commons-lang": {
+            "locked": "2.6",
+            "requested": "2.6"
+        },
+        "junit:junit": {
+            "locked": "4.12",
+            "requested": "4.12"
+        },
+        "org.codehaus.gpars:gpars": {
+            "locked": "1.2.1",
+            "requested": "1.2.1"
+        },
+        "org.codenarc:CodeNarc": {
+            "locked": "0.25.2",
+            "requested": "0.25.2"
+        },
+        "org.eclipse.jdt:core": {
+            "locked": "3.1.1",
+            "requested": "3.1.1"
+        },
+        "org.eclipse.jgit:org.eclipse.jgit": {
+            "locked": "4.5.0.201609210915-r",
+            "requested": "4.5.0.201609210915-r"
+        },
+        "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
+            "locked": "1.1.0",
+            "requested": "1.1.0"
+        },
+        "org.ow2.asm:asm": {
+            "locked": "5.2",
+            "requested": "5.2"
+        },
+        "org.spockframework:spock-core": {
+            "locked": "1.0-groovy-2.4",
+            "requested": "1.0-groovy-2.4"
+        }
+    },
+    "compileClasspath": {
+        "com.netflix.nebula:gradle-info-plugin": {
+            "locked": "3.3.5",
+            "requested": "3.3.5"
+        },
+        "com.netflix.nebula:nebula-gradle-interop": {
+            "locked": "0.4.0",
+            "requested": "latest.release"
+        },
+        "com.netflix.nebula:nebula-test": {
+            "locked": "4.2.1",
+            "requested": "4.2.1"
+        },
+        "commons-lang:commons-lang": {
+            "locked": "2.6",
+            "requested": "2.6"
+        },
+        "junit:junit": {
+            "locked": "4.12",
+            "requested": "4.12"
+        },
+        "org.codehaus.gpars:gpars": {
+            "locked": "1.2.1",
+            "requested": "1.2.1"
+        },
+        "org.codenarc:CodeNarc": {
+            "locked": "0.25.2",
+            "requested": "0.25.2"
+        },
+        "org.eclipse.jdt:core": {
+            "locked": "3.1.1",
+            "requested": "3.1.1"
+        },
+        "org.eclipse.jgit:org.eclipse.jgit": {
+            "locked": "4.5.0.201609210915-r",
+            "requested": "4.5.0.201609210915-r"
+        },
+        "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
+            "locked": "1.1.0",
+            "requested": "1.1.0"
+        },
+        "org.ow2.asm:asm": {
+            "locked": "5.2",
+            "requested": "5.2"
+        },
+        "org.spockframework:spock-core": {
+            "locked": "1.0-groovy-2.4",
+            "requested": "1.0-groovy-2.4"
+        }
+    },
+    "compileOnly": {
+        "com.netflix.nebula:gradle-info-plugin": {
+            "locked": "3.3.5",
+            "requested": "3.3.5"
+        },
+        "com.netflix.nebula:nebula-gradle-interop": {
+            "locked": "0.4.0",
+            "requested": "latest.release"
+        },
+        "com.netflix.nebula:nebula-test": {
+            "locked": "4.2.1",
+            "requested": "4.2.1"
+        },
+        "commons-lang:commons-lang": {
+            "locked": "2.6",
+            "requested": "2.6"
+        },
+        "junit:junit": {
+            "locked": "4.12",
+            "requested": "4.12"
+        },
+        "org.codehaus.gpars:gpars": {
+            "locked": "1.2.1",
+            "requested": "1.2.1"
+        },
+        "org.codenarc:CodeNarc": {
+            "locked": "0.25.2",
+            "requested": "0.25.2"
+        },
+        "org.eclipse.jdt:core": {
+            "locked": "3.1.1",
+            "requested": "3.1.1"
+        },
+        "org.eclipse.jgit:org.eclipse.jgit": {
+            "locked": "4.5.0.201609210915-r",
+            "requested": "4.5.0.201609210915-r"
+        },
+        "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
+            "locked": "1.1.0",
+            "requested": "1.1.0"
+        },
+        "org.ow2.asm:asm": {
+            "locked": "5.2",
+            "requested": "5.2"
+        },
+        "org.spockframework:spock-core": {
+            "locked": "1.0-groovy-2.4",
+            "requested": "1.0-groovy-2.4"
+        }
+    },
+    "default": {
+        "com.netflix.nebula:gradle-info-plugin": {
+            "locked": "3.3.5",
+            "requested": "3.3.5"
+        },
+        "com.netflix.nebula:nebula-gradle-interop": {
+            "locked": "0.4.0",
+            "requested": "latest.release"
+        },
+        "com.netflix.nebula:nebula-test": {
+            "locked": "4.2.1",
+            "requested": "4.2.1"
+        },
+        "commons-lang:commons-lang": {
+            "locked": "2.6",
+            "requested": "2.6"
+        },
+        "junit:junit": {
+            "locked": "4.12",
+            "requested": "4.12"
+        },
+        "org.codehaus.gpars:gpars": {
+            "locked": "1.2.1",
+            "requested": "1.2.1"
+        },
+        "org.codenarc:CodeNarc": {
+            "locked": "0.25.2",
+            "requested": "0.25.2"
+        },
+        "org.eclipse.jdt:core": {
+            "locked": "3.1.1",
+            "requested": "3.1.1"
+        },
+        "org.eclipse.jgit:org.eclipse.jgit": {
+            "locked": "4.5.0.201609210915-r",
+            "requested": "4.5.0.201609210915-r"
+        },
+        "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
+            "locked": "1.1.0",
+            "requested": "1.1.0"
+        },
+        "org.ow2.asm:asm": {
+            "locked": "5.2",
+            "requested": "5.2"
+        },
+        "org.spockframework:spock-core": {
+            "locked": "1.0-groovy-2.4",
+            "requested": "1.0-groovy-2.4"
+        }
+    },
+    "integTestCompile": {
+        "com.netflix.nebula:gradle-info-plugin": {
+            "locked": "3.3.5",
+            "requested": "3.3.5"
+        },
+        "com.netflix.nebula:nebula-gradle-interop": {
+            "locked": "0.4.0",
+            "requested": "latest.release"
+        },
+        "com.netflix.nebula:nebula-test": {
+            "locked": "6.0.0",
+            "requested": "4.2.1"
+        },
+        "commons-lang:commons-lang": {
+            "locked": "2.6",
+            "requested": "2.6"
+        },
+        "joda-time:joda-time": {
+            "locked": "2.9.9",
+            "requested": "latest.release"
+        },
+        "junit:junit": {
+            "locked": "4.12",
+            "requested": "4.12"
+        },
+        "org.codehaus.gpars:gpars": {
+            "locked": "1.2.1",
+            "requested": "1.2.1"
+        },
+        "org.codenarc:CodeNarc": {
+            "locked": "0.25.2",
+            "requested": "0.25.2"
+        },
+        "org.eclipse.jdt:core": {
+            "locked": "3.1.1",
+            "requested": "3.1.1"
+        },
+        "org.eclipse.jgit:org.eclipse.jgit": {
+            "locked": "4.5.0.201609210915-r",
+            "requested": "4.5.0.201609210915-r"
+        },
+        "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
+            "locked": "1.1.0",
+            "requested": "1.1.0"
+        },
+        "org.ow2.asm:asm": {
+            "locked": "5.2",
+            "requested": "5.2"
+        },
+        "org.ow2.asm:asm-util": {
+            "locked": "5.2",
+            "requested": "5.2"
+        },
+        "org.spockframework:spock-core": {
+            "locked": "1.1-groovy-2.4-rc-4",
+            "requested": "1.0-groovy-2.4"
+        }
+    },
+    "integTestCompileClasspath": {
+        "com.netflix.nebula:gradle-info-plugin": {
+            "locked": "3.3.5",
+            "requested": "3.3.5"
+        },
+        "com.netflix.nebula:nebula-gradle-interop": {
+            "locked": "0.4.0",
+            "requested": "latest.release"
+        },
+        "com.netflix.nebula:nebula-test": {
+            "locked": "6.0.0",
+            "requested": "4.2.1"
+        },
+        "commons-lang:commons-lang": {
+            "locked": "2.6",
+            "requested": "2.6"
+        },
+        "joda-time:joda-time": {
+            "locked": "2.9.9",
+            "requested": "latest.release"
+        },
+        "junit:junit": {
+            "locked": "4.12",
+            "requested": "4.12"
+        },
+        "org.codehaus.gpars:gpars": {
+            "locked": "1.2.1",
+            "requested": "1.2.1"
+        },
+        "org.codenarc:CodeNarc": {
+            "locked": "0.25.2",
+            "requested": "0.25.2"
+        },
+        "org.eclipse.jdt:core": {
+            "locked": "3.1.1",
+            "requested": "3.1.1"
+        },
+        "org.eclipse.jgit:org.eclipse.jgit": {
+            "locked": "4.5.0.201609210915-r",
+            "requested": "4.5.0.201609210915-r"
+        },
+        "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
+            "locked": "1.1.0",
+            "requested": "1.1.0"
+        },
+        "org.ow2.asm:asm": {
+            "locked": "5.2",
+            "requested": "5.2"
+        },
+        "org.ow2.asm:asm-util": {
+            "locked": "5.2",
+            "requested": "5.2"
+        },
+        "org.spockframework:spock-core": {
+            "locked": "1.1-groovy-2.4-rc-4",
+            "requested": "1.0-groovy-2.4"
+        }
+    },
+    "integTestCompileOnly": {
+        "com.netflix.nebula:gradle-info-plugin": {
+            "locked": "3.3.5",
+            "requested": "3.3.5"
+        },
+        "com.netflix.nebula:nebula-gradle-interop": {
+            "locked": "0.4.0",
+            "requested": "latest.release"
+        },
+        "com.netflix.nebula:nebula-test": {
+            "locked": "6.0.0",
+            "requested": "4.2.1"
+        },
+        "commons-lang:commons-lang": {
+            "locked": "2.6",
+            "requested": "2.6"
+        },
+        "joda-time:joda-time": {
+            "locked": "2.9.9",
+            "requested": "latest.release"
+        },
+        "junit:junit": {
+            "locked": "4.12",
+            "requested": "4.12"
+        },
+        "org.codehaus.gpars:gpars": {
+            "locked": "1.2.1",
+            "requested": "1.2.1"
+        },
+        "org.codenarc:CodeNarc": {
+            "locked": "0.25.2",
+            "requested": "0.25.2"
+        },
+        "org.eclipse.jdt:core": {
+            "locked": "3.1.1",
+            "requested": "3.1.1"
+        },
+        "org.eclipse.jgit:org.eclipse.jgit": {
+            "locked": "4.5.0.201609210915-r",
+            "requested": "4.5.0.201609210915-r"
+        },
+        "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
+            "locked": "1.1.0",
+            "requested": "1.1.0"
+        },
+        "org.ow2.asm:asm": {
+            "locked": "5.2",
+            "requested": "5.2"
+        },
+        "org.ow2.asm:asm-util": {
+            "locked": "5.2",
+            "requested": "5.2"
+        },
+        "org.spockframework:spock-core": {
+            "locked": "1.1-groovy-2.4-rc-4",
+            "requested": "1.0-groovy-2.4"
+        }
+    },
+    "integTestRuntime": {
+        "com.netflix.nebula:gradle-info-plugin": {
+            "locked": "3.3.5",
+            "requested": "3.3.5"
+        },
+        "com.netflix.nebula:nebula-gradle-interop": {
+            "locked": "0.4.0",
+            "requested": "latest.release"
+        },
+        "com.netflix.nebula:nebula-test": {
+            "locked": "6.0.0",
+            "requested": "4.2.1"
+        },
+        "commons-lang:commons-lang": {
+            "locked": "2.6",
+            "requested": "2.6"
+        },
+        "joda-time:joda-time": {
+            "locked": "2.9.9",
+            "requested": "latest.release"
+        },
+        "junit:junit": {
+            "locked": "4.12",
+            "requested": "4.12"
+        },
+        "org.codehaus.gpars:gpars": {
+            "locked": "1.2.1",
+            "requested": "1.2.1"
+        },
+        "org.codenarc:CodeNarc": {
+            "locked": "0.25.2",
+            "requested": "0.25.2"
+        },
+        "org.eclipse.jdt:core": {
+            "locked": "3.1.1",
+            "requested": "3.1.1"
+        },
+        "org.eclipse.jgit:org.eclipse.jgit": {
+            "locked": "4.5.0.201609210915-r",
+            "requested": "4.5.0.201609210915-r"
+        },
+        "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
+            "locked": "1.1.0",
+            "requested": "1.1.0"
+        },
+        "org.ow2.asm:asm": {
+            "locked": "5.2",
+            "requested": "5.2"
+        },
+        "org.ow2.asm:asm-util": {
+            "locked": "5.2",
+            "requested": "5.2"
+        },
+        "org.spockframework:spock-core": {
+            "locked": "1.1-groovy-2.4-rc-4",
+            "requested": "1.0-groovy-2.4"
+        }
+    },
+    "jacocoAgent": {
+        "org.jacoco:org.jacoco.agent": {
+            "locked": "0.7.7.201606060606"
+        }
+    },
+    "jacocoAnt": {
+        "org.jacoco:org.jacoco.ant": {
+            "locked": "0.7.7.201606060606"
+        }
+    },
+    "kapt": {
+        "org.jetbrains.kotlin:kotlin-annotation-processing": {
+            "locked": "1.1.0",
+            "requested": "1.1.0"
+        }
+    },
+    "kaptIntegTest": {
+        "org.jetbrains.kotlin:kotlin-annotation-processing": {
+            "locked": "1.1.0",
+            "requested": "1.1.0"
+        }
+    },
+    "kaptTest": {
+        "org.jetbrains.kotlin:kotlin-annotation-processing": {
+            "locked": "1.1.0",
+            "requested": "1.1.0"
+        }
+    },
+    "plugin": {
+        "com.netflix.nebula:gradle-info-plugin": {
+            "locked": "3.3.5",
+            "requested": "3.3.5"
+        },
+        "com.netflix.nebula:nebula-test": {
+            "locked": "4.2.1",
+            "requested": "4.2.1"
+        },
+        "commons-lang:commons-lang": {
+            "locked": "2.6",
+            "requested": "2.6"
+        },
+        "junit:junit": {
+            "locked": "4.12",
+            "requested": "4.12"
+        },
+        "org.codehaus.gpars:gpars": {
+            "locked": "1.2.1",
+            "requested": "1.2.1"
+        },
+        "org.codenarc:CodeNarc": {
+            "locked": "0.25.2",
+            "requested": "0.25.2"
+        },
+        "org.eclipse.jdt:core": {
+            "locked": "3.1.1",
+            "requested": "3.1.1"
+        },
+        "org.eclipse.jgit:org.eclipse.jgit": {
+            "locked": "4.5.0.201609210915-r",
+            "requested": "4.5.0.201609210915-r"
+        },
+        "org.ow2.asm:asm": {
+            "locked": "5.2",
+            "requested": "5.2"
+        },
+        "org.spockframework:spock-core": {
+            "locked": "1.0-groovy-2.4",
+            "requested": "1.0-groovy-2.4"
+        }
+    },
+    "runtime": {
+        "com.netflix.nebula:gradle-info-plugin": {
+            "locked": "3.3.5",
+            "requested": "3.3.5"
+        },
+        "com.netflix.nebula:nebula-gradle-interop": {
+            "locked": "0.4.0",
+            "requested": "latest.release"
+        },
+        "com.netflix.nebula:nebula-test": {
+            "locked": "4.2.1",
+            "requested": "4.2.1"
+        },
+        "commons-lang:commons-lang": {
+            "locked": "2.6",
+            "requested": "2.6"
+        },
+        "junit:junit": {
+            "locked": "4.12",
+            "requested": "4.12"
+        },
+        "org.codehaus.gpars:gpars": {
+            "locked": "1.2.1",
+            "requested": "1.2.1"
+        },
+        "org.codenarc:CodeNarc": {
+            "locked": "0.25.2",
+            "requested": "0.25.2"
+        },
+        "org.eclipse.jdt:core": {
+            "locked": "3.1.1",
+            "requested": "3.1.1"
+        },
+        "org.eclipse.jgit:org.eclipse.jgit": {
+            "locked": "4.5.0.201609210915-r",
+            "requested": "4.5.0.201609210915-r"
+        },
+        "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
+            "locked": "1.1.0",
+            "requested": "1.1.0"
+        },
+        "org.ow2.asm:asm": {
+            "locked": "5.2",
+            "requested": "5.2"
+        },
+        "org.spockframework:spock-core": {
+            "locked": "1.0-groovy-2.4",
+            "requested": "1.0-groovy-2.4"
+        }
+    },
+    "testCompile": {
+        "com.netflix.nebula:gradle-info-plugin": {
+            "locked": "3.3.5",
+            "requested": "3.3.5"
+        },
+        "com.netflix.nebula:nebula-gradle-interop": {
+            "locked": "0.4.0",
+            "requested": "latest.release"
+        },
+        "com.netflix.nebula:nebula-test": {
+            "locked": "6.0.0",
+            "requested": "4.2.1"
+        },
+        "commons-lang:commons-lang": {
+            "locked": "2.6",
+            "requested": "2.6"
+        },
+        "joda-time:joda-time": {
+            "locked": "2.9.9",
+            "requested": "latest.release"
+        },
+        "junit:junit": {
+            "locked": "4.12",
+            "requested": "4.12"
+        },
+        "org.codehaus.gpars:gpars": {
+            "locked": "1.2.1",
+            "requested": "1.2.1"
+        },
+        "org.codenarc:CodeNarc": {
+            "locked": "0.25.2",
+            "requested": "0.25.2"
+        },
+        "org.eclipse.jdt:core": {
+            "locked": "3.1.1",
+            "requested": "3.1.1"
+        },
+        "org.eclipse.jgit:org.eclipse.jgit": {
+            "locked": "4.5.0.201609210915-r",
+            "requested": "4.5.0.201609210915-r"
+        },
+        "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
+            "locked": "1.1.0",
+            "requested": "1.1.0"
+        },
+        "org.ow2.asm:asm": {
+            "locked": "5.2",
+            "requested": "5.2"
+        },
+        "org.ow2.asm:asm-util": {
+            "locked": "5.2",
+            "requested": "5.2"
+        },
+        "org.spockframework:spock-core": {
+            "locked": "1.1-groovy-2.4-rc-4",
+            "requested": "1.0-groovy-2.4"
+        }
+    },
+    "testCompileClasspath": {
+        "com.netflix.nebula:gradle-info-plugin": {
+            "locked": "3.3.5",
+            "requested": "3.3.5"
+        },
+        "com.netflix.nebula:nebula-gradle-interop": {
+            "locked": "0.4.0",
+            "requested": "latest.release"
+        },
+        "com.netflix.nebula:nebula-test": {
+            "locked": "6.0.0",
+            "requested": "4.2.1"
+        },
+        "commons-lang:commons-lang": {
+            "locked": "2.6",
+            "requested": "2.6"
+        },
+        "joda-time:joda-time": {
+            "locked": "2.9.9",
+            "requested": "latest.release"
+        },
+        "junit:junit": {
+            "locked": "4.12",
+            "requested": "4.12"
+        },
+        "org.codehaus.gpars:gpars": {
+            "locked": "1.2.1",
+            "requested": "1.2.1"
+        },
+        "org.codenarc:CodeNarc": {
+            "locked": "0.25.2",
+            "requested": "0.25.2"
+        },
+        "org.eclipse.jdt:core": {
+            "locked": "3.1.1",
+            "requested": "3.1.1"
+        },
+        "org.eclipse.jgit:org.eclipse.jgit": {
+            "locked": "4.5.0.201609210915-r",
+            "requested": "4.5.0.201609210915-r"
+        },
+        "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
+            "locked": "1.1.0",
+            "requested": "1.1.0"
+        },
+        "org.ow2.asm:asm": {
+            "locked": "5.2",
+            "requested": "5.2"
+        },
+        "org.ow2.asm:asm-util": {
+            "locked": "5.2",
+            "requested": "5.2"
+        },
+        "org.spockframework:spock-core": {
+            "locked": "1.1-groovy-2.4-rc-4",
+            "requested": "1.0-groovy-2.4"
+        }
+    },
+    "testCompileOnly": {
+        "com.netflix.nebula:gradle-info-plugin": {
+            "locked": "3.3.5",
+            "requested": "3.3.5"
+        },
+        "com.netflix.nebula:nebula-gradle-interop": {
+            "locked": "0.4.0",
+            "requested": "latest.release"
+        },
+        "com.netflix.nebula:nebula-test": {
+            "locked": "6.0.0",
+            "requested": "4.2.1"
+        },
+        "commons-lang:commons-lang": {
+            "locked": "2.6",
+            "requested": "2.6"
+        },
+        "joda-time:joda-time": {
+            "locked": "2.9.9",
+            "requested": "latest.release"
+        },
+        "junit:junit": {
+            "locked": "4.12",
+            "requested": "4.12"
+        },
+        "org.codehaus.gpars:gpars": {
+            "locked": "1.2.1",
+            "requested": "1.2.1"
+        },
+        "org.codenarc:CodeNarc": {
+            "locked": "0.25.2",
+            "requested": "0.25.2"
+        },
+        "org.eclipse.jdt:core": {
+            "locked": "3.1.1",
+            "requested": "3.1.1"
+        },
+        "org.eclipse.jgit:org.eclipse.jgit": {
+            "locked": "4.5.0.201609210915-r",
+            "requested": "4.5.0.201609210915-r"
+        },
+        "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
+            "locked": "1.1.0",
+            "requested": "1.1.0"
+        },
+        "org.ow2.asm:asm": {
+            "locked": "5.2",
+            "requested": "5.2"
+        },
+        "org.ow2.asm:asm-util": {
+            "locked": "5.2",
+            "requested": "5.2"
+        },
+        "org.spockframework:spock-core": {
+            "locked": "1.1-groovy-2.4-rc-4",
+            "requested": "1.0-groovy-2.4"
+        }
+    },
+    "testRuntime": {
+        "com.netflix.nebula:gradle-info-plugin": {
+            "locked": "3.3.5",
+            "requested": "3.3.5"
+        },
+        "com.netflix.nebula:nebula-gradle-interop": {
+            "locked": "0.4.0",
+            "requested": "latest.release"
+        },
+        "com.netflix.nebula:nebula-test": {
+            "locked": "6.0.0",
+            "requested": "4.2.1"
+        },
+        "commons-lang:commons-lang": {
+            "locked": "2.6",
+            "requested": "2.6"
+        },
+        "joda-time:joda-time": {
+            "locked": "2.9.9",
+            "requested": "latest.release"
+        },
+        "junit:junit": {
+            "locked": "4.12",
+            "requested": "4.12"
+        },
+        "org.codehaus.gpars:gpars": {
+            "locked": "1.2.1",
+            "requested": "1.2.1"
+        },
+        "org.codenarc:CodeNarc": {
+            "locked": "0.25.2",
+            "requested": "0.25.2"
+        },
+        "org.eclipse.jdt:core": {
+            "locked": "3.1.1",
+            "requested": "3.1.1"
+        },
+        "org.eclipse.jgit:org.eclipse.jgit": {
+            "locked": "4.5.0.201609210915-r",
+            "requested": "4.5.0.201609210915-r"
+        },
+        "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
+            "locked": "1.1.0",
+            "requested": "1.1.0"
+        },
+        "org.ow2.asm:asm": {
+            "locked": "5.2",
+            "requested": "5.2"
+        },
+        "org.ow2.asm:asm-util": {
+            "locked": "5.2",
+            "requested": "5.2"
+        },
+        "org.spockframework:spock-core": {
+            "locked": "1.1-groovy-2.4-rc-4",
+            "requested": "1.0-groovy-2.4"
+        }
+    }
+}
