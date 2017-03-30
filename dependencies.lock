@@ -209,7 +209,7 @@
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.0.0",
+            "locked": "6.0.1",
             "requested": "4.2.1"
         },
         "commons-lang:commons-lang": {
@@ -267,7 +267,7 @@
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.0.0",
+            "locked": "6.0.1",
             "requested": "4.2.1"
         },
         "commons-lang:commons-lang": {
@@ -325,7 +325,7 @@
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.0.0",
+            "locked": "6.0.1",
             "requested": "4.2.1"
         },
         "commons-lang:commons-lang": {
@@ -383,7 +383,7 @@
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.0.0",
+            "locked": "6.0.1",
             "requested": "4.2.1"
         },
         "commons-lang:commons-lang": {
@@ -561,7 +561,7 @@
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.0.0",
+            "locked": "6.0.1",
             "requested": "4.2.1"
         },
         "commons-lang:commons-lang": {
@@ -619,7 +619,7 @@
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.0.0",
+            "locked": "6.0.1",
             "requested": "4.2.1"
         },
         "commons-lang:commons-lang": {
@@ -677,7 +677,7 @@
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.0.0",
+            "locked": "6.0.1",
             "requested": "4.2.1"
         },
         "commons-lang:commons-lang": {
@@ -735,7 +735,7 @@
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.0.0",
+            "locked": "6.0.1",
             "requested": "4.2.1"
         },
         "commons-lang:commons-lang": {
