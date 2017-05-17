@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Netflix, Inc.
+ * Copyright 2015-2017 Netflix, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
 
         then:
         result.output.contains(message)
-        result.output.contains("✖ 1 problem (0 errors, 1 warning)")
+        result.output.contains("1 problem (0 errors, 1 warning)")
 
         where:
         deps                            | message
