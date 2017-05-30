@@ -5,6 +5,8 @@ import groovyx.gpars.GParsPool
 import org.gradle.api.Project
 import org.gradle.api.artifacts.*
 import org.gradle.api.internal.artifacts.DefaultModuleIdentifier
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.VersionInfo
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.Versioned
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.DefaultVersionComparator
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.SourceSet
@@ -24,6 +26,8 @@ import java.util.zip.ZipException
 class DependencyService {
     private static final String EXTENSION_NAME = "gradleLintDependencyService"
 
+    private static final Comparator<Versioned> VERSION_COMPARATOR = new DefaultVersionComparator()
+
     static synchronized DependencyService forProject(Project project) {
         def extension = project.extensions.findByType(DependencyServiceExtension)
         if (!extension) {
@@ -40,8 +44,6 @@ class DependencyService {
     private final Logger logger = LoggerFactory.getLogger(DependencyService)
 
     Project project
-
-    private Comparator<String> versionComparator = new DefaultVersionComparator().asStringComparator()
 
     private DependencyService(Project project) {
         this.project = project
@@ -141,7 +143,7 @@ class DependencyService {
             else if (m1.name != m2.name)
                 return m1.name.compareTo(m2.name)
             else
-                return new DefaultVersionComparator().asStringComparator().compare(m1.version, m2.version)
+                return VERSION_COMPARATOR.compare(new VersionInfo(m2.version), new VersionInfo(m1.version))
         }
     }
 
@@ -197,7 +199,7 @@ class DependencyService {
                 .groupBy { it.module }
                 .values()
                 .collect {
-            it.sort { d1, d2 -> versionComparator.compare(d2.version, d1.version) }.first()
+            it.sort { d1, d2 -> VERSION_COMPARATOR.compare(new VersionInfo(d2.version), new VersionInfo(d1.version)) }.first()
         }
         .toSet()
 
