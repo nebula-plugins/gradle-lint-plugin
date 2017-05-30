@@ -16,7 +16,7 @@
 
 plugins {
     id 'com.gradle.plugin-publish' version '0.9.7'
-    id 'nebula.plugin-plugin' version '5.6.0'
+    id 'nebula.plugin-plugin' version '5.7.0'
     id 'nebula.kotlin' version '1.1.0'
     id 'com.github.johnrengelman.shadow' version '1.2.3'
     id 'java-gradle-plugin'
