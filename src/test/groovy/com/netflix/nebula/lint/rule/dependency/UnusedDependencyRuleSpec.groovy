@@ -112,12 +112,15 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             repositories { mavenCentral() }
 
             dependencies {
+                // Dependency that provides guava transitively, otherwise we can't compile
+                compile 'com.netflix.nebula:nebula-test:6.0.1'
+
                 $conf 'com.google.guava:guava:18.0'
             }
         """
 
         then:
-        runTasksSuccessfully('compileJava', 'fixGradleLint')
+        runTasksSuccessfully('fixGradleLint')
         dependencies(buildFile, conf) == [guava]
 
         where:

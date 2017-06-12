@@ -16,7 +16,6 @@
 
 package com.netflix.nebula.lint.rule.dependency
 
-import org.gradle.api.artifacts.ResolvedDependency
 import org.gradle.api.internal.artifacts.DefaultModuleVersionIdentifier
 import org.gradle.api.internal.artifacts.DefaultResolvedDependency
 import org.gradle.api.internal.artifacts.ResolvedConfigurationIdentifier
@@ -61,10 +60,10 @@ class DependencyClassVisitorSpec extends Specification {
 
         where:
         field << [
-            'A a',
-            'A[] a',
-            'List<A> a',
-            'Object a = A.create()'
+                'A a',
+                'A[] a',
+                'List<A> a',
+                'Object a = A.create()'
         ]
     }
 
@@ -88,13 +87,13 @@ class DependencyClassVisitorSpec extends Specification {
 
         where:
         method << [
-            'A m() { return null; }',
-            'void m(A a) {}',
-            'public <T extends A> void m(T t) {}',
-            'A[] m() { return null; }',
-            'void m(A[] a) {}',
-            'List<A> m() { return null; }',
-            'void m(List<A> a) {}'
+                'A m() { return null; }',
+                'void m(A a) {}',
+                'public <T extends A> void m(T t) {}',
+                'A[] m() { return null; }',
+                'void m(A[] a) {}',
+                'List<A> m() { return null; }',
+                'void m(List<A> a) {}'
         ]
     }
 
@@ -117,9 +116,9 @@ class DependencyClassVisitorSpec extends Specification {
 
         where:
         classSignature << [
-            ' extends A',
-            ' implements AInt',
-            '<T extends A>'
+                ' extends A',
+                ' implements AInt',
+                '<T extends A>'
         ]
     }
 
@@ -198,12 +197,12 @@ class DependencyClassVisitorSpec extends Specification {
         java.containsReferenceTo('b.B', ['a/AAnnot': [a1].toSet()], a1)
 
         where:
-        annotation                                                                          | type
-        '''@AAnnot public class B { }'''                                                    | 'class'
-        '''public class B { @AAnnot public void foo() {} }'''                               | 'method'
-        '''public class B { @AAnnot Object field; }'''                                      | 'field'
-        '''public class B { public void foo(@AAnnot Object p) {} }'''                       | 'param'
-        '''public class B { @AAnnot public B() {} }'''                                      | 'constructor'
+        annotation                                                    | type
+        '''@AAnnot public class B { }'''                              | 'class'
+        '''public class B { @AAnnot public void foo() {} }'''         | 'method'
+        '''public class B { @AAnnot Object field; }'''                | 'field'
+        '''public class B { public void foo(@AAnnot Object p) {} }''' | 'param'
+        '''public class B { @AAnnot public B() {} }'''                | 'constructor'
 
         // Note: local variable annotations aren't stored in the bytecode
     }
@@ -256,6 +255,8 @@ class DependencyClassVisitorSpec extends Specification {
     }
 
     static DefaultResolvedDependency gav(String g, String a, String v) {
-        new DefaultResolvedDependency(new DefaultModuleVersionIdentifier(g, a, v), 'compile')
+        def mvid = new DefaultModuleVersionIdentifier(g, a, v)
+        def id = new ResolvedConfigurationIdentifier(mvid, 'compile')
+        new DefaultResolvedDependency(0, id, null)
     }
 }

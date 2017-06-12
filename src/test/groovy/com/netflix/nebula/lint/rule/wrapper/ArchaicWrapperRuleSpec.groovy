@@ -17,10 +17,12 @@ package com.netflix.nebula.lint.rule.wrapper
 
 import com.netflix.nebula.lint.rule.test.AbstractRuleSpec
 import org.gradle.util.GradleVersion
+import spock.lang.Ignore
 
 /**
  * @author Boaz Jan
  */
+@Ignore("See issue #125")
 class ArchaicWrapperRuleSpec extends AbstractRuleSpec {
 
     def 'wrapper without a configuration is a violation'() {

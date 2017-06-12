@@ -9,6 +9,8 @@ import org.codehaus.groovy.ast.expr.Expression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.gradle.api.Incubating
 import org.gradle.api.artifacts.Configuration
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.VersionInfo
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.Versioned
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.DefaultVersionComparator
 
 /**
@@ -22,10 +24,11 @@ class MinimumDependencyVersionRule extends GradleLintRule implements GradleModel
     String description = 'pull up dependencies to a minimum version if necessary'
 
     def alreadyAdded = [] as Set
-    private Comparator<String> versionComparator = new DefaultVersionComparator().asStringComparator()
+    private Comparator<Versioned> versionComparator = new DefaultVersionComparator()
 
-    @Lazy List<GradleDependency> minimumVersions = {
-        if(project.hasProperty('gradleLint.minVersions')) {
+    @Lazy
+    List<GradleDependency> minimumVersions = {
+        if (project.hasProperty('gradleLint.minVersions')) {
             project.property('gradleLint.minVersions')?.
                     toString()?.
                     split(',')?.
@@ -49,15 +52,15 @@ class MinimumDependencyVersionRule extends GradleLintRule implements GradleModel
 
     private void fixDependencyDeclarationIfNecessary(ASTNode decl, String conf, GradleDependency dep) {
         def minVersionConstraint = minimumVersions.find { it.group == dep.group && it.name == dep.name }
-        if(!minVersionConstraint) {
+        if (!minVersionConstraint) {
             return // nothing to do
         }
 
-        if(!DependencyService.forProject(project).isResolved(conf)) {
+        if (!DependencyService.forProject(project).isResolved(conf)) {
             return // we won't slow down the build by resolving the configuration if it hasn't been already
         }
 
-        if(!dep.version) {
+        if (!dep.version) {
             return // we assume that anything recommending this version is behaving correctly
         }
 
@@ -66,10 +69,10 @@ class MinimumDependencyVersionRule extends GradleLintRule implements GradleModel
             it.moduleVersion.id.group == dep.group && it.moduleVersion.id.name == dep.name
         }
 
-        if(!resolved)
+        if (!resolved)
             return
 
-        if(versionComparator.compare(resolved.moduleVersion.id.version, minVersionConstraint.version) < 0) {
+        if (versionComparator.compare(new VersionInfo(resolved.moduleVersion.id.version), new VersionInfo(minVersionConstraint.version)) < 0) {
             addBuildLintViolation("this dependency does not meet the minimum version of $minVersionConstraint.version", decl)
                     .replaceWith(decl, "'${minVersionConstraint.toNotation()}'")
             alreadyAdded += minVersionConstraint
@@ -83,34 +86,40 @@ class MinimumDependencyVersionRule extends GradleLintRule implements GradleModel
 
     @Override
     protected void visitClassComplete(ClassNode node) {
-        def depService = DependencyService.forProject(project)
-        depService.resolvableConfigurations().findAll { depService.isResolved(it) }.each { conf ->
+        project.configurations.each { conf ->
             minimumVersions.each { constraint ->
-                if(!alreadyAdded.contains(constraint) && addFirstOrderIfNecessary(conf, constraint))
+                if (!alreadyAdded.contains(constraint) && addFirstOrderIfNecessary(conf, constraint))
                     alreadyAdded += constraint
             }
         }
     }
 
     private boolean addFirstOrderIfNecessary(Configuration conf, GradleDependency constraint) {
+        def depService = DependencyService.forProject(project)
+
+        if (!depService.isResolved(conf))
+            return false
+
+        if (!depService.isResolvable(conf))
+            return false
+
         def resolved = conf.resolvedConfiguration.resolvedArtifacts*.moduleVersion*.id.find {
             constraint.group == it.group && constraint.name == it.name
         }
 
-        if(!resolved)
+        if (!resolved)
             return false
 
         // add the first order dependency to the lowest configuration violating the constraint and none of its extending configurations
-        if(conf.extendsFrom.any { addFirstOrderIfNecessary(it, constraint) })
+        if (conf.extendsFrom.any { addFirstOrderIfNecessary(it, constraint) })
             return true
 
-        if(constraint && versionComparator.compare(resolved.version, constraint.version) < 0) {
+        if (constraint && versionComparator.compare(new VersionInfo(resolved.version), new VersionInfo(constraint.version)) < 0) {
             def dependenciesBlock = bookmark('dependencies')
-            if(dependenciesBlock) {
+            if (dependenciesBlock) {
                 addBuildLintViolation("$constraint.group:$constraint.name is below the minimum version of $constraint.version")
                         .insertIntoClosure(dependenciesBlock, "$conf.name '${constraint.toNotation()}'")
-            }
-            else {
+            } else {
                 addBuildLintViolation("$constraint.group:$constraint.name is below the minimum version of $constraint.version")
                 // FIXME insert new dependencies block with this dependency
             }
