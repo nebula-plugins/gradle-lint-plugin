@@ -23,6 +23,8 @@ import spock.lang.Unroll
 class UnusedDependencyRuleSpec extends TestKitSpecification {
     static def guava = 'com.google.guava:guava:18.0'
     static def asm = 'org.ow2.asm:asm:5.0.4'
+    // Dependency that provides guava:18.0 transitively
+    static def springfox = 'io.springfox:springfox-core:2.0.2'
 
     def main = '''
             import com.google.common.collect.*;
@@ -53,7 +55,7 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             |repositories { mavenCentral() }
             |
             |dependencies {
-            ${deps.collect { "|   compile '$it'" }.join('\n') }
+            ${deps.collect { "|   compile '$it'" }.join('\n')}
             |}
             |""".stripMargin()
 
@@ -64,10 +66,10 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
         dependencies(buildFile) == expected
 
         where:
-        deps                                                  | expected
-        [guava, asm]                                          | [guava]
-        ['io.springfox:springfox-core:2.0.2']                 | [guava]
-        [guava, 'io.springfox:springfox-core:2.0.2']          | [guava]
+        deps               | expected
+        [guava, asm]       | [guava]
+        [springfox]        | [guava]
+        [guava, springfox] | [guava]
     }
 
     @Unroll
@@ -84,7 +86,9 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             repositories { mavenCentral() }
 
             dependencies {
-                runtime 'com.google.guava:guava:18.0'
+                compile '$springfox'
+
+                $conf '$guava'
             }
         """
 
@@ -112,10 +116,9 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             repositories { mavenCentral() }
 
             dependencies {
-                // Dependency that provides guava transitively, otherwise we can't compile
-                compile 'com.netflix.nebula:nebula-test:6.0.1'
+                compile '$springfox'
 
-                $conf 'com.google.guava:guava:18.0'
+                $conf '$guava'
             }
         """
 
