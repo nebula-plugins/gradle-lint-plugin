@@ -104,7 +104,7 @@ class ArchaicWrapperRule extends GradleLintRule implements GradleModelAware {
 
         GradleVersion executionGradleVersion = GradleVersion.version(project.gradle.getGradleVersion())
         if (wrapperGradleVersion > executionGradleVersion) {
-            addBuildLintViolation("this build was executed with a Gradle version [$executionGradleVersion] older then the one defined by the build's wrapper [$wrapperGradleVersion]")
+            addBuildLintViolation("this build was executed with a Gradle version [$executionGradleVersion] older than the one defined by the build's wrapper [$wrapperGradleVersion]")
             return
         }
 
@@ -126,10 +126,10 @@ class ArchaicWrapperRule extends GradleLintRule implements GradleModelAware {
             def latestVersionParts = splitVersionParts(latestKnownGradleVersion)
             def wrapperVersionParts = splitVersionParts(wrapperGradleVersion)
             if (latestVersionParts['major'] - wrapperVersionParts['major'] > majorThreshold) {
-                addBuildLintViolation("the build's wrapper is more then $majorThreshold major versions behind the ${versionTitle} Gradle version")
+                addBuildLintViolation("the build's wrapper is more than $majorThreshold major versions behind the ${versionTitle} Gradle version")
                         .replaceWith(versionExpression, "gradleVersion = '${latestKnownGradleVersion.getVersion()}'")
             } else if (latestVersionParts['minor'] - wrapperVersionParts['minor'] > minorThreshold) {
-                addBuildLintViolation("the build's wrapper is more then $minorThreshold minor versions behind the ${versionTitle} Gradle version")
+                addBuildLintViolation("the build's wrapper is more than $minorThreshold minor versions behind the ${versionTitle} Gradle version")
                         .replaceWith(versionExpression, "gradleVersion = '${latestKnownGradleVersion.getVersion()}'")
             }
         }
