@@ -38,11 +38,10 @@ abstract class AbstractRuleSpec extends ProjectSpec {
         def ruleSet = new CompositeRuleSet()
         rules.each {
             ruleSet.addRule(it)
-            if (it in GradleModelAware ) {
+            if (it in GradleModelAware) {
                 it.project = project
             }
         }
-
         ruleSet
     }
 
