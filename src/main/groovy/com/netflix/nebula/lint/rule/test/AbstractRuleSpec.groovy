@@ -64,6 +64,11 @@ abstract class AbstractRuleSpec extends ProjectSpec {
 
         return project.buildFile.text
     }
+
+    @Override
+    boolean deleteProjectDir() {
+        return false
+    }
 }
 
 class ResultsAssert {
