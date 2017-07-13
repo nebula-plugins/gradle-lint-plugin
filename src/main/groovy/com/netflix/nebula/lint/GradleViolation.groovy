@@ -67,9 +67,8 @@ class GradleViolation extends Violation {
             closure = node
         }
 
-        // we want to indent 3 spaces in from the last bracket, since the first bracket may be further to the right, e.g.
-        // foo {
-        // }
+        // goal: when adding into a closure, it should be indented 4 spaces
+        // achieve this by taking the node's (columnNumber-1)+4 OR columnNumber+3
 
         if(closure) {
             if (closure.lineNumber == closure.lastLineNumber) {
