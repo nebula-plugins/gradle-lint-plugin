@@ -121,10 +121,10 @@ class LintService {
                 }
 
                 analyzer.analyze(buildFile.text, ruleSet)
+
+                DependencyService.removeForProject(p)
             }
         }
-
-        DependencyService.removeForProject(project)
 
         return analyzer.results
     }
