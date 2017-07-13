@@ -461,6 +461,35 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         '''.stripIndent().trim()
     }
 
+    def 'insertIntoClosure indents 4 spaces'() {
+        when:
+        project.buildFile << """\
+            block {
+                something 'else'
+            }
+        """.stripIndent()
+
+        String corrected = correct(new GradleLintRule() {
+            String description = 'test insertIntoClosure'
+
+            @Override
+            void visitMethodCallExpression(MethodCallExpression call) {
+                if (call.methodAsString == 'block')
+                    addBuildLintViolation('inserting into block', call)
+                .insertIntoClosure(call, 'inserted true')
+            }
+        })
+
+        then:
+        String expected = """\
+            block {
+                inserted true
+                something 'else'
+            }
+        """.stripIndent()
+        corrected.equals(expected)
+    }
+
     def 'visit resolution strategy forces'() {
         when:
         project.buildFile << """
