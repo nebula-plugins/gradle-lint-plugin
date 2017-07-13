@@ -78,7 +78,7 @@ class GradleViolation extends Violation {
             else {
                 def indentedChanges = changes.stripIndent()
                         .split('\n')
-                        .collect { line -> ''.padRight(closure.lastColumnNumber + 1) + line }
+                        .collect { line -> ''.padRight(node.columnNumber + 3) + line }
                         .join('\n')
 
                 fixes += new GradleLintInsertAfter(this, file, closure.lineNumber, indentedChanges)
