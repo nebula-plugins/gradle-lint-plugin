@@ -19,6 +19,7 @@ package com.netflix.nebula.lint.plugin
 import com.netflix.nebula.lint.GradleViolation
 import com.netflix.nebula.lint.rule.GradleAstUtil
 import com.netflix.nebula.lint.rule.GradleLintRule
+import com.netflix.nebula.lint.rule.dependency.DependencyService
 import org.codehaus.groovy.ast.ClassCodeVisitorSupport
 import org.codehaus.groovy.ast.builder.AstBuilder
 import org.codehaus.groovy.ast.expr.MethodCallExpression
@@ -122,6 +123,8 @@ class LintService {
                 analyzer.analyze(buildFile.text, ruleSet)
             }
         }
+
+        DependencyService.removeForProject(project)
 
         return analyzer.results
     }
