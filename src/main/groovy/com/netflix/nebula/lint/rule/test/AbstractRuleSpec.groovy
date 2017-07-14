@@ -20,32 +20,39 @@ import com.netflix.nebula.lint.GradleLintFix
 import com.netflix.nebula.lint.GradleLintPatchAction
 import com.netflix.nebula.lint.plugin.NotNecessarilyGitRepository
 import com.netflix.nebula.lint.rule.GradleLintRule
+import com.netflix.nebula.lint.rule.GradleModelAware
 import nebula.test.ProjectSpec
 import org.codenarc.analyzer.StringSourceAnalyzer
 import org.codenarc.results.Results
 import org.codenarc.ruleset.CompositeRuleSet
 import org.codenarc.ruleset.RuleSet
 import org.eclipse.jgit.api.ApplyCommand
+import org.gradle.api.Project
 
 abstract class AbstractRuleSpec extends ProjectSpec {
     def setupSpec() {
         Results.mixin ResultsAssert
     }
 
-    private static RuleSet configureRuleSet(GradleLintRule... rules) {
+    private static RuleSet configureRuleSet(Project project, GradleLintRule... rules) {
         def ruleSet = new CompositeRuleSet()
-        rules.each { ruleSet.addRule(it) }
+        rules.each {
+            ruleSet.addRule(it)
+            if (it in GradleModelAware) {
+                it.project = project
+            }
+        }
         ruleSet
     }
 
     Results runRulesAgainst(GradleLintRule... rules) {
-        new StringSourceAnalyzer(project.buildFile.text).analyze(configureRuleSet(rules))
+        new StringSourceAnalyzer(project.buildFile.text).analyze(configureRuleSet(this.project, rules))
     }
 
     String correct(GradleLintRule... rules) {
         def analyzer = new StringSourceAnalyzer(project.buildFile.text)
         def violations = analyzer
-                .analyze(configureRuleSet(*rules.collect { it.buildFile = project.buildFile; it }))
+                .analyze(configureRuleSet(this.project, *rules.collect { it.buildFile = project.buildFile; it }))
                 .violations
 
         def patchFile = new File(projectDir, 'lint.patch')
@@ -55,6 +62,11 @@ abstract class AbstractRuleSpec extends ProjectSpec {
         new ApplyCommand(new NotNecessarilyGitRepository(projectDir)).setPatch(patchFile.newInputStream()).call()
 
         return project.buildFile.text
+    }
+
+    @Override
+    boolean deleteProjectDir() {
+        return false
     }
 }
 
