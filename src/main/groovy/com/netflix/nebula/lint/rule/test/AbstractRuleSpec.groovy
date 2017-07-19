@@ -20,6 +20,7 @@ import com.netflix.nebula.lint.GradleLintFix
 import com.netflix.nebula.lint.GradleLintPatchAction
 import com.netflix.nebula.lint.plugin.NotNecessarilyGitRepository
 import com.netflix.nebula.lint.rule.GradleLintRule
+import com.netflix.nebula.lint.rule.GradleModelAware
 import nebula.test.ProjectSpec
 import org.codenarc.analyzer.StringSourceAnalyzer
 import org.codenarc.results.Results
@@ -32,9 +33,14 @@ abstract class AbstractRuleSpec extends ProjectSpec {
         Results.mixin ResultsAssert
     }
 
-    private static RuleSet configureRuleSet(GradleLintRule... rules) {
+    private RuleSet configureRuleSet(GradleLintRule... rules) {
         def ruleSet = new CompositeRuleSet()
-        rules.each { ruleSet.addRule(it) }
+        rules.each {
+            ruleSet.addRule(it)
+            if (it instanceof GradleModelAware) {
+                it.project = project
+            }
+        }
         ruleSet
     }
 
@@ -55,6 +61,11 @@ abstract class AbstractRuleSpec extends ProjectSpec {
         new ApplyCommand(new NotNecessarilyGitRepository(projectDir)).setPatch(patchFile.newInputStream()).call()
 
         return project.buildFile.text
+    }
+
+    @Override
+    boolean deleteProjectDir() {
+        return false
     }
 }
 
