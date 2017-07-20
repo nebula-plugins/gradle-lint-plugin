@@ -38,6 +38,8 @@ import org.gradle.testfixtures.internal.TestGlobalScopeServices;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * @author Boaz Jan
@@ -61,7 +63,15 @@ public class WrapperProjectBuilder {
 
         NativeServices.initialize(userHomeDir);
 
-        ServiceRegistry topLevelRegistry = new TestBuildScopeServices(getGlobalServices(), startParameter, homeDir);
+        ServiceRegistry topLevelRegistry;
+        try {
+            Constructor<TestBuildScopeServices> constructor = TestBuildScopeServices.class.getConstructor(ServiceRegistry.class, StartParameter.class, File.class);
+            topLevelRegistry = constructor.newInstance(getGlobalServices(), startParameter, homeDir);
+        } catch (NoSuchMethodException e) {
+            topLevelRegistry = new TestBuildScopeServices(getGlobalServices(), homeDir);
+        } catch (Exception e) {
+            throw Throwables.propagate(e);
+        }
         GradleInternal gradle = CLASS_GENERATOR.newInstance(CustomVersionGradle.class, null, startParameter, topLevelRegistry.get(ServiceRegistryFactory.class));
 
         DefaultProjectDescriptor projectDescriptor = new DefaultProjectDescriptor(null, name, projectDir, new DefaultProjectDescriptorRegistry(),
