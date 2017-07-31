@@ -119,12 +119,5 @@ class GradleLintReportTaskSpec extends TestKitSpecification {
 
         then:
         runTasksSuccessfully('generateGradleLintReport')
-
-        when:
-        def report = new File(projectDir, 'build/reports/gradleLint').listFiles().find { it.name.endsWith('.txt') }
-
-        then:
-        report.text.contains('Violation: Rule=duplicate-dependency-class')
-        report.text.contains('TotalFiles=1')
     }
 }
