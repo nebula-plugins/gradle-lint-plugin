@@ -32,10 +32,9 @@ class DependencyService {
         def extension = project.extensions.findByType(DependencyServiceExtension)
         if (!extension) {
             extension = project.extensions.create(EXTENSION_NAME, DependencyServiceExtension)
-            extension.dependencyService = new DependencyService(project)
         }
         if (extension.dependencyService == null) {
-            throw new IllegalArgumentException("DependencyService has been removed from this project")
+            extension.dependencyService = new DependencyService(project)
         }
         return extension.dependencyService
     }
