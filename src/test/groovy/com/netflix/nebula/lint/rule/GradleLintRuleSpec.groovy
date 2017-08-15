@@ -163,7 +163,6 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
 
     def 'visit dependencies in allprojects block'() {
         when:
-        project.configurations.create('compile')
         project.buildFile << """
             allprojects {
                 apply plugin: 'java'
@@ -205,7 +204,6 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
     
     def 'visit dependencies that are defined with map notation'() {
         when:
-        project.configurations.create('compile')
         project.buildFile << """
             dependencies {
                compile group: 'a', name: 'a', version: '1'
@@ -223,7 +221,6 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
 
     def 'visit dependency with no version'() {
         when:
-        project.configurations.create('compile')
         project.buildFile << """
             dependencies {
                compile 'a:a'

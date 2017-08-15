@@ -63,6 +63,7 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
     void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {}
     void visitSubprojectGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {}
     void visitAllprojectsGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {}
+    void visitAnyGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {}
     void visitGradlePlugin(MethodCallExpression call, String conf, GradlePlugin plugin) {}
     void visitConfigurationExclude(MethodCallExpression call, String conf, GradleDependency exclude) {}
     void visitExtensionProperty(ExpressionStatement expression, String extension, String prop, String value) {}
@@ -406,6 +407,7 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                         } else {
                             visitGradleDependency(call, methodName, dependency)
                         }
+                        visitAnyGradleDependency(call, methodName, dependency)
                     }
                 }
             }
@@ -456,8 +458,15 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                 if (!project) {
                     return Collections.emptySet()
                 }
-                def configurations = !dslStack().isEmpty() && dslStack().first() == 'subprojects' ? project.childProjects.values().first().configurations : project.configurations
-                return configurations.names.contains(name)
+                def configurations
+                if (!dslStack().isEmpty() && dslStack().first() == 'subprojects') {
+                    // FIXME handle subprojects('path')
+                    configurations = project.childProjects.values().first().configurations
+                } else {
+                    configurations = project.configurations
+                }
+                // contains() causes an NPE on the TreeSet that comes from the configuration, thus the extra toSet()
+                return configurations.names.toSet().contains(name)
             }
 
             private void visitFixme(MethodCallExpression call) {

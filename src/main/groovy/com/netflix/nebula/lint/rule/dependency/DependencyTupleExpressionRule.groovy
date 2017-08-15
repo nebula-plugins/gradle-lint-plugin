@@ -26,7 +26,7 @@ class DependencyTupleExpressionRule extends GradleLintRule implements GradleMode
     String description = "use the more compact string representation of a dependency when possible"
 
     @Override
-    void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
+    void visitAnyGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
         if(dep.conf == null && dep.syntax == GradleDependency.Syntax.MapNotation) {
             // FIXME what if one of the values is a function call?
             def ex = GradleAstUtil.collectEntryExpressions(call)
