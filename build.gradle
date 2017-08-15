@@ -56,7 +56,7 @@ dependencies {
     // to proprietary rule implementations packed in other jars, but are considered provided
     plugin ('org.spockframework:spock-core:1.0-groovy-2.4') { transitive = false }
     plugin ('junit:junit:4.12')
-    plugin ('com.netflix.nebula:nebula-test:4.2.1') { transitive = false }
+    plugin ('com.netflix.nebula:nebula-test:latest.release') { transitive = false }
 
     testCompile gradleTestKit()
     testCompile ('org.spockframework:spock-core:1.0-groovy-2.4') {
