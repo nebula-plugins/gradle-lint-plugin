@@ -201,6 +201,26 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         b
         b.syntax == GradleDependency.Syntax.StringNotation
     }
+
+    def 'visit dependencies in a project path subprojects block'() {
+        when:
+        def subproject = addSubproject('test')
+        subproject.configurations.create('compile')
+        project.subprojects.add(subproject)
+        project.buildFile << """
+            subprojects(':test') {
+                dependencies {
+                   compile 'b:b:1'
+                }
+            }
+        """
+
+        def b = new DependencyVisitingRule().run().subprojectDeps.find { it.name == 'b' }
+
+        then:
+        b
+        b.syntax == GradleDependency.Syntax.StringNotation
+    }
     
     def 'visit dependencies that are defined with map notation'() {
         when:
