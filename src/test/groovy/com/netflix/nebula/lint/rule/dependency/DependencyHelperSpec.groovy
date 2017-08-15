@@ -2,14 +2,17 @@ package com.netflix.nebula.lint.rule.dependency
 
 import com.netflix.nebula.lint.rule.GradleDependency
 import com.netflix.nebula.lint.rule.GradleLintRule
+import com.netflix.nebula.lint.rule.GradleModelAware
 import nebula.test.IntegrationSpec
 import nebula.test.dependencies.DependencyGraphBuilder
 import nebula.test.dependencies.GradleDependencyGenerator
 import org.codehaus.groovy.ast.expr.MethodCallExpression
+import spock.lang.Ignore
 import spock.lang.Unroll
 
 
 class DependencyHelperSpec extends IntegrationSpec {
+//    @Ignore
     @Unroll('should transform(remove) #dep -> #depResult')
     def 'removes version'() {
         given:
@@ -120,7 +123,7 @@ class DependencyHelperSpec extends IntegrationSpec {
     }
 }
 
-class TestDependencyRemoveVersionRule extends GradleLintRule {
+class TestDependencyRemoveVersionRule extends GradleLintRule implements GradleModelAware {
     String description = "remove all versions"
 
     @Override
@@ -129,13 +132,13 @@ class TestDependencyRemoveVersionRule extends GradleLintRule {
     }
 
     @Override
-    void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
+    void visitAnyGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
         def violation = addBuildLintViolation('dep violation', call)
         DependencyHelper.removeVersion(violation, call, dep)
     }
 }
 
-class TestDependencyReplaceVersionRule extends GradleLintRule {
+class TestDependencyReplaceVersionRule extends GradleLintRule implements GradleModelAware {
     String description = "replace all versions"
 
     @Override
@@ -144,7 +147,7 @@ class TestDependencyReplaceVersionRule extends GradleLintRule {
     }
 
     @Override
-    void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
+    void visitAnyGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
         def violation = addBuildLintViolation('dep violation', call)
         DependencyHelper.replaceVersion(violation, call, dep, '1.1.0')
     }
