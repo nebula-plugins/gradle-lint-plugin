@@ -33,6 +33,10 @@ abstract class AbstractRuleSpec extends ProjectSpec {
         Results.mixin ResultsAssert
     }
 
+    def setup() {
+        project.configurations.create('compile')
+    }
+
     private RuleSet configureRuleSet(GradleLintRule... rules) {
         def ruleSet = new CompositeRuleSet()
         rules.each {

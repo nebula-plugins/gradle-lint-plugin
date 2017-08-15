@@ -26,6 +26,7 @@ import org.codehaus.groovy.ast.expr.VariableExpression
 import org.codehaus.groovy.ast.stmt.ExpressionStatement
 import org.gradle.api.GradleException
 import org.gradle.api.plugins.JavaPlugin
+import org.gradle.testfixtures.ProjectBuilder
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.junit.Rule
@@ -79,37 +80,6 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         then:
         pluginCount == 1
     }
-
-    def 'visit `buildScript`'() {
-        when:
-        project.buildFile << """
-            buildscript {
-                repositories {
-                    maven { url 'https://plugins.gradle.org/m2/' }
-                }
-
-                dependencies {
-                    classpath 'com.gradle:build-scan-plugin:1.1.1'
-                }
-            }
-        """
-
-        def dependenciesCount = 0
-
-        runRulesAgainst(new GradleLintRule() {
-            String description = 'test'
-
-            @Override
-            void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
-                dependenciesCount++
-            }
-        })
-
-        then:
-        dependenciesCount == 1
-    }
-
-    abstract class GradleProjectLintRule extends GradleLintRule implements GradleModelAware {}
 
     def 'visit `task`'() {
         when:
@@ -171,20 +141,52 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         calls.size() == taskCount
     }
 
-    private class DependencyVisitingRule extends GradleLintRule {
-        final String description = 'visit dependencies'
-        List<GradleDependency> deps = []
-        
-        @Override
-        void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
-            deps += dep
-        }
-        
-        DependencyVisitingRule run() { runRulesAgainst(this); this }
+    def 'visit dependencies in buildscript'() {
+        when:
+        project.buildFile << """
+            buildscript {
+                repositories {
+                    maven { url 'https://plugins.gradle.org/m2/' }
+                }
+
+                dependencies {
+                    classpath 'com.gradle:build-scan-plugin:1.1.1'
+                }
+            }
+        """
+
+        def dep = new DependencyVisitingRule().run().buildscriptDeps.first()
+
+        then:
+        dep.name == 'build-scan-plugin'
     }
-    
+
+    def 'visit dependencies in allprojects block'() {
+        when:
+        project.buildFile << """
+            allprojects {
+                apply plugin: 'java'
+            
+                dependencies {
+                   compile 'b:b:1'
+                }
+            }
+        """
+
+        def b = new DependencyVisitingRule().run().allprojectDeps.find { it.name == 'b' }
+
+        then:
+        b
+        b.syntax == GradleDependency.Syntax.StringNotation
+    }
+
+
+
     def 'visit dependencies in subprojects block'() {
         when:
+        def subproject = addSubproject('test')
+        subproject.configurations.create('compile')
+        project.subprojects.add(subproject)
         project.buildFile << """
             subprojects {
                 dependencies {
@@ -193,7 +195,27 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
             }
         """
 
-        def b = new DependencyVisitingRule().run().deps.find { it.name == 'b' }
+        def b = new DependencyVisitingRule().run().subprojectDeps.find { it.name == 'b' }
+
+        then:
+        b
+        b.syntax == GradleDependency.Syntax.StringNotation
+    }
+
+    def 'visit dependencies in a project path subprojects block'() {
+        when:
+        def subproject = addSubproject('test')
+        subproject.configurations.create('compile')
+        project.subprojects.add(subproject)
+        project.buildFile << """
+            subprojects(':test') {
+                dependencies {
+                   compile 'b:b:1'
+                }
+            }
+        """
+
+        def b = new DependencyVisitingRule().run().subprojectDeps.find { it.name == 'b' }
 
         then:
         b
@@ -268,7 +290,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
             }
 
             @Override
-            void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
+            void visitDependencies(MethodCallExpression call) {
                 if (bookmark('lastApplyPlugin')) {
                     addBuildLintViolation('should generate source jar', call)
                             .insertAfter(bookmark('lastApplyPlugin'), "apply plugin: 'nebula.source-jar'")
@@ -289,6 +311,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
             }
         """.stripIndent()
     }
+
 
     @Unroll
     def 'violations suppression inside of ignore blocks when ignored rule(s) is `#rules`'() {
@@ -574,5 +597,37 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         LintRuleRegistry.classLoader = new URLClassLoader([temp.root.toURI().toURL()] as URL[], getClass().getClassLoader())
 
         noPluginsRule
+    }
+
+    abstract class GradleProjectLintRule extends GradleLintRule implements GradleModelAware {}
+
+    private class DependencyVisitingRule extends GradleLintRule implements GradleModelAware {
+        final String description = 'visit dependencies'
+        List<GradleDependency> deps = []
+        List<GradleDependency> allprojectDeps = []
+        List<GradleDependency> subprojectDeps = []
+        List<GradleDependency> buildscriptDeps = []
+
+        @Override
+        void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
+            deps += dep
+        }
+
+        @Override
+        void visitBuildScriptDependency(MethodCallExpression call, String conf, GradleDependency dep) {
+            buildscriptDeps += dep
+        }
+
+        @Override
+        void visitSubprojectGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
+            subprojectDeps += dep
+        }
+
+        @Override
+        void visitAllprojectsGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
+            allprojectDeps += dep
+        }
+
+        DependencyVisitingRule run() { runRulesAgainst(this); this }
     }
 }

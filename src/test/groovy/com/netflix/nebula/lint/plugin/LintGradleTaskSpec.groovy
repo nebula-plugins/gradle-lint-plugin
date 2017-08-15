@@ -47,6 +47,7 @@ class LintGradleTaskSpec extends TestKitSpecification {
 
     def 'critical rule failures cause build failure'() {
         when:
+        debug = true
         buildFile.text = """
             plugins {
                 id 'java'

@@ -59,16 +59,35 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
 
     // Gradle DSL specific visitor methods
     void visitApplyPlugin(MethodCallExpression call, String plugin) {}
+
+    void visitBuildScriptDependency(MethodCallExpression call, String conf, GradleDependency dep) {}
+
     void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {}
+
+    void visitSubprojectGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {}
+
+    void visitAllprojectsGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {}
+
+    void visitAnyGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {}
+
     void visitGradlePlugin(MethodCallExpression call, String conf, GradlePlugin plugin) {}
+
     void visitConfigurationExclude(MethodCallExpression call, String conf, GradleDependency exclude) {}
+
     void visitExtensionProperty(ExpressionStatement expression, String extension, String prop, String value) {}
+
     void visitExtensionProperty(ExpressionStatement expression, String extension, String prop) {}
+
     void visitDependencies(MethodCallExpression call) {}
+
     void visitPlugins(MethodCallExpression call) {}
+
     void visitTask(MethodCallExpression call, String name, Map<String, String> args) {}
+
     void visitBuildscript(MethodCallExpression call) {}
-    void visitGradleResolutionStrategyForce(MethodCallExpression call, String conf, Map<GradleDependency, Expression> forces) {}
+
+    void visitGradleResolutionStrategyForce(MethodCallExpression call, String conf, Map<GradleDependency, Expression> forces) {
+    }
 
     protected boolean isIgnored() {
         callStack.any { call ->
@@ -77,14 +96,15 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                 // for fixm-e, the first argument is the predicate that determines whether to fail the build or not
                 def ruleNameExpressions = methodName == 'ignore' ? call.arguments.expressions : call.arguments.expressions.drop(1)
 
-                List<String> rulesToIgnore = ruleNameExpressions.findAll { it instanceof ConstantExpression }.collect { it.text }
+                List<String> rulesToIgnore = ruleNameExpressions.findAll { it instanceof ConstantExpression }.collect {
+                    it.text
+                }
                 if (rulesToIgnore.isEmpty())
                     true
                 else {
                     rulesToIgnore.collect { LintRuleRegistry.findRules(it) }.flatten().contains(ruleId)
                 }
-            }
-            else false
+            } else false
         }
     }
 
@@ -99,11 +119,11 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
     final List<String> dslStack(List<MethodCallExpression> calls) {
         def _dslStack
         _dslStack = { Expression expr ->
-            if(expr instanceof PropertyExpression)
+            if (expr instanceof PropertyExpression)
                 _dslStack(expr.objectExpression) + expr.propertyAsString
-            else if(expr instanceof MethodCallExpression)
+            else if (expr instanceof MethodCallExpression)
                 _dslStack(expr.objectExpression) + expr.methodAsString
-            else if(expr instanceof VariableExpression)
+            else if (expr instanceof VariableExpression)
                 expr.text == 'this' ? [] : [expr.text]
             else []
         }
@@ -130,7 +150,7 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
 
     GradleViolation addBuildLintViolation(String message, ASTNode node) {
         def v = new GradleViolation(buildFile, rule, node?.lineNumber, sourceCode(node), message)
-        if(!isIgnored())
+        if (!isIgnored())
             gradleViolations.add(v)
         return v
     }
@@ -141,7 +161,7 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
 
     GradleViolation addLintViolation(String message, File file, Integer lineNumber) {
         def v = new GradleViolation(file, rule, lineNumber, null, message)
-        if(!isIgnored())
+        if (!isIgnored())
             gradleViolations.add(v)
         return v
     }
@@ -165,7 +185,7 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
      * prior to the starting column, and code that exists on the last line after the ending column
      */
     private final String sourceCode(ASTNode node) {
-        if(!node) return null
+        if (!node) return null
 
         // make a copy of violating lines so they can be formatted for display in a report
         def violatingLines = new ArrayList<String>(sourceCode.lines.subList(node.lineNumber - 1, node.lastLineNumber))
@@ -178,36 +198,33 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
         // taken from the internal implementation of stripIndent()
         def findMinimumLeadingSpaces = { Integer count, String line ->
             int index
-            for(index = 0; index < line.length() && index < count && Character.isWhitespace(line.charAt(index)); ++index) {
+            for (index = 0; index < line.length() && index < count && Character.isWhitespace(line.charAt(index)); ++index) {
             }
             index
         }
 
         def indentFirst = violatingLines.size() > 1 ? violatingLines.drop(1).inject(Integer.MAX_VALUE, findMinimumLeadingSpaces) : 0
-        violatingLines[0] = violatingLines[0].padLeft(violatingLines[0].length()+indentFirst)
+        violatingLines[0] = violatingLines[0].padLeft(violatingLines[0].length() + indentFirst)
         violatingLines.join('\n').stripIndent()
     }
 
     /**
      * See the comment on compositeVisitor below for why we are visiting the AST separately independently of our rule definition.
      */
-    @Delegate final Rule rule = new AbstractAstVisitorRule() {
+    @Delegate
+    final Rule rule = new AbstractAstVisitorRule() {
         @Override
-        AstVisitor getAstVisitor() { new CompositeGroovyAstVisitor(visitors: [gradleAstVisitor, GradleLintRule.this], callStack: callStack) }
+        AstVisitor getAstVisitor() {
+            new CompositeGroovyAstVisitor(visitors: [gradleAstVisitor, GradleLintRule.this], callStack: callStack)
+        }
 
         private Logger logger = LoggerFactory.getLogger(GradleLintRule)
 
         GroovyAstVisitor gradleAstVisitor = new GroovyAstVisitor() {
-            // fall back on some common configurations in case the rule is not GradleModelAware
-            Collection<String> configurations = ['archives', 'default', 'compile', 'runtime', 'testCompile', 'testRuntime']
 
             @Override
             void visitMethodCallExpression(MethodCallExpression call) {
                 def methodName = call.methodAsString
-                if (methodName == 'runScript' && project && !project.configurations.empty) {
-                    configurations = project.configurations.collect { it.name }
-                }
-
                 def expressions = call.arguments.expressions
                 def objectExpression = call.objectExpression.text
 
@@ -221,10 +238,10 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
 
                 def inMethod = { name -> dslStack(callStack + call).contains(name) }
 
-                if(inMethod('dependencies')) visitMethodCallInDependencies(call)
-                if(inMethod('configurations')) visitMethodCallInConfigurations(call)
-                if(inMethod('plugins')) visitMethodCallInPlugins(call)
-                if(inMethod('resolutionStrategy')) visitMethodCallInResolutionStrategy(call)
+                if (inMethod('dependencies')) visitMethodCallInDependencies(call)
+                if (inMethod('configurations')) visitMethodCallInConfigurations(call)
+                if (inMethod('plugins')) visitMethodCallInPlugins(call)
+                if (inMethod('resolutionStrategy')) visitMethodCallInResolutionStrategy(call)
 
                 if (methodName == 'buildscript') {
                     GradleLintRule.this.visitBuildscript(call)
@@ -249,29 +266,21 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
              * Supports the following definition forms:
              * task(t1)
              * task('t2')
-             * task(t3) {}
-             * task('t4') {}
-             * task t5
-             * task t6 {}
-             * task (t7,type: Wrapper)
+             * task(t3) {}* task('t4') {}* task t5
+             * task t6 {}* task (t7,type: Wrapper)
              * task ('t8',type: Wrapper)
              * task t9(type: Wrapper)
-             * task t10(type: Wrapper) {}
-             * task([:], t11)
+             * task t10(type: Wrapper) {}* task([:], t11)
              * task([type: Wrapper], t12)
-             * task([type: Wrapper], t13) {}
-             * tasks.create([name: 't14'])
-             * tasks.create([name: 't15']) {}
-             * tasks.create('t16') {}
-             * tasks.create('t17')
-             * tasks.create('t18', Wrapper) {}
-             * tasks.create('t19', Wrapper.class)
+             * task([type: Wrapper], t13) {}* tasks.create([name: 't14'])
+             * tasks.create([name: 't15']) {}* tasks.create('t16') {}* tasks.create('t17')
+             * tasks.create('t18', Wrapper) {}* tasks.create('t19', Wrapper.class)
              *
              * @author Boaz Jan
              * @param call
              * @param expressions
              */
-            private void visitPossibleTaskDefinition(MethodCallExpression call, List expressions){
+            private void visitPossibleTaskDefinition(MethodCallExpression call, List expressions) {
                 def taskName = null
                 def taskArgs = [:] as Map<String, String>
                 def possibleName = expressions.find {
@@ -307,13 +316,14 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                 def expression = statement.expression
                 if (!callStack.isEmpty()) {
                     def closureName = null
-                    switch(callStack.peek()) {
+                    switch (callStack.peek()) {
                         case MethodCallExpression: closureName = callStack.peek().methodAsString; break
                         case PropertyExpression: closureName = callStack.peek().text; break
                     }
 
                     if (expression instanceof BinaryExpression) {
-                        if (expression.rightExpression instanceof ConstantExpression) { // STYLE: nebula { moduleOwner = 'me' }
+                        if (expression.rightExpression instanceof ConstantExpression) {
+                            // STYLE: nebula { moduleOwner = 'me' }
                             // if the right side isn't a constant expression, we won't be able to evaluate it through just the AST
                             visitExtensionProperty(statement, closureName, expression.leftExpression.text,
                                     expression.rightExpression.text)
@@ -353,7 +363,7 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                 def conf = containingConfiguration(call)
 
                 // https://docs.gradle.org/current/javadoc/org/gradle/api/artifacts/ModuleDependency.html#exclude(java.util.Map)
-                if ((configurations.contains(conf) || conf == 'all') && methodName == 'exclude') {
+                if ((hasConfiguration(conf) || conf == 'all') && methodName == 'exclude') {
                     def entries = GradleAstUtil.collectEntryExpressions(call)
                     visitConfigurationExclude(call, conf, new GradleDependency(entries.group, entries.module))
                 }
@@ -363,7 +373,7 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                 // https://docs.gradle.org/current/javadoc/org/gradle/api/artifacts/dsl/DependencyHandler.html
                 def methodName = call.methodAsString
                 def args = call.arguments.expressions as List
-                if (!args.empty && (configurations.contains(methodName) || methodName == 'classpath')) {
+                if (!args.empty && (hasConfiguration(methodName) || methodName == 'classpath')) {
                     def dependency = null
 
                     if (call.arguments.expressions.any { it instanceof MapExpression }) {
@@ -376,30 +386,42 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                                 entries.ext,
                                 entries.conf,
                                 GradleDependency.Syntax.MapNotation)
-                    } else if (call.arguments.expressions.any { it instanceof ConstantExpression || it instanceof GStringExpression }) {
+                    } else if (call.arguments.expressions.any {
+                        it instanceof ConstantExpression || it instanceof GStringExpression
+                    }) {
                         def expr = call.arguments.expressions.findResult {
-                            if(it instanceof ConstantExpression)
+                            if (it instanceof ConstantExpression)
                                 return it.value
-                            if(it instanceof GStringExpression)
+                            if (it instanceof GStringExpression)
                                 return it.text
                             return null
                         }
                         dependency = GradleDependency.fromConstant(expr)
-                    } else if(call.arguments.expressions.any { it instanceof PropertyExpression } && project != null) {
+                    } else if (call.arguments.expressions.any { it instanceof PropertyExpression } && project != null) {
                         def shell = new GroovyShell()
                         shell.setVariable('project', project as Project)
                         try {
                             Object dep = shell.evaluate('project.' + sourceCode(call.arguments))
                             dependency = GradleDependency.fromConstant(dep)
                             dependency.syntax = GradleDependency.Syntax.EvaluatedArbitraryCode
-                        } catch(Throwable t) {
+                        } catch (Throwable t) {
                             // if we cannot evaluate this expression, just give up
                             logger.debug("Unable to evaluate dependency expression ${sourceCode(call.arguments)}", t)
                         }
                     }
-                    
-                    if(dependency) {
-                        visitGradleDependency(call, methodName, dependency)
+
+                    if (dependency) {
+                        def top = dslStack().isEmpty() ? "" : dslStack().first()
+                        if (top == 'allprojects') {
+                            visitAllprojectsGradleDependency(call, methodName, dependency)
+                        } else if (top == 'subprojects') {
+                            visitSubprojectGradleDependency(call, methodName, dependency)
+                        } else if (top == 'buildscript') {
+                            visitBuildScriptDependency(call, methodName, dependency)
+                        } else {
+                            visitGradleDependency(call, methodName, dependency)
+                        }
+                        visitAnyGradleDependency(call, methodName, dependency)
                     }
                 }
             }
@@ -419,11 +441,11 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                                 return it.text
                             return null
                         }
-                        if(expr instanceof String)
+                        if (expr instanceof String)
                             plugin = new GradlePlugin(expr)
                     }
 
-                    if(plugin) {
+                    if (plugin) {
                         visitGradlePlugin(call, call.methodAsString, plugin)
                     }
                 }
@@ -431,24 +453,46 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
 
             private void visitMethodCallInResolutionStrategy(MethodCallExpression call) {
                 // https://docs.gradle.org/current/dsl/org.gradle.api.artifacts.ResolutionStrategy.html
-                if(call.methodAsString == 'force') {
+                if (call.methodAsString == 'force') {
                     def forces = (call.arguments.expressions as List).findResults {
-                        if(it instanceof ConstantExpression)
+                        if (it instanceof ConstantExpression)
                             return [GradleDependency.fromConstant(it.value), it]
-                        if(it instanceof GStringExpression)
+                        if (it instanceof GStringExpression)
                             return [GradleDependency.fromConstant(it.text), it]
                         return null
                     }.flatten()
 
                     def conf = containingConfiguration(call)
-                    if(conf)
+                    if (conf)
                         visitGradleResolutionStrategyForce(call, conf, forces.toSpreadMap())
                 }
             }
 
+            private boolean hasConfiguration(String name) {
+                if (!project) {
+                    return Collections.emptySet()
+                }
+                def configurations
+                if (!dslStack().isEmpty() && dslStack().first() == 'subprojects') {
+                    def expr = callStack.first().arguments.expressions[0]
+                    def subproject
+                    if (expr instanceof ConstantExpression || expr instanceof GStringExpression) {
+                        def path = expr instanceof ConstantExpression ? expr.value : expr.text
+                        subproject = project.childProjects.values().find { it.path == path }
+                    } else {
+                        subproject = project.childProjects.values().first()
+                    }
+                    configurations = subproject.configurations
+                } else {
+                    configurations = project.configurations
+                }
+                // contains() causes an NPE on the TreeSet that comes from the configuration, thus the extra toSet()
+                return configurations.names.toSet().contains(name)
+            }
+
             private void visitFixme(MethodCallExpression call) {
                 def predicate = call.arguments.expressions[0]
-                switch(predicate) {
+                switch (predicate) {
                     case ConstantExpression:
                         def succesfullyComparedDate = ['yyyy-M-d', 'M/d/yy', 'M/d/yyyy'].any { pattern ->
                             try {
@@ -459,12 +503,12 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                                             'this fixme has expired -- remove it and address the underlying lint issue that caused it to be added'))
                                     true
                                 } else true
-                            } catch(ParseException ignored) {
+                            } catch (ParseException ignored) {
                                 false
                             }
                         }
 
-                        if(!succesfullyComparedDate) {
+                        if (!succesfullyComparedDate) {
                             gradleViolations.add(new GradleViolation(buildFile, new FixmeRule(), call?.lineNumber, sourceCode(call),
                                     'this fixme contains an unparseable date, use the yyyy-M-d format'))
                         }

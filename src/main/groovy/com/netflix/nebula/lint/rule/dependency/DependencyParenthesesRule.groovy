@@ -18,14 +18,15 @@ package com.netflix.nebula.lint.rule.dependency
 
 import com.netflix.nebula.lint.rule.GradleDependency
 import com.netflix.nebula.lint.rule.GradleLintRule
+import com.netflix.nebula.lint.rule.GradleModelAware
 import org.codehaus.groovy.ast.expr.ClosureExpression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 
-class DependencyParenthesesRule extends GradleLintRule {
+class DependencyParenthesesRule extends GradleLintRule implements GradleModelAware {
     String description = "don't put parentheses around dependency definitions unless it is necessary"
 
     @Override
-    void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
+    void visitAnyGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
         def args = call.arguments.expressions as List
         if(!args.empty && !(args[-1] instanceof ClosureExpression)) {
             def callSource = getSourceCode().line(call.lineNumber-1)

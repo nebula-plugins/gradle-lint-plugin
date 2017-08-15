@@ -19,13 +19,14 @@ package com.netflix.nebula.lint.rule.dependency
 import com.netflix.nebula.lint.rule.GradleAstUtil
 import com.netflix.nebula.lint.rule.GradleDependency
 import com.netflix.nebula.lint.rule.GradleLintRule
+import com.netflix.nebula.lint.rule.GradleModelAware
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 
-class DependencyTupleExpressionRule extends GradleLintRule {
+class DependencyTupleExpressionRule extends GradleLintRule implements GradleModelAware {
     String description = "use the more compact string representation of a dependency when possible"
 
     @Override
-    void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
+    void visitAnyGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
         if(dep.conf == null && dep.syntax == GradleDependency.Syntax.MapNotation) {
             // FIXME what if one of the values is a function call?
             def ex = GradleAstUtil.collectEntryExpressions(call)
