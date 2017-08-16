@@ -12,7 +12,6 @@ import spock.lang.Unroll
 
 
 class DependencyHelperSpec extends IntegrationSpec {
-//    @Ignore
     @Unroll('should transform(remove) #dep -> #depResult')
     def 'removes version'() {
         given:
@@ -121,15 +120,62 @@ class DependencyHelperSpec extends IntegrationSpec {
         'compile("test.nebula:foo:${myVersion}") { transitive = false }' | 'compile("test.nebula:foo:${myVersion}") { transitive = false }'
         'compile(group: \'test.nebula\', name: \'foo\', version: \'1.0.0\') { transitive = false }' | 'compile(group: \'test.nebula\', name: \'foo\', version: \'1.1.0\') { transitive = false }'
     }
+
+    @Unroll('should replace #dep -> #depResult')
+    def 'replaces dependency'() {
+        given:
+        new File(projectDir, 'src/main/resources/META-INF/lint-rules')
+
+        def graph = new DependencyGraphBuilder().addModule('bar:baz:2.0.0').addModule('test.nebula:foo:1.0.0').build()
+        def generator = new GradleDependencyGenerator(graph, "${projectDir}/myrepo")
+        generator.generateTestMavenRepo()
+
+        buildFile << """\
+            plugins {
+                id 'java'
+            }
+            
+            apply plugin: 'nebula.lint'
+            
+            ext {
+                myVersion = '1.0.0'
+            }
+            
+            gradleLint.rules = ['test-dependency-replace']
+            
+            repositories {
+                ${generator.mavenRepositoryBlock}
+            }
+            
+            dependencies {
+                ${dep}
+            }
+            """.stripIndent()
+
+        writeHelloWorld('test.nebula')
+
+        expect:
+        def results = runTasks('lintGradle', 'fixGradleLint')
+        buildFile.text.contains(depResult)
+        if (dep != depResult) {
+            !buildFile.text.contains(dep)
+        }
+
+        where:
+        dep | depResult
+        'compile \'test.nebula:foo:1.0.0\'' | 'compile \'bar:baz:2.0.0\''
+        'testCompile \'test.nebula:foo:1.0.0\'' | 'testCompile \'bar:baz:2.0.0\''
+        'compile "test.nebula:foo:${myVersion}"' | 'compile "test.nebula:foo:${myVersion}"'
+        'runtime group: \'test.nebula\', name: \'foo\', version: \'1.0.0\'' | 'runtime group: \'bar\', name: \'baz\', version: \'2.0.0\''
+        'runtime group: \'test.nebula\', name: \'foo\', version: myVersion' | 'runtime group: \'bar\', name: \'baz\', version: \'2.0.0\''
+        'compile(\'test.nebula:foo:1.0.0\') { transitive = false }' | 'compile(\'bar:baz:2.0.0\') { transitive = false }'
+        'compile("test.nebula:foo:${myVersion}") { transitive = false }' | 'compile("test.nebula:foo:${myVersion}") { transitive = false }'
+        'compile(group: \'test.nebula\', name: \'foo\', version: \'1.0.0\') { transitive = false }' | 'compile(group: \'bar\', name: \'baz\', version: \'2.0.0\') { transitive = false }'
+    }
 }
 
 class TestDependencyRemoveVersionRule extends GradleLintRule implements GradleModelAware {
     String description = "remove all versions"
-
-    @Override
-    void visitPlugins(MethodCallExpression call) {
-        super.visitPlugins(call)
-    }
 
     @Override
     void visitAnyGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
@@ -142,13 +188,18 @@ class TestDependencyReplaceVersionRule extends GradleLintRule implements GradleM
     String description = "replace all versions"
 
     @Override
-    void visitPlugins(MethodCallExpression call) {
-        super.visitPlugins(call)
-    }
-
-    @Override
     void visitAnyGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
         def violation = addBuildLintViolation('dep violation', call)
         DependencyHelper.replaceVersion(violation, call, dep, '1.1.0')
+    }
+}
+
+class TestDependencyReplaceRule extends GradleLintRule implements GradleModelAware {
+    String description = "replace dependency"
+
+    @Override
+    void visitAnyGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
+        def violation = addBuildLintViolation('need to replace dependency', call)
+        DependencyHelper.replaceDependency(violation, call, new GradleDependency('bar', 'baz', '2.0.0'))
     }
 }

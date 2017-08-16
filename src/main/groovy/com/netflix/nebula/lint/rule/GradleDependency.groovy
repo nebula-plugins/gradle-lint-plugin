@@ -57,6 +57,18 @@ class GradleDependency {
         return notation
     }
 
+    Map<String, String> toMap() {
+        Map<String, String> dependency = new HashMap<>()
+        if (group) dependency.put('group', group)
+        if (name) dependency.put('name', name)
+        if (version) dependency.put('version', version)
+        if (classifier) dependency.put('classifier', classifier)
+        if (ext) dependency.put('ext', ext)
+        if (conf) dependency.put('conf', conf)
+
+        return dependency
+    }
+
     static GradleDependency fromConstant(Object expr) {
         def matcher = expr =~ /(?<group>[^:]+)?(:(?<name>[^:]+))(:(?<version>[^@:]+)(?<classifier>:[^@]+)?(?<ext>@.+)?)?/
         if (matcher.matches()) {
