@@ -44,6 +44,21 @@ class DependencyHelper {
         }
     }
 
+    static void replaceDependency(GradleViolation violation, MethodCallExpression call, GradleDependency dep) {
+        if (call.arguments.expressions.size == 1 && call.arguments.expressions[0] instanceof ConstantExpression) {
+            handleConstantExpression(violation, call.arguments.expressions[0], "'${dep.group}:${dep.name}:${dep.version}'")
+        } else if (call.arguments.expressions.size == 1 && call.arguments.expressions[0] instanceof NamedArgumentListExpression) {
+            replaceNamedArgumentListExpression(violation, call.arguments.expressions[0], dep.toMap())
+        } else if (call.arguments.expressions.size == 2 && call.arguments.expressions[1] instanceof ClosureExpression) {
+            def depExpression = call.arguments.expressions[0]
+            if (depExpression instanceof ConstantExpression) {
+                handleConstantExpression(violation, depExpression, "'${dep.group}:${dep.name}:${dep.version}'")
+            } else if (depExpression instanceof MapExpression) {
+                replaceMapExpression(violation, call.arguments.expressions[0], dep.toMap())
+            }
+        }
+    }
+
     private static void handleConstantExpression(GradleViolation violation, ConstantExpression expr, String text) {
         violation.replaceWith(expr, text)
     }
@@ -83,6 +98,22 @@ class DependencyHelper {
         def mapEntries = mapLikeExpr.mapEntryExpressions.clone()
         def mapString = mapEntries
                 .collect { (it.keyExpression.value == key && it.valueExpression instanceof ConstantExpression) ? "${it.keyExpression.value}: '${newValue}'" : "${it.keyExpression.value}: '${it.valueExpression.value}'" }
+                .join(', ')
+        violation.replaceWith(mapLikeExpr, mapString)
+    }
+
+    private static void replaceNamedArgumentListExpression(GradleViolation violation, NamedArgumentListExpression expr, Map<String, String> replacements) {
+        replaceMapLikeExpression(violation, expr, replacements)
+    }
+
+    private static void replaceMapExpression(GradleViolation violation, MapExpression expr, Map<String, String> replacements) {
+        replaceMapLikeExpression(violation, expr, replacements)
+    }
+
+    private static void replaceMapLikeExpression(GradleViolation violation, mapLikeExpr, Map<String, String> replacements) {
+        def mapEntries = mapLikeExpr.mapEntryExpressions.clone()
+        def mapString = mapEntries
+                .collect { replacements.keySet().contains(it.keyExpression.value) ? "${it.keyExpression.value}: '${replacements.get(it.keyExpression.value)}'" : "${it.keyExpression.value}: '${it.valueExpression.value}'" }
                 .join(', ')
         violation.replaceWith(mapLikeExpr, mapString)
     }
