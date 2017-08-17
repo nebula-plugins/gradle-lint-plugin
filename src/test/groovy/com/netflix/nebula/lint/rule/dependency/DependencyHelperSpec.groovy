@@ -48,7 +48,9 @@ class DependencyHelperSpec extends IntegrationSpec {
         expect:
         def results = runTasks('lintGradle', 'fixGradleLint')
         buildFile.text.contains(depResult)
-        !buildFile.text.contains(dep)
+        if (dep != depResult) {
+            !buildFile.text.contains(dep)
+        }
 
         where:
         dep | depResult
@@ -59,8 +61,11 @@ class DependencyHelperSpec extends IntegrationSpec {
         'runtime group: \'test.nebula\', name: \'foo\', version: myVersion' | 'runtime group: \'test.nebula\', name: \'foo\''
         'compile \'test.nebula:foo:1.0.0\',\n' + (' ' * 20)  + '\'a:b:1.0.0\'' | 'compile \'test.nebula:foo:1.0.0\',\n' + (' ' * 8) + '\'a:b:1.0.0\'' // opt to ignore lists of strings for now
         'compile(\'test.nebula:foo:1.0.0\') { transitive = false }' | 'compile(\'test.nebula:foo\') { transitive = false }'
+        'compile(\'test.nebula:foo:1.0.0\') { }' | 'compile(\'test.nebula:foo\') { }'
         'compile("test.nebula:foo:${myVersion}") { transitive = false }' | 'compile("test.nebula:foo") { transitive = false }'
         'compile(group: \'test.nebula\', name: \'foo\', version: \'1.0.0\') { transitive = false }' | 'compile(group: \'test.nebula\', name: \'foo\') { transitive = false }'
+        'compile(\'test.nebula:foo:1.0.0\') { force = true }' | 'compile(\'test.nebula:foo:1.0.0\') { force = true }'
+        'compile(group: \'test.nebula\', name: \'foo\', version: \'1.0.0\') { force = true }' | 'compile(group: \'test.nebula\', name: \'foo\', version: \'1.0.0\') { force = true }'
     }
 
     @Unroll('should transform(replace) #dep -> #depResult')
