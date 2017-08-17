@@ -2,6 +2,7 @@ package com.netflix.nebula.lint.rule.dependency
 
 import com.netflix.nebula.lint.GradleViolation
 import com.netflix.nebula.lint.rule.GradleDependency
+import org.codehaus.groovy.ast.expr.BinaryExpression
 import org.codehaus.groovy.ast.expr.ClosureExpression
 import org.codehaus.groovy.ast.expr.ConstantExpression
 import org.codehaus.groovy.ast.expr.GStringExpression
@@ -18,13 +19,15 @@ class DependencyHelper {
         } else if (call.arguments.expressions.size == 1 && call.arguments.expressions[0] instanceof NamedArgumentListExpression) {
             removeNamedArgumentListExpression(violation, call.arguments.expressions[0], 'version')
         } else if (call.arguments.expressions.size == 2 && call.arguments.expressions[1] instanceof ClosureExpression) {
-            def depExpression = call.arguments.expressions[0]
-            if (depExpression instanceof ConstantExpression) {
-                handleConstantExpression(violation, depExpression, "'${dep.group}:${dep.name}'")
-            } else if (depExpression instanceof GStringExpression) {
-                handleGStringExpression(violation, call.arguments.expressions[0], "\"${dep.group}:${dep.name}\"")
-            } else if (depExpression instanceof MapExpression) {
-                removeMapExpression(violation, call.arguments.expressions[0], 'version')
+            if (!closureContainsForce(call.arguments.expressions[1])) {
+                def depExpression = call.arguments.expressions[0]
+                if (depExpression instanceof ConstantExpression) {
+                    handleConstantExpression(violation, depExpression, "'${dep.group}:${dep.name}'")
+                } else if (depExpression instanceof GStringExpression) {
+                    handleGStringExpression(violation, call.arguments.expressions[0], "\"${dep.group}:${dep.name}\"")
+                } else if (depExpression instanceof MapExpression) {
+                    removeMapExpression(violation, call.arguments.expressions[0], 'version')
+                }
             }
         }
     }
@@ -57,6 +60,12 @@ class DependencyHelper {
                 replaceMapExpression(violation, call.arguments.expressions[0], dep.toMap())
             }
         }
+    }
+
+    private static Boolean closureContainsForce(ClosureExpression expr) {
+        return expr.code.statements.any { (it.expression instanceof BinaryExpression) &&
+                ((BinaryExpression)it.expression).leftExpression?.variable == 'force' &&
+                ((BinaryExpression)it.expression).rightExpression?.value == true }
     }
 
     private static void handleConstantExpression(GradleViolation violation, ConstantExpression expr, String text) {
