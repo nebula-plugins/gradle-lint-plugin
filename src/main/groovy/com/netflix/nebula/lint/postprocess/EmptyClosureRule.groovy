@@ -32,6 +32,8 @@ class EmptyClosureRule extends GradleLintRule {
 
     def emptyClosureCalls = [] as List<MethodCallExpression>
     def taskNames = [] as List<Expression>
+    List<String> deletableBlocks = []
+    Boolean enableDeletableBlocks = false
 
     @Override
     void visitMethodCallExpression(MethodCallExpression call) {
@@ -43,11 +45,15 @@ class EmptyClosureRule extends GradleLintRule {
             taskNames.add(it)
         }
 
-        if (expressions.size == 1 && expressions.last() instanceof ClosureExpression) {
+        if (isDeletable(call.methodAsString) && expressions.size == 1 && expressions.last() instanceof ClosureExpression) {
             if(expressions.last().code.empty) {
                 emptyClosureCalls.add(call)
             }
         }
+    }
+
+    protected Boolean isDeletable(String block) {
+        !enableDeletableBlocks || (enableDeletableBlocks && deletableBlocks.contains(block))
     }
 
     @Override
