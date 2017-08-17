@@ -31,6 +31,36 @@ class EmptyClosureRuleSpec extends AbstractRuleSpec {
         correct(new EmptyClosureRule()).replaceAll(/\s/, '') == /nebula{moduleOwner='me'}/
     }
 
+    def 'if a deletion rule(s) may be limited to a subset of blocks'() {
+        when:
+        project.buildFile << """
+            nebula { moduleOwner = 'me' }
+            test { }
+            """.substring(1).stripIndent()
+
+        def rule = new EmptyClosureRule()
+        rule.enableDeletableBlocks = true
+        rule.deletableBlocks.add('nebula')
+
+        then:
+        correct(rule).replaceAll(/\s/, '') == /nebula{moduleOwner='me'}test{}/
+    }
+
+    def 'if a deletion rule(s) may be limited to a subset of blocks and deletes if in list'() {
+        when:
+        project.buildFile << """
+            nebula { moduleOwner = 'me' }
+            nebula { }
+            """.substring(1).stripIndent()
+
+        def rule = new EmptyClosureRule()
+        rule.enableDeletableBlocks = true
+        rule.deletableBlocks.add('nebula')
+
+        then:
+        correct(rule).replaceAll(/\s/, '') == /nebula{moduleOwner='me'}/
+    }
+
     def 'do not delete empty tasks'() {
         when:
         project.buildFile << """
