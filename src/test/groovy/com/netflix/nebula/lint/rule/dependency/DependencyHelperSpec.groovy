@@ -19,7 +19,8 @@ class DependencyHelperSpec extends IntegrationSpec {
 
         def graph = new DependencyGraphBuilder().addModule('a:b:1.0.0').addModule('test.nebula:foo:1.0.0').build()
         def generator = new GradleDependencyGenerator(graph, "${projectDir}/myrepo")
-        generator.generateTestMavenRepo()
+        def dir = generator.generateTestMavenRepo()
+        new File(dir, 'test/nebula/foo/1.0.0/foo-1.0.0-tests.jar').createNewFile()
 
         buildFile << """\
             plugins {
@@ -46,7 +47,7 @@ class DependencyHelperSpec extends IntegrationSpec {
         writeHelloWorld('test.nebula')
 
         expect:
-        def results = runTasks('lintGradle', 'fixGradleLint')
+        def results = runTasks('lintGradle', 'fixGradleLint', '--stacktrace')
         buildFile.text.contains(depResult)
         if (dep != depResult) {
             !buildFile.text.contains(dep)
@@ -56,6 +57,7 @@ class DependencyHelperSpec extends IntegrationSpec {
         dep | depResult
         'compile \'test.nebula:foo:1.0.0\'' | 'compile \'test.nebula:foo\''
         'testCompile \'test.nebula:foo:1.0.0\'' | 'testCompile \'test.nebula:foo\''
+        'compile \'test.nebula:foo:1.0.0:tests\'' | 'compile \'test.nebula:foo::tests\''
         'compile "test.nebula:foo:${myVersion}"' | 'compile "test.nebula:foo"'
         'runtime group: \'test.nebula\', name: \'foo\', version: \'1.0.0\'' | 'runtime group: \'test.nebula\', name: \'foo\''
         'runtime group: \'test.nebula\', name: \'foo\', version: myVersion' | 'runtime group: \'test.nebula\', name: \'foo\''
