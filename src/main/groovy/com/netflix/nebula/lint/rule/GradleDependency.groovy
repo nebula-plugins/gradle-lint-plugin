@@ -23,7 +23,7 @@ import org.gradle.api.internal.artifacts.DefaultModuleIdentifier
 import org.gradle.api.internal.artifacts.DefaultModuleVersionIdentifier
 
 @Canonical
-class GradleDependency {
+class GradleDependency implements Cloneable {
     String group
     String name
     String version
@@ -51,7 +51,8 @@ class GradleDependency {
         def notation = (group ?: '') + ':'
         notation += name
         if(version) notation += ":$version"
-        if(classifier) notation += ":$classifier"
+        if(version && classifier) notation += ":$classifier"
+        if(!version && classifier) notation += "::$classifier"
         if(ext) notation += "@$ext"
         
         return notation
