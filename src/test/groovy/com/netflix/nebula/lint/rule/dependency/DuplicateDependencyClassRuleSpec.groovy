@@ -244,6 +244,30 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
         !result.output.contains("com.google.collections:google-collections:1.0 in configuration ':compile' has 385 classes duplicated by com.google.guava:guava:10.0.1")
     }
 
+    @Issue('#139')
+    def 'duplicate module/package classes do not cause violations'() {
+        setup:
+        buildFile.text = """
+            plugins {
+                id 'java'
+                id 'nebula.lint'
+            }
+
+            gradleLint.rules = ['duplicate-dependency-class']
+
+            repositories { mavenCentral() }
+
+            dependencies {
+                compile 'org.slf4j:slf4j-api:1.8.0-alpha2'
+                testRuntime 'org.slf4j:slf4j-simple:1.8.0-alpha2'
+            }
+        """
+
+        expect:
+        createJavaSourceFile('public class Main{}')
+        def result = runTasksSuccessfully('compileJava', 'lintGradle')
+    }
+
     @Issue('#98')
     def 'duplicate classes between transitive dependencies cause violations when the transitive rule is used'() {
         setup:

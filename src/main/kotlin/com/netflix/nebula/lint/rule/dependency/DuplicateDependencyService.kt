@@ -8,6 +8,13 @@ import org.slf4j.LoggerFactory
 import java.util.*
 
 class DuplicateDependencyService(val project: Project) {
+    companion object {
+        val BLACKLISTED_CLASSES = setOf(
+                "package-info",
+                "module-info"
+        )
+    }
+
     val logger: Logger = LoggerFactory.getLogger(DuplicateDependencyService::class.java)
 
     fun violationsForModules(moduleIds: List<ModuleVersionIdentifier>, conf: Configuration, ignoredDependencies: Set<ModuleVersionIdentifier>): List<String> =
@@ -21,6 +28,9 @@ class DuplicateDependencyService(val project: Project) {
 
         val dependencyClasses = dependencyService.jarContents(mvid.module)?.classes ?: return emptyList()
         val dupeDependencyClasses = dependencyService.artifactsByClass(conf)
+                .filter {
+                    !BLACKLISTED_CLASSES.contains(it.key)
+                }
                 .filter {
                     // don't count artifacts that have the same ModuleIdentifier, which are different versions of the same
                     // module coming from extended configurations that are ultimately conflict resolved away anyway
