@@ -47,7 +47,7 @@ class DependencyHelperSpec extends IntegrationSpec {
         writeHelloWorld('test.nebula')
 
         expect:
-        def results = runTasks('lintGradle', 'fixGradleLint', '--stacktrace')
+        def results = runTasks('fixGradleLint', '--stacktrace')
         buildFile.text.contains(depResult)
         if (dep != depResult) {
             !buildFile.text.contains(dep)
@@ -109,7 +109,7 @@ class DependencyHelperSpec extends IntegrationSpec {
         writeHelloWorld('test.nebula')
 
         expect:
-        def results = runTasks('lintGradle', 'fixGradleLint')
+        def results = runTasks( 'fixGradleLint')
         buildFile.text.contains(depResult)
         if (dep != depResult) {
             !buildFile.text.contains(dep)
@@ -162,7 +162,7 @@ class DependencyHelperSpec extends IntegrationSpec {
         writeHelloWorld('test.nebula')
 
         expect:
-        def results = runTasks('lintGradle', 'fixGradleLint')
+        def results = runTasks('fixGradleLint')
         buildFile.text.contains(depResult)
         if (dep != depResult) {
             !buildFile.text.contains(dep)
