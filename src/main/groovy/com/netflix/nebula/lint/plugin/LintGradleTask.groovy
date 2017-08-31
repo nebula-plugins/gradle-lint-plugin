@@ -25,6 +25,8 @@ import static com.netflix.nebula.lint.StyledTextService.Styling.*
 class LintGradleTask extends DefaultTask {
     List<GradleLintViolationAction> listeners = []
 
+    boolean failOnWarning = false
+
     LintGradleTask() {
         group = 'lint'
     }
@@ -63,7 +65,7 @@ class LintGradleTask extends DefaultTask {
                 String buildFilePath = project.rootDir.toURI().relativize(buildFile.toURI()).toString()
 
                 violationsByFile.each { v ->
-                    if(v.rule.priority == 1) {
+                    if (v.rule.priority == 1) {
                         textOutput.withStyle(Red).text('error'.padRight(10))
                     } else {
                         textOutput.withStyle(Red).text('warning'.padRight(10))
@@ -72,11 +74,11 @@ class LintGradleTask extends DefaultTask {
                     textOutput.text(v.rule.name.padRight(35))
 
                     textOutput.withStyle(Yellow).text(v.message)
-                    if(v.fixes.empty) {
+                    if (v.fixes.empty) {
                         textOutput.withStyle(Yellow).text(' (no auto-fix available)')
                     }
                     textOutput.println()
-                    
+
                     if (v.lineNumber)
                         textOutput.withStyle(Bold).println(buildFilePath + ':' + v.lineNumber)
                     if (v.sourceLine)
@@ -91,8 +93,13 @@ class LintGradleTask extends DefaultTask {
                 textOutput.text("To apply fixes automatically, run ").withStyle(Bold).text("fixGradleLint")
                 textOutput.println(", review, and commit the changes.\n")
 
-                if (errors > 0)
-                    throw new GradleException("This build contains $errors critical lint violation ${errors == 1 ? '' : 's'}") // fail the whole build
+                if (errors > 0) {
+                    throw new GradleException("This build contains $errors critical lint violation${errors == 1 ? '' : 's'}")
+                }
+
+                if (failOnWarning) {
+                    throw new GradleException("This build contains $warnings lint violation${warnings == 1 ? '' : 's'}")
+                }
             }
         }
     }

@@ -59,7 +59,7 @@ class GradleLintReportTask extends DefaultTask implements VerificationTask, Repo
             def results = lintService.lint(project)
             def violationCount = results.violations.size()
             def textOutput = new StyledTextService(getServices())
-            
+
             textOutput.text('Generated a report containing information about ')
             textOutput.withStyle(Bold).text("$violationCount lint violation${violationCount == 1 ? '' : 's'}")
             textOutput.println(' in this project')
@@ -77,8 +77,8 @@ class GradleLintReportTask extends DefaultTask implements VerificationTask, Repo
             }
 
             int errors = results.violations.count { Violation v -> v.rule.priority == 1 }
-            if(errors > 0) {
-                throw new GradleException("This build contains $errors critical lint violation ${errors == 1 ? '' : 's'}")
+            if (errors > 0) {
+                throw new GradleException("This build contains $errors critical lint violation${errors == 1 ? '' : 's'}")
             }
         }
     }

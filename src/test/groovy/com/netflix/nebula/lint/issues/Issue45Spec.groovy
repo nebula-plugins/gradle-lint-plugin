@@ -33,7 +33,7 @@ class Issue45Spec extends TestKitSpecification {
         createJavaTestFile('public class A {}')
 
         then:
-        def results = runTasksSuccessfully('compileTestJava', 'lintGradle')
+        def results = runTasksSuccessfully('compileTestJava')
         println(results.output)
         results.output.contains('unused-dependency')
     }

@@ -49,7 +49,7 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
 
         when:
         createJavaSourceFile('public class Main {}')
-        def result = runTasksSuccessfully('compileJava', 'lintGradle')
+        def result = runTasksSuccessfully('compileJava')
 
         then:
         result.output.contains(message)
@@ -83,7 +83,7 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
 
         when:
         createJavaTestFile('public class Main {}')
-        def result = runTasksSuccessfully('compileTestJava', 'lintGradle')
+        def result = runTasksSuccessfully('compileTestJava')
 
         then:
         !result.output.contains("log4j:log4j:1.2.16 in configuration 'compile'")
@@ -115,7 +115,7 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
         
         when:
         createJavaSourceFile('public class Main{}')
-        def result = runTasksSuccessfully('compileJava', 'lintGradle')
+        def result = runTasksSuccessfully('compileJava')
         
         then:
         result.output.contains("$collections in configuration ':compile' has 310 classes duplicated by $guava")
@@ -144,7 +144,7 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
 
         when:
         createJavaSourceFile('public class Main{}')
-        def result = runTasksSuccessfully('compileJava', 'lintGradle')
+        def result = runTasksSuccessfully('compileJava')
 
         then:
         !result.output.contains("$collections in configuration ':compile' has 310 classes duplicated by $guava")
@@ -183,7 +183,7 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
         createJavaSourceFile('public class A { }')
         
         then:
-        def results = runTasksSuccessfully('compileJava', 'lintGradle')
+        def results = runTasksSuccessfully('compileJava')
         !results.output.contains('duplicate-dependency-class')
     }
 
@@ -212,7 +212,7 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
 
         when:
         createJavaSourceFile('public class Main{}')
-        def result = runTasksSuccessfully('compileJava', 'lintGradle')
+        def result = runTasksSuccessfully('compileJava')
 
         then:
         !result.output.contains("$collections in configuration ':compile' has 310 classes duplicated by $guava")
@@ -265,7 +265,7 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
 
         when:
         createJavaSourceFile('public class Main{}')
-        def result = runTasksSuccessfully('compileJava', 'lintGradle', '--info')
+        def result = runTasksSuccessfully('compileJava', '--info')
 
         then:
         result.output.contains("com.google.collections:google-collections:1.0 in configuration ':compile' has 385 classes duplicated by com.google.guava:guava:10.0.1")

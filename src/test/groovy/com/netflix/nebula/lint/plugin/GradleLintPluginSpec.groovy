@@ -293,7 +293,7 @@ class GradleLintPluginSpec extends TestKitSpecification {
         """
 
         then:
-        def results = runTasksSuccessfully('lintGradle')
+        def results = runTasksSuccessfully('autoLintGradle')
 
         when:
         def console = results.output.readLines()
@@ -301,6 +301,31 @@ class GradleLintPluginSpec extends TestKitSpecification {
         then:
         console.findAll { it.startsWith('warning') }.size() == 1
         console.any { it.contains('archaic-wrapper') }
+    }
+
+    def 'build fails for violations in manual lint'() {
+        given:
+        buildFile << """
+            plugins {
+                id 'nebula.lint'
+                id 'java'
+            }
+
+            gradleLint.rules = ['archaic-wrapper']
+
+            task wrapper(type: Wrapper){
+                gradleVersion = '0.1'
+            }
+        """
+
+        when:
+        def results = runTasksFail('lintGradle')
+
+        then:
+        def console = results.output.readLines()
+        console.findAll { it.startsWith('warning') }.size() == 1
+        console.any { it.contains('archaic-wrapper') }
+        console.any { it.contains('This build contains 1 lint violation') }
     }
 
     @Issue('#68')

@@ -35,6 +35,7 @@ class GradleLintPlugin implements Plugin<Project> {
 
             def manualLintTask = project.tasks.create('lintGradle', LintGradleTask)
             manualLintTask.group = 'lint'
+            manualLintTask.failOnWarning = true
 
             def fixTask = project.tasks.create('fixGradleLint', FixGradleLintTask)
             fixTask.userDefinedListeners = lintExt.listeners

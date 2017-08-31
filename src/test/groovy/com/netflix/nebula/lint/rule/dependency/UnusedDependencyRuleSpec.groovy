@@ -489,7 +489,7 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
         createJavaSourceFile('public class A {}')
 
         then:
-        def results = runTasksSuccessfully('compileJava', 'lintGradle')
+        def results = runTasksSuccessfully('compileJava')
         results.output.contains('unused-dependency')
     }
 
@@ -551,7 +551,7 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
         ''', 'src/integTest/java')
 
         then:
-        def results = runTasksSuccessfully('lintGradle')
+        def results = runTasksSuccessfully('autoLintGradle')
         println(results.output)
         results.output.readLines().count { it.contains('unused-dependency') } == 1
     }

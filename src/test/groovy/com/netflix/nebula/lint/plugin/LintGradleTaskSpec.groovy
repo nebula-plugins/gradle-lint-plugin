@@ -39,7 +39,7 @@ class LintGradleTaskSpec extends TestKitSpecification {
 
         when:
         createJavaSourceFile('public class Main {}')
-        def result = runTasksSuccessfully('compileJava', 'lintGradle')
+        def result = runTasksSuccessfully('compileJava')
 
         then:
         result.output.contains('(no auto-fix available)')
