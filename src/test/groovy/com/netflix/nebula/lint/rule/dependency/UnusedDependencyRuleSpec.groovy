@@ -551,7 +551,7 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
         ''', 'src/integTest/java')
 
         then:
-        def results = runTasksSuccessfully('compileJava')
+        def results = runTasksSuccessfully('classes', 'testClasses')
         println(results.output)
         results.output.readLines().count { it.contains('unused-dependency') } == 1
     }
