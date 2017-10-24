@@ -1,5 +1,6 @@
 # Gradle Lint Plugin
 
+[![Download](https://api.bintray.com/packages/nebula/gradle-plugins/gradle-lint-plugin/images/download.svg)](https://bintray.com/nebula/gradle-plugins/gradle-lint-plugin/_latestVersion)
 ![Support Status](https://img.shields.io/badge/nebula-supported-brightgreen.svg)
 [![Build Status](https://travis-ci.org/nebula-plugins/gradle-lint-plugin.svg?branch=master)](https://travis-ci.org/nebula-plugins/gradle-lint-plugin)
 [![Coverage Status](https://coveralls.io/repos/github/nebula-plugins/gradle-lint-plugin/badge.svg?branch=master)](https://coveralls.io/github/nebula-plugins/gradle-lint-plugin?branch=master)
@@ -21,7 +22,7 @@ To apply this plugin:
 ```groovy
 buildscript { repositories { jcenter() } }
 plugins {
-  id 'nebula.lint' version '7.4.0'
+  id 'nebula.lint' version '8.3.1'
 }
 ```
     
