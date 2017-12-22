@@ -37,8 +37,8 @@
             "requested": "4.5.0.201609210915-r"
         },
         "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
-            "locked": "1.1.0",
-            "requested": "1.1.0"
+            "locked": "1.2.10",
+            "requested": "1.2.10"
         },
         "org.ow2.asm:asm": {
             "locked": "5.2",
@@ -87,8 +87,8 @@
             "requested": "4.5.0.201609210915-r"
         },
         "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
-            "locked": "1.1.0",
-            "requested": "1.1.0"
+            "locked": "1.2.10",
+            "requested": "1.2.10"
         },
         "org.ow2.asm:asm": {
             "locked": "5.2",
@@ -137,8 +137,8 @@
             "requested": "4.5.0.201609210915-r"
         },
         "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
-            "locked": "1.1.0",
-            "requested": "1.1.0"
+            "locked": "1.2.10",
+            "requested": "1.2.10"
         },
         "org.ow2.asm:asm": {
             "locked": "5.2",
@@ -191,8 +191,8 @@
             "requested": "4.5.0.201609210915-r"
         },
         "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
-            "locked": "1.1.0",
-            "requested": "1.1.0"
+            "locked": "1.2.10",
+            "requested": "1.2.10"
         },
         "org.ow2.asm:asm": {
             "locked": "5.2",
@@ -249,8 +249,8 @@
             "requested": "4.5.0.201609210915-r"
         },
         "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
-            "locked": "1.1.0",
-            "requested": "1.1.0"
+            "locked": "1.2.10",
+            "requested": "1.2.10"
         },
         "org.ow2.asm:asm": {
             "locked": "5.2",
@@ -307,8 +307,8 @@
             "requested": "4.5.0.201609210915-r"
         },
         "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
-            "locked": "1.1.0",
-            "requested": "1.1.0"
+            "locked": "1.2.10",
+            "requested": "1.2.10"
         },
         "org.ow2.asm:asm": {
             "locked": "5.2",
@@ -365,8 +365,8 @@
             "requested": "4.5.0.201609210915-r"
         },
         "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
-            "locked": "1.1.0",
-            "requested": "1.1.0"
+            "locked": "1.2.10",
+            "requested": "1.2.10"
         },
         "org.ow2.asm:asm": {
             "locked": "5.2",
@@ -383,30 +383,32 @@
     },
     "jacocoAgent": {
         "org.jacoco:org.jacoco.agent": {
-            "locked": "0.7.8"
+            "locked": "0.7.9",
+            "requested": "0.7.9"
         }
     },
     "jacocoAnt": {
         "org.jacoco:org.jacoco.ant": {
-            "locked": "0.7.8"
+            "locked": "0.7.9",
+            "requested": "0.7.9"
         }
     },
     "kapt": {
-        "org.jetbrains.kotlin:kotlin-annotation-processing": {
-            "locked": "1.1.0",
-            "requested": "1.1.0"
+        "org.jetbrains.kotlin:kotlin-annotation-processing-gradle": {
+            "locked": "1.2.10",
+            "requested": "1.2.10"
         }
     },
     "kaptIntegTest": {
-        "org.jetbrains.kotlin:kotlin-annotation-processing": {
-            "locked": "1.1.0",
-            "requested": "1.1.0"
+        "org.jetbrains.kotlin:kotlin-annotation-processing-gradle": {
+            "locked": "1.2.10",
+            "requested": "1.2.10"
         }
     },
     "kaptTest": {
-        "org.jetbrains.kotlin:kotlin-annotation-processing": {
-            "locked": "1.1.0",
-            "requested": "1.1.0"
+        "org.jetbrains.kotlin:kotlin-annotation-processing-gradle": {
+            "locked": "1.2.10",
+            "requested": "1.2.10"
         }
     },
     "plugin": {
@@ -489,8 +491,8 @@
             "requested": "4.5.0.201609210915-r"
         },
         "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
-            "locked": "1.1.0",
-            "requested": "1.1.0"
+            "locked": "1.2.10",
+            "requested": "1.2.10"
         },
         "org.ow2.asm:asm": {
             "locked": "5.2",
@@ -539,8 +541,8 @@
             "requested": "4.5.0.201609210915-r"
         },
         "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
-            "locked": "1.1.0",
-            "requested": "1.1.0"
+            "locked": "1.2.10",
+            "requested": "1.2.10"
         },
         "org.ow2.asm:asm": {
             "locked": "5.2",
@@ -593,8 +595,8 @@
             "requested": "4.5.0.201609210915-r"
         },
         "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
-            "locked": "1.1.0",
-            "requested": "1.1.0"
+            "locked": "1.2.10",
+            "requested": "1.2.10"
         },
         "org.ow2.asm:asm": {
             "locked": "5.2",
@@ -651,8 +653,8 @@
             "requested": "4.5.0.201609210915-r"
         },
         "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
-            "locked": "1.1.0",
-            "requested": "1.1.0"
+            "locked": "1.2.10",
+            "requested": "1.2.10"
         },
         "org.ow2.asm:asm": {
             "locked": "5.2",
@@ -709,8 +711,8 @@
             "requested": "4.5.0.201609210915-r"
         },
         "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
-            "locked": "1.1.0",
-            "requested": "1.1.0"
+            "locked": "1.2.10",
+            "requested": "1.2.10"
         },
         "org.ow2.asm:asm": {
             "locked": "5.2",
@@ -767,8 +769,8 @@
             "requested": "4.5.0.201609210915-r"
         },
         "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
-            "locked": "1.1.0",
-            "requested": "1.1.0"
+            "locked": "1.2.10",
+            "requested": "1.2.10"
         },
         "org.ow2.asm:asm": {
             "locked": "5.2",
