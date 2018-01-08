@@ -129,8 +129,11 @@ publishing {
 
 // Kotlin compiles first, stubbing Java dependencies, however it can't stub Groovy and we need to call Groovy code from Kotlin. For details see:
 // https://discuss.gradle.org/t/kotlin-groovy-and-java-compilation/14903/10
-
-compileGroovy.dependsOn = compileGroovy.taskDependencies.values - 'compileJava'
+if (GradleVersion.version(project.gradle.gradleVersion).compareTo(GradleVersion.version('4.4.1')) > 0) {
+    compileGroovy.dependsOn = compileGroovy.taskDependencies.mutableValues - 'compileJava'
+} else {
+    compileGroovy.dependsOn = compileGroovy.taskDependencies.values - 'compileJava'
+}
 compileKotlin.dependsOn compileGroovy
 compileKotlin.classpath += files(compileGroovy.destinationDir)
 classes.dependsOn compileKotlin

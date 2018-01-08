@@ -6,6 +6,7 @@ import com.netflix.nebula.lint.rule.GradleModelAware
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.gradle.api.artifacts.ComponentMetadata
 import org.gradle.api.artifacts.ModuleVersionIdentifier
+import org.gradle.api.attributes.AttributeContainer
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.DefaultVersionComparator
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.DefaultVersionSelectorScheme
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.LatestVersionSelector
@@ -49,5 +50,10 @@ class OverriddenDependencyVersionRule extends GradleLintRule implements GradleMo
         List<String> statusScheme
 
         final boolean changing = false // does not matter
+
+//        @Override
+        AttributeContainer getAttributes() {
+            return null
+        }
     }
 }
