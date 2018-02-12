@@ -1,9 +1,11 @@
 package com.netflix.nebula.lint.rule.dependency
 
+import com.netflix.nebula.interop.GradleKt
 import groovy.transform.Memoized
 import groovyx.gpars.GParsPool
 import org.gradle.api.Project
 import org.gradle.api.artifacts.*
+import org.gradle.api.file.FileCollection
 import org.gradle.api.internal.artifacts.DefaultModuleIdentifier
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.VersionInfo
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.Versioned
@@ -160,39 +162,36 @@ class DependencyService {
     private DependencyReferences classReferences(String confName) {
         def conf = project.configurations.getByName(confName)
         def classpath = sourceSetClasspath(confName)
-        def output = sourceSetOutput(confName)
-
-        if (!output || !output.exists())
-            return null
-
-        def artifactsByClass = artifactsByClass(conf)
         def references = new DependencyReferences()
 
-        def compiledSourceClassLoader = new URLClassLoader((classpath + output)
-                .collect { it.toURI().toURL() } as URL[], null as ClassLoader)
+        sourceSetOutput(confName).files.findAll { it.exists() }.each { output ->
+            def artifactsByClass = artifactsByClass(conf)
+            def compiledSourceClassLoader = new URLClassLoader((classpath + output)
+                    .collect { it.toURI().toURL() } as URL[], null as ClassLoader)
 
-        Files.walkFileTree(output.toPath(), new SimpleFileVisitor<Path>() {
-            @Override
-            FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                if (file.toFile().name.endsWith('.class')) {
-                    try {
-                        def visitor = new DependencyClassVisitor(artifactsByClass, compiledSourceClassLoader)
-                        file.newInputStream().withCloseable { inputStream ->
-                            new ClassReader(inputStream).accept(visitor, ClassReader.SKIP_DEBUG)
+            Files.walkFileTree(output.toPath(), new SimpleFileVisitor<Path>() {
+                @Override
+                FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    if (file.toFile().name.endsWith('.class')) {
+                        try {
+                            def visitor = new DependencyClassVisitor(artifactsByClass, compiledSourceClassLoader)
+                            file.newInputStream().withCloseable { inputStream ->
+                                new ClassReader(inputStream).accept(visitor, ClassReader.SKIP_DEBUG)
 
-                            references.direct.addAll(visitor.directReferences)
-                            references.indirect.addAll(visitor.indirectReferences)
+                                references.direct.addAll(visitor.directReferences)
+                                references.indirect.addAll(visitor.indirectReferences)
+                            }
+                        } catch (Throwable t) {
+                            // see https://github.com/nebula-plugins/gradle-lint-plugin/issues/88
+                            // type annotations can cause ArrayIndexOutOfBounds in ASM:
+                            // http://forge.ow2.org/tracker/index.php?func=detail&aid=317615&group_id=23&atid=100023
+                            logger.debug("unable to read class ${file.toFile().name}", t)
                         }
-                    } catch (Throwable t) {
-                        // see https://github.com/nebula-plugins/gradle-lint-plugin/issues/88
-                        // type annotations can cause ArrayIndexOutOfBounds in ASM:
-                        // http://forge.ow2.org/tracker/index.php?func=detail&aid=317615&group_id=23&atid=100023
-                        logger.debug("unable to read class ${file.toFile().name}", t)
                     }
+                    return FileVisitResult.CONTINUE
                 }
-                return FileVisitResult.CONTINUE
-            }
-        })
+            })
+        }
 
         return references
     }
@@ -417,9 +416,15 @@ class DependencyService {
         return project.tasks.findByName('compileReleaseJavaWithJavac')?.classpath
     }
 
-    private File sourceSetOutput(String conf) {
+    private FileCollection sourceSetOutput(String conf) {
         def sourceSet = sourceSetByConf(conf == 'compileOnly' ? 'compile' : conf)
-        if (sourceSet) return sourceSet.output.classesDir
+        if (sourceSet) {
+            if (GradleKt.versionLessThan(project.gradle, "4.0")) {
+                return project.files(sourceSet.output.classesDir)
+            } else {
+                return sourceSet.output.classesDirs
+            }
+        }
 
         // all android confs get squashed into either debug or release output dir?
         if (conf.startsWith('test')) {
