@@ -21,14 +21,15 @@ package com.netflix.nebula.lint
 import com.netflix.nebula.lint.rule.dependency.JavaFixture
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
-import org.junit.rules.TemporaryFolder
+import org.junit.rules.TestName
 import spock.lang.Specification
 
 /**
  * Things that really belong in the unfinished Gradle Testkit
  */
 abstract class TestKitSpecification extends Specification {
-    @Rule final TemporaryFolder temp = new TemporaryFolder()
+    @Rule
+    TestName testName = new TestName()
     File projectDir
     File buildFile
     File settingsFile
@@ -36,7 +37,11 @@ abstract class TestKitSpecification extends Specification {
     Boolean debug = true
 
     def setup() {
-        projectDir = temp.root
+        projectDir = new File("build/nebulatest/${this.class.canonicalName}/${testName.methodName.replaceAll(/\W+/, '-')}").absoluteFile
+        if (projectDir.exists()) {
+            projectDir.deleteDir()
+        }
+        projectDir.mkdirs()
         buildFile = new File(projectDir, 'build.gradle')
         settingsFile = new File(projectDir, 'settings.gradle')
         propertiesFile = new File(projectDir, 'gradle.properties')

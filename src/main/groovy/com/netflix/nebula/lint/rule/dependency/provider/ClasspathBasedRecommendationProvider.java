@@ -36,18 +36,14 @@ import java.util.Set;
 
 public abstract class ClasspathBasedRecommendationProvider extends AbstractRecommendationProvider {
     private final Logger log = LoggerFactory.getLogger(ClasspathBasedRecommendationProvider.class);
-
-    private static Set<File> boms;
     protected Project project;
-    private Configuration configuration;
 
-    ClasspathBasedRecommendationProvider(Project project, String configName) {
+    ClasspathBasedRecommendationProvider(Project project) {
         this.project = project;
-        this.configuration = project.getConfigurations().getByName(configName);
     }
 
     Set<File> getFilesOnConfiguration() {
-        boms = new LinkedHashSet<>(); // to preserve insertion order and resolution order
+        Set<File> boms = new LinkedHashSet<>(); // to preserve insertion order and resolution order
 
         ConfigurationContainer allConfigurations = project.getConfigurations();
         for (Configuration configuration : allConfigurations) {

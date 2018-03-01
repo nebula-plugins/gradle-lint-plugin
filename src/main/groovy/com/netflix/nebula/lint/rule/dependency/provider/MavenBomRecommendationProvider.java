@@ -18,7 +18,6 @@
 
 package com.netflix.nebula.lint.rule.dependency.provider;
 
-import com.netflix.nebula.dependencybase.DependencyManagement;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Parent;
@@ -54,12 +53,8 @@ public class MavenBomRecommendationProvider extends ClasspathBasedRecommendation
     private final Logger log = LoggerFactory.getLogger(MavenBomRecommendationProvider.class);
     private Map<String, String> recommendations;
 
-    public MavenBomRecommendationProvider(Project project, String configName) {
-        super(project, configName);
-    }
-
-    public MavenBomRecommendationProvider(Project project, String configName, DependencyManagement insight) {
-        super(project, configName);
+    public MavenBomRecommendationProvider(Project project) {
+        super(project);
     }
 
     private static class SimpleModelSource implements ModelSource2 {
@@ -95,7 +90,7 @@ public class MavenBomRecommendationProvider extends ClasspathBasedRecommendation
         return getRecommendations().get(org + ":" + name);
     }
 
-    public Map<String, String> getRecommendations() throws Exception {
+    private Map<String, String> getRecommendations() throws Exception {
         if (recommendations == null) {
             recommendations = new HashMap<>();
 
@@ -153,7 +148,7 @@ public class MavenBomRecommendationProvider extends ClasspathBasedRecommendation
                 modelBuilder.setModelInterpolator(new ProjectPropertiesModelInterpolator(project));
 
                 ModelBuildingResult result = modelBuilder.build(request);
-                log.info("nebula.dependency-recommender uses mavenBom: " + result.getEffectiveModel().getId());
+                log.info("using bom: " + result.getEffectiveModel().getId());
                 Model model = result.getEffectiveModel();
                 if (model == null) {
                     break;
@@ -163,7 +158,7 @@ public class MavenBomRecommendationProvider extends ClasspathBasedRecommendation
                     break;
                 }
                 for (Dependency d : dependencyManagement.getDependencies()) {
-                    recommendations.put(d.getGroupId() + ":" + d.getArtifactId(), d.getVersion());
+                    recommendations.put(d.getGroupId() + ":" + d.getArtifactId(), d.getVersion()); // overwrites previous values
                 }
             }
         }

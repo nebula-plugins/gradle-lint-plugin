@@ -46,7 +46,7 @@ class ClasspathBasedRecommendationProviderTest extends TestKitSpecification {
             compile module
         }
 
-        def provider = new MavenBomRecommendationProvider(project, 'compile')
+        def provider = new MavenBomRecommendationProvider(project)
 
         when:
         def files = provider.getFilesOnConfiguration()
@@ -86,7 +86,7 @@ class ClasspathBasedRecommendationProviderTest extends TestKitSpecification {
             compile thirdBom
         }
 
-        def provider = new MavenBomRecommendationProvider(project, 'compile')
+        def provider = new MavenBomRecommendationProvider(project)
 
         when:
         def files = provider.getFilesOnConfiguration()
@@ -128,7 +128,7 @@ class ClasspathBasedRecommendationProviderTest extends TestKitSpecification {
             testCompile thirdBom
         }
 
-        def provider = new MavenBomRecommendationProvider(project, 'compile')
+        def provider = new MavenBomRecommendationProvider(project)
 
         when:
         def files = provider.getFilesOnConfiguration()
@@ -173,7 +173,7 @@ class ClasspathBasedRecommendationProviderTest extends TestKitSpecification {
             testCompile thirdBom
         }
 
-        def provider = new MavenBomRecommendationProvider(project, 'compile')
+        def provider = new MavenBomRecommendationProvider(project)
 
         when:
         def files = provider.getFilesOnConfiguration()
@@ -219,7 +219,7 @@ class ClasspathBasedRecommendationProviderTest extends TestKitSpecification {
         boms.add(new File('sample/bat/1.0/bat-1.0.pom'))
 
         when:
-        def provider = new MavenBomRecommendationProvider(project, 'compile')
+        def provider = new MavenBomRecommendationProvider(project)
         def isAlreadyAdded = provider.dependencyIsAlreadyAdded(dep, boms)
 
         then:
@@ -252,7 +252,7 @@ class ClasspathBasedRecommendationProviderTest extends TestKitSpecification {
         boms.add(new File('sample/buzz/1.0/buzz-1.0.pom'))
 
         when:
-        def provider = new MavenBomRecommendationProvider(project, 'compile')
+        def provider = new MavenBomRecommendationProvider(project)
         def isAlreadyAdded = provider.dependencyIsAlreadyAdded(dep, boms)
 
         then:
@@ -270,7 +270,7 @@ class ClasspathBasedRecommendationProviderTest extends TestKitSpecification {
         def fizzPom = new File(repo, 'sample/fizz/1.0/fizz-1.0.pom')
 
         when:
-        def provider = new MavenBomRecommendationProvider(project, 'compile')
+        def provider = new MavenBomRecommendationProvider(project)
         def shouldAddToBoms = provider.shouldAddToBoms(fizzPom)
 
         then:
@@ -290,7 +290,7 @@ class ClasspathBasedRecommendationProviderTest extends TestKitSpecification {
         sampleFile << "I am not a pom!"
 
         when:
-        def provider = new MavenBomRecommendationProvider(project, 'compile')
+        def provider = new MavenBomRecommendationProvider(project)
         def shouldAddToBoms = provider.shouldAddToBoms(sampleFile)
 
         then:
@@ -308,7 +308,7 @@ class ClasspathBasedRecommendationProviderTest extends TestKitSpecification {
         def buzzPom = new File(repo, 'sample/buzz/1.0/buzz-1.0.pom')
 
         when:
-        def provider = new MavenBomRecommendationProvider(project, 'compile')
+        def provider = new MavenBomRecommendationProvider(project)
         def shouldAddToBoms = provider.shouldAddToBoms(buzzPom)
 
         then:
