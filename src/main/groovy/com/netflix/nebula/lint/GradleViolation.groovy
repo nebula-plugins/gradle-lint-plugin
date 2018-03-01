@@ -16,6 +16,7 @@
 
 package com.netflix.nebula.lint
 
+import com.netflix.nebula.lint.rule.BuildFiles
 import groovy.transform.EqualsAndHashCode
 import org.codehaus.groovy.ast.ASTNode
 import org.codehaus.groovy.ast.expr.ArgumentListExpression
@@ -28,14 +29,14 @@ import java.util.concurrent.atomic.AtomicInteger
 
 @EqualsAndHashCode(includes = 'id')
 class GradleViolation extends Violation {
-    File file
+    BuildFiles files
     List<GradleLintFix> fixes = []
     int id
 
     static AtomicInteger nextId = new AtomicInteger(0)
 
-    GradleViolation(File file, Rule rule, Integer lineNumber, String sourceLine, String message) {
-        this.file = file
+    GradleViolation(BuildFiles files, Rule rule, Integer lineNumber, String sourceLine, String message) {
+        this.files = files
         this.rule = rule
         this.lineNumber = lineNumber
         this.sourceLine = sourceLine
@@ -43,13 +44,23 @@ class GradleViolation extends Violation {
         this.id = nextId.getAndIncrement()
     }
 
+    File getFile() {
+        files.original(super.lineNumber).file
+    }
+
+    Integer getLineNumber() {
+        files.original(super.lineNumber).line
+    }
+
     GradleViolation insertAfter(ASTNode node, String changes) {
-        fixes += new GradleLintInsertAfter(this, file, node.lastLineNumber, changes)
+        BuildFiles.Original original = files.original(node.lastLineNumber)
+        fixes += new GradleLintInsertAfter(this, original.file, original.line, changes)
         this
     }
 
     GradleViolation insertBefore(ASTNode node, String changes) {
-        fixes += new GradleLintInsertBefore(this, file, node.lineNumber, changes)
+        BuildFiles.Original original = files.original(node.lineNumber)
+        fixes += new GradleLintInsertBefore(this, original.file, original.line, changes)
         this
     }
 
@@ -80,7 +91,8 @@ class GradleViolation extends Violation {
                         .collect { line -> ''.padRight(node.columnNumber + 3) + line }
                         .join('\n')
 
-                fixes += new GradleLintInsertAfter(this, file, closure.lineNumber, indentedChanges)
+                BuildFiles.Original original = files.original(closure.lineNumber)
+                fixes += new GradleLintInsertAfter(this, original.file, original.line, indentedChanges)
             }
         }
 
@@ -88,13 +100,15 @@ class GradleViolation extends Violation {
     }
 
     GradleViolation replaceWith(ASTNode node, String changes) {
-        fixes += new GradleLintReplaceWith(this, file, node.lineNumber..node.lastLineNumber, node.columnNumber,
+        BuildFiles.Original original = files.original(node.lineNumber)
+        fixes += new GradleLintReplaceWith(this, original.file, original.line..files.original(node.lastLineNumber).line, node.columnNumber,
             node.lastColumnNumber, changes)
         this
     }
 
     GradleViolation delete(ASTNode node) {
-        fixes += new GradleLintReplaceWith(this, file, node.lineNumber..node.lastLineNumber, node.columnNumber, node.lastColumnNumber, '')
+        BuildFiles.Original original = files.original(node.lineNumber)
+        fixes += new GradleLintReplaceWith(this, original.file, original.line..files.original(node.lastLineNumber).line, node.columnNumber, node.lastColumnNumber, '')
         this
     }
 

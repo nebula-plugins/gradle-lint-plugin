@@ -2,6 +2,7 @@ build/
 .gradle
 gradle.properties
 .idea/
+out/
 *.iml
 *.ipr
 *.iws
