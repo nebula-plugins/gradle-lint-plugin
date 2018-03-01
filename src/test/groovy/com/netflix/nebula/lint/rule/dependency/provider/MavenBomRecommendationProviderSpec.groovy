@@ -62,7 +62,7 @@ class MavenBomRecommendationProviderSpec extends Specification {
                   <dependency>
                     <groupId>commons-configuration</groupId>
                     <artifactId>commons-configuration</artifactId>
-                    <version>${commons.version}</version>
+                    <version>${commonsVersion}</version>
                   </dependency>
                 </dependencies>
               </dependencyManagement>
@@ -72,14 +72,14 @@ class MavenBomRecommendationProviderSpec extends Specification {
         project.repositories { maven { url repo } }
 
         // demonstrates maven property interpolation from gradle project properties
-        project.getExtensions().add("commons.version", "1.1.2")
+        project.getExtensions().add("commonsVersion", "1.1.2")
 
         project.dependencies {
             compile module
         }
 
         when:
-        def recommendations = new MavenBomRecommendationProvider(project, 'compile')
+        def recommendations = new MavenBomRecommendationProvider(project)
 
         then:
         recommendations.getVersion('commons-logging', 'commons-logging') == '1.1.1'
@@ -151,7 +151,7 @@ class MavenBomRecommendationProviderSpec extends Specification {
         }
 
         when:
-        def recommendations = new MavenBomRecommendationProvider(project, 'compile')
+        def recommendations = new MavenBomRecommendationProvider(project)
 
         then:
         recommendations.getVersion('commons-logging', 'commons-logging') == '1.1.1'
@@ -186,7 +186,7 @@ class MavenBomRecommendationProviderSpec extends Specification {
                   <dependency>
                     <groupId>commons-configuration</groupId>
                     <artifactId>commons-configuration</artifactId>
-                    <version>${commons.version}</version>
+                    <version>${commonsVersion}</version>
                   </dependency>
                 </dependencies>
               </dependencyManagement>
@@ -204,14 +204,14 @@ class MavenBomRecommendationProviderSpec extends Specification {
         project.repositories { maven { url repo } }
 
         // demonstrates maven property interpolation from gradle project properties
-        project.getExtensions().add("commons.version", "1.1.2")
+        project.getExtensions().add("commonsVersion", "1.1.2")
 
         project.dependencies {
             compile module
         }
 
         when:
-        def recommendations = new MavenBomRecommendationProvider(project, 'compile')
+        def recommendations = new MavenBomRecommendationProvider(project)
 
         then:
         recommendations.getVersion('commons-logging', 'commons-logging') == '1.1.1'
@@ -260,7 +260,7 @@ class MavenBomRecommendationProviderSpec extends Specification {
             compile 'example:foo'
         }
 
-        def recommendations = new MavenBomRecommendationProvider(project, 'compile')
+        def recommendations = new MavenBomRecommendationProvider(project)
 
         expect:
         recommendations.getVersion('example', 'foo') == expectedVersion
