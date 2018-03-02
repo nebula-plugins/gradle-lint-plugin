@@ -94,7 +94,7 @@ public class MavenBomRecommendationProvider extends ClasspathBasedRecommendation
         if (recommendations == null) {
             recommendations = new HashMap<>();
 
-            Set<File> recommendationFiles = getFilesOnConfiguration();
+            Set<File> recommendationFiles = getBomsOnConfiguration();
             for (File recommendation : recommendationFiles) {
                 if (!recommendation.getName().endsWith("pom")) {
                     break;

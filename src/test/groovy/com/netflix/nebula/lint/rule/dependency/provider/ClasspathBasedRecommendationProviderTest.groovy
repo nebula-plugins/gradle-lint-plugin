@@ -49,7 +49,7 @@ class ClasspathBasedRecommendationProviderTest extends TestKitSpecification {
         def provider = new MavenBomRecommendationProvider(project)
 
         when:
-        def files = provider.getFilesOnConfiguration()
+        def files = provider.getBomsOnConfiguration()
 
         then:
         files.find { it.toString().find(/sample\/recommender\/1.0\/recommender-1.0.pom/) }
@@ -89,7 +89,7 @@ class ClasspathBasedRecommendationProviderTest extends TestKitSpecification {
         def provider = new MavenBomRecommendationProvider(project)
 
         when:
-        def files = provider.getFilesOnConfiguration()
+        def files = provider.getBomsOnConfiguration()
 
         then:
         files.find { it.toString().contains(/sample\/recommender\/1.0\/recommender-1.0.pom/) }
@@ -131,7 +131,7 @@ class ClasspathBasedRecommendationProviderTest extends TestKitSpecification {
         def provider = new MavenBomRecommendationProvider(project)
 
         when:
-        def files = provider.getFilesOnConfiguration()
+        def files = provider.getBomsOnConfiguration()
 
         then:
         files.find { it.toString().contains(/sample\/recommender\/1.0\/recommender-1.0.pom/) }
@@ -176,7 +176,7 @@ class ClasspathBasedRecommendationProviderTest extends TestKitSpecification {
         def provider = new MavenBomRecommendationProvider(project)
 
         when:
-        def files = provider.getFilesOnConfiguration()
+        def files = provider.getBomsOnConfiguration()
 
         then:
         files.find { it.toString().contains(/sample\/recommender\/1.0\/recommender-1.0.pom/) }
