@@ -22,7 +22,6 @@ import com.netflix.nebula.lint.rule.dependency.JavaFixture
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
-import org.junit.rules.TestName
 import spock.lang.Specification
 
 /**
