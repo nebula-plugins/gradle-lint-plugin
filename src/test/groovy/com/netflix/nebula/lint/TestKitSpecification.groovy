@@ -29,10 +29,7 @@ import spock.lang.Specification
  * Things that really belong in the unfinished Gradle Testkit
  */
 abstract class TestKitSpecification extends Specification {
-    @Rule
-    final TestName testName = new TestName()
-    @Rule
-    final TemporaryFolder temp = new TemporaryFolder()
+    @Rule final TemporaryFolder temp = new TemporaryFolder()
     File projectDir
     File buildFile
     File settingsFile
@@ -41,7 +38,6 @@ abstract class TestKitSpecification extends Specification {
 
     def setup() {
         projectDir = temp.root
-        projectDir.mkdirs()
         buildFile = new File(projectDir, 'build.gradle')
         settingsFile = new File(projectDir, 'settings.gradle')
         propertiesFile = new File(projectDir, 'gradle.properties')
