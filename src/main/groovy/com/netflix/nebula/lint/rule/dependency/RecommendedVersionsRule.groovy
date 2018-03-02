@@ -83,9 +83,15 @@ class RecommendedVersionsRule extends GradleLintRule implements GradleModelAware
             return false
         }
 
+        def filesInProjectDir = project.projectDir.listFiles().toString()
         if (project.gradle.gradleVersion < GRADLE_VERSION_WITH_OPT_IN_FEATURES) {
+            if (!filesInProjectDir.contains(project.projectDir.toString() + File.separator + GRADLE_PROPERTIES)) {
+                return false
+            }
+
             def props = new Properties()
-            new File(project.projectDir, GRADLE_PROPERTIES).withInputStream { props.load(it) }
+            def propertiesFile = new File(project.projectDir, GRADLE_PROPERTIES)
+            propertiesFile.withInputStream { props.load(it) }
             def advancedPomPropertySet = props.getProperty('org.gradle.advancedpomsupport') == "true"
 
             def experimentalFeaturesEnabled = project.gradle.properties.get("experimentalFeatures")?.getProperties()?.get("enabled") == true
@@ -93,8 +99,11 @@ class RecommendedVersionsRule extends GradleLintRule implements GradleModelAware
             return advancedPomPropertySet && experimentalFeaturesEnabled
         }
 
-        def settingsFileText = new File(project.projectDir, GRADLE_SETTINGS).text
-        def advancedPomFeatureEnable = settingsFileText.contains('enableFeaturePreview(\'IMPROVED_POM_SUPPORT\')')
+        if (!filesInProjectDir.contains(project.projectDir.toString() + File.separator + GRADLE_SETTINGS)) {
+            return false
+        }
+        def settingsFile = new File(project.projectDir, GRADLE_SETTINGS)
+        def advancedPomFeatureEnable = settingsFile.text.contains('enableFeaturePreview(\'IMPROVED_POM_SUPPORT\')')
 
         advancedPomFeatureEnable
     }

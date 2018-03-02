@@ -19,16 +19,26 @@
 package com.netflix.nebula.lint.rule.dependency
 
 import nebula.test.IntegrationSpec
+import org.junit.Rule
+import org.junit.rules.TemporaryFolder
 import spock.lang.Unroll
 
 class RecommendedVersionsRuleSpec extends IntegrationSpec {
+    @Rule
+    final TemporaryFolder temp = new TemporaryFolder()
     private static final String V_4_POINT_1 = '4.1'
     private static final String V_4_POINT_5 = '4.5'
     private static final String V_4_POINT_6 = '4.6'
 
+    def setup() {
+        projectDir = temp.root
+        buildFile = new File(projectDir, 'build.gradle')
+    }
+
     @Unroll
     def 'v#versionOfGradle - remove version from dependency when bom has version - #expectVersionsRemoved'() {
         given:
+        setup()
         def repo = new File(projectDir, 'repo')
         repo.mkdirs()
         setupSampleBomFile(repo, 'recommender')
@@ -66,11 +76,13 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         versionOfGradle | lowerVersionOfGradle | expectVersionsRemoved
         V_4_POINT_1     | true                 | false
         V_4_POINT_5     | false                | true
+        V_4_POINT_6     | false                | true
     }
 
     @Unroll
     def 'v#versionOfGradle - preserve versions when bom does not contain version'() {
         given:
+        setup()
         def repo = new File(projectDir, 'repo')
         repo.mkdirs()
         setupSampleBomFile(repo, 'recommender')
@@ -103,11 +115,13 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         versionOfGradle | lowerVersionOfGradle
         V_4_POINT_1     | true
         V_4_POINT_5     | false
+        V_4_POINT_6     | false
     }
 
     @Unroll
     def 'v#versionOfGradle - remove version from dependency when bom has version set via property - #expectVersionsRemoved'() {
         given:
+        setup()
         def repo = new File(projectDir, 'repo')
         repo.mkdirs()
         setupSampleBomFile(repo, 'recommender')
@@ -150,11 +164,13 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         versionOfGradle | lowerVersionOfGradle | expectVersionsRemoved
         V_4_POINT_1     | true                 | false
         V_4_POINT_5     | false                | true
+        V_4_POINT_6     | false                | true
     }
 
     @Unroll
     def 'v#versionOfGradle - runs (#shouldRemoveDependencyVersions) with setup: prop - #addedProperties, settings - #addedSettings'() {
         given:
+        setup()
         def repo = new File(projectDir, 'repo')
         repo.mkdirs()
         setupSampleBomFile(repo, 'recommender')
@@ -202,6 +218,42 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         V_4_POINT_6     | false           | true          | true    // doesn't need properties set
         V_4_POINT_6     | true            | true          | true
     }
+    
+    @Unroll
+    def 'v#versionOfGradle - there are no problems with a basic configuration, without settings or properties'() {
+        given:
+        setup()
+        buildFile.text = """
+            buildscript {  repositories { jcenter() } }
+
+            apply plugin: 'java'
+            apply plugin: 'nebula.lint'
+
+            gradleLint.rules = ['recommended-versions']
+
+            dependencies {
+                compile 'commons-logging:commons-logging:latest.release'
+            }
+        """
+        setupGradleVersion(versionOfGradle)
+
+        when:
+        def result = runTasks('fixGradleLint')
+
+        then:
+        assertDependenciesPreserveVersions(buildFile, 'commons-logging:commons-logging')
+        !result.standardOutput.contains('fixed          recommended-dependency')
+        !result.standardOutput.contains('Exception')
+        !result.standardOutput.contains('FileNotFoundException')
+
+        def filesAsString = projectDir.listFiles().toString()
+        filesAsString.contains("build.gradle")
+        !filesAsString.contains("gradle.properties")
+        !filesAsString.contains("settings.gradle")
+
+        where:
+        versionOfGradle << [V_4_POINT_1, V_4_POINT_5, V_4_POINT_6]
+    }
 
     private static void setupSampleBomFile(File repo, String artifactName) {
         def sampleFileContents = """\
@@ -233,7 +285,8 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
     }
 
     private static File setupSampleFileWith(File repo, String artifactName, String sampleFileContents) {
-        def sample = new File(repo, 'sample/' + artifactName + '/1.0')
+        String repoPath = File.separator + 'sample' + File.separator + artifactName + File.separator + '1.0'
+        def sample = new File(repo, repoPath)
         sample.mkdirs()
         def sampleFile = new File(sample, artifactName + '-1.0.pom')
         sampleFile << sampleFileContents
