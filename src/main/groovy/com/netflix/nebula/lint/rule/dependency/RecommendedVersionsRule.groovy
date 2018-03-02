@@ -60,7 +60,7 @@ class RecommendedVersionsRule extends GradleLintRule implements GradleModelAware
             return
         }
 
-        recommendationProvider = new MavenBomRecommendationProvider(project)  // TODO: use dependenciesPerConf
+        recommendationProvider = new MavenBomRecommendationProvider(project)
 
         dependenciesPerConf.each { conf, allDependencies ->
             allDependencies.each { desc, call ->

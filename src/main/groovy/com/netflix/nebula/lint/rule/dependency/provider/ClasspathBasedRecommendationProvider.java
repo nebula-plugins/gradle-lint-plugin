@@ -42,7 +42,7 @@ public abstract class ClasspathBasedRecommendationProvider extends AbstractRecom
         this.project = project;
     }
 
-    Set<File> getFilesOnConfiguration() {
+    Set<File> getBomsOnConfiguration() {
         Set<File> boms = new LinkedHashSet<>(); // to preserve insertion order and resolution order
 
         ConfigurationContainer allConfigurations = project.getConfigurations();
