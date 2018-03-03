@@ -79,18 +79,23 @@ class RecommendedVersionsRule extends GradleLintRule implements GradleModelAware
     }
 
     private boolean recommenderIsEnabled() {
-        if (project.gradle.gradleVersion < GRADLE_VERSION_WITH_EXPERIMENTAL_FEATURES) {
+        def gradleVersion = project.gradle.gradleVersion
+        if (gradleVersion < GRADLE_VERSION_WITH_EXPERIMENTAL_FEATURES) {
             return false
         }
 
-        def filesInProjectDir = project.projectDir.listFiles().toString()
-        if (project.gradle.gradleVersion < GRADLE_VERSION_WITH_OPT_IN_FEATURES) {
-            if (!filesInProjectDir.contains(project.projectDir.toString() + File.separator + GRADLE_PROPERTIES)) {
+        def currentProjectDir = project.projectDir
+        def rootProjectDir = project.rootDir
+        def filesInProjectDir = rootProjectDir.listFiles().toString()
+        if (gradleVersion < GRADLE_VERSION_WITH_OPT_IN_FEATURES) {
+            if (!filesInProjectDir.contains(rootProjectDir.toString() + File.separator + GRADLE_PROPERTIES) &&
+                    !filesInProjectDir.contains(currentProjectDir.toString() + File.separator + GRADLE_PROPERTIES)) {
                 return false
             }
 
+            //TODO: search through properties in subprojects
             def props = new Properties()
-            def propertiesFile = new File(project.projectDir, GRADLE_PROPERTIES)
+            def propertiesFile = new File(rootProjectDir, GRADLE_PROPERTIES)
             propertiesFile.withInputStream { props.load(it) }
             def advancedPomPropertySet = props.getProperty('org.gradle.advancedpomsupport') == "true"
 
@@ -99,10 +104,12 @@ class RecommendedVersionsRule extends GradleLintRule implements GradleModelAware
             return advancedPomPropertySet && experimentalFeaturesEnabled
         }
 
-        if (!filesInProjectDir.contains(project.projectDir.toString() + File.separator + GRADLE_SETTINGS)) {
+        if (!filesInProjectDir.contains(rootProjectDir.toString() + File.separator + GRADLE_SETTINGS) &&
+                !filesInProjectDir.toString().contains(currentProjectDir.toString() + File.separator + GRADLE_SETTINGS)) {
             return false
         }
-        def settingsFile = new File(project.projectDir, GRADLE_SETTINGS)
+        //TODO: search through settings in subprojects
+        def settingsFile = new File(rootProjectDir, GRADLE_SETTINGS)
         def advancedPomFeatureEnable = settingsFile.text.contains('enableFeaturePreview(\'IMPROVED_POM_SUPPORT\')')
 
         advancedPomFeatureEnable

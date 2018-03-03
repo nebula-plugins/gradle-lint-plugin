@@ -19,24 +19,25 @@
 package com.netflix.nebula.lint.rule.dependency
 
 import nebula.test.IntegrationSpec
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
 import spock.lang.Unroll
 
 class RecommendedVersionsRuleSpec extends IntegrationSpec {
-    @Rule
-    final TemporaryFolder temp = new TemporaryFolder()
     private static final String V_4_POINT_1 = '4.1'
     private static final String V_4_POINT_5 = '4.5'
     private static final String V_4_POINT_6 = '4.6'
 
     def setup() {
-        projectDir = temp.root
-        buildFile = new File(projectDir, 'build.gradle')
+        if (settingsFile.exists()) {
+            settingsFile.delete()
+        }
+        def propertiesFile = new File("gradle.properties")
+        if (propertiesFile.exists()) {
+            propertiesFile.delete()
+        }
     }
 
     @Unroll
-    def 'v#versionOfGradle - remove version from dependency when bom has version - #expectVersionsRemoved'() {
+    def 'v#versionOfGradle - base - remove version from dependency when bom has version - #expectVersionsRemoved'() {
         given:
         setup()
         def repo = new File(projectDir, 'repo')
@@ -80,7 +81,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
     }
 
     @Unroll
-    def 'v#versionOfGradle - preserve versions when bom does not contain version'() {
+    def 'v#versionOfGradle - base - preserve versions when bom does not contain version'() {
         given:
         setup()
         def repo = new File(projectDir, 'repo')
@@ -119,7 +120,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
     }
 
     @Unroll
-    def 'v#versionOfGradle - remove version from dependency when bom has version set via property - #expectVersionsRemoved'() {
+    def 'v#versionOfGradle - base - remove version from dependency when bom has version set via property - #expectVersionsRemoved'() {
         given:
         setup()
         def repo = new File(projectDir, 'repo')
@@ -166,6 +167,244 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         V_4_POINT_5     | false                | true
         V_4_POINT_6     | false                | true
     }
+
+    @Unroll
+    def 'v#versionOfGradle - subprojects - remove version from dependency - #expectVersionsRemoved'() {
+        given:
+        setup()
+        def repo = new File(projectDir, 'repo')
+        repo.mkdirs()
+        setupSampleBomFile(repo, 'recommender')
+
+        buildFile.text = """
+            buildscript {  repositories { jcenter() } }
+            apply plugin: 'java'
+            apply plugin: 'nebula.lint'
+
+            subprojects {
+                apply plugin: 'java'
+                apply plugin: 'nebula.lint'
+                
+                gradleLint.rules = ['recommended-versions']
+                
+                repositories { maven { url "${repo}" } }
+            }
+        """
+        addSubproject('sub1', """\
+            dependencies {
+                compile 'sample:recommender:1.0'
+                compile 'commons-logging:commons-logging:latest.release'
+            }
+            """.stripIndent())
+
+        setupGradleVersion(versionOfGradle)
+        setupSettingsFile()
+        setupPropertiesFile()
+
+        when:
+        def result = runTasks('fixGradleLint')
+
+        then:
+        def sub1Gradle = new File(projectDir, 'sub1/build.gradle')
+        if (expectVersionsRemoved) {
+            assertDependenciesHaveVersionsRemoved(sub1Gradle, 'commons-logging:commons-logging')
+            result.standardOutput.contains('fixed          recommended-dependency')
+        } else {
+            assertDependenciesPreserveVersions(sub1Gradle, 'commons-logging:commons-logging')
+        }
+
+        where:
+        versionOfGradle | lowerVersionOfGradle | expectVersionsRemoved
+        V_4_POINT_1     | true                 | false
+        V_4_POINT_5     | false                | true
+        V_4_POINT_6     | false                | true
+    }
+
+    @Unroll
+    def 'v#versionOfGradle - subprojects - remove version from dependency when bom has version set via property - #expectVersionsRemoved'() {
+        given:
+        setup()
+        def repo = new File(projectDir, 'repo')
+        repo.mkdirs()
+        setupSampleBomFile(repo, 'recommender')
+
+        buildFile.text = """
+            buildscript {  repositories { jcenter() } }
+            apply plugin: 'java'
+            apply plugin: 'nebula.lint'
+
+            ext {
+                commonsVersion = '1.1.2'
+            }
+            
+            subprojects {
+                apply plugin: 'java'
+                apply plugin: 'nebula.lint'
+                
+                gradleLint.rules = ['recommended-versions']
+                
+                repositories { maven { url "${repo}" } }
+            }
+        """
+        addSubproject('sub1', """\
+            dependencies {
+                compile 'sample:recommender:1.0'
+                compile 'commons-lang:commons-lang:latest.release'
+                compile 'commons-logging:commons-logging:latest.release'
+            }
+            """.stripIndent())
+
+        setupGradleVersion(versionOfGradle)
+        setupSettingsFile()
+        setupPropertiesFile()
+
+        when:
+        def result = runTasks('fixGradleLint')
+
+        then:
+        def sub1Gradle = new File(projectDir, 'sub1/build.gradle')
+        if (expectVersionsRemoved) {
+            assertDependenciesHaveVersionsRemoved(sub1Gradle, 'commons-lang:commons-lang', 'commons-logging:commons-logging')
+            result.standardOutput.contains('fixed          recommended-dependency')
+        } else {
+            assertDependenciesPreserveVersions(sub1Gradle, 'commons-lang:commons-lang', 'commons-logging:commons-logging')
+        }
+
+        where:
+        versionOfGradle | lowerVersionOfGradle | expectVersionsRemoved
+        V_4_POINT_1     | true                 | false
+        V_4_POINT_5     | false                | true
+        V_4_POINT_6     | false                | true
+    }
+
+    @Unroll
+    def 'v#versionOfGradle - multiple subprojects - remove version from dependency - #expectVersionsRemoved'() {
+        given:
+        setup()
+        def repo = new File(projectDir, 'repo')
+        repo.mkdirs()
+        setupSampleBomFile(repo, 'recommender')
+
+        buildFile.text = """
+            buildscript {  repositories { jcenter() } }
+            apply plugin: 'java'
+            apply plugin: 'nebula.lint'
+
+            ext {
+                commonsVersion = '1.1.2'
+            }
+            
+            subprojects {
+                apply plugin: 'java'
+                apply plugin: 'nebula.lint'
+                
+                gradleLint.rules = ['recommended-versions']
+                
+                repositories { maven { url "${repo}" } }
+            }
+        """
+        addSubproject('sub1', """\
+            dependencies {
+                compile 'sample:recommender:1.0'
+                compile 'commons-lang:commons-lang:latest.release'
+                compile 'commons-logging:commons-logging:latest.release'
+            }
+            """.stripIndent())
+        addSubproject('sub2', """\
+            dependencies {
+                compile 'sample:recommender:1.0'
+                compile 'commons-lang:commons-lang:latest.release'
+                compile 'commons-logging:commons-logging:latest.release'
+            }
+            """.stripIndent())
+
+        setupGradleVersion(versionOfGradle)
+        setupSettingsFile()
+        setupPropertiesFile()
+
+        when:
+        def result = runTasks('fixGradleLint')
+
+        then:
+        def sub1Gradle = new File(projectDir, 'sub1/build.gradle')
+        def sub2Gradle = new File(projectDir, 'sub2/build.gradle')
+        if (expectVersionsRemoved) {
+            assertDependenciesHaveVersionsRemoved(sub1Gradle, 'commons-lang:commons-lang', 'commons-logging:commons-logging')
+            assertDependenciesHaveVersionsRemoved(sub2Gradle, 'commons-lang:commons-lang', 'commons-logging:commons-logging')
+            result.standardOutput.contains('fixed          recommended-dependency')
+        } else {
+            assertDependenciesPreserveVersions(sub1Gradle, 'commons-lang:commons-lang', 'commons-logging:commons-logging')
+            assertDependenciesPreserveVersions(sub2Gradle, 'commons-lang:commons-lang', 'commons-logging:commons-logging')
+        }
+
+        where:
+        versionOfGradle | lowerVersionOfGradle | expectVersionsRemoved
+        V_4_POINT_1     | true                 | false
+        V_4_POINT_5     | false                | true
+        V_4_POINT_6     | false                | true
+    }
+
+    @Unroll
+    def 'v#versionOfGradle - subprojects - preserve versions when bom does not contain version'() {
+        given:
+        setup()
+        def repo = new File(projectDir, 'repo')
+        repo.mkdirs()
+        setupSampleBomFile(repo, 'recommender')
+
+        buildFile.text = """
+            buildscript {  repositories { jcenter() } }
+            repositories { maven { url "${repo}" } }
+
+            apply plugin: 'java'
+            apply plugin: 'nebula.lint'
+
+            gradleLint.rules = ['recommended-versions']
+
+            subprojects {
+                apply plugin: 'java'
+                apply plugin: 'nebula.lint'
+                
+                gradleLint.rules = ['recommended-versions']
+                
+                repositories { maven { url "${repo}" } }
+            }
+        """
+        addSubproject('sub1', """\
+            dependencies {
+                compile 'sample:recommender:1.0'
+                compile 'com.google.guava:guava:19.0'
+                compile 'commons-lang:commons-lang:latest.release'
+                compile 'commons-logging:commons-logging:latest.release'
+            }
+            """.stripIndent())
+        setupGradleVersion(versionOfGradle)
+        setupSettingsFile()
+        setupPropertiesFile()
+
+        when:
+        def result = runTasks('fixGradleLint')
+
+        then:
+
+        def sub1Gradle = new File(projectDir, 'sub1/build.gradle')
+        assertDependenciesPreserveVersions(sub1Gradle, 'com.google.guava:guava')
+
+        if (expectRecommendedVersionsRemoved) {
+            assertDependenciesHaveVersionsRemoved(sub1Gradle, 'commons-lang:commons-lang', 'commons-logging:commons-logging')
+            result.standardOutput.contains('fixed          recommended-dependency')
+        } else {
+            assertDependenciesPreserveVersions(sub1Gradle, 'commons-lang:commons-lang', 'commons-logging:commons-logging')
+        }
+
+        where:
+        versionOfGradle | lowerVersionOfGradle | expectRecommendedVersionsRemoved
+        V_4_POINT_1     | true                 | false
+        V_4_POINT_5     | false                | true
+        V_4_POINT_6     | false                | true
+    }
+
+    // TODO: allprojects test
 
     @Unroll
     def 'v#versionOfGradle - runs (#shouldRemoveDependencyVersions) with setup: prop - #addedProperties, settings - #addedSettings'() {
@@ -218,7 +457,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         V_4_POINT_6     | false           | true          | true    // doesn't need properties set
         V_4_POINT_6     | true            | true          | true
     }
-    
+
     @Unroll
     def 'v#versionOfGradle - there are no problems with a basic configuration, without settings or properties'() {
         given:
@@ -247,9 +486,9 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         !result.standardOutput.contains('FileNotFoundException')
 
         def filesAsString = projectDir.listFiles().toString()
-        filesAsString.contains("build.gradle")
-        !filesAsString.contains("gradle.properties")
-        !filesAsString.contains("settings.gradle")
+        filesAsString.contains(projectDir.toString() + File.separator + "build.gradle")
+        !filesAsString.contains(projectDir.toString() + File.separator + "gradle.properties")
+        !filesAsString.contains(projectDir.toString() + File.separator + "settings.gradle")
 
         where:
         versionOfGradle << [V_4_POINT_1, V_4_POINT_5, V_4_POINT_6]
