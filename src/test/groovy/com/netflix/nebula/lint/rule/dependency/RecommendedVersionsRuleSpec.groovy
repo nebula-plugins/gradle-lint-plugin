@@ -25,6 +25,8 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
     private static final String V_4_POINT_1 = '4.1'
     private static final String V_4_POINT_5 = '4.5'
     private static final String V_4_POINT_6 = '4.6'
+    private static final String SUBPROJECTS = 'subprojects'
+    private static final String ALLPROJECTS = 'allprojects'
 
     def setup() {
         if (settingsFile.exists()) {
@@ -57,7 +59,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
                 compile 'sample:recommender:1.0'
                 compile 'commons-logging:commons-logging:latest.release'
             }
-        """
+        """.stripIndent()
         setupGradleVersion(versionOfGradle)
         setupSettingsFile()
         setupPropertiesFile()
@@ -101,7 +103,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
                 compile 'sample:recommender:1.0'
                 compile 'com.google.guava:guava:19.0'
             }
-        """
+        """.stripIndent()
         setupGradleVersion(versionOfGradle)
         setupSettingsFile()
         setupPropertiesFile()
@@ -145,7 +147,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
                 compile 'commons-lang:commons-lang:latest.release'
                 compile 'commons-logging:commons-logging:latest.release'
             }
-        """
+        """.stripIndent()
         setupGradleVersion(versionOfGradle)
         setupSettingsFile()
         setupPropertiesFile()
@@ -169,19 +171,26 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
     }
 
     @Unroll
-    def 'v#versionOfGradle - subprojects - remove version from dependency - #expectVersionsRemoved'() {
+    def 'v#versionOfGradle, #subOrAllProjects: remove version from dependency - #expectVersionsRemoved'() {
         given:
         setup()
         def repo = new File(projectDir, 'repo')
         repo.mkdirs()
         setupSampleBomFile(repo, 'recommender')
 
-        buildFile.text = """
+        buildFile << '''
             buildscript {  repositories { jcenter() } }
-            apply plugin: 'java'
-            apply plugin: 'nebula.lint'
+            '''.stripIndent()
 
-            subprojects {
+        if (subOrAllProjects == SUBPROJECTS) {
+            buildFile << '''\
+                apply plugin: 'java'
+                apply plugin: 'nebula.lint'
+                '''.stripIndent()
+        }
+
+        buildFile << """\
+            ${subOrAllProjects} {
                 apply plugin: 'java'
                 apply plugin: 'nebula.lint'
                 
@@ -189,7 +198,8 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
                 
                 repositories { maven { url "${repo}" } }
             }
-        """
+        """.stripIndent()
+
         addSubproject('sub1', """\
             dependencies {
                 compile 'sample:recommender:1.0'
@@ -214,30 +224,39 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         }
 
         where:
-        versionOfGradle | lowerVersionOfGradle | expectVersionsRemoved
-        V_4_POINT_1     | true                 | false
-        V_4_POINT_5     | false                | true
-        V_4_POINT_6     | false                | true
+        versionOfGradle | lowerVersionOfGradle | expectVersionsRemoved | subOrAllProjects
+        V_4_POINT_1     | true                 | false                 | SUBPROJECTS
+        V_4_POINT_1     | true                 | false                 | ALLPROJECTS
+        V_4_POINT_5     | false                | true                  | SUBPROJECTS
+        V_4_POINT_5     | false                | true                  | ALLPROJECTS
+        V_4_POINT_6     | false                | true                  | SUBPROJECTS
+        V_4_POINT_6     | false                | true                  | ALLPROJECTS
     }
 
     @Unroll
-    def 'v#versionOfGradle - subprojects - remove version from dependency when bom has version set via property - #expectVersionsRemoved'() {
+    def 'v#versionOfGradle, #subOrAllProjects - remove version from dependency when bom has version set via property - #expectVersionsRemoved'() {
         given:
         setup()
         def repo = new File(projectDir, 'repo')
         repo.mkdirs()
         setupSampleBomFile(repo, 'recommender')
 
-        buildFile.text = """
+        buildFile << """
             buildscript {  repositories { jcenter() } }
-            apply plugin: 'java'
-            apply plugin: 'nebula.lint'
-
             ext {
                 commonsVersion = '1.1.2'
             }
-            
-            subprojects {
+            """.stripIndent()
+
+        if (subOrAllProjects == SUBPROJECTS) {
+            buildFile << '''\
+                apply plugin: 'java'
+                apply plugin: 'nebula.lint'
+                '''.stripIndent()
+        }
+
+        buildFile << """\
+            ${subOrAllProjects} {
                 apply plugin: 'java'
                 apply plugin: 'nebula.lint'
                 
@@ -245,7 +264,8 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
                 
                 repositories { maven { url "${repo}" } }
             }
-        """
+            """.stripIndent()
+
         addSubproject('sub1', """\
             dependencies {
                 compile 'sample:recommender:1.0'
@@ -271,30 +291,39 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         }
 
         where:
-        versionOfGradle | lowerVersionOfGradle | expectVersionsRemoved
-        V_4_POINT_1     | true                 | false
-        V_4_POINT_5     | false                | true
-        V_4_POINT_6     | false                | true
+        versionOfGradle | lowerVersionOfGradle | expectVersionsRemoved | subOrAllProjects
+        V_4_POINT_1     | true                 | false                 | SUBPROJECTS
+        V_4_POINT_1     | true                 | false                 | ALLPROJECTS
+        V_4_POINT_5     | false                | true                  | SUBPROJECTS
+        V_4_POINT_5     | false                | true                  | ALLPROJECTS
+        V_4_POINT_6     | false                | true                  | SUBPROJECTS
+        V_4_POINT_6     | false                | true                  | ALLPROJECTS
     }
 
     @Unroll
-    def 'v#versionOfGradle - multiple subprojects - remove version from dependency - #expectVersionsRemoved'() {
+    def 'v#versionOfGradle, #subOrAllProjects, multiple subprojects - remove version from dependency - #expectVersionsRemoved'() {
         given:
         setup()
         def repo = new File(projectDir, 'repo')
         repo.mkdirs()
         setupSampleBomFile(repo, 'recommender')
 
-        buildFile.text = """
+        buildFile << """
             buildscript {  repositories { jcenter() } }
-            apply plugin: 'java'
-            apply plugin: 'nebula.lint'
-
             ext {
                 commonsVersion = '1.1.2'
             }
-            
-            subprojects {
+            """.stripIndent()
+
+        if (subOrAllProjects == SUBPROJECTS) {
+            buildFile << '''\
+                apply plugin: 'java'
+                apply plugin: 'nebula.lint'
+                '''.stripIndent()
+        }
+
+        buildFile << """\
+            ${subOrAllProjects} {
                 apply plugin: 'java'
                 apply plugin: 'nebula.lint'
                 
@@ -302,7 +331,8 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
                 
                 repositories { maven { url "${repo}" } }
             }
-        """
+            """.stripIndent()
+
         addSubproject('sub1', """\
             dependencies {
                 compile 'sample:recommender:1.0'
@@ -310,6 +340,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
                 compile 'commons-logging:commons-logging:latest.release'
             }
             """.stripIndent())
+
         addSubproject('sub2', """\
             dependencies {
                 compile 'sample:recommender:1.0'
@@ -338,14 +369,17 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         }
 
         where:
-        versionOfGradle | lowerVersionOfGradle | expectVersionsRemoved
-        V_4_POINT_1     | true                 | false
-        V_4_POINT_5     | false                | true
-        V_4_POINT_6     | false                | true
+        versionOfGradle | lowerVersionOfGradle | expectVersionsRemoved | subOrAllProjects
+        V_4_POINT_1     | true                 | false                 | SUBPROJECTS
+        V_4_POINT_1     | true                 | false                 | ALLPROJECTS
+        V_4_POINT_5     | false                | true                  | SUBPROJECTS
+        V_4_POINT_5     | false                | true                  | ALLPROJECTS
+        V_4_POINT_6     | false                | true                  | SUBPROJECTS
+        V_4_POINT_6     | false                | true                  | ALLPROJECTS
     }
 
     @Unroll
-    def 'v#versionOfGradle - subprojects - preserve versions when bom does not contain version'() {
+    def 'v#versionOfGradle, #subOrAllProjects - preserve versions when bom does not contain version'() {
         given:
         setup()
         def repo = new File(projectDir, 'repo')
@@ -354,14 +388,20 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
 
         buildFile.text = """
             buildscript {  repositories { jcenter() } }
-            repositories { maven { url "${repo}" } }
+            ext {
+                commonsVersion = '1.1.2'
+            }
+            """.stripIndent()
 
-            apply plugin: 'java'
-            apply plugin: 'nebula.lint'
+        if (subOrAllProjects == SUBPROJECTS) {
+            buildFile << '''\
+                apply plugin: 'java'
+                apply plugin: 'nebula.lint'
+                '''.stripIndent()
+        }
 
-            gradleLint.rules = ['recommended-versions']
-
-            subprojects {
+        buildFile << """\
+            ${subOrAllProjects} {
                 apply plugin: 'java'
                 apply plugin: 'nebula.lint'
                 
@@ -369,7 +409,8 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
                 
                 repositories { maven { url "${repo}" } }
             }
-        """
+            """.stripIndent()
+
         addSubproject('sub1', """\
             dependencies {
                 compile 'sample:recommender:1.0'
@@ -378,6 +419,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
                 compile 'commons-logging:commons-logging:latest.release'
             }
             """.stripIndent())
+
         setupGradleVersion(versionOfGradle)
         setupSettingsFile()
         setupPropertiesFile()
@@ -398,13 +440,14 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         }
 
         where:
-        versionOfGradle | lowerVersionOfGradle | expectRecommendedVersionsRemoved
-        V_4_POINT_1     | true                 | false
-        V_4_POINT_5     | false                | true
-        V_4_POINT_6     | false                | true
+        versionOfGradle | lowerVersionOfGradle | expectRecommendedVersionsRemoved | subOrAllProjects
+        V_4_POINT_1     | true                 | false                            | SUBPROJECTS
+        V_4_POINT_1     | true                 | false                            | ALLPROJECTS
+        V_4_POINT_5     | false                | true                             | SUBPROJECTS
+        V_4_POINT_5     | false                | true                             | ALLPROJECTS
+        V_4_POINT_6     | false                | true                             | SUBPROJECTS
+        V_4_POINT_6     | false                | true                             | ALLPROJECTS
     }
-
-    // TODO: allprojects test
 
     @Unroll
     def 'v#versionOfGradle - runs (#shouldRemoveDependencyVersions) with setup: prop - #addedProperties, settings - #addedSettings'() {
@@ -427,7 +470,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
                 compile 'sample:recommender:1.0'
                 compile 'commons-logging:commons-logging:latest.release'
             }
-        """
+        """.stripIndent()
         setupGradleVersion(versionOfGradle)
         if (addedProperties) {
             setupPropertiesFile()
@@ -473,7 +516,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
             dependencies {
                 compile 'commons-logging:commons-logging:latest.release'
             }
-        """
+        """.stripIndent()
         setupGradleVersion(versionOfGradle)
 
         when:
@@ -519,7 +562,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
                 </dependencies>
               </dependencyManagement>
             </project>
-        """
+        """.stripIndent()
         setupSampleFileWith(repo, artifactName, sampleFileContents)
     }
 
