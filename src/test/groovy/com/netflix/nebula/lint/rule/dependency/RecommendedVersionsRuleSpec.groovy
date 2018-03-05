@@ -29,6 +29,9 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
     private static final String ALLPROJECTS = 'allprojects'
 
     def setup() {
+        if (buildFile.exists()) {
+            buildFile.delete()
+        }
         if (settingsFile.exists()) {
             settingsFile.delete()
         }
@@ -39,7 +42,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
     }
 
     @Unroll
-    def 'v#versionOfGradle - base - remove version from dependency when bom has version - #expectVersionsRemoved'() {
+    def 'v#versionOfGradle, base - remove version from dependency when bom has version - #expectVersionsRemoved'() {
         given:
         setup()
         def repo = new File(projectDir, 'repo')
@@ -83,7 +86,47 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
     }
 
     @Unroll
-    def 'v#versionOfGradle - respects ignores'() {
+    def 'v#versionOfGradle, base - no lint errors on correct build.gradle'() {
+        given:
+        setup()
+        def repo = new File(projectDir, 'repo')
+        repo.mkdirs()
+        setupSampleBomFile(repo, 'recommender')
+
+        buildFile.text = """
+            buildscript {  repositories { jcenter() } }
+            repositories { maven { url "${repo}" } }
+
+            apply plugin: 'java'
+            apply plugin: 'nebula.lint'
+
+            gradleLint.rules = ['recommended-versions']
+
+            dependencies {
+                compile 'sample:recommender:1.0'
+                compile 'commons-logging:commons-logging'
+            }
+        """.stripIndent()
+        setupGradleVersion(versionOfGradle)
+        setupSettingsFile()
+        setupPropertiesFile()
+
+        when:
+        def result = runTasks('fixGradleLint')
+
+        then:
+        def output = result.standardOutput
+        !output.contains('warning')
+        !output.contains('problem (')
+        !output.contains('problems (')
+        !output.contains('commons-logging:commons-logging:')
+
+        where:
+        versionOfGradle << [V_4_POINT_1, V_4_POINT_5, V_4_POINT_6]
+    }
+
+    @Unroll
+    def 'v#versionOfGradle, base - respects ignores'() {
         given:
         setup()
         def repo = new File(projectDir, 'repo')
@@ -121,7 +164,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
     }
 
     @Unroll
-    def 'v#versionOfGradle - base - preserve versions when bom does not contain version'() {
+    def 'v#versionOfGradle, base - preserve versions when bom does not contain version'() {
         given:
         setup()
         def repo = new File(projectDir, 'repo')
@@ -160,7 +203,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
     }
 
     @Unroll
-    def 'v#versionOfGradle - base - remove version from dependency when bom has version set via property - #expectVersionsRemoved'() {
+    def 'v#versionOfGradle, base - remove version from dependency when bom has version set via property - #expectVersionsRemoved'() {
         given:
         setup()
         def repo = new File(projectDir, 'repo')
@@ -269,6 +312,72 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         V_4_POINT_5     | false                | true                  | ALLPROJECTS
         V_4_POINT_6     | false                | true                  | SUBPROJECTS
         V_4_POINT_6     | false                | true                  | ALLPROJECTS
+    }
+
+    @Unroll
+    def 'v#versionOfGradle, #subOrAllProjects - no lint errors on correct build.gradle'() {
+        given:
+        setup()
+        def repo = new File(projectDir, 'repo')
+        repo.mkdirs()
+        setupSampleBomFile(repo, 'recommender')
+
+        buildFile << """
+            buildscript {  repositories { jcenter() } }
+            ext {
+                commonsVersion = '1.1.2'
+            }
+            """.stripIndent()
+
+        if (subOrAllProjects == SUBPROJECTS) {
+            buildFile << '''\
+                apply plugin: 'java'
+                apply plugin: 'nebula.lint'
+                '''.stripIndent()
+        }
+
+        buildFile << """\
+            ${subOrAllProjects} {
+                apply plugin: 'java'
+                apply plugin: 'nebula.lint'
+                
+                gradleLint.rules = ['recommended-versions']
+                
+                repositories { maven { url "${repo}" } }
+            }
+            """.stripIndent()
+
+        addSubproject('sub1', """\
+            dependencies {
+                compile 'sample:recommender:1.0'
+                compile 'commons-lang:commons-lang'
+                compile 'commons-logging:commons-logging'
+            }
+            """.stripIndent())
+
+        setupGradleVersion(versionOfGradle)
+        setupSettingsFile()
+        setupPropertiesFile()
+
+        when:
+        def result = runTasks('fixGradleLint')
+
+        then:
+        def output = result.standardOutput
+        !output.contains('warning')
+        !output.contains('problem (')
+        !output.contains('problems (')
+        !output.contains('commons-lang:commons-lang:')
+        !output.contains('commons-logging:commons-logging:')
+
+        where:
+        versionOfGradle | subOrAllProjects
+        V_4_POINT_1     | SUBPROJECTS
+        V_4_POINT_1     | ALLPROJECTS
+        V_4_POINT_5     | SUBPROJECTS
+        V_4_POINT_5     | ALLPROJECTS
+        V_4_POINT_6     | SUBPROJECTS
+        V_4_POINT_6     | ALLPROJECTS
     }
 
     @Unroll
