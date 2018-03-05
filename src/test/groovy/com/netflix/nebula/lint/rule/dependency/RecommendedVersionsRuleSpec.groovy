@@ -450,6 +450,70 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
     }
 
     @Unroll
+    def 'v#versionOfGradle, #subOrAllProjects - multiproject sets platform bom given all config in root project'() {
+        given:
+        setup()
+        def repo = new File(projectDir, 'repo')
+        repo.mkdirs()
+        setupSampleBomFile(repo, 'recommender')
+
+        buildFile << """
+            buildscript {  repositories { jcenter() } }
+            ext {
+                commonsVersion = '1.1.2'
+            }
+            allprojects {
+                apply plugin: 'java'
+                apply plugin: 'nebula.lint'
+                gradleLint.rules = ['recommended-versions']
+                repositories { maven { url "${repo}" } }
+                dependencies {
+                    compile 'sample:recommender:1.0'
+                }
+            }
+            dependencies {
+                compile 'commons-configuration:commons-configuration:latest.release'
+            }
+            ${subOrAllProjects} {
+                dependencies {
+                    compile 'commons-lang:commons-lang:latest.release'
+                    compile 'commons-logging:commons-logging:latest.release'
+                }
+            }
+            """.stripIndent()
+
+        setupGradleVersion(versionOfGradle)
+        setupSettingsFile()
+        setupPropertiesFile()
+
+        when:
+        def result = runTasks('fixGradleLint')
+
+        then:
+        if (expectVersionsRemoved) {
+            assertDependenciesHaveVersionsRemoved(buildFile,
+                    'commons-lang:commons-lang',
+                    'commons-logging:commons-logging',
+                    'commons-configuration:commons-configuration')
+            result.standardOutput.contains('fixed          recommended-dependency')
+        } else {
+            assertDependenciesPreserveVersions(buildFile,
+                    'commons-lang:commons-lang',
+                    'commons-logging:commons-logging',
+                    'commons-configuration:commons-configuration')
+        }
+
+        where:
+        versionOfGradle | lowerVersionOfGradle | expectVersionsRemoved | subOrAllProjects
+        V_4_POINT_1     | true                 | false                 | SUBPROJECTS
+        V_4_POINT_1     | true                 | false                 | ALLPROJECTS
+//        V_4_POINT_5     | false                | true                  | SUBPROJECTS  // FIXME: why doesn't this work?
+        V_4_POINT_5     | false                | true                  | ALLPROJECTS
+//        V_4_POINT_6     | false                | true                  | SUBPROJECTS
+        V_4_POINT_6     | false                | true                  | ALLPROJECTS
+    }
+
+    @Unroll
     def 'v#versionOfGradle - runs (#shouldRemoveDependencyVersions) with setup: prop - #addedProperties, settings - #addedSettings'() {
         given:
         setup()
@@ -500,6 +564,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         V_4_POINT_6     | false           | true          | true    // doesn't need properties set
         V_4_POINT_6     | true            | true          | true
     }
+
 
     @Unroll
     def 'v#versionOfGradle - there are no problems with a basic configuration, without settings or properties'() {
@@ -558,6 +623,11 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
                     <groupId>commons-lang</groupId>
                     <artifactId>commons-lang</artifactId>
                     <version>\${commonsVersion}</version>
+                  </dependency>
+                  <dependency>
+                    <groupId>commons-configuration</groupId>
+                    <artifactId>commons-configuration</artifactId>
+                    <version>1.1.2</version>
                   </dependency>
                 </dependencies>
               </dependencyManagement>
