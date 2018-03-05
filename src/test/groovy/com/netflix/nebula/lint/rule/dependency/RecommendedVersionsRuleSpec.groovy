@@ -83,6 +83,44 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
     }
 
     @Unroll
+    def 'v#versionOfGradle - respects ignores'() {
+        given:
+        setup()
+        def repo = new File(projectDir, 'repo')
+        repo.mkdirs()
+        setupSampleBomFile(repo, 'recommender')
+
+        buildFile.text = """
+            buildscript {  repositories { jcenter() } }
+            repositories { maven { url "${repo}" } }
+
+            apply plugin: 'java'
+            apply plugin: 'nebula.lint'
+
+            gradleLint.rules = ['recommended-versions']
+
+            dependencies {
+                compile 'sample:recommender:1.0'
+                gradleLint.ignore {
+                    compile 'commons-logging:commons-logging:latest.release'
+                }
+            }
+        """.stripIndent()
+        setupGradleVersion(versionOfGradle)
+        setupSettingsFile()
+        setupPropertiesFile()
+
+        when:
+        def result = runTasks('fixGradleLint')
+
+        then:
+        assertDependenciesPreserveVersions(buildFile, 'commons-logging:commons-logging')
+
+        where:
+        versionOfGradle << [V_4_POINT_1, V_4_POINT_5, V_4_POINT_6]
+    }
+
+    @Unroll
     def 'v#versionOfGradle - base - preserve versions when bom does not contain version'() {
         given:
         setup()

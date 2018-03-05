@@ -50,8 +50,10 @@ class RecommendedVersionsRule extends GradleLintRule implements GradleModelAware
     }
 
     private void handleDependencyVisit(MethodCallExpression call, String conf, GradleDependency dep) {
-        def desc = ModuleDescriptor.fromGradleDependency(dep)
-        dependenciesPerConf.get(conf).put(desc, call)
+        if (!(ignored)) {
+            def desc = ModuleDescriptor.fromGradleDependency(dep)
+            dependenciesPerConf.get(conf).put(desc, call)
+        }
     }
 
     @Override
