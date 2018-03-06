@@ -40,7 +40,7 @@ class ClasspathBasedRecommendationProviderTest extends TestKitSpecification {
         project.repositories { maven { url repo } }
 
         // demonstrates maven property interpolation from gradle project properties
-        project.getExtensions().add("commons.version", "1.1.2")
+        project.getExtensions().add("commonsVersion", "1.1.2")
 
         project.dependencies {
             compile module
@@ -78,7 +78,7 @@ class ClasspathBasedRecommendationProviderTest extends TestKitSpecification {
         project.repositories { maven { url repo } }
 
         // demonstrates maven property interpolation from gradle project properties
-        project.getExtensions().add("commons.version", "1.1.2")
+        project.getExtensions().add("commonsVersion", "1.1.2")
 
         project.dependencies {
             compile firstBom
@@ -120,7 +120,7 @@ class ClasspathBasedRecommendationProviderTest extends TestKitSpecification {
         project.repositories { maven { url repo } }
 
         // demonstrates maven property interpolation from gradle project properties
-        project.getExtensions().add("commons.version", "1.1.2")
+        project.getExtensions().add("commonsVersion", "1.1.2")
 
         project.dependencies {
             compile firstBom
@@ -164,7 +164,7 @@ class ClasspathBasedRecommendationProviderTest extends TestKitSpecification {
         project.repositories { maven { url repo } }
 
         // demonstrates maven property interpolation from gradle project properties
-        project.getExtensions().add("commons.version", "1.1.2")
+        project.getExtensions().add("commonsVersion", "1.1.2")
 
         project.dependencies {
             compile firstBom
@@ -365,7 +365,7 @@ class ClasspathBasedRecommendationProviderTest extends TestKitSpecification {
                   <dependency>
                     <groupId>commons-configuration</groupId>
                     <artifactId>commons-configuration</artifactId>
-                    <version>\${commons.version}</version>
+                    <version>\${commonsVersion}</version>
                   </dependency>
                 </dependencies>
               </dependencyManagement>

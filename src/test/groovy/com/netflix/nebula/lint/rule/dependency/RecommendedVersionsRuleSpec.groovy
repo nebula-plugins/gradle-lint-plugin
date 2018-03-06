@@ -47,7 +47,12 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         setupSampleBomFile(repo, 'recommender')
 
         buildFile.text = """
-            buildscript {  repositories { jcenter() } }
+            buildscript {
+                repositories { jcenter() }
+                dependencies {
+                    classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
+                }
+            }
             repositories { maven { url "${repo}" } }
 
             apply plugin: 'java'
@@ -91,7 +96,12 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         setupSampleBomFile(repo, 'recommender')
 
         buildFile.text = """
-            buildscript {  repositories { jcenter() } }
+            buildscript {
+                repositories { jcenter() }
+                dependencies {
+                    classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
+                }
+            }
             repositories { maven { url "${repo}" } }
 
             apply plugin: 'java'
@@ -131,7 +141,12 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         setupSampleBomFile(repo, 'recommender')
 
         buildFile.text = """
-            buildscript {  repositories { jcenter() } }
+            buildscript {
+                repositories { jcenter() }
+                dependencies {
+                    classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
+                }
+            }
             repositories { maven { url "${repo}" } }
 
             apply plugin: 'java'
@@ -169,7 +184,12 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         setupSampleBomFile(repo, 'recommender')
 
         buildFile.text = """
-            buildscript {  repositories { jcenter() } }
+            buildscript {
+                repositories { jcenter() }
+                dependencies {
+                    classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
+                }
+            }
             repositories { maven { url "${repo}" } }
 
             apply plugin: 'java'
@@ -208,7 +228,12 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         setupSampleBomFile(repo, 'recommender')
 
         buildFile.text = """
-            buildscript {  repositories { jcenter() } }
+            buildscript {
+                repositories { jcenter() }
+                dependencies {
+                    classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
+                }
+            }
             repositories { maven { url "${repo}" } }
 
             apply plugin: 'java'
@@ -257,7 +282,12 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         setupSampleBomFile(repo, 'recommender')
 
         buildFile << '''
-            buildscript {  repositories { jcenter() } }
+            buildscript {
+                repositories { jcenter() }
+                dependencies {
+                    classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release\'
+                }
+            }
             '''.stripIndent()
 
         if (subOrAllProjects == SUBPROJECTS) {
@@ -320,7 +350,12 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         setupSampleBomFile(repo, 'recommender')
 
         buildFile << """
-            buildscript {  repositories { jcenter() } }
+            buildscript {
+                repositories { jcenter() }
+                dependencies {
+                    classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
+                }
+            }
             ext {
                 commonsVersion = '1.1.2'
             }
@@ -386,7 +421,12 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         setupSampleBomFile(repo, 'recommender')
 
         buildFile << """
-            buildscript {  repositories { jcenter() } }
+            buildscript {
+                repositories { jcenter() }
+                dependencies {
+                    classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
+                }
+            }
             ext {
                 commonsVersion = '1.1.2'
             }
@@ -541,7 +581,12 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         setupSampleBomFile(repo, 'recommender')
 
         buildFile << """
-            buildscript {  repositories { jcenter() } }
+            buildscript {
+                repositories { jcenter() }
+                dependencies {
+                    classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
+                }
+            }
             ext {
                 commonsVersion = '1.1.2'
             }
@@ -619,7 +664,12 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         setupSampleBomFile(repo, 'recommender')
 
         buildFile.text = """
-            buildscript {  repositories { jcenter() } }
+            buildscript {
+                repositories { jcenter() }
+                dependencies {
+                    classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
+                }
+            }
             ext {
                 commonsVersion = '1.1.2'
             }
@@ -765,7 +815,12 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         setupSampleBomFile(repo, 'recommender')
 
         buildFile.text = """
-            buildscript {  repositories { jcenter() } }
+            buildscript {
+                repositories { jcenter() }
+                dependencies {
+                    classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
+                }
+            }
             repositories { maven { url "${repo}" } }
 
             apply plugin: 'java'
@@ -814,7 +869,12 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         given:
         setup()
         buildFile.text = """
-            buildscript {  repositories { jcenter() } }
+            buildscript {
+                repositories { jcenter() }
+                dependencies {
+                    classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
+                }
+            }
 
             apply plugin: 'java'
             apply plugin: 'nebula.lint'
