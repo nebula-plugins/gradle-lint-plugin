@@ -445,7 +445,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
     }
 
     @Unroll
-    def 'v#versionOfGradle - nested multi-project - removes versions only at levels using bom'() {
+    def 'v#versionOfGradle - nested multi-project - removes versions only at level using bom when not in allporjects or subprojects block'() {
         given:
         setup()
         def repo = new File(projectDir, 'repo')
@@ -473,9 +473,6 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
                     repositories { mavenCentral() } 
                 }
             }
-            dependencies {
-                compile 'commons-configuration:commons-configuration:latest.release'
-            }
             """.stripIndent()
 
         addSubproject('sub1', """\
@@ -488,7 +485,10 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
 
         setupGradleVersion(versionOfGradle)
         setupSettingsFile() // There is only 1 settings file, even in multi-project builds
-        settingsFile << "include 'sub1:sub2'"
+        settingsFile << """\
+            include 'sub1:sub2'
+            include 'sub1:sub2:sub3'
+            """.stripIndent()
 
         def sub2Dir = new File(projectDir, "sub1/sub2")
         sub2Dir.mkdirs()
@@ -499,11 +499,20 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
                 compile 'sample:recommender:1.0'
                 compile 'commons-logging:commons-logging:latest.release'
             }
-            """.stripIndent()
+            """.stripIndent() // since the bom is not in allprojects or subprojects block, it will only apply here
         FeaturePreviewsFixture.enableImprovedPomSupport(sub2PropertiesFile, gradleVersion)
 
+        def sub3Dir = new File(projectDir, "sub1/sub2/sub3")
+        sub3Dir.mkdirs()
+        def sub3BuildGradle = new File(projectDir, "sub1/sub2/sub3/build.gradle")
+        sub3BuildGradle << """\
+            dependencies {
+                compile 'commons-configuration:commons-configuration:latest.release'
+            }
+            """.stripIndent()
+
         when:
-        def result = runTasks(':sub1:assemble', ':sub1:sub2:assemble', 'fixGradleLint')
+        def result = runTasks(':sub1:assemble', ':sub1:sub2:assemble', ':sub1:sub2:sub3:assemble', 'fixGradleLint')
 
         then:
         if (expectVersionsRemovedFromSubproject) {
@@ -512,9 +521,9 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         } else {
             assertDependenciesPreserveVersions(sub2BuildGradle, 'commons-logging:commons-logging')
         }
-        assertDependenciesPreserveVersions(buildFile, 'commons-configuration:commons-configuration')
-        def sub1Gradle = new File(projectDir, 'sub1/build.gradle')
-        assertDependenciesPreserveVersions(sub1Gradle, 'commons-lang:commons-lang')
+        def sub1BuildGradle = new File(projectDir, 'sub1/build.gradle')
+        assertDependenciesPreserveVersions(sub1BuildGradle, 'commons-lang:commons-lang')
+        assertDependenciesPreserveVersions(sub3BuildGradle, 'commons-configuration:commons-configuration')
 
         where:
         versionOfGradle | expectVersionsRemovedFromSubproject
