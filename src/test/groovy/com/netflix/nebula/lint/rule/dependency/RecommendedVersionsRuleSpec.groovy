@@ -29,9 +29,6 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
     private static final String ALLPROJECTS = 'allprojects'
 
     def setup() {
-        if (buildFile.exists()) {
-            buildFile.delete()
-        }
         if (settingsFile.exists()) {
             settingsFile.delete()
         }
@@ -445,6 +442,85 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         V_4_POINT_5     | false                | true                  | ALLPROJECTS
         V_4_POINT_6     | false                | true                  | SUBPROJECTS
         V_4_POINT_6     | false                | true                  | ALLPROJECTS
+    }
+
+    @Unroll
+    def 'v#versionOfGradle - nested multi-project - removes versions only at levels using bom'() {
+        given:
+        setup()
+        def repo = new File(projectDir, 'repo')
+        repo.mkdirs()
+        setupSampleBomFile(repo, 'recommender')
+
+        buildFile << """
+            buildscript { 
+                repositories { jcenter() }
+                dependencies {
+                    classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
+                } 
+            }
+            ext {
+                commonsVersion = '1.1.2'
+            }
+            allprojects {
+                apply plugin: 'java'
+                apply plugin: 'nebula.lint'
+                
+                gradleLint.rules = ['recommended-versions']
+                
+                repositories {
+                    maven { url "${repo}" } 
+                    repositories { mavenCentral() } 
+                }
+            }
+            dependencies {
+                compile 'commons-configuration:commons-configuration:latest.release'
+            }
+            """.stripIndent()
+
+        addSubproject('sub1', """\
+            dependencies {
+                compile 'commons-lang:commons-lang:latest.release'
+            }
+            """.stripIndent())
+        def sub1PropertiesFile = new File(projectDir, "sub1/gradle.properties")
+        sub1PropertiesFile << "example.property=a"
+
+        setupGradleVersion(versionOfGradle)
+        setupSettingsFile() // There is only 1 settings file, even in multi-project builds
+        settingsFile << "include 'sub1:sub2'"
+
+        def sub2Dir = new File(projectDir, "sub1/sub2")
+        sub2Dir.mkdirs()
+        def sub2PropertiesFile = new File(projectDir, "sub1/sub2/gradle.properties")
+        def sub2BuildGradle = new File(projectDir, "sub1/sub2/build.gradle")
+        sub2BuildGradle << """\
+            dependencies {
+                compile 'sample:recommender:1.0'
+                compile 'commons-logging:commons-logging:latest.release'
+            }
+            """.stripIndent()
+        FeaturePreviewsFixture.enableImprovedPomSupport(sub2PropertiesFile, gradleVersion)
+
+        when:
+        def result = runTasks(':sub1:assemble', ':sub1:sub2:assemble', 'fixGradleLint')
+
+        then:
+        if (expectVersionsRemovedFromSubproject) {
+            assertDependenciesHaveVersionsRemoved(sub2BuildGradle, 'commons-logging:commons-logging')
+            result.standardOutput.contains('fixed          recommended-dependency')
+        } else {
+            assertDependenciesPreserveVersions(sub2BuildGradle, 'commons-logging:commons-logging')
+        }
+        assertDependenciesPreserveVersions(buildFile, 'commons-configuration:commons-configuration')
+        def sub1Gradle = new File(projectDir, 'sub1/build.gradle')
+        assertDependenciesPreserveVersions(sub1Gradle, 'commons-lang:commons-lang')
+
+        where:
+        versionOfGradle | expectVersionsRemovedFromSubproject
+        V_4_POINT_1     | false
+        V_4_POINT_5     | true
+        V_4_POINT_6     | true
     }
 
     @Unroll
