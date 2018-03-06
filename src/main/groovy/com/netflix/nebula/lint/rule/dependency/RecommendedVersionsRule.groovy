@@ -28,6 +28,7 @@ import org.codehaus.groovy.ast.expr.MethodCallExpression
 class RecommendedVersionsRule extends GradleLintRule implements GradleModelAware {
     private static final String GRADLE_VERSION_WITH_EXPERIMENTAL_FEATURES = '4.5'
     private static final String GRADLE_VERSION_WITH_OPT_IN_FEATURES = '4.6'
+    private static final String GRADLE_VERSION_WITH_DEFAULT_FEATURES = '5.0'
     private static final String GRADLE_PROPERTIES = "gradle.properties"
     private static final String GRADLE_SETTINGS = "settings.gradle"
     String description = 'Remove versions from dependencies that are recommended'
@@ -108,13 +109,17 @@ class RecommendedVersionsRule extends GradleLintRule implements GradleModelAware
             return advancedPomPropertySet && experimentalFeaturesEnabled
         }
 
-        if (!rootProjectDir.listFiles().toString().contains(rootProjectDir.toString() + File.separator + GRADLE_SETTINGS)) {
-            return false
-        }
-        def settingsFile = new File(rootProjectDir, GRADLE_SETTINGS) // There is only one
-        def advancedPomFeatureEnabled = settingsFile.text.contains('enableFeaturePreview(\'IMPROVED_POM_SUPPORT\')')
+        if (gradleVersion < GRADLE_VERSION_WITH_DEFAULT_FEATURES) {
+            if (!rootProjectDir.listFiles().toString().contains(rootProjectDir.toString() + File.separator + GRADLE_SETTINGS)) {
+                return false
+            }
+            def settingsFile = new File(rootProjectDir, GRADLE_SETTINGS) // There is only one
+            def advancedPomFeatureEnabled = settingsFile.text.contains('enableFeaturePreview(\'IMPROVED_POM_SUPPORT\')')
 
-        advancedPomFeatureEnabled
+            advancedPomFeatureEnabled
+        }
+
+        true // gradle versions past here should enable improved pom support by default
     }
 
     List<File> findAllInPath(String fileName) {

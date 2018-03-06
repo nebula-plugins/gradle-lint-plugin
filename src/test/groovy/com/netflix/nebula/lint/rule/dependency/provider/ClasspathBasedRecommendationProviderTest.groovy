@@ -277,7 +277,7 @@ class ClasspathBasedRecommendationProviderTest extends TestKitSpecification {
         shouldAddToBoms
     }
 
-    def "returns false when file should not be added to bom - different packaging"() {
+    def "returns false when file should not be added to bom - not a pom"() {
         given:
         def project = ProjectBuilder.builder().build()
         project.apply plugin: 'java'
@@ -297,7 +297,7 @@ class ClasspathBasedRecommendationProviderTest extends TestKitSpecification {
         !shouldAddToBoms
     }
 
-    def "returns false when file should not be added to bom - not a pom"() {
+    def "returns false when file should not be added to bom - different packaging"() {
         given:
         def project = ProjectBuilder.builder().build()
         project.apply plugin: 'java'
