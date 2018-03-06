@@ -445,7 +445,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
     }
 
     @Unroll
-    def 'v#versionOfGradle - nested multi-project - removes versions only at level using bom when not in allporjects or subprojects block'() {
+    def 'v#versionOfGradle - nested multi-project - removes versions only at level using bom when not in allprojects or subprojects block'() {
         given:
         setup()
         def repo = new File(projectDir, 'repo')
@@ -690,7 +690,12 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         setupSampleBomFile(repo, 'recommender')
 
         buildFile << """
-            buildscript {  repositories { jcenter() } }
+            buildscript {
+                repositories { jcenter() }
+                dependencies {
+                    classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
+                }
+            }
             ext {
                 commonsVersion = '1.1.2'
             }
@@ -698,7 +703,10 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
                 apply plugin: 'java'
                 apply plugin: 'nebula.lint'
                 gradleLint.rules = ['recommended-versions']
-                repositories { maven { url "${repo}" } }
+                repositories {
+                    maven { url "${repo}" }
+                    repositories { mavenCentral() }
+                }
                 dependencies {
                     compile 'sample:recommender:1.0'
                 }
@@ -713,6 +721,9 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
                 }
             }
             """.stripIndent()
+
+        addSubproject('sub1', """\
+            """.stripIndent())
 
         setupGradleVersion(versionOfGradle)
         setupSettingsFile()
@@ -739,9 +750,9 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         versionOfGradle | lowerVersionOfGradle | expectVersionsRemoved | subOrAllProjects
         V_4_POINT_1     | true                 | false                 | SUBPROJECTS
         V_4_POINT_1     | true                 | false                 | ALLPROJECTS
-//        V_4_POINT_5     | false                | true                  | SUBPROJECTS  // FIXME: why doesn't this work?
+        V_4_POINT_5     | false                | true                  | SUBPROJECTS
         V_4_POINT_5     | false                | true                  | ALLPROJECTS
-//        V_4_POINT_6     | false                | true                  | SUBPROJECTS
+        V_4_POINT_6     | false                | true                  | SUBPROJECTS
         V_4_POINT_6     | false                | true                  | ALLPROJECTS
     }
 
