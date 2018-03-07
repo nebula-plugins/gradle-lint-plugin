@@ -34,6 +34,7 @@ class RecommendedVersionsRule extends GradleLintRule implements GradleModelAware
     String description = 'Remove versions from dependencies that are recommended'
     Map<String, Map<ModuleDescriptor, MethodCallExpression>> dependenciesPerConf = [:].withDefault { [:] }
     MavenBomRecommendationProvider recommendationProvider
+    private Boolean recommenderIsEnabled = null
 
     @Override
     void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
@@ -51,7 +52,11 @@ class RecommendedVersionsRule extends GradleLintRule implements GradleModelAware
     }
 
     private void handleDependencyVisit(MethodCallExpression call, String conf, GradleDependency dep) {
-        if (!(ignored)) {
+        if (recommenderIsEnabled == null) {
+            recommenderIsEnabled = recommenderIsEnabled()
+        }
+
+        if (!(ignored) && recommenderIsEnabled) {
             def desc = ModuleDescriptor.fromGradleDependency(dep)
             dependenciesPerConf.get(conf).put(desc, call)
         }
@@ -59,7 +64,7 @@ class RecommendedVersionsRule extends GradleLintRule implements GradleModelAware
 
     @Override
     protected void visitClassComplete(ClassNode node) {
-        if (!recommenderIsEnabled()) {
+        if (!recommenderIsEnabled) {
             return
         }
 
