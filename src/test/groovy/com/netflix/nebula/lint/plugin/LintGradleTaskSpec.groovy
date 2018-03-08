@@ -163,4 +163,57 @@ class LintGradleTaskSpec extends TestKitSpecification {
         then:
         result.task(':autoLintGradle').outcome == TaskOutcome.SKIPPED
     }
+
+    def 'lint finds all violations in all applied files with bookmark rule'() {
+        given:
+        buildFile << """
+            plugins {
+                id 'nebula.lint'
+                id 'java'
+            }
+            
+            repositories {
+                mavenCentral()
+            }
+            
+            def someVariable = 1
+
+            gradleLint.rules = ['dependency-parentheses']
+            
+            dependencies {
+                compile('commons-lang:commons-lang:2.5')
+            }
+
+            allprojects {
+                apply from: 'dependencies.gradle'
+            }
+        """
+        File dependenciesFile = new File(projectDir, 'dependencies.gradle')
+        dependenciesFile.text = """
+
+            def someVariable = 2
+
+            dependencies {
+                compile('com.google.guava:guava:18.0')
+            }
+            
+            apply from: 'another.gradle'
+        """
+
+        File another = new File(projectDir, 'another.gradle')
+        another.text = """
+            dependencies {
+                compile('com.google.guava:guava:17.0')
+            }
+        """
+
+        when:
+        def results = runTasksFail('lintGradle')
+
+        then:
+        results.output.count('warning   dependency-parentheses             parentheses are unnecessary for dependencies') == 3
+        results.output.contains('another.gradle:3')
+        results.output.contains('dependencies.gradle:6')
+        results.output.contains('build.gradle:16')
+    }
 }

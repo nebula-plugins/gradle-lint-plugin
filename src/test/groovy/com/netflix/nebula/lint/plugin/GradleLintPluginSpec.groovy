@@ -51,6 +51,44 @@ class GradleLintPluginSpec extends TestKitSpecification {
         console.any { it.contains('dependency-tuple') }
     }
 
+    def 'run multiple rules on a single module project with applied file'() {
+        when:
+        buildFile << """
+            plugins {
+                id 'nebula.lint'
+                id 'java'
+            }
+
+            gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
+            
+            dependencies {
+                compile('commons-lang:commons-lang:2.6')
+            }
+
+            apply from: 'dependencies.gradle'
+        """
+        File dependenciesFile = new File(projectDir, 'dependencies.gradle')
+        dependenciesFile.text = """
+            dependencies {
+                compile('com.google.guava:guava:18.0')
+                testCompile group: 'junit',
+                    name: 'junit',
+                    version: '4.11'
+            }
+        """
+
+        then:
+        def results = runTasksSuccessfully('assemble')
+
+        when:
+        def console = results.output.readLines()
+
+        then:
+        console.findAll { it.startsWith('warning') }.size() == 3
+        console.findAll { it.contains('dependency-parentheses') }.size() == 2
+        console.any { it.contains('dependency-tuple') }
+    }
+
     def 'run rules on multi-module project where one of the subprojects has no build.gradle'() {
         when:
         buildFile << """

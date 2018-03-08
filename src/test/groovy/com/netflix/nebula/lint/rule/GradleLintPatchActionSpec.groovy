@@ -32,9 +32,10 @@ class GradleLintPatchActionSpec extends Specification {
     Project project
 
     def setup() {
+        def buildFile = temp.newFile('build.gradle')
         project = [getRootDir: { temp.root }] as Project
         violation = new GradleViolation(
-                temp.root, // does not matter
+                new BuildFiles([buildFile]), // does not matter
                 null, // does not matter
                 1, // does not matter
                 'doesnotmatter',
