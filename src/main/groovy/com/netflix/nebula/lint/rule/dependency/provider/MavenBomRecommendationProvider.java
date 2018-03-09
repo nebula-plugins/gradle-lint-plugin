@@ -18,6 +18,8 @@
 
 package com.netflix.nebula.lint.rule.dependency.provider;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Parent;
@@ -25,6 +27,7 @@ import org.apache.maven.model.Repository;
 import org.apache.maven.model.building.DefaultModelBuilder;
 import org.apache.maven.model.building.DefaultModelBuilderFactory;
 import org.apache.maven.model.building.DefaultModelBuildingRequest;
+import org.apache.maven.model.building.ModelBuildingException;
 import org.apache.maven.model.building.ModelBuildingRequest;
 import org.apache.maven.model.building.ModelBuildingResult;
 import org.apache.maven.model.building.ModelProblemCollector;
@@ -43,6 +46,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -51,7 +55,16 @@ import java.util.Set;
 
 public class MavenBomRecommendationProvider extends ClasspathBasedRecommendationProvider {
     private final Logger log = LoggerFactory.getLogger(MavenBomRecommendationProvider.class);
-    private Map<String, String> recommendations;
+    private Supplier<Map<String, String>> recommendations = Suppliers.memoize(new Supplier<Map<String, String>>() {
+        @Override
+        public Map<String, String> get() {
+            try {
+                return getMavenRecommendations();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    });
 
     public MavenBomRecommendationProvider(Project project) {
         super(project);
@@ -91,75 +104,77 @@ public class MavenBomRecommendationProvider extends ClasspathBasedRecommendation
     }
 
     private Map<String, String> getRecommendations() throws Exception {
-        if (recommendations == null) {
-            recommendations = new HashMap<>();
+        return recommendations.get();
+    }
 
-            Set<File> recommendationFiles = getBomsOnConfiguration();
-            for (File recommendation : recommendationFiles) {
-                if (!recommendation.getName().endsWith("pom")) {
-                    break;
+    private Map<String, String> getMavenRecommendations() throws UnresolvableModelException, FileNotFoundException, ModelBuildingException {
+        Map<String, String> recommendations = new HashMap<>();
+
+        Set<File> recommendationFiles = getBomsOnConfiguration();
+        for (File recommendation : recommendationFiles) {
+            if (!recommendation.getName().endsWith("pom")) {
+                break;
+            }
+
+            DefaultModelBuildingRequest request = new DefaultModelBuildingRequest();
+
+            request.setModelResolver(new ModelResolver() {
+                @Override
+                public ModelSource2 resolveModel(String groupId, String artifactId, String version) throws UnresolvableModelException {
+                    String notation = groupId + ":" + artifactId + ":" + version + "@pom";
+                    org.gradle.api.artifacts.Dependency dependency = project.getDependencies().create(notation);
+                    org.gradle.api.artifacts.Configuration configuration = project.getConfigurations().detachedConfiguration(dependency);
+                    try {
+                        File file = configuration.getFiles().iterator().next();
+                        return new SimpleModelSource(new java.io.FileInputStream(file));
+                    } catch (Exception e) {
+                        throw new UnresolvableModelException(e, groupId, artifactId, version);
+                    }
                 }
 
-                DefaultModelBuildingRequest request = new DefaultModelBuildingRequest();
-
-                request.setModelResolver(new ModelResolver() {
-                    @Override
-                    public ModelSource2 resolveModel(String groupId, String artifactId, String version) throws UnresolvableModelException {
-                        String notation = groupId + ":" + artifactId + ":" + version + "@pom";
-                        org.gradle.api.artifacts.Dependency dependency = project.getDependencies().create(notation);
-                        org.gradle.api.artifacts.Configuration configuration = project.getConfigurations().detachedConfiguration(dependency);
-                        try {
-                            File file = configuration.getFiles().iterator().next();
-                            return new SimpleModelSource(new java.io.FileInputStream(file));
-                        } catch (Exception e) {
-                            throw new UnresolvableModelException(e, groupId, artifactId, version);
-                        }
-                    }
-
-                    @Override
-                    public ModelSource2 resolveModel(Dependency dependency) throws UnresolvableModelException {
-                        return resolveModel(dependency.getGroupId(), dependency.getArtifactId(), dependency.getVersion());
-                    }
-
-                    @Override
-                    public ModelSource2 resolveModel(Parent parent) throws UnresolvableModelException {
-                        return resolveModel(parent.getGroupId(), parent.getArtifactId(), parent.getVersion());
-                    }
-
-                    @Override
-                    public void addRepository(Repository repository) throws InvalidRepositoryException {
-                        // do nothing
-                    }
-
-                    @Override
-                    public void addRepository(Repository repository, boolean bool) throws InvalidRepositoryException {
-                        // do nothing
-                    }
-
-                    @Override
-                    public ModelResolver newCopy() {
-                        return this; // do nothing
-                    }
-                });
-                request.setModelSource(new SimpleModelSource(new java.io.FileInputStream(recommendation)));
-                request.setSystemProperties(System.getProperties());
-
-                DefaultModelBuilder modelBuilder = new DefaultModelBuilderFactory().newInstance();
-                modelBuilder.setModelInterpolator(new ProjectPropertiesModelInterpolator(project));
-
-                ModelBuildingResult result = modelBuilder.build(request);
-                log.info("using bom: " + result.getEffectiveModel().getId());
-                Model model = result.getEffectiveModel();
-                if (model == null) {
-                    break;
+                @Override
+                public ModelSource2 resolveModel(Dependency dependency) throws UnresolvableModelException {
+                    return resolveModel(dependency.getGroupId(), dependency.getArtifactId(), dependency.getVersion());
                 }
-                org.apache.maven.model.DependencyManagement dependencyManagement = model.getDependencyManagement();
-                if (dependencyManagement == null) {
-                    break;
+
+                @Override
+                public ModelSource2 resolveModel(Parent parent) throws UnresolvableModelException {
+                    return resolveModel(parent.getGroupId(), parent.getArtifactId(), parent.getVersion());
                 }
-                for (Dependency d : dependencyManagement.getDependencies()) {
-                    recommendations.put(d.getGroupId() + ":" + d.getArtifactId(), d.getVersion()); // overwrites previous values
+
+                @Override
+                public void addRepository(Repository repository) throws InvalidRepositoryException {
+                    // do nothing
                 }
+
+                @Override
+                public void addRepository(Repository repository, boolean bool) throws InvalidRepositoryException {
+                    // do nothing
+                }
+
+                @Override
+                public ModelResolver newCopy() {
+                    return this; // do nothing
+                }
+            });
+            request.setModelSource(new SimpleModelSource(new java.io.FileInputStream(recommendation)));
+            request.setSystemProperties(System.getProperties());
+
+            DefaultModelBuilder modelBuilder = new DefaultModelBuilderFactory().newInstance();
+            modelBuilder.setModelInterpolator(new ProjectPropertiesModelInterpolator(project));
+
+            ModelBuildingResult result = modelBuilder.build(request);
+            log.info("using bom: " + result.getEffectiveModel().getId());
+            Model model = result.getEffectiveModel();
+            if (model == null) {
+                break;
+            }
+            org.apache.maven.model.DependencyManagement dependencyManagement = model.getDependencyManagement();
+            if (dependencyManagement == null) {
+                break;
+            }
+            for (Dependency d : dependencyManagement.getDependencies()) {
+                recommendations.put(d.getGroupId() + ":" + d.getArtifactId(), d.getVersion()); // overwrites previous values
             }
         }
         return recommendations;
