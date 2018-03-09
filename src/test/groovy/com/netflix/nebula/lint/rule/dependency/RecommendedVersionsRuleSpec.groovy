@@ -41,7 +41,6 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
     @Unroll
     def 'v#versionOfGradle, base - remove version from dependency when bom has version - #expectVersionsRemoved'() {
         given:
-        setup()
         def repo = new File(projectDir, 'repo')
         repo.mkdirs()
         setupSampleBomFile(repo, 'recommender')
@@ -53,7 +52,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
                     classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
                 }
             }
-            repositories { maven { url "${repo}" } }
+            repositories { maven { url "${repo.toURI().toURL()}" } }
 
             apply plugin: 'java'
             apply plugin: 'nebula.lint'
@@ -90,7 +89,6 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
     @Unroll
     def 'v#versionOfGradle, base - no lint errors on correct build.gradle'() {
         given:
-        setup()
         def repo = new File(projectDir, 'repo')
         repo.mkdirs()
         setupSampleBomFile(repo, 'recommender')
@@ -102,7 +100,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
                     classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
                 }
             }
-            repositories { maven { url "${repo}" } }
+            repositories { maven { url "${repo.toURI().toURL()}" } }
 
             apply plugin: 'java'
             apply plugin: 'nebula.lint'
@@ -135,7 +133,6 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
     @Unroll
     def 'v#versionOfGradle, base - respects ignores'() {
         given:
-        setup()
         def repo = new File(projectDir, 'repo')
         repo.mkdirs()
         setupSampleBomFile(repo, 'recommender')
@@ -147,7 +144,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
                     classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
                 }
             }
-            repositories { maven { url "${repo}" } }
+            repositories { maven { url "${repo.toURI().toURL()}" } }
 
             apply plugin: 'java'
             apply plugin: 'nebula.lint'
@@ -178,7 +175,6 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
     @Unroll
     def 'v#versionOfGradle, base - preserve versions when bom does not contain version'() {
         given:
-        setup()
         def repo = new File(projectDir, 'repo')
         repo.mkdirs()
         setupSampleBomFile(repo, 'recommender')
@@ -190,7 +186,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
                     classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
                 }
             }
-            repositories { maven { url "${repo}" } }
+            repositories { maven { url "${repo.toURI().toURL()}" } }
 
             apply plugin: 'java'
             apply plugin: 'nebula.lint'
@@ -222,7 +218,6 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
     @Unroll
     def 'v#versionOfGradle, base - remove version from dependency when bom has version set via property - #expectVersionsRemoved'() {
         given:
-        setup()
         def repo = new File(projectDir, 'repo')
         repo.mkdirs()
         setupSampleBomFile(repo, 'recommender')
@@ -234,7 +229,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
                     classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
                 }
             }
-            repositories { maven { url "${repo}" } }
+            repositories { maven { url "${repo.toURI().toURL()}" } }
 
             apply plugin: 'java'
             apply plugin: 'nebula.lint'
@@ -276,7 +271,6 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
     @Unroll
     def 'v#versionOfGradle, #subOrAllProjects: remove version from dependency - #expectVersionsRemoved'() {
         given:
-        setup()
         def repo = new File(projectDir, 'repo')
         repo.mkdirs()
         setupSampleBomFile(repo, 'recommender')
@@ -304,7 +298,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
                 
                 gradleLint.rules = ['recommended-versions']
                 
-                repositories { maven { url "${repo}" } }
+                repositories { maven { url "${repo.toURI().toURL()}" } }
             }
         """.stripIndent()
 
@@ -344,7 +338,6 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
     @Unroll
     def 'v#versionOfGradle, #subOrAllProjects - no lint errors on correct build.gradle'() {
         given:
-        setup()
         def repo = new File(projectDir, 'repo')
         repo.mkdirs()
         setupSampleBomFile(repo, 'recommender')
@@ -375,7 +368,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
                 
                 gradleLint.rules = ['recommended-versions']
                 
-                repositories { maven { url "${repo}" } }
+                repositories { maven { url "${repo.toURI().toURL()}" } }
             }
             """.stripIndent()
 
@@ -415,7 +408,6 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
     @Unroll
     def 'v#versionOfGradle, #subOrAllProjects - remove version from dependency when bom has version set via property - #expectVersionsRemoved'() {
         given:
-        setup()
         def repo = new File(projectDir, 'repo')
         repo.mkdirs()
         setupSampleBomFile(repo, 'recommender')
@@ -446,7 +438,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
                 
                 gradleLint.rules = ['recommended-versions']
                 
-                repositories { maven { url "${repo}" } }
+                repositories { maven { url "${repo.toURI().toURL()}" } }
             }
             """.stripIndent()
 
@@ -487,7 +479,6 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
     @Unroll
     def 'v#versionOfGradle - nested multi-project - removes versions only at level using bom when not in allprojects or subprojects block'() {
         given:
-        setup()
         def repo = new File(projectDir, 'repo')
         repo.mkdirs()
         setupSampleBomFile(repo, 'recommender')
@@ -509,7 +500,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
                 gradleLint.rules = ['recommended-versions']
                 
                 repositories {
-                    maven { url "${repo}" } 
+                    maven { url "${repo.toURI().toURL()}" } 
                     repositories { mavenCentral() } 
                 }
             }
@@ -575,7 +566,6 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
     @Unroll
     def 'v#versionOfGradle, #subOrAllProjects, multiple subprojects - remove version from dependency - #expectVersionsRemoved'() {
         given:
-        setup()
         def repo = new File(projectDir, 'repo')
         repo.mkdirs()
         setupSampleBomFile(repo, 'recommender')
@@ -606,7 +596,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
                 
                 gradleLint.rules = ['recommended-versions']
                 
-                repositories { maven { url "${repo}" } }
+                repositories { maven { url "${repo.toURI().toURL()}" } }
             }
             """.stripIndent()
 
@@ -658,7 +648,6 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
     @Unroll
     def 'v#versionOfGradle, #subOrAllProjects - preserve versions when bom does not contain version'() {
         given:
-        setup()
         def repo = new File(projectDir, 'repo')
         repo.mkdirs()
         setupSampleBomFile(repo, 'recommender')
@@ -689,7 +678,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
                 
                 gradleLint.rules = ['recommended-versions']
                 
-                repositories { maven { url "${repo}" } }
+                repositories { maven { url "${repo.toURI().toURL()}" } }
             }
             """.stripIndent()
 
@@ -734,7 +723,6 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
     @Unroll
     def 'v#versionOfGradle, #subOrAllProjects - multiproject sets platform bom given all config in root project'() {
         given:
-        setup()
         def repo = new File(projectDir, 'repo')
         repo.mkdirs()
         setupSampleBomFile(repo, 'recommender')
@@ -754,7 +742,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
                 apply plugin: 'nebula.lint'
                 gradleLint.rules = ['recommended-versions']
                 repositories {
-                    maven { url "${repo}" }
+                    maven { url "${repo.toURI().toURL()}" }
                     repositories { mavenCentral() }
                 }
                 dependencies {
@@ -809,7 +797,6 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
     @Unroll
     def 'v#versionOfGradle - runs (#shouldRemoveDependencyVersions) with setup: prop - #addedProperties, settings - #addedSettings'() {
         given:
-        setup()
         def repo = new File(projectDir, 'repo')
         repo.mkdirs()
         setupSampleBomFile(repo, 'recommender')
@@ -821,7 +808,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
                     classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
                 }
             }
-            repositories { maven { url "${repo}" } }
+            repositories { maven { url "${repo.toURI().toURL()}" } }
 
             apply plugin: 'java'
             apply plugin: 'nebula.lint'
@@ -867,7 +854,6 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
     @Unroll
     def 'v#versionOfGradle - there are no problems with a basic configuration, without settings or properties'() {
         given:
-        setup()
         buildFile.text = """
             buildscript {
                 repositories { jcenter() }
