@@ -15,31 +15,32 @@ class BuildFilesTest extends Specification {
     def file1
     @Shared
     def file2
+    @Shared
+    def file3
 
     def setupSpec() {
         file1 = temporaryFolder.newFile()
-        file1.text = """
-        line 1
-        """
+        file1.text = """\nline 1\n"""
         file2 = temporaryFolder.newFile()
-        file2.text = """
-        line 2
-        """
+        file2.text = """\nline 2\n"""
+
+        file3 = temporaryFolder.newFile()
+        file3.text = "\nline 3\n"
     }
 
 
     def 'files are correctly concatenated'() {
         when:
-        def text = new BuildFiles([file1, file2]).text
+        def text = new BuildFiles([file1, file2, file3]).text
 
         then:
-        text == "\n        line 1\n        \n\n        line 2\n        \n"
+        text == "\nline 1\n\n\nline 2\n\n\nline 3\n\n"
     }
 
     @Unroll
     def 'original file and line is retrieved'() {
         given:
-        def buildFiles = new BuildFiles([file1, file2])
+        def buildFiles = new BuildFiles([file1, file2, file3])
 
         when:
         def original = buildFiles.original(concatenatedLine)
@@ -56,5 +57,8 @@ class BuildFilesTest extends Specification {
         4                | file2        | 1
         5                | file2        | 2
         6                | file2        | 3
+        7                | file3        | 1
+        8                | file3        | 2
+        9                | file3        | 3
     }
 }
