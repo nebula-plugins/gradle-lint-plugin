@@ -82,6 +82,10 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
 
     void visitDependencies(MethodCallExpression call) {}
 
+    void visitAllprojects(MethodCallExpression call) {}
+
+    void visitSubprojects(MethodCallExpression call) {}
+
     void visitPlugins(MethodCallExpression call) {}
 
     void visitTask(MethodCallExpression call, String name, Map<String, String> args) {}
@@ -263,6 +267,10 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                     }
                 } else if (methodName == 'task' || (objectExpression == 'tasks' && methodName == 'create')) {
                     visitPossibleTaskDefinition(call, expressions as List)
+                } else if (methodName == 'allprojects') {
+                    visitAllprojects(call)
+                } else if (methodName == 'subprojects') {
+                    visitSubprojects(call)
                 }
             }
 
