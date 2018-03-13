@@ -99,7 +99,11 @@ class GradleViolation extends Violation {
 
                 def lineNumberToStartInsertion = insertAtStart ? closure.lineNumber : closure.lastLineNumber
                 BuildFiles.Original original = files.original(lineNumberToStartInsertion)
-                fixes += new GradleLintInsertAfter(this, original.file, original.line, indentedChanges)
+                if (insertAtStart) {
+                    fixes += new GradleLintInsertAfter(this, original.file, original.line, indentedChanges)
+                } else {
+                    fixes += new GradleLintInsertBefore(this, original.file, original.line, indentedChanges)
+                }
             }
         }
 
