@@ -65,33 +65,40 @@ class GradleViolation extends Violation {
     }
 
     GradleViolation insertIntoClosure(ASTNode node, String changes) {
+        return insertIntoClosureAt(node, changes, true)
+    }
+
+    GradleViolation insertIntoClosureAtTheEnd(ASTNode node, String changes) {
+        return insertIntoClosureAt(node, changes, false)
+    }
+
+    private void insertIntoClosureAt(ASTNode node, String changes, boolean insertAtStart) {
         ClosureExpression closure = null
-        if(node instanceof MethodCallExpression) {
+        if (node instanceof MethodCallExpression) {
             closure = node.arguments.find { it instanceof ClosureExpression } as ClosureExpression
-            if(!closure && node.arguments instanceof ArgumentListExpression) {
+            if (!closure && node.arguments instanceof ArgumentListExpression) {
                 (node.arguments as ArgumentListExpression).expressions.each {
                     insertIntoClosure(it, changes)
                 }
             }
-        }
-        else if(node instanceof ClosureExpression) {
+        } else if (node instanceof ClosureExpression) {
             closure = node
         }
 
         // goal: when adding into a closure, it should be indented 4 spaces
         // achieve this by taking the node's (columnNumber-1)+4 OR columnNumber+3
 
-        if(closure) {
+        if (closure) {
             if (closure.lineNumber == closure.lastLineNumber) {
                 // TODO what to do about single line closures?
-            }
-            else {
+            } else {
                 def indentedChanges = changes.stripIndent()
                         .split('\n')
                         .collect { line -> ''.padRight(node.columnNumber + 3) + line }
                         .join('\n')
 
-                BuildFiles.Original original = files.original(closure.lineNumber)
+                def lineNumberToStartInsertion = insertAtStart ? closure.lineNumber : closure.lastLineNumber
+                BuildFiles.Original original = files.original(lineNumberToStartInsertion)
                 fixes += new GradleLintInsertAfter(this, original.file, original.line, indentedChanges)
             }
         }
