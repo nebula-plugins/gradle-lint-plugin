@@ -17,15 +17,9 @@
 package com.netflix.nebula.lint.plugin
 
 import com.netflix.nebula.lint.GradleViolation
-import com.netflix.nebula.lint.rule.GradleAstUtil
+import com.netflix.nebula.lint.rule.BuildFiles
 import com.netflix.nebula.lint.rule.GradleLintRule
 import com.netflix.nebula.lint.rule.dependency.DependencyService
-import org.codehaus.groovy.ast.ClassCodeVisitorSupport
-import org.codehaus.groovy.ast.builder.AstBuilder
-import org.codehaus.groovy.ast.expr.MethodCallExpression
-import org.codehaus.groovy.ast.stmt.BlockStatement
-import org.codehaus.groovy.control.CompilePhase
-import org.codehaus.groovy.control.SourceUnit
 import org.codenarc.analyzer.AbstractSourceAnalyzer
 import org.codenarc.results.DirectoryResults
 import org.codenarc.results.FileResults
@@ -111,16 +105,17 @@ class LintService {
         def analyzer = new ReportableAnalyzer(project)
 
         ([project] + project.subprojects).each { p ->
-            def buildFile = p.buildFile
+            def files = SourceCollector.getAllFiles(p.buildFile, p.projectDir)
+            def buildFiles = new BuildFiles(files)
             def ruleSet = ruleSetForProject(p)
             if (!ruleSet.rules.isEmpty()) {
                 // establish which file we are linting for each rule
                 ruleSet.rules.each { rule ->
                     if (rule instanceof GradleLintRule)
-                        rule.buildFile = buildFile
+                        rule.buildFiles = buildFiles
                 }
 
-                analyzer.analyze(buildFile.text, ruleSet)
+                analyzer.analyze(buildFiles.text, ruleSet)
 
                 DependencyService.removeForProject(p)
             }

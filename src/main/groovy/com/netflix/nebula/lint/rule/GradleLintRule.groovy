@@ -34,7 +34,7 @@ import java.text.ParseException
 
 abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
     Project project // will be non-null if type is GradleModelAware, otherwise null
-    File buildFile
+    BuildFiles buildFiles
     SourceCode sourceCode
     List<GradleViolation> gradleViolations = []
     boolean critical = false
@@ -60,6 +60,8 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
     // Gradle DSL specific visitor methods
     void visitApplyPlugin(MethodCallExpression call, String plugin) {}
 
+    void visitApplyFrom(MethodCallExpression call, String from) {}
+
     void visitBuildScriptDependency(MethodCallExpression call, String conf, GradleDependency dep) {}
 
     void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {}
@@ -79,6 +81,10 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
     void visitExtensionProperty(ExpressionStatement expression, String extension, String prop) {}
 
     void visitDependencies(MethodCallExpression call) {}
+
+    void visitAllprojects(MethodCallExpression call) {}
+
+    void visitSubprojects(MethodCallExpression call) {}
 
     void visitPlugins(MethodCallExpression call) {}
 
@@ -149,7 +155,7 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
     }
 
     GradleViolation addBuildLintViolation(String message, ASTNode node) {
-        def v = new GradleViolation(buildFile, rule, node?.lineNumber, sourceCode(node), message)
+        def v = new GradleViolation(buildFiles, rule, node?.lineNumber, sourceCode(node), message)
         if (!isIgnored())
             gradleViolations.add(v)
         return v
@@ -160,7 +166,7 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
     }
 
     GradleViolation addLintViolation(String message, File file, Integer lineNumber) {
-        def v = new GradleViolation(file, rule, lineNumber, null, message)
+        def v = new GradleViolation(new BuildFiles([file]), rule, lineNumber, null, message)
         if (!isIgnored())
             gradleViolations.add(v)
         return v
@@ -255,9 +261,16 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                         if (entries.plugin) {
                             visitApplyPlugin(call, entries.plugin)
                         }
+                        if (entries.from) {
+                            visitApplyFrom(call, entries.from)
+                        }
                     }
                 } else if (methodName == 'task' || (objectExpression == 'tasks' && methodName == 'create')) {
                     visitPossibleTaskDefinition(call, expressions as List)
+                } else if (methodName == 'allprojects') {
+                    visitAllprojects(call)
+                } else if (methodName == 'subprojects') {
+                    visitSubprojects(call)
                 }
             }
 
@@ -494,12 +507,12 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                 def predicate = call.arguments.expressions[0]
                 switch (predicate) {
                     case ConstantExpression:
-                        def succesfullyComparedDate = ['yyyy-M-d', 'M/d/yy', 'M/d/yyyy'].any { pattern ->
+                        def successfullyComparedDate = ['yyyy-M-d', 'M/d/yy', 'M/d/yyyy'].any { pattern ->
                             try {
                                 def date = Date.parse(pattern, predicate.value as String)
                                 if (!date) false
                                 else if (date < new Date()) {
-                                    gradleViolations.add(new GradleViolation(buildFile, new FixmeRule(), call?.lineNumber, sourceCode(call),
+                                    gradleViolations.add(new GradleViolation(buildFiles, new FixmeRule(), call?.lineNumber, sourceCode(call),
                                             'this fixme has expired -- remove it and address the underlying lint issue that caused it to be added'))
                                     true
                                 } else true
@@ -508,8 +521,8 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                             }
                         }
 
-                        if (!succesfullyComparedDate) {
-                            gradleViolations.add(new GradleViolation(buildFile, new FixmeRule(), call?.lineNumber, sourceCode(call),
+                        if (!successfullyComparedDate) {
+                            gradleViolations.add(new GradleViolation(buildFiles, new FixmeRule(), call?.lineNumber, sourceCode(call),
                                     'this fixme contains an unparseable date, use the yyyy-M-d format'))
                         }
                         break

@@ -68,7 +68,6 @@ class LintRuleRegistry {
 
                 if(r instanceof GradleLintRule) {
                     r.ruleId = ruleId
-                    r.buildFile = project.buildFile
                     r.critical = critical
                 }
 

@@ -16,6 +16,7 @@
 
 package com.netflix.nebula.lint
 
+import com.netflix.nebula.lint.rule.BuildFiles
 import groovy.transform.EqualsAndHashCode
 import org.codehaus.groovy.ast.ASTNode
 import org.codehaus.groovy.ast.expr.ArgumentListExpression
@@ -28,14 +29,14 @@ import java.util.concurrent.atomic.AtomicInteger
 
 @EqualsAndHashCode(includes = 'id')
 class GradleViolation extends Violation {
-    File file
+    BuildFiles files
     List<GradleLintFix> fixes = []
     int id
 
     static AtomicInteger nextId = new AtomicInteger(0)
 
-    GradleViolation(File file, Rule rule, Integer lineNumber, String sourceLine, String message) {
-        this.file = file
+    GradleViolation(BuildFiles files, Rule rule, Integer lineNumber, String sourceLine, String message) {
+        this.files = files
         this.rule = rule
         this.lineNumber = lineNumber
         this.sourceLine = sourceLine
@@ -43,44 +44,66 @@ class GradleViolation extends Violation {
         this.id = nextId.getAndIncrement()
     }
 
+    File getFile() {
+        files.original(super.lineNumber).file
+    }
+
+    Integer getLineNumber() {
+        files.original(super.lineNumber).line
+    }
+
     GradleViolation insertAfter(ASTNode node, String changes) {
-        fixes += new GradleLintInsertAfter(this, file, node.lastLineNumber, changes)
+        BuildFiles.Original original = files.original(node.lastLineNumber)
+        fixes += new GradleLintInsertAfter(this, original.file, original.line, changes)
         this
     }
 
     GradleViolation insertBefore(ASTNode node, String changes) {
-        fixes += new GradleLintInsertBefore(this, file, node.lineNumber, changes)
+        BuildFiles.Original original = files.original(node.lineNumber)
+        fixes += new GradleLintInsertBefore(this, original.file, original.line, changes)
         this
     }
 
     GradleViolation insertIntoClosure(ASTNode node, String changes) {
+        return insertIntoClosureAt(node, changes, true)
+    }
+
+    GradleViolation insertIntoClosureAtTheEnd(ASTNode node, String changes) {
+        return insertIntoClosureAt(node, changes, false)
+    }
+
+    private void insertIntoClosureAt(ASTNode node, String changes, boolean insertAtStart) {
         ClosureExpression closure = null
-        if(node instanceof MethodCallExpression) {
+        if (node instanceof MethodCallExpression) {
             closure = node.arguments.find { it instanceof ClosureExpression } as ClosureExpression
-            if(!closure && node.arguments instanceof ArgumentListExpression) {
+            if (!closure && node.arguments instanceof ArgumentListExpression) {
                 (node.arguments as ArgumentListExpression).expressions.each {
                     insertIntoClosure(it, changes)
                 }
             }
-        }
-        else if(node instanceof ClosureExpression) {
+        } else if (node instanceof ClosureExpression) {
             closure = node
         }
 
         // goal: when adding into a closure, it should be indented 4 spaces
         // achieve this by taking the node's (columnNumber-1)+4 OR columnNumber+3
 
-        if(closure) {
+        if (closure) {
             if (closure.lineNumber == closure.lastLineNumber) {
                 // TODO what to do about single line closures?
-            }
-            else {
+            } else {
                 def indentedChanges = changes.stripIndent()
                         .split('\n')
                         .collect { line -> ''.padRight(node.columnNumber + 3) + line }
                         .join('\n')
 
-                fixes += new GradleLintInsertAfter(this, file, closure.lineNumber, indentedChanges)
+                def lineNumberToStartInsertion = insertAtStart ? closure.lineNumber : closure.lastLineNumber
+                BuildFiles.Original original = files.original(lineNumberToStartInsertion)
+                if (insertAtStart) {
+                    fixes += new GradleLintInsertAfter(this, original.file, original.line, indentedChanges)
+                } else {
+                    fixes += new GradleLintInsertBefore(this, original.file, original.line, indentedChanges)
+                }
             }
         }
 
@@ -88,13 +111,15 @@ class GradleViolation extends Violation {
     }
 
     GradleViolation replaceWith(ASTNode node, String changes) {
-        fixes += new GradleLintReplaceWith(this, file, node.lineNumber..node.lastLineNumber, node.columnNumber,
+        BuildFiles.Original original = files.original(node.lineNumber)
+        fixes += new GradleLintReplaceWith(this, original.file, original.line..files.original(node.lastLineNumber).line, node.columnNumber,
             node.lastColumnNumber, changes)
         this
     }
 
     GradleViolation delete(ASTNode node) {
-        fixes += new GradleLintReplaceWith(this, file, node.lineNumber..node.lastLineNumber, node.columnNumber, node.lastColumnNumber, '')
+        BuildFiles.Original original = files.original(node.lineNumber)
+        fixes += new GradleLintReplaceWith(this, original.file, original.line..files.original(node.lastLineNumber).line, node.columnNumber, node.lastColumnNumber, '')
         this
     }
 

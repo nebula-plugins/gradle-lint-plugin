@@ -85,9 +85,9 @@ class FixGradleLintTask extends DefaultTask implements VerificationTask {
                 int unfixedCriticalViolations = 0
 
                 violations.groupBy { it.file }.each { buildFile, projectViolations ->
-                    String buildFilePath = project.rootDir.toURI().relativize(buildFile.toURI()).toString()
 
                     projectViolations.each { v ->
+                        String buildFilePath = project.rootDir.toURI().relativize(v.file.toURI()).toString()
                         def unfixed = v.fixes.findAll { it.reasonForNotFixing != null }
                         if(v.fixes.empty) {
                             textOutput.withStyle(Yellow).text('nothing to do'.padRight(15))

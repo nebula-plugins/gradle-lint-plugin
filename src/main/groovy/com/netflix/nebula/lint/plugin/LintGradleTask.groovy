@@ -62,9 +62,9 @@ class LintGradleTask extends DefaultTask {
             }
 
             violations.groupBy { it.file }.each { buildFile, violationsByFile ->
-                String buildFilePath = project.rootDir.toURI().relativize(buildFile.toURI()).toString()
 
                 violationsByFile.each { v ->
+                    String buildFilePath = project.rootDir.toURI().relativize(v.file.toURI()).toString()
                     if (v.rule.priority == 1) {
                         textOutput.withStyle(Red).text('error'.padRight(10))
                     } else {
