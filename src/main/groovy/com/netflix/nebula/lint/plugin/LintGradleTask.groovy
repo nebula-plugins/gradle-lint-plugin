@@ -26,6 +26,7 @@ class LintGradleTask extends DefaultTask {
     List<GradleLintViolationAction> listeners = []
 
     boolean failOnWarning = false
+    boolean onlyCriticalRules = false
 
     LintGradleTask() {
         group = 'lint'
@@ -33,7 +34,7 @@ class LintGradleTask extends DefaultTask {
 
     @TaskAction
     void lint() {
-        def violations = new LintService().lint(project).violations
+        def violations = new LintService().lint(project, onlyCriticalRules).violations
                 .unique { v1, v2 -> v1.is(v2) ? 0 : 1 }
 
         (listeners + new GradleLintPatchAction(project) + new GradleLintInfoBrokerAction(project) + consoleOutputAction).each {

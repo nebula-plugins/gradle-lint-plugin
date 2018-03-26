@@ -15,14 +15,16 @@
  */
 package com.netflix.nebula.lint.plugin
 
+import org.gradle.BuildAdapter
+import org.gradle.BuildResult
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.execution.TaskExecutionGraph
+import org.gradle.api.execution.TaskExecutionGraphListener
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.tasks.compile.AbstractCompile
 
 class GradleLintPlugin implements Plugin<Project> {
-    private final exemptTasks = ['help', 'tasks', 'dependencies', 'dependencyInsight',
-        'components', 'model', 'projects', 'properties', 'wrapper', 'lintGradle', 'fixGradleLint', 'fixLintGradle']
 
     @Override
     void apply(Project project) {
@@ -37,46 +39,46 @@ class GradleLintPlugin implements Plugin<Project> {
             manualLintTask.group = 'lint'
             manualLintTask.failOnWarning = true
 
+            def criticalLintTask = project.tasks.create('criticalLintGradle', LintGradleTask)
+            criticalLintTask.group = 'lint'
+            criticalLintTask.onlyCriticalRules = true
+
             def fixTask = project.tasks.create('fixGradleLint', FixGradleLintTask)
             fixTask.userDefinedListeners = lintExt.listeners
 
             def fixTask2 = project.tasks.create('fixLintGradle', FixGradleLintTask)
             fixTask2.userDefinedListeners = lintExt.listeners
 
-            autoLintTask.onlyIf {
-                def allTasks = project.gradle.taskGraph.allTasks
-                def hasFailedTask = !lintExt.autoLintAfterFailure && allTasks.any { it.state.failure != null }
-                def hasExplicitLintTask = allTasks.any { it == fixTask || it == fixTask2 || it == manualLintTask }
-                !hasFailedTask && !hasExplicitLintTask
-            }
+            project.gradle.addBuildListener(new LintListener() {
+                def allTasks
+
+                @Override
+                void graphPopulated(TaskExecutionGraph graph) {
+                    allTasks = graph.allTasks
+                }
+
+                @Override
+                void buildFinished(BuildResult result) {
+                    if (onlyIf()) {
+                        autoLintTask.lint()
+                    }
+                }
+
+                private boolean onlyIf() {
+                    def shouldLint = project.hasProperty('gradleLint.alwaysRun') ?
+                            Boolean.valueOf(project.property('gradleLint.alwaysRun').toString()) : lintExt.alwaysRun
+                    def hasFailedTask = !lintExt.autoLintAfterFailure && allTasks.any { it.state.failure != null }
+                    //when we already have failed critical lint task we don't want to run autolint
+                    def hasFailedCriticalLintTask = allTasks.any { it == criticalLintTask && it.state.failure != null }
+                    def hasExplicitLintTask = allTasks.any {
+                        it == fixTask || it == fixTask2 || it == manualLintTask || it == autoLintTask
+                    }
+                    shouldLint && !hasFailedTask && !hasExplicitLintTask && !hasFailedCriticalLintTask
+                }
+            })
         }
 
         configureReportTask(project, lintExt)
-
-        def finalizeByLint = { task ->
-            if(lintExt.alwaysRun) {
-                def rootLint = project.rootProject.tasks.getByName('autoLintGradle')
-                if (task != rootLint && !exemptTasks.contains(task.name)) {
-                    // when running a lint-eligible task on a subproject, we want to lint the whole project
-                    task.finalizedBy rootLint
-
-                    // because technically you can override path in a Gradle task implementation and cause path to be null!
-                    if (task.getPath() != null) {
-                        try {
-                            rootLint.shouldRunAfter task
-                        } catch (Throwable ignored) {
-                            // just quietly DON'T add rootLint to run after this task, it will probably still run because
-                            // it will be hung on some other task as a shouldRunAfter
-                        }
-                    }
-                }
-            }
-        }
-
-        // ensure that lint runs
-        project.afterEvaluate {
-            project.tasks.each { finalizeByLint(it) }
-        }
 
         project.plugins.withType(JavaBasePlugin) {
             project.tasks.withType(AbstractCompile) { task ->
@@ -99,4 +101,6 @@ class GradleLintPlugin implements Plugin<Project> {
             }
         }
     }
+
+    private static abstract class LintListener  extends BuildAdapter implements TaskExecutionGraphListener {}
 }
