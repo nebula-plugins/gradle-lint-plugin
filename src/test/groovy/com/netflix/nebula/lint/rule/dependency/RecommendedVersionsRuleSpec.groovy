@@ -934,6 +934,9 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
     }
 
     private void setupGradleVersion(String versionOfGradle) {
+        if (versionOfGradle == null) {
+            throw new RuntimeException('test setup issue: version of gradle to set cannot be null')
+        }
         gradleVersion = versionOfGradle
     }
 

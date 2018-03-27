@@ -441,4 +441,22 @@ class DependencyService {
         def androidReleaseOutput = project.tasks.findByName('compileReleaseJavaWithJavac')?.destinationDir
         return androidReleaseOutput
     }
+
+    Comparator<? super SourceSet> sourceSetComparator() {
+        // sort the sourceSets from least dependent to most dependent, e.g. [main, test, integTest]
+        new Comparator<SourceSet>() {
+            @Override
+            int compare(SourceSet s1, SourceSet s2) {
+                def c1 = project.configurations.findByName(s1.compileConfigurationName)
+                def c2 = project.configurations.findByName(s2.compileConfigurationName)
+
+                if (allExtendsFrom(c1).contains(c2))
+                    1
+                if (allExtendsFrom(c2).contains(c1))
+                    -1
+                // secondary sorting if there is no relationship between these source sets
+                else c1.name <=> c2.name
+            }
+        }
+    }
 }

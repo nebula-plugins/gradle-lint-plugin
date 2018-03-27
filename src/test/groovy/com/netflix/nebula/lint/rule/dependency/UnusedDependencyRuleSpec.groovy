@@ -16,7 +16,6 @@
 package com.netflix.nebula.lint.rule.dependency
 
 import com.netflix.nebula.lint.TestKitSpecification
-import spock.lang.Ignore
 import spock.lang.Issue
 import spock.lang.Unroll
 
@@ -63,6 +62,7 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
 
         then:
         runTasksSuccessfully('compileJava', 'fixGradleLint')
+
         dependencies(buildFile) == expected
 
         where:

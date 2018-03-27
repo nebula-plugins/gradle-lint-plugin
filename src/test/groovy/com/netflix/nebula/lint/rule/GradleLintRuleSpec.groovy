@@ -24,9 +24,7 @@ import org.codehaus.groovy.ast.expr.Expression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.codehaus.groovy.ast.expr.VariableExpression
 import org.codehaus.groovy.ast.stmt.ExpressionStatement
-import org.gradle.api.GradleException
 import org.gradle.api.plugins.JavaPlugin
-import org.gradle.testfixtures.ProjectBuilder
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.junit.Rule
@@ -58,11 +56,12 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         pluginCount == 1
     }
 
-    def 'visit `plugins`'() {
+    @Unroll
+    def 'visit `plugins` - #plugin'() {
         when:
         project.buildFile << """
             plugins {
-             id 'java'
+             id '${plugin}'
             }
         """
 
@@ -79,6 +78,9 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
 
         then:
         pluginCount == 1
+
+        where:
+        plugin << ['java', 'org.gradle.java']
     }
 
     def 'visit `task`'() {

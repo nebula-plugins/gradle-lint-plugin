@@ -19,47 +19,81 @@
 package com.netflix.nebula.lint
 
 import com.netflix.nebula.lint.rule.dependency.JavaFixture
+import nebula.test.functional.internal.classpath.ClasspathAddingInitScriptBuilder
 import org.gradle.testkit.runner.GradleRunner
+import org.gradle.util.GFileUtils
 import org.junit.Rule
-import org.junit.rules.TemporaryFolder
+import org.junit.rules.TestName
 import spock.lang.Specification
 
 /**
  * Things that really belong in the unfinished Gradle Testkit
  */
 abstract class TestKitSpecification extends Specification {
-    @Rule final TemporaryFolder temp = new TemporaryFolder()
+    @Rule
+    final TestName testName = new TestName()
+
     File projectDir
     File buildFile
     File settingsFile
     File propertiesFile
     Boolean debug = true
+    String moduleName
+    String gradleVersion
+
+    /**
+     * Automatic addition of `GradleRunner.withPluginClasspath()` _only_ works if the plugin under test is applied using the plugins DSL
+     * This enables us to add the plugin-under-test classpath via an init script
+     * https://docs.gradle.org/4.6/userguide/test_kit.html#sub:test-kit-automatic-classpath-injection
+     */
+    boolean definePluginOutsideOfPluginBlock = false
 
     def setup() {
-        projectDir = temp.root
+        projectDir = new File("build/nebulatest/${this.class.canonicalName}/${testName.methodName.replaceAll(/\W+/, '-')}").absoluteFile
+        if (projectDir.exists()) {
+            projectDir.deleteDir()
+        }
+        projectDir.mkdirs()
+
         buildFile = new File(projectDir, 'build.gradle')
         settingsFile = new File(projectDir, 'settings.gradle')
         propertiesFile = new File(projectDir, 'gradle.properties')
+
+        moduleName = findModuleName()
+        settingsFile.text = "rootProject.name='${moduleName}'\n"
     }
 
     def runTasksSuccessfully(String... tasks) {
-        return GradleRunner.create()
+        def initArgs = definePluginOutsideOfPluginBlock ? createGradleTestKitInitArgs() : new ArrayList<>()
+        def gradleRunnerBuilder = GradleRunner.create()
                 .withDebug(debug)
                 .withProjectDir(projectDir)
-                .withArguments(*(tasks + '--stacktrace'))
+                .withArguments(*(tasks + initArgs + '--stacktrace'))
                 .withPluginClasspath()
-                .build()
+
+        if (gradleVersion != null) {
+            gradleRunnerBuilder.withGradleVersion(gradleVersion)
+        }
+
+        return gradleRunnerBuilder.build()
     }
 
     def runTasksFail(String... tasks) {
-        return GradleRunner.create()
+        def initArgs = definePluginOutsideOfPluginBlock ? createGradleTestKitInitArgs() : new ArrayList<>()
+        def gradleRunnerBuilder = GradleRunner.create()
                 .withDebug(debug)
                 .withProjectDir(projectDir)
-                .withArguments(*(tasks))
+                .withArguments(*(tasks + initArgs))
                 .withPluginClasspath()
-                .buildAndFail()
+
+        if (gradleVersion != null) {
+            gradleRunnerBuilder.withGradleVersion(gradleVersion)
+        }
+
+        return gradleRunnerBuilder.buildAndFail()
     }
 
+    @Deprecated
     def runTasksSuccessfullyWithGradleVersion(String gradleVersion, String... tasks) {
         return GradleRunner.create()
                 .withDebug(debug)
@@ -114,4 +148,23 @@ abstract class TestKitSpecification extends Specification {
         sourceFolder.mkdirs()
         new File(sourceFolder, JavaFixture.fullyQualifiedName(source).replaceAll(/\./, '/') + '.java').text = source
     }
+
+    private String findModuleName() {
+        getProjectDir().getName().replaceAll(/_\d+/, '')
+    }
+
+    private List<String> createGradleTestKitInitArgs() {
+        File testKitDir = new File(projectDir, ".gradle-test-kit")
+        if (!testKitDir.exists()) {
+            GFileUtils.mkdirs(testKitDir)
+        }
+
+        File initScript = new File(testKitDir, "init.gradle")
+        ClassLoader classLoader = this.getClass().getClassLoader()
+        def classpathFilter = nebula.test.functional.GradleRunner.CLASSPATH_DEFAULT
+        ClasspathAddingInitScriptBuilder.build(initScript, classLoader, classpathFilter)
+
+        return Arrays.asList("--init-script", initScript.getAbsolutePath())
+    }
+
 }
