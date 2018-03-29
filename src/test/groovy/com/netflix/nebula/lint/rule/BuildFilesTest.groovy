@@ -61,4 +61,20 @@ class BuildFilesTest extends Specification {
         8                | file3        | 2
         9                | file3        | 3
     }
+
+    def 'exception with details when you are asking line out of range'() {
+        given:
+        def buildFiles = new BuildFiles([file1, file2, file3])
+
+        when:
+        buildFiles.original(10)
+
+        then:
+        def exception = thrown(IllegalArgumentException)
+        def lines = exception.message.split('\n')
+        lines[0] == 'Asked line in concatenated file was: 10 but it wasn\'t found. Original project files were concatenated to following ranges:'
+        lines[1].startsWith("Lines 1 - 3 are ")
+        lines[2].startsWith("Lines 4 - 6 are ")
+        lines[3].startsWith("Lines 7 - 9 are ")
+    }
 }
