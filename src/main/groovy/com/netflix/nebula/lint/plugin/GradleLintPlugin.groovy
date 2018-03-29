@@ -15,6 +15,7 @@
  */
 package com.netflix.nebula.lint.plugin
 
+import com.netflix.nebula.lint.plugin.GradleLintPlugin.LintListener
 import org.gradle.BuildAdapter
 import org.gradle.BuildResult
 import org.gradle.api.Plugin
@@ -67,13 +68,14 @@ class GradleLintPlugin implements Plugin<Project> {
                 private boolean onlyIf() {
                     def shouldLint = project.hasProperty('gradleLint.alwaysRun') ?
                             Boolean.valueOf(project.property('gradleLint.alwaysRun').toString()) : lintExt.alwaysRun
+                    def skipForSpecificTask = project.gradle.startParameter.taskNames.any { lintExt.skipForTasks.contains(it) }
                     def hasFailedTask = !lintExt.autoLintAfterFailure && allTasks.any { it.state.failure != null }
                     //when we already have failed critical lint task we don't want to run autolint
                     def hasFailedCriticalLintTask = allTasks.any { it == criticalLintTask && it.state.failure != null }
                     def hasExplicitLintTask = allTasks.any {
                         it == fixTask || it == fixTask2 || it == manualLintTask || it == autoLintTask
                     }
-                    shouldLint && !hasFailedTask && !hasExplicitLintTask && !hasFailedCriticalLintTask
+                    shouldLint && !skipForSpecificTask && !hasFailedTask && !hasExplicitLintTask && !hasFailedCriticalLintTask
                 }
             })
         }
