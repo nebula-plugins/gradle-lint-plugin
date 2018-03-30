@@ -50,7 +50,7 @@ class GradleLintPlugin implements Plugin<Project> {
             def fixTask2 = project.tasks.create('fixLintGradle', FixGradleLintTask)
             fixTask2.userDefinedListeners = lintExt.listeners
 
-            project.gradle.addBuildListener(new LintListener() {
+            project.gradle.addListener(new LintListener() {
                 def allTasks
 
                 @Override

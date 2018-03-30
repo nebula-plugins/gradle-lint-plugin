@@ -163,7 +163,6 @@ class GradleLintPluginSpec extends TestKitSpecification {
         def console = results.output.readLines()
 
         then:
-        println(results.output)
         console.findAll { it.startsWith('error') }.size() == 1
         console.any { it.contains('dependency-tuple') }
         console.every { ! it.contains('dependency-parentheses') }
@@ -335,7 +334,6 @@ class GradleLintPluginSpec extends TestKitSpecification {
 
         then:
         def results = runTasksSuccessfully('generateGradleLintReport')
-        println results.output
 
         when:
         def console = results.output.readLines()
