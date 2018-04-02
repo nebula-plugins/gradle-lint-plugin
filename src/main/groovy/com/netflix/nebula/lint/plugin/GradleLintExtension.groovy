@@ -17,7 +17,6 @@
 package com.netflix.nebula.lint.plugin
 
 import com.netflix.nebula.lint.GradleLintViolationAction
-import com.netflix.nebula.lint.GradleViolation
 import org.gradle.api.Incubating
 import org.gradle.api.InvalidUserDataException
 
@@ -37,6 +36,8 @@ class GradleLintExtension {
     String reportFormat = 'html'
     boolean alwaysRun = true
     boolean autoLintAfterFailure = true
+
+    List<String> skipForTasks = ['help', 'tasks', 'dependencies', 'dependencyInsight', 'components', 'model', 'projects', 'properties', 'wrapper']
 
     @Incubating
     List<GradleLintViolationAction> listeners = []
@@ -63,4 +64,8 @@ class GradleLintExtension {
     void fixme(String ignoreUntil, String r1, String r2, String r3, Closure c) { c() }
     void fixme(String ignoreUntil, String r1, String r2, String r3, String r4, Closure c) { c() }
     void fixme(String ignoreUntil, String r1, String r2, String r3, String r4, String r5, Closure c) { c() }
+
+    void skipForTask(String taskName) {
+        skipForTasks.add(taskName)
+    }
 }

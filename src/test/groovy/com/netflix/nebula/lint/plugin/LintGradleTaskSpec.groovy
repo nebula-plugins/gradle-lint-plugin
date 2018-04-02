@@ -131,7 +131,7 @@ class LintGradleTaskSpec extends TestKitSpecification {
         def result = runTasksFail('compileJava')
 
         then:
-        result.task(':autoLintGradle').outcome == TaskOutcome.SUCCESS
+        result.output.contains('This project contains lint violations.')
     }
 
 
@@ -161,7 +161,7 @@ class LintGradleTaskSpec extends TestKitSpecification {
         def result = runTasksFail('compileJava')
 
         then:
-        result.task(':autoLintGradle').outcome == TaskOutcome.SKIPPED
+        ! result.output.contains('This project contains lint violations.')
     }
 
     def 'lint finds all violations in all applied files with bookmark rule'() {

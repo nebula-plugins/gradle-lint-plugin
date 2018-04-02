@@ -56,7 +56,7 @@ class GradleLintReportTask extends DefaultTask implements VerificationTask, Repo
     void generateReport() {
         if (reports.enabled) {
             def lintService = new LintService()
-            def results = lintService.lint(project)
+            def results = lintService.lint(project, false)
             def violationCount = results.violations.size()
             def textOutput = new StyledTextService(getServices())
 

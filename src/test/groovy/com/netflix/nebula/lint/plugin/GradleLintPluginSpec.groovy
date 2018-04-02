@@ -137,6 +137,37 @@ class GradleLintPluginSpec extends TestKitSpecification {
         runTasksSuccessfully('lintGradle')
     }
 
+    def 'run only critical rules and skip normal ones'() {
+        when:
+        buildFile << """
+            plugins {
+                id 'nebula.lint'
+                id 'java'
+            }
+
+            gradleLint.rules = ['dependency-parentheses']
+            gradleLint.criticalRules = ['dependency-tuple']
+
+            dependencies {
+                compile('com.google.guava:guava:18.0')
+                testCompile group: 'junit',
+                    name: 'junit',
+                    version: '4.11'
+            }
+        """
+
+        then:
+        def results = runTasksFail('criticalLintGradle')
+
+        when:
+        def console = results.output.readLines()
+
+        then:
+        console.findAll { it.startsWith('error') }.size() == 1
+        console.any { it.contains('dependency-tuple') }
+        console.every { ! it.contains('dependency-parentheses') }
+    }
+
     @Unroll
     def 'auto correct all violations on a single module project with task #taskName'() {
         when:
@@ -303,7 +334,6 @@ class GradleLintPluginSpec extends TestKitSpecification {
 
         then:
         def results = runTasksSuccessfully('generateGradleLintReport')
-        println results.output
 
         when:
         def console = results.output.readLines()
@@ -396,6 +426,67 @@ class GradleLintPluginSpec extends TestKitSpecification {
         !console.any { it.contains('archaic-wrapper') }
     }
 
+    def 'lint task does not run when alwaysRun is off via cli'() {
+        when:
+        buildFile << """
+            plugins {
+                id 'nebula.lint'
+                id 'java'
+            }
+
+            gradleLint {
+                rules = ['archaic-wrapper']
+            }
+
+            task wrapper(type: Wrapper){
+                gradleVersion = '0.1'
+            }
+        """
+
+        then:
+        // build would normally trigger lintGradle, but will not when alwaysRun = false
+        def results = runTasksSuccessfully('build', '-PgradleLint.alwaysRun=false')
+
+        when:
+        def console = results.output.readLines()
+
+        then:
+        !console.any { it.contains('archaic-wrapper') }
+    }
+
+    @Unroll
+    def 'lint task does not run for task #taskName'() {
+        when:
+        buildFile << """
+            plugins {
+                id 'nebula.lint'
+                id 'java'
+            }
+
+            gradleLint {
+                rules = ['archaic-wrapper']
+            }
+
+            task wrapper(type: Wrapper){
+                gradleVersion = '0.1'
+            }
+        """
+
+        then:
+        // build would normally trigger lintGradle, but will not when alwaysRun = false
+        def results = runTasksSuccessfully(taskName)
+
+        when:
+        def console = results.output.readLines()
+
+        then:
+        !console.any { it.contains('archaic-wrapper') }
+
+        where:
+        taskName << ['help', 'tasks', 'dependencies', 'components',
+                     'model', 'projects', 'properties', 'wrapper']
+    }
+
     def 'autoLintGradle is always run'() {
         createJavaSourceFile('public class Main { }')
         buildFile << """\
@@ -404,14 +495,19 @@ class GradleLintPluginSpec extends TestKitSpecification {
                 id 'nebula.lint'
             }
             
-            gradleLint.rules = ['dependency-parentheses']
+            gradleLint.rules = ['archaic-wrapper']
+            
+            task wrapper(type: Wrapper){
+                gradleVersion = '0.1'
+            }
+            
             """.stripIndent()
 
         when:
         def results = runTasksSuccessfully('compileJava')
 
         then:
-        results.task(':autoLintGradle').outcome == TaskOutcome.SUCCESS
+        results.output.contains('This project contains lint violations.')
     }
 
     def 'override rule set with a gradle property'() {

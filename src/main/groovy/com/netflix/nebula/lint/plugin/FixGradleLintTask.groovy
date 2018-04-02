@@ -51,7 +51,7 @@ class FixGradleLintTask extends DefaultTask implements VerificationTask {
     
     @TaskAction
     void lintCorrections() {
-        def violations = new LintService().lint(project).violations
+        def violations = new LintService().lint(project, false).violations
                 .unique { v1, v2 -> v1.is(v2) ? 0 : 1 }
 
         (userDefinedListeners + infoBrokerAction + new GradleLintPatchAction(project)).each {
