@@ -36,6 +36,13 @@ class BuildFiles {
             Map.Entry<LineRange, File> entry = orderedFiles.find { key, value ->
                 key.within(concatenatedFileLine)
             }
+            if (entry == null) {
+                String ranges = orderedFiles
+                        .collect { key, value -> "Lines $key.start - $key.end are $value.absolutePath"}
+                        .join('\n')
+                throw new IllegalArgumentException("Asked line in concatenated file was: $concatenatedFileLine" +
+                        " but it wasn't found. Original project files were concatenated to following ranges:\n$ranges")
+            }
             new Original(
                     file: entry.value,
                     line: concatenatedFileLine - (entry.key.start - 1)
