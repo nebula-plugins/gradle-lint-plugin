@@ -1,7 +1,6 @@
 package com.netflix.nebula.lint.rule.dependency
 
 import com.google.common.collect.ImmutableMap
-import com.netflix.nebula.lint.rule.GradleDependency
 import com.netflix.nebula.lint.rule.GradleLintRule
 import com.netflix.nebula.lint.rule.GradleModelAware
 import org.codehaus.groovy.ast.ASTNode
@@ -45,16 +44,6 @@ class UndeclaredDependencyRule extends GradleLintRule implements GradleModelAwar
     @Override
     void visitSubprojects(MethodCallExpression call) {
         bookmark(SUBPROJECTS_BLOCK, call)
-    }
-
-    @Override
-    void visitAllprojectsGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
-        bookmark(ALLPROJECTS_DEPENDENCIES_BLOCK, call)
-    }
-
-    @Override
-    void visitSubprojectGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
-        bookmark(SUBPROJECTS_DEPENDENCIES_BLOCK, call)
     }
 
     @Override
