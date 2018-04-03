@@ -23,6 +23,8 @@ import org.gradle.api.artifacts.Dependency
 import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.Unroll
 
+import javax.annotation.Nullable
+
 class ClasspathBasedRecommendationProviderTest extends TestKitSpecification {
     static def version = 1.0
 
@@ -340,6 +342,12 @@ class ClasspathBasedRecommendationProviderTest extends TestKitSpecification {
             @Override
             Dependency copy() {
                 return null
+            }
+
+            void because(@Nullable String s) {}
+
+            String getReason() {
+                return ""
             }
         }
         dep
