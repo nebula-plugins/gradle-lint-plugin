@@ -18,6 +18,7 @@
 
 package com.netflix.nebula.lint.rule.dependency
 
+import groovy.transform.PackageScope
 import nebula.test.dependencies.Coordinate
 
 import java.util.jar.Attributes
@@ -25,6 +26,7 @@ import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
 import java.util.zip.ZipEntry
 
+@PackageScope
 class ArtifactHelpers {
     protected static File setupSamplePomWith(File repo, Coordinate coordinate, String sampleFileContents) {
         def sample = new File(repo, coordinate.getGroup() + File.separator + coordinate.getArtifact() + File.separator + coordinate.getVersion())

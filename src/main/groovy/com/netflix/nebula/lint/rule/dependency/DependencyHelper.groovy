@@ -2,7 +2,13 @@ package com.netflix.nebula.lint.rule.dependency
 
 import com.netflix.nebula.lint.GradleViolation
 import com.netflix.nebula.lint.rule.GradleDependency
-import org.codehaus.groovy.ast.expr.*
+import org.codehaus.groovy.ast.expr.BinaryExpression
+import org.codehaus.groovy.ast.expr.ClosureExpression
+import org.codehaus.groovy.ast.expr.ConstantExpression
+import org.codehaus.groovy.ast.expr.GStringExpression
+import org.codehaus.groovy.ast.expr.MapExpression
+import org.codehaus.groovy.ast.expr.MethodCallExpression
+import org.codehaus.groovy.ast.expr.NamedArgumentListExpression
 
 class DependencyHelper {
     static void removeVersion(GradleViolation violation, MethodCallExpression call, GradleDependency dep) {
