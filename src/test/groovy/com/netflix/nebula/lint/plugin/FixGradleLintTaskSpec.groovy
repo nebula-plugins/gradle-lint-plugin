@@ -175,9 +175,10 @@ dependencies {\r
 
             gradleLint.rules = ['all-dependencies']
             """.stripIndent()
+        gradleVersion = '2.13'
 
         when:
-        def results = runTasksSuccessfullyWithGradleVersion('2.13', 'assemble', 'lintGradle')
+        def results = runTasksSuccessfully('assemble', 'lintGradle')
 
         then:
         println results?.output
