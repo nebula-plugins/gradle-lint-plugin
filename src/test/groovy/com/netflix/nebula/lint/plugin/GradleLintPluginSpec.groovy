@@ -454,6 +454,34 @@ class GradleLintPluginSpec extends TestKitSpecification {
         !console.any { it.contains('archaic-wrapper') }
     }
 
+    def 'lint task does not run when autoGradleLint is excluded via cli'() {
+        when:
+        buildFile << """
+            plugins {
+                id 'nebula.lint'
+                id 'java'
+            }
+
+            gradleLint {
+                rules = ['archaic-wrapper']
+            }
+
+            task wrapper(type: Wrapper){
+                gradleVersion = '0.1'
+            }
+        """
+
+        then:
+        // build would normally trigger lintGradle, but will not when alwaysRun = false
+        def results = runTasksSuccessfully('build', '-x', 'autoLintGradle')
+
+        when:
+        def console = results.output.readLines()
+
+        then:
+        !console.any { it.contains('archaic-wrapper') }
+    }
+
     @Unroll
     def 'lint task does not run for task #taskName'() {
         when:
