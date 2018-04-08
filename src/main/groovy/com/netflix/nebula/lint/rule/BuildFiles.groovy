@@ -7,7 +7,6 @@ package com.netflix.nebula.lint.rule
 class BuildFiles {
 
     private Map<LineRange, File> orderedFiles = new LinkedHashMap<>()
-    private static String NEW_LINE_CHAR = System.getProperty("line.separator");
 
     BuildFiles(List<File> allFiles) {
         int currentLinesTotal = 0
@@ -20,7 +19,11 @@ class BuildFiles {
     }
 
     int linesCount(File file) {
-        file.text.count(NEW_LINE_CHAR) + 1
+        file.withReader { reader ->
+            LineNumberReader lineNumberReader = new LineNumberReader(reader)
+            while (lineNumberReader.read() != -1) {}
+            lineNumberReader.getLineNumber() + 1
+        }
     }
 
     String getText() {

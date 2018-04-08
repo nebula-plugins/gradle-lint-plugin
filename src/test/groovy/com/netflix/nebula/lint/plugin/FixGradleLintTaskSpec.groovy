@@ -116,14 +116,14 @@ class FixGradleLintTaskSpec extends TestKitSpecification {
             }
             
             apply from: 'another.gradle'
-        """
+"""
 
         File another = new File(projectDir, 'another.gradle')
         another.text = """
             dependencies {
                 compile 'com.google.guava:guava:17.0'
             }
-        """
+"""
 
         createJavaSourceFile('public class Main {}')
 
