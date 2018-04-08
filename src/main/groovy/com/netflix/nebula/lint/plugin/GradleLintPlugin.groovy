@@ -27,13 +27,15 @@ import org.gradle.api.tasks.compile.AbstractCompile
 
 class GradleLintPlugin implements Plugin<Project> {
 
+    public static final String AUTO_LINT_GRADLE = 'autoLintGradle'
+
     @Override
     void apply(Project project) {
         LintRuleRegistry.classLoader = getClass().classLoader
         def lintExt = project.extensions.create('gradleLint', GradleLintExtension)
 
         if (project.rootProject == project) {
-            def autoLintTask = project.tasks.create('autoLintGradle', LintGradleTask)
+            def autoLintTask = project.tasks.create(AUTO_LINT_GRADLE, LintGradleTask)
             autoLintTask.listeners = lintExt.listeners
 
             def manualLintTask = project.tasks.create('lintGradle', LintGradleTask)
@@ -68,6 +70,7 @@ class GradleLintPlugin implements Plugin<Project> {
                 private boolean onlyIf() {
                     def shouldLint = project.hasProperty('gradleLint.alwaysRun') ?
                             Boolean.valueOf(project.property('gradleLint.alwaysRun').toString()) : lintExt.alwaysRun
+                    def excludedAutoLintGradle = project.gradle.startParameter.excludedTaskNames.contains(AUTO_LINT_GRADLE)
                     def skipForSpecificTask = project.gradle.startParameter.taskNames.any { lintExt.skipForTasks.contains(it) }
                     def hasFailedTask = !lintExt.autoLintAfterFailure && allTasks.any { it.state.failure != null }
                     //when we already have failed critical lint task we don't want to run autolint
@@ -75,7 +78,8 @@ class GradleLintPlugin implements Plugin<Project> {
                     def hasExplicitLintTask = allTasks.any {
                         it == fixTask || it == fixTask2 || it == manualLintTask || it == autoLintTask
                     }
-                    shouldLint && !skipForSpecificTask && !hasFailedTask && !hasExplicitLintTask && !hasFailedCriticalLintTask
+                    shouldLint && !excludedAutoLintGradle && !skipForSpecificTask && !hasFailedTask &&
+                            !hasExplicitLintTask && !hasFailedCriticalLintTask
                 }
             })
         }
