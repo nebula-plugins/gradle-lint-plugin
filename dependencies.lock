@@ -4,12 +4,16 @@
             "locked": "3.3.5",
             "requested": "3.3.5"
         },
+        "com.netflix.nebula:nebula-dependency-base-plugin": {
+            "locked": "0.1.0",
+            "requested": "0.1.0"
+        },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.1.2",
+            "locked": "6.4.0",
             "requested": "latest.release"
         },
         "commons-lang:commons-lang": {
@@ -19,6 +23,10 @@
         "junit:junit": {
             "locked": "4.12",
             "requested": "4.12"
+        },
+        "org.apache.maven:maven-model-builder": {
+            "locked": "3.5.3",
+            "requested": "3.+"
         },
         "org.codehaus.gpars:gpars": {
             "locked": "1.2.1",
@@ -54,12 +62,16 @@
             "locked": "3.3.5",
             "requested": "3.3.5"
         },
+        "com.netflix.nebula:nebula-dependency-base-plugin": {
+            "locked": "0.1.0",
+            "requested": "0.1.0"
+        },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.1.2",
+            "locked": "6.4.0",
             "requested": "latest.release"
         },
         "commons-lang:commons-lang": {
@@ -69,6 +81,10 @@
         "junit:junit": {
             "locked": "4.12",
             "requested": "4.12"
+        },
+        "org.apache.maven:maven-model-builder": {
+            "locked": "3.5.3",
+            "requested": "3.+"
         },
         "org.codehaus.gpars:gpars": {
             "locked": "1.2.1",
@@ -104,12 +120,16 @@
             "locked": "3.3.5",
             "requested": "3.3.5"
         },
+        "com.netflix.nebula:nebula-dependency-base-plugin": {
+            "locked": "0.1.0",
+            "requested": "0.1.0"
+        },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.1.2",
+            "locked": "6.4.0",
             "requested": "latest.release"
         },
         "commons-lang:commons-lang": {
@@ -119,6 +139,10 @@
         "junit:junit": {
             "locked": "4.12",
             "requested": "4.12"
+        },
+        "org.apache.maven:maven-model-builder": {
+            "locked": "3.5.3",
+            "requested": "3.+"
         },
         "org.codehaus.gpars:gpars": {
             "locked": "1.2.1",
@@ -154,12 +178,16 @@
             "locked": "3.3.5",
             "requested": "3.3.5"
         },
+        "com.netflix.nebula:nebula-dependency-base-plugin": {
+            "locked": "0.1.0",
+            "requested": "0.1.0"
+        },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.1.2",
+            "locked": "6.4.0",
             "requested": "latest.release"
         },
         "commons-lang:commons-lang": {
@@ -173,6 +201,10 @@
         "junit:junit": {
             "locked": "4.12",
             "requested": "4.12"
+        },
+        "org.apache.maven:maven-model-builder": {
+            "locked": "3.5.3",
+            "requested": "3.+"
         },
         "org.codehaus.gpars:gpars": {
             "locked": "1.2.1",
@@ -212,12 +244,16 @@
             "locked": "3.3.5",
             "requested": "3.3.5"
         },
+        "com.netflix.nebula:nebula-dependency-base-plugin": {
+            "locked": "0.1.0",
+            "requested": "0.1.0"
+        },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.1.2",
+            "locked": "6.4.0",
             "requested": "latest.release"
         },
         "commons-lang:commons-lang": {
@@ -231,6 +267,10 @@
         "junit:junit": {
             "locked": "4.12",
             "requested": "4.12"
+        },
+        "org.apache.maven:maven-model-builder": {
+            "locked": "3.5.3",
+            "requested": "3.+"
         },
         "org.codehaus.gpars:gpars": {
             "locked": "1.2.1",
@@ -270,12 +310,16 @@
             "locked": "3.3.5",
             "requested": "3.3.5"
         },
+        "com.netflix.nebula:nebula-dependency-base-plugin": {
+            "locked": "0.1.0",
+            "requested": "0.1.0"
+        },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.1.2",
+            "locked": "6.4.0",
             "requested": "latest.release"
         },
         "commons-lang:commons-lang": {
@@ -289,6 +333,10 @@
         "junit:junit": {
             "locked": "4.12",
             "requested": "4.12"
+        },
+        "org.apache.maven:maven-model-builder": {
+            "locked": "3.5.3",
+            "requested": "3.+"
         },
         "org.codehaus.gpars:gpars": {
             "locked": "1.2.1",
@@ -328,12 +376,16 @@
             "locked": "3.3.5",
             "requested": "3.3.5"
         },
+        "com.netflix.nebula:nebula-dependency-base-plugin": {
+            "locked": "0.1.0",
+            "requested": "0.1.0"
+        },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.1.2",
+            "locked": "6.4.0",
             "requested": "latest.release"
         },
         "commons-lang:commons-lang": {
@@ -347,6 +399,10 @@
         "junit:junit": {
             "locked": "4.12",
             "requested": "4.12"
+        },
+        "org.apache.maven:maven-model-builder": {
+            "locked": "3.5.3",
+            "requested": "3.+"
         },
         "org.codehaus.gpars:gpars": {
             "locked": "1.2.1",
@@ -383,14 +439,12 @@
     },
     "jacocoAgent": {
         "org.jacoco:org.jacoco.agent": {
-            "locked": "0.7.9",
-            "requested": "0.7.9"
+            "locked": "0.8.1"
         }
     },
     "jacocoAnt": {
         "org.jacoco:org.jacoco.ant": {
-            "locked": "0.7.9",
-            "requested": "0.7.9"
+            "locked": "0.8.1"
         }
     },
     "kapt": {
@@ -417,7 +471,7 @@
             "requested": "3.3.5"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.1.2",
+            "locked": "6.4.0",
             "requested": "latest.release"
         },
         "commons-lang:commons-lang": {
@@ -458,12 +512,16 @@
             "locked": "3.3.5",
             "requested": "3.3.5"
         },
+        "com.netflix.nebula:nebula-dependency-base-plugin": {
+            "locked": "0.1.0",
+            "requested": "0.1.0"
+        },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.1.2",
+            "locked": "6.4.0",
             "requested": "latest.release"
         },
         "commons-lang:commons-lang": {
@@ -473,6 +531,10 @@
         "junit:junit": {
             "locked": "4.12",
             "requested": "4.12"
+        },
+        "org.apache.maven:maven-model-builder": {
+            "locked": "3.5.3",
+            "requested": "3.+"
         },
         "org.codehaus.gpars:gpars": {
             "locked": "1.2.1",
@@ -508,12 +570,16 @@
             "locked": "3.3.5",
             "requested": "3.3.5"
         },
+        "com.netflix.nebula:nebula-dependency-base-plugin": {
+            "locked": "0.1.0",
+            "requested": "0.1.0"
+        },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.1.2",
+            "locked": "6.4.0",
             "requested": "latest.release"
         },
         "commons-lang:commons-lang": {
@@ -523,6 +589,10 @@
         "junit:junit": {
             "locked": "4.12",
             "requested": "4.12"
+        },
+        "org.apache.maven:maven-model-builder": {
+            "locked": "3.5.3",
+            "requested": "3.+"
         },
         "org.codehaus.gpars:gpars": {
             "locked": "1.2.1",
@@ -558,12 +628,16 @@
             "locked": "3.3.5",
             "requested": "3.3.5"
         },
+        "com.netflix.nebula:nebula-dependency-base-plugin": {
+            "locked": "0.1.0",
+            "requested": "0.1.0"
+        },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.1.2",
+            "locked": "6.4.0",
             "requested": "latest.release"
         },
         "commons-lang:commons-lang": {
@@ -577,6 +651,10 @@
         "junit:junit": {
             "locked": "4.12",
             "requested": "4.12"
+        },
+        "org.apache.maven:maven-model-builder": {
+            "locked": "3.5.3",
+            "requested": "3.+"
         },
         "org.codehaus.gpars:gpars": {
             "locked": "1.2.1",
@@ -616,12 +694,16 @@
             "locked": "3.3.5",
             "requested": "3.3.5"
         },
+        "com.netflix.nebula:nebula-dependency-base-plugin": {
+            "locked": "0.1.0",
+            "requested": "0.1.0"
+        },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.1.2",
+            "locked": "6.4.0",
             "requested": "latest.release"
         },
         "commons-lang:commons-lang": {
@@ -635,6 +717,10 @@
         "junit:junit": {
             "locked": "4.12",
             "requested": "4.12"
+        },
+        "org.apache.maven:maven-model-builder": {
+            "locked": "3.5.3",
+            "requested": "3.+"
         },
         "org.codehaus.gpars:gpars": {
             "locked": "1.2.1",
@@ -674,12 +760,16 @@
             "locked": "3.3.5",
             "requested": "3.3.5"
         },
+        "com.netflix.nebula:nebula-dependency-base-plugin": {
+            "locked": "0.1.0",
+            "requested": "0.1.0"
+        },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.1.2",
+            "locked": "6.4.0",
             "requested": "latest.release"
         },
         "commons-lang:commons-lang": {
@@ -693,6 +783,10 @@
         "junit:junit": {
             "locked": "4.12",
             "requested": "4.12"
+        },
+        "org.apache.maven:maven-model-builder": {
+            "locked": "3.5.3",
+            "requested": "3.+"
         },
         "org.codehaus.gpars:gpars": {
             "locked": "1.2.1",
@@ -732,12 +826,16 @@
             "locked": "3.3.5",
             "requested": "3.3.5"
         },
+        "com.netflix.nebula:nebula-dependency-base-plugin": {
+            "locked": "0.1.0",
+            "requested": "0.1.0"
+        },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "0.5.0",
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.1.2",
+            "locked": "6.4.0",
             "requested": "latest.release"
         },
         "commons-lang:commons-lang": {
@@ -751,6 +849,10 @@
         "junit:junit": {
             "locked": "4.12",
             "requested": "4.12"
+        },
+        "org.apache.maven:maven-model-builder": {
+            "locked": "3.5.3",
+            "requested": "3.+"
         },
         "org.codehaus.gpars:gpars": {
             "locked": "1.2.1",
