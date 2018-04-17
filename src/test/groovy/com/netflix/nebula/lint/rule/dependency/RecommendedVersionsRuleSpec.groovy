@@ -884,7 +884,6 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
 
         def filesAsString = projectDir.listFiles().toString()
         filesAsString.contains(projectDir.toString() + File.separator + "build.gradle")
-        !filesAsString.contains(projectDir.toString() + File.separator + "gradle.properties")
         !filesAsString.contains(projectDir.toString() + File.separator + "settings.gradle")
 
         where:
