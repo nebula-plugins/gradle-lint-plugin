@@ -9,9 +9,7 @@ import org.codehaus.groovy.ast.expr.Expression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.gradle.api.Incubating
 import org.gradle.api.artifacts.Configuration
-import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.VersionInfo
-import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.Versioned
-import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.DefaultVersionComparator
+import org.gradle.util.VersionNumber
 
 /**
  * This is like a declarative form of the use of a Substitute Nebula Resolution Rule:
@@ -24,7 +22,6 @@ class MinimumDependencyVersionRule extends GradleLintRule implements GradleModel
     String description = 'pull up dependencies to a minimum version if necessary'
 
     def alreadyAdded = [] as Set
-    private Comparator<Versioned> versionComparator = new DefaultVersionComparator()
 
     @Lazy
     List<GradleDependency> minimumVersions = {
@@ -72,7 +69,7 @@ class MinimumDependencyVersionRule extends GradleLintRule implements GradleModel
         if (!resolved)
             return
 
-        if (versionComparator.compare(new VersionInfo(resolved.moduleVersion.id.version), new VersionInfo(minVersionConstraint.version)) < 0) {
+        if (VersionNumber.parse(resolved.moduleVersion.id.version).compareTo(VersionNumber.parse(minVersionConstraint.version)) < 0) {
             addBuildLintViolation("this dependency does not meet the minimum version of $minVersionConstraint.version", decl)
                     .replaceWith(decl, "'${minVersionConstraint.toNotation()}'")
             alreadyAdded += minVersionConstraint
@@ -114,7 +111,7 @@ class MinimumDependencyVersionRule extends GradleLintRule implements GradleModel
         if (conf.extendsFrom.any { addFirstOrderIfNecessary(it, constraint) })
             return true
 
-        if (constraint && versionComparator.compare(new VersionInfo(resolved.version), new VersionInfo(constraint.version)) < 0) {
+        if (constraint && VersionNumber.parse(resolved.version).compareTo(VersionNumber.parse(constraint.version)) < 0) {
             def dependenciesBlock = bookmark('dependencies')
             if (dependenciesBlock) {
                 addBuildLintViolation("$constraint.group:$constraint.name is below the minimum version of $constraint.version")
