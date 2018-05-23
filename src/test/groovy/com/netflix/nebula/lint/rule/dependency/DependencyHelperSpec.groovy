@@ -7,9 +7,7 @@ import nebula.test.IntegrationSpec
 import nebula.test.dependencies.DependencyGraphBuilder
 import nebula.test.dependencies.GradleDependencyGenerator
 import org.codehaus.groovy.ast.expr.MethodCallExpression
-import spock.lang.Ignore
 import spock.lang.Unroll
-
 
 class DependencyHelperSpec extends IntegrationSpec {
     @Unroll('should transform(remove) #dep -> #depResult')

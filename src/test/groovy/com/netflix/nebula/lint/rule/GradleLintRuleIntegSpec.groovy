@@ -56,8 +56,7 @@ class GradleLintRuleIntegSpec extends TestKitSpecification {
         createJavaSourceFile('public class Main{}')
 
         then:
-        def result = runTasksFail('compileJava', 'lintGradle', '-s')
-        println result.output
+        def result = runTasksFail('compileJava', 'lintGradle')
         result.output.contains('this dependency is unused and can be removed')
     }
 }

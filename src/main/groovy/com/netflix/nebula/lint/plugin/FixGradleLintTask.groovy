@@ -20,15 +20,14 @@ import com.netflix.nebula.lint.GradleLintPatchAction
 import com.netflix.nebula.lint.GradleLintViolationAction
 import com.netflix.nebula.lint.GradleViolation
 import com.netflix.nebula.lint.StyledTextService
-import org.gradle.api.GradleException
 
-import static com.netflix.nebula.lint.StyledTextService.Styling.*
 import org.eclipse.jgit.api.ApplyCommand
 import org.gradle.api.DefaultTask
+import org.gradle.api.GradleException
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.VerificationTask
 
-import javax.inject.Inject
+import static com.netflix.nebula.lint.StyledTextService.Styling.*
 
 class FixGradleLintTask extends DefaultTask implements VerificationTask {
     List<GradleLintViolationAction> userDefinedListeners = []
@@ -90,7 +89,10 @@ class FixGradleLintTask extends DefaultTask implements VerificationTask {
                     projectViolations.each { v ->
                         def unfixed = v.fixes.findAll { it.reasonForNotFixing != null }
                         if(v.fixes.empty) {
-                            textOutput.withStyle(Yellow).text('nothing to do'.padRight(15))
+                            textOutput.withStyle(Yellow).text('needs fixing'.padRight(15))
+                            if (v.rule.priority == 1) {
+                                unfixedCriticalViolations++
+                            }
                         }
                         else if(unfixed.empty) {
                             textOutput.withStyle(Green).text('fixed'.padRight(15))
