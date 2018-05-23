@@ -33,7 +33,6 @@ class FixGradleLintTaskCriticalRulesSpec extends IntegrationSpec {
 
         then:
         def results = runTasksWithFailure('compileJava', 'fixGradleLint', '-s')
-        results.failure != null
         results.standardOutput.findAll('needs fixing.*test-user-action-required').size() == 1
         results.standardError.contains('This build contains 1 critical lint violation')
     }
