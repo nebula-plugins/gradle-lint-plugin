@@ -34,7 +34,10 @@ class FixGradleLintTaskCriticalRulesSpec extends IntegrationSpec {
         then:
         def results = runTasksWithFailure('compileJava', 'fixGradleLint', '-s')
         results.standardOutput.findAll('needs fixing.*test-user-action-required').size() == 1
-        results.standardError.contains('This build contains 1 critical lint violation')
+        def expectedMessage = 'This build contains 1 critical lint violation'
+        //we need to check both stream because Gradle 4.8 changes where error are printed, during transition period
+        //we run tests or multiple version so we need to maintain compatibility
+        results.standardOutput.contains(expectedMessage) || results.standardError.contains(expectedMessage)
     }
 }
 
