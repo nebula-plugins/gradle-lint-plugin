@@ -120,6 +120,10 @@ class DependencyService {
         return project.configurations.findAll { isResolvable(it) }
     }
 
+    Set<Configuration> resolvedConfigurations() {
+        return resolvableConfigurations().findAll { isResolved(it) }
+    }
+
     @SuppressWarnings("GrMethodMayBeStatic") // Static memoization will leak
     @Memoized
     JarContents jarContents(File file) {
@@ -348,6 +352,7 @@ class DependencyService {
         return transitives
     }
 
+    // Think about using resolvedConfigurations() instead
     boolean isResolved(String conf) {
         try {
             return isResolved(project.configurations.getByName(conf))
@@ -356,6 +361,7 @@ class DependencyService {
         }
     }
 
+    // Think about using resolvedConfigurations() instead
     boolean isResolved(Configuration conf) {
         // Gradle does not properly propagate the resolved state down configuration hierarchies
         conf.state == Configuration.State.RESOLVED ||

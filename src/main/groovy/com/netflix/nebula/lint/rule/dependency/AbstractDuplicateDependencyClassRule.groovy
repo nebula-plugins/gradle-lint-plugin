@@ -42,11 +42,14 @@ abstract class AbstractDuplicateDependencyClassRule extends GradleLintRule imple
     @Override
     protected void visitClassComplete(ClassNode node) {
         for (Configuration conf : directlyUsedConfigurations) {
-            if (DependencyService.forProject(project).isResolved(conf)) {
+            def dependencyService = DependencyService.forProject(project)
+            if (dependencyService.resolvedConfigurations().contains(conf)) {
                 def moduleIds = moduleIds(conf)
-                def dependencyService = Class.forName('com.netflix.nebula.lint.rule.dependency.DuplicateDependencyService').newInstance(project)
-                def checkForDuplicates = dependencyService.class.methods.find { it.name == 'violationsForModules' }
-                def violations = checkForDuplicates.invoke(dependencyService, moduleIds, conf, ignoredDependencies) as List<String>
+                def duplicateDependencyService = Class.forName('com.netflix.nebula.lint.rule.dependency.DuplicateDependencyService').newInstance(project)
+                def checkForDuplicates = duplicateDependencyService.class.methods.find {
+                    it.name == 'violationsForModules'
+                }
+                def violations = checkForDuplicates.invoke(duplicateDependencyService, moduleIds, conf, ignoredDependencies) as List<String>
                 violations.each { message ->
                     addBuildLintViolation(message)
                 }

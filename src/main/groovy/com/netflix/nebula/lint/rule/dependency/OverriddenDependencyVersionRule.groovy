@@ -18,7 +18,8 @@ class OverriddenDependencyVersionRule extends GradleLintRule implements GradleMo
 
     @Override
     void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
-        if(!DependencyService.forProject(project).isResolved(conf)) {
+        def dependencyService = DependencyService.forProject(project)
+        if (!dependencyService.resolvedConfigurations().collect { it.name }.contains(conf)) {
             return // we won't slow down the build by resolving the configuration if it hasn't been already
         }
         

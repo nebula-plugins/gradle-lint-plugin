@@ -20,8 +20,8 @@ import org.gradle.util.VersionNumber
 @Incubating
 class MinimumDependencyVersionRule extends GradleLintRule implements GradleModelAware {
     String description = 'pull up dependencies to a minimum version if necessary'
-
     def alreadyAdded = [] as Set
+    def dependencyService
 
     @Lazy
     List<GradleDependency> minimumVersions = {
@@ -34,6 +34,11 @@ class MinimumDependencyVersionRule extends GradleLintRule implements GradleModel
                     []
         } else []
     }()
+
+    @Override
+    protected void beforeApplyTo() {
+        dependencyService = DependencyService.forProject(project)
+    }
 
     @Override
     void visitGradleResolutionStrategyForce(MethodCallExpression call, String conf, Map<GradleDependency, Expression> forces) {
@@ -53,7 +58,7 @@ class MinimumDependencyVersionRule extends GradleLintRule implements GradleModel
             return // nothing to do
         }
 
-        if (!DependencyService.forProject(project).isResolved(conf)) {
+        if (!dependencyService.resolvedConfigurations().collect { it.name }.contains(conf)) {
             return // we won't slow down the build by resolving the configuration if it hasn't been already
         }
 
@@ -84,20 +89,17 @@ class MinimumDependencyVersionRule extends GradleLintRule implements GradleModel
     @Override
     protected void visitClassComplete(ClassNode node) {
         project.configurations.each { conf ->
-            minimumVersions.each { constraint ->
-                if (!alreadyAdded.contains(constraint) && addFirstOrderIfNecessary(conf, constraint))
-                    alreadyAdded += constraint
+            if (dependencyService.resolvedConfigurations().contains(conf)) {
+                minimumVersions.each { constraint ->
+                    if (!alreadyAdded.contains(constraint) && addFirstOrderIfNecessary(conf, constraint))
+                        alreadyAdded += constraint
+                }
             }
         }
     }
 
     private boolean addFirstOrderIfNecessary(Configuration conf, GradleDependency constraint) {
-        def depService = DependencyService.forProject(project)
-
-        if (!depService.isResolved(conf))
-            return false
-
-        if (!depService.isResolvable(conf))
+        if (!dependencyService.resolvedConfigurations().contains(conf))
             return false
 
         def resolved = conf.resolvedConfiguration.resolvedArtifacts*.moduleVersion*.id.find {
