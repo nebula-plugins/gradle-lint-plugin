@@ -15,9 +15,9 @@
  */
 package com.netflix.nebula.lint.plugin
 
-import com.netflix.nebula.lint.plugin.GradleLintPlugin.LintListener
 import org.gradle.BuildAdapter
 import org.gradle.BuildResult
+import org.gradle.api.BuildCancelledException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.execution.TaskExecutionGraph
@@ -31,6 +31,8 @@ class GradleLintPlugin implements Plugin<Project> {
 
     @Override
     void apply(Project project) {
+        failForKotlinScript(project)
+
         LintRuleRegistry.classLoader = getClass().classLoader
         def lintExt = project.extensions.create('gradleLint', GradleLintExtension)
 
@@ -92,6 +94,13 @@ class GradleLintPlugin implements Plugin<Project> {
                 project.rootProject.tasks.getByName('lintGradle').dependsOn(task)
                 project.rootProject.tasks.getByName('fixLintGradle').dependsOn(task)
             }
+        }
+    }
+
+    def failForKotlinScript(Project project) {
+        if (project.buildFile.name.toLowerCase().endsWith('.kts')) {
+            throw new BuildCancelledException("Gradle Lint Plugin currently doesn't support kotlin build scripts." +
+                    " Please, switch to groovy build script if you want to use linting.")
         }
     }
 
