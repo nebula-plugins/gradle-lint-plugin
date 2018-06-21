@@ -615,4 +615,22 @@ class GradleLintPluginSpec extends TestKitSpecification {
         then:
         runTasksSuccessfully('fixGradleLint')
     }
+
+    def 'lint plugin cannot be applied to kotlin script build files'() {
+        given:
+        buildFile = new File(projectDir, 'build.gradle.kts')
+        buildFile << """
+        plugins {
+            id("nebula.lint")
+        }
+        """
+
+        when:
+        runTasksFail("clean")
+
+        then:
+        def failure = thrown(Exception)
+        failure.message.contains("Gradle Lint Plugin currently doesn't support kotlin build scripts." +
+              " Please, switch to groovy build script if you want to use linting.")
+    }
 }
