@@ -555,4 +555,37 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
         println(results.output)
         results.output.readLines().count { it.contains('unused-dependency') } == 1
     }
+
+    @Unroll
+    def 'ignore configurations from java library plugin'() {
+        when:
+        buildFile.text = """\
+            |plugins {
+            |    id 'nebula.lint'
+            |    id 'java-library'
+            |}
+            |
+            |gradleLint.rules = ['unused-dependency']
+            |
+            |repositories { mavenCentral() }
+            |
+            |dependencies {
+            ${deps.collect { "|   implementation '$it'" }.join('\n')}
+            |}
+            |""".stripMargin()
+
+        createJavaSourceFile(main)
+
+        then:
+        runTasksSuccessfully('compileJava', 'fixGradleLint')
+
+        buildFile.text.contains("compile '${guava}'")
+        buildFile.text.contains('implementation')
+
+        where:
+        deps               | expected
+        [guava, asm]       | [guava]
+        [springfox]        | [guava]
+        [guava, springfox] | [guava]
+    }
 }

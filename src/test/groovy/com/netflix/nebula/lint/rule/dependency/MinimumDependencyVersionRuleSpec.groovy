@@ -17,7 +17,7 @@ class MinimumDependencyVersionRuleSpec extends TestKitSpecification {
             gradleLint.rules = ['minimum-dependency-version']
 
             repositories { mavenCentral() }
-        """
+        """.stripIndent()
     }
 
     def 'first order dependency versions not meeting the minimum are upgraded'() {
@@ -141,5 +141,33 @@ class MinimumDependencyVersionRuleSpec extends TestKitSpecification {
         then:
         runTasksSuccessfully(*tasks)
         dependencies(buildFile, 'compile') == ['com.google.guava:guava']
+    }
+
+    def 'ignore configurations from java library plugin'() {
+        // TODO: Sometime, refactor the project to support java library adjustments
+
+        given:
+        definePluginOutsideOfPluginBlock = true
+
+        buildFile.delete()
+
+        buildFile << """
+            apply plugin: 'nebula.lint'
+            apply plugin: 'nebula.configEnvironment'
+            apply plugin: 'java-library'
+            gradleLint.rules = ['minimum-dependency-version']
+            repositories { mavenCentral() }
+            dependencies {
+                implementation 'com.google.guava:guava:18.+'
+            }
+            """.stripIndent()
+
+        createJavaSourceFile('public class Main {}')
+
+        when:
+        runTasksSuccessfully(*tasks)
+
+        then:
+        dependencies(buildFile, 'implementation') == ['com.google.guava:guava:18.+']
     }
 }

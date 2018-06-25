@@ -135,12 +135,26 @@ abstract class TestKitSpecification extends Specification {
         createJavaFile(projectDir, source, 'src/main/java')
     }
 
+    def createJavaSourceFile(File projectDir) {
+        createJavaSourceFile(projectDir, 'public class Main {}')
+    }
+
     def createJavaTestFile(File projectDir, String source) {
         createJavaFile(projectDir, source, 'src/test/java')
     }
 
     def createJavaTestFile(String source) {
         createJavaTestFile(projectDir, source)
+    }
+
+    def createJavaTestFile(File projectDir) {
+        createJavaTestFile(projectDir, '''
+            import org.junit.Test;
+            public class Test1 {
+                @Test
+                public void test() {}
+            }
+        '''.stripIndent())
     }
 
     def createJavaFile(File projectDir, String source, String sourceFolderPath) {

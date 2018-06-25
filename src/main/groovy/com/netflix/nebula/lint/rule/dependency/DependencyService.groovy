@@ -120,6 +120,15 @@ class DependencyService {
         return project.configurations.findAll { isResolvable(it) }
     }
 
+    /**
+     * Projects previously using {@link #resolvableConfigurations()} or
+     * checking configurations individually with {@link #isResolved()}
+     * will likely want to use this method
+     */
+    Set<Configuration> resolvableAndResolvedConfigurations() {
+        return resolvableConfigurations().findAll { isResolved(it) }
+    }
+
     @SuppressWarnings("GrMethodMayBeStatic") // Static memoization will leak
     @Memoized
     JarContents jarContents(File file) {

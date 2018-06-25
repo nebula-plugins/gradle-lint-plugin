@@ -25,7 +25,7 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
 
     @Override
     void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
-        if(!dependencyService.isResolved(conf)) {
+        if (!dependencyService.isResolved(conf)) {
             return // we won't slow down the build by resolving the configuration if it hasn't been already
         }
 
@@ -35,7 +35,7 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
             if(conf == 'compileOnly') {
                 compileOnlyDependencies.add(mid)
             }
-            
+
             if (!dependencyService.isRuntime(conf) && dependencyService.isResolvable(conf)) {
                 def jarContents = dependencyService.jarContents(mid)
                 if (!jarContents) {
@@ -73,7 +73,7 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
                                 .delete(call)
                     }
                 }
-            } else if(conf != 'compileOnly') {
+            } else if (conf != 'compileOnly') {
                 runtimeDependencyDefinitions[mid] = call
             }
         }

@@ -288,4 +288,76 @@ class DependencyServiceSpec extends TestKitSpecification {
         ['web:coreContents']                    | []
         ['web:assemble', 'web:coreContents']    | ['A']
     }
+
+    def 'resolved configurations returns lists of configurations that are resolvable and resolved'() {
+        given:
+        definePluginOutsideOfPluginBlock = true
+        def dependency = 'commons-lang:commons-lang:latest.release'
+
+        buildFile << """
+            apply plugin: 'java-library'
+
+            repositories { jcenter() }
+
+            dependencies {
+                compile '${dependency}'
+                testCompile '${dependency}'
+
+                implementation '${dependency}'
+                testImplementation '${dependency}'
+
+                apiElements '${dependency}'
+
+                runtimeElements '${dependency}'
+
+                runtime '${dependency}'
+                testRuntime '${dependency}'
+
+                runtimeOnly '${dependency}'
+                testRuntimeOnly '${dependency}'
+            }
+            
+            import com.netflix.nebula.lint.rule.dependency.*
+            
+            task resolvableAndResolvedConfigurations << {
+              new File(projectDir, "resolvableAndResolvedConfigurations.txt").text = DependencyService.forProject(project)
+                .resolvableAndResolvedConfigurations()
+                .join('\\n')
+            }
+            """.stripIndent()
+
+        createJavaSourceFile('public class Main {}')
+        createJavaTestFile('public class TestMain {}')
+
+        def dependencyService = DependencyService.forProject(project)
+        dependencyService.resolvableConfigurations().each { resolvableConf ->
+            resolvableConf.resolve()
+        }
+
+        when:
+        def resolvedConfigurations = dependencyService.resolvableAndResolvedConfigurations()
+
+        then:
+        def configurationNames = resolvedConfigurations.collect { conf -> conf.getName() }
+
+        configurationNames.size() > 0
+
+        // sample the configurations
+        configurationNames.contains('compile')
+        configurationNames.contains('testCompile')
+
+        !configurationNames.contains('implementation')
+        !configurationNames.contains('testImplementation')
+
+        !configurationNames.contains('apiElements')
+        !configurationNames.contains('runtimeElements')
+
+        configurationNames.contains('runtime')
+        configurationNames.contains('testRuntime')
+
+        !configurationNames.contains('runtimeOnly')
+        !configurationNames.contains('testRuntimeOnly')
+
+        // and more!
+    }
 }

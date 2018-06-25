@@ -16,9 +16,17 @@ class OverriddenDependencyVersionRule extends GradleLintRule implements GradleMo
 
     def selectorScheme = new DefaultVersionSelectorScheme(new DefaultVersionComparator())
 
+    def resolvableAndResolvedConfigurations
+
+    @Override
+    protected void beforeApplyTo() {
+        def dependencyService = DependencyService.forProject(project)
+        resolvableAndResolvedConfigurations = dependencyService.resolvableAndResolvedConfigurations()
+    }
+
     @Override
     void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
-        if(!DependencyService.forProject(project).isResolved(conf)) {
+        if (!resolvableAndResolvedConfigurations.collect { it.name }.contains(conf)) {
             return // we won't slow down the build by resolving the configuration if it hasn't been already
         }
         
