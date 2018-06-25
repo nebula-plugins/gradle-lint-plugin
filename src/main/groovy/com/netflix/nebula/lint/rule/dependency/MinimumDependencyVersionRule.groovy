@@ -21,7 +21,7 @@ import org.gradle.util.VersionNumber
 class MinimumDependencyVersionRule extends GradleLintRule implements GradleModelAware {
     String description = 'pull up dependencies to a minimum version if necessary'
     def alreadyAdded = [] as Set
-    def dependencyService
+    def resolvableAndResolvedConfigurations
 
     @Lazy
     List<GradleDependency> minimumVersions = {
@@ -37,7 +37,8 @@ class MinimumDependencyVersionRule extends GradleLintRule implements GradleModel
 
     @Override
     protected void beforeApplyTo() {
-        dependencyService = DependencyService.forProject(project)
+        def dependencyService = DependencyService.forProject(project)
+        resolvableAndResolvedConfigurations = dependencyService.resolvableAndResolvedConfigurations()
     }
 
     @Override
@@ -58,7 +59,7 @@ class MinimumDependencyVersionRule extends GradleLintRule implements GradleModel
             return // nothing to do
         }
 
-        if (!dependencyService.resolvedConfigurations().collect { it.name }.contains(conf)) {
+        if (!resolvableAndResolvedConfigurations.collect { it.name }.contains(conf)) {
             return // we won't slow down the build by resolving the configuration if it hasn't been already
         }
 
@@ -89,7 +90,7 @@ class MinimumDependencyVersionRule extends GradleLintRule implements GradleModel
     @Override
     protected void visitClassComplete(ClassNode node) {
         project.configurations.each { conf ->
-            if (dependencyService.resolvedConfigurations().contains(conf)) {
+            if (resolvableAndResolvedConfigurations.contains(conf)) {
                 minimumVersions.each { constraint ->
                     if (!alreadyAdded.contains(constraint) && addFirstOrderIfNecessary(conf, constraint))
                         alreadyAdded += constraint
@@ -99,7 +100,7 @@ class MinimumDependencyVersionRule extends GradleLintRule implements GradleModel
     }
 
     private boolean addFirstOrderIfNecessary(Configuration conf, GradleDependency constraint) {
-        if (!dependencyService.resolvedConfigurations().contains(conf))
+        if (!resolvableAndResolvedConfigurations.contains(conf))
             return false
 
         def resolved = conf.resolvedConfiguration.resolvedArtifacts*.moduleVersion*.id.find {

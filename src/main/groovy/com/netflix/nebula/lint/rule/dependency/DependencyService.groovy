@@ -120,7 +120,12 @@ class DependencyService {
         return project.configurations.findAll { isResolvable(it) }
     }
 
-    Set<Configuration> resolvedConfigurations() {
+    /**
+     * Projects previously using {@link #resolvableConfigurations()} or
+     * checking configurations individually with {@link #isResolved()}
+     * will likely want to use this method
+     */
+    Set<Configuration> resolvableAndResolvedConfigurations() {
         return resolvableConfigurations().findAll { isResolved(it) }
     }
 
@@ -352,7 +357,6 @@ class DependencyService {
         return transitives
     }
 
-    // Think about using resolvedConfigurations() instead
     boolean isResolved(String conf) {
         try {
             return isResolved(project.configurations.getByName(conf))
@@ -361,7 +365,6 @@ class DependencyService {
         }
     }
 
-    // Think about using resolvedConfigurations() instead
     boolean isResolved(Configuration conf) {
         // Gradle does not properly propagate the resolved state down configuration hierarchies
         conf.state == Configuration.State.RESOLVED ||

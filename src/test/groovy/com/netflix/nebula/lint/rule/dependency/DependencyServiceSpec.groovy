@@ -319,9 +319,9 @@ class DependencyServiceSpec extends TestKitSpecification {
             
             import com.netflix.nebula.lint.rule.dependency.*
             
-            task resolvedConfigurations << {
-              new File(projectDir, "resolvedConfigurations.txt").text = DependencyService.forProject(project)
-                .resolvedConfigurations()
+            task resolvableAndResolvedConfigurations << {
+              new File(projectDir, "resolvableAndResolvedConfigurations.txt").text = DependencyService.forProject(project)
+                .resolvableAndResolvedConfigurations()
                 .join('\\n')
             }
             """.stripIndent()
@@ -335,7 +335,7 @@ class DependencyServiceSpec extends TestKitSpecification {
         }
 
         when:
-        def resolvedConfigurations = dependencyService.resolvedConfigurations()
+        def resolvedConfigurations = dependencyService.resolvableAndResolvedConfigurations()
 
         then:
         def configurationNames = resolvedConfigurations.collect { conf -> conf.getName() }
