@@ -9,11 +9,11 @@
             "requested": "0.1.0"
         },
         "com.netflix.nebula:nebula-gradle-interop": {
-            "locked": "0.5.0",
+            "locked": "0.6.0",
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.4.4",
+            "locked": "6.7.1",
             "requested": "latest.release"
         },
         "commons-lang:commons-lang": {
@@ -25,7 +25,7 @@
             "requested": "4.12"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.3",
+            "locked": "3.5.4",
             "requested": "3.+"
         },
         "org.codehaus.gpars:gpars": {
@@ -44,9 +44,9 @@
             "locked": "4.5.0.201609210915-r",
             "requested": "4.5.0.201609210915-r"
         },
-        "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
-            "locked": "1.2.10",
-            "requested": "1.2.10"
+        "org.jetbrains.kotlin:kotlin-stdlib-jdk7": {
+            "locked": "1.2.61",
+            "requested": "1.2.61"
         },
         "org.ow2.asm:asm": {
             "locked": "5.2",
@@ -67,11 +67,11 @@
             "requested": "0.1.0"
         },
         "com.netflix.nebula:nebula-gradle-interop": {
-            "locked": "0.5.0",
+            "locked": "0.6.0",
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.4.4",
+            "locked": "6.7.1",
             "requested": "latest.release"
         },
         "commons-lang:commons-lang": {
@@ -83,7 +83,7 @@
             "requested": "4.12"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.3",
+            "locked": "3.5.4",
             "requested": "3.+"
         },
         "org.codehaus.gpars:gpars": {
@@ -102,9 +102,9 @@
             "locked": "4.5.0.201609210915-r",
             "requested": "4.5.0.201609210915-r"
         },
-        "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
-            "locked": "1.2.10",
-            "requested": "1.2.10"
+        "org.jetbrains.kotlin:kotlin-stdlib-jdk7": {
+            "locked": "1.2.61",
+            "requested": "1.2.61"
         },
         "org.ow2.asm:asm": {
             "locked": "5.2",
@@ -125,11 +125,11 @@
             "requested": "0.1.0"
         },
         "com.netflix.nebula:nebula-gradle-interop": {
-            "locked": "0.5.0",
+            "locked": "0.6.0",
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.4.4",
+            "locked": "6.7.1",
             "requested": "latest.release"
         },
         "commons-lang:commons-lang": {
@@ -141,7 +141,7 @@
             "requested": "4.12"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.3",
+            "locked": "3.5.4",
             "requested": "3.+"
         },
         "org.codehaus.gpars:gpars": {
@@ -160,9 +160,9 @@
             "locked": "4.5.0.201609210915-r",
             "requested": "4.5.0.201609210915-r"
         },
-        "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
-            "locked": "1.2.10",
-            "requested": "1.2.10"
+        "org.jetbrains.kotlin:kotlin-stdlib-jdk7": {
+            "locked": "1.2.61",
+            "requested": "1.2.61"
         },
         "org.ow2.asm:asm": {
             "locked": "5.2",
@@ -183,11 +183,11 @@
             "requested": "0.1.0"
         },
         "com.netflix.nebula:nebula-gradle-interop": {
-            "locked": "0.5.0",
+            "locked": "0.6.0",
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.4.4",
+            "locked": "6.7.1",
             "requested": "latest.release"
         },
         "commons-lang:commons-lang": {
@@ -195,7 +195,7 @@
             "requested": "2.6"
         },
         "joda-time:joda-time": {
-            "locked": "2.9.9",
+            "locked": "2.10",
             "requested": "latest.release"
         },
         "junit:junit": {
@@ -203,7 +203,7 @@
             "requested": "4.12"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.3",
+            "locked": "3.5.4",
             "requested": "3.+"
         },
         "org.codehaus.gpars:gpars": {
@@ -222,9 +222,9 @@
             "locked": "4.5.0.201609210915-r",
             "requested": "4.5.0.201609210915-r"
         },
-        "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
-            "locked": "1.2.10",
-            "requested": "1.2.10"
+        "org.jetbrains.kotlin:kotlin-stdlib-jdk7": {
+            "locked": "1.2.61",
+            "requested": "1.2.61"
         },
         "org.ow2.asm:asm": {
             "locked": "5.2",
@@ -249,11 +249,11 @@
             "requested": "0.1.0"
         },
         "com.netflix.nebula:nebula-gradle-interop": {
-            "locked": "0.5.0",
+            "locked": "0.6.0",
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.4.4",
+            "locked": "6.7.1",
             "requested": "latest.release"
         },
         "commons-lang:commons-lang": {
@@ -261,7 +261,7 @@
             "requested": "2.6"
         },
         "joda-time:joda-time": {
-            "locked": "2.9.9",
+            "locked": "2.10",
             "requested": "latest.release"
         },
         "junit:junit": {
@@ -269,7 +269,7 @@
             "requested": "4.12"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.3",
+            "locked": "3.5.4",
             "requested": "3.+"
         },
         "org.codehaus.gpars:gpars": {
@@ -288,9 +288,9 @@
             "locked": "4.5.0.201609210915-r",
             "requested": "4.5.0.201609210915-r"
         },
-        "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
-            "locked": "1.2.10",
-            "requested": "1.2.10"
+        "org.jetbrains.kotlin:kotlin-stdlib-jdk7": {
+            "locked": "1.2.61",
+            "requested": "1.2.61"
         },
         "org.ow2.asm:asm": {
             "locked": "5.2",
@@ -315,11 +315,11 @@
             "requested": "0.1.0"
         },
         "com.netflix.nebula:nebula-gradle-interop": {
-            "locked": "0.5.0",
+            "locked": "0.6.0",
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.4.4",
+            "locked": "6.7.1",
             "requested": "latest.release"
         },
         "commons-lang:commons-lang": {
@@ -327,7 +327,7 @@
             "requested": "2.6"
         },
         "joda-time:joda-time": {
-            "locked": "2.9.9",
+            "locked": "2.10",
             "requested": "latest.release"
         },
         "junit:junit": {
@@ -335,7 +335,7 @@
             "requested": "4.12"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.3",
+            "locked": "3.5.4",
             "requested": "3.+"
         },
         "org.codehaus.gpars:gpars": {
@@ -354,9 +354,9 @@
             "locked": "4.5.0.201609210915-r",
             "requested": "4.5.0.201609210915-r"
         },
-        "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
-            "locked": "1.2.10",
-            "requested": "1.2.10"
+        "org.jetbrains.kotlin:kotlin-stdlib-jdk7": {
+            "locked": "1.2.61",
+            "requested": "1.2.61"
         },
         "org.ow2.asm:asm": {
             "locked": "5.2",
@@ -381,11 +381,11 @@
             "requested": "0.1.0"
         },
         "com.netflix.nebula:nebula-gradle-interop": {
-            "locked": "0.5.0",
+            "locked": "0.6.0",
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.4.4",
+            "locked": "6.7.1",
             "requested": "latest.release"
         },
         "commons-lang:commons-lang": {
@@ -393,7 +393,7 @@
             "requested": "2.6"
         },
         "joda-time:joda-time": {
-            "locked": "2.9.9",
+            "locked": "2.10",
             "requested": "latest.release"
         },
         "junit:junit": {
@@ -401,7 +401,7 @@
             "requested": "4.12"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.3",
+            "locked": "3.5.4",
             "requested": "3.+"
         },
         "org.codehaus.gpars:gpars": {
@@ -420,9 +420,9 @@
             "locked": "4.5.0.201609210915-r",
             "requested": "4.5.0.201609210915-r"
         },
-        "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
-            "locked": "1.2.10",
-            "requested": "1.2.10"
+        "org.jetbrains.kotlin:kotlin-stdlib-jdk7": {
+            "locked": "1.2.61",
+            "requested": "1.2.61"
         },
         "org.ow2.asm:asm": {
             "locked": "5.2",
@@ -447,22 +447,15 @@
             "locked": "0.8.1"
         }
     },
-    "kapt": {
-        "org.jetbrains.kotlin:kotlin-annotation-processing-gradle": {
-            "locked": "1.2.10",
-            "requested": "1.2.10"
+    "kotlinCompilerClasspath": {
+        "org.jetbrains.kotlin:kotlin-compiler-embeddable": {
+            "locked": "1.2.61"
         }
     },
-    "kaptIntegTest": {
-        "org.jetbrains.kotlin:kotlin-annotation-processing-gradle": {
-            "locked": "1.2.10",
-            "requested": "1.2.10"
-        }
-    },
-    "kaptTest": {
-        "org.jetbrains.kotlin:kotlin-annotation-processing-gradle": {
-            "locked": "1.2.10",
-            "requested": "1.2.10"
+    "kotlinCompilerPluginClasspath": {
+        "org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable": {
+            "locked": "1.2.61",
+            "requested": "1.2.61"
         }
     },
     "plugin": {
@@ -471,7 +464,7 @@
             "requested": "3.3.5"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.4.4",
+            "locked": "6.7.1",
             "requested": "latest.release"
         },
         "commons-lang:commons-lang": {
@@ -517,11 +510,11 @@
             "requested": "0.1.0"
         },
         "com.netflix.nebula:nebula-gradle-interop": {
-            "locked": "0.5.0",
+            "locked": "0.6.0",
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.4.4",
+            "locked": "6.7.1",
             "requested": "latest.release"
         },
         "commons-lang:commons-lang": {
@@ -533,7 +526,7 @@
             "requested": "4.12"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.3",
+            "locked": "3.5.4",
             "requested": "3.+"
         },
         "org.codehaus.gpars:gpars": {
@@ -552,9 +545,9 @@
             "locked": "4.5.0.201609210915-r",
             "requested": "4.5.0.201609210915-r"
         },
-        "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
-            "locked": "1.2.10",
-            "requested": "1.2.10"
+        "org.jetbrains.kotlin:kotlin-stdlib-jdk7": {
+            "locked": "1.2.61",
+            "requested": "1.2.61"
         },
         "org.ow2.asm:asm": {
             "locked": "5.2",
@@ -575,11 +568,11 @@
             "requested": "0.1.0"
         },
         "com.netflix.nebula:nebula-gradle-interop": {
-            "locked": "0.5.0",
+            "locked": "0.6.0",
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.4.4",
+            "locked": "6.7.1",
             "requested": "latest.release"
         },
         "commons-lang:commons-lang": {
@@ -591,7 +584,7 @@
             "requested": "4.12"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.3",
+            "locked": "3.5.4",
             "requested": "3.+"
         },
         "org.codehaus.gpars:gpars": {
@@ -610,9 +603,9 @@
             "locked": "4.5.0.201609210915-r",
             "requested": "4.5.0.201609210915-r"
         },
-        "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
-            "locked": "1.2.10",
-            "requested": "1.2.10"
+        "org.jetbrains.kotlin:kotlin-stdlib-jdk7": {
+            "locked": "1.2.61",
+            "requested": "1.2.61"
         },
         "org.ow2.asm:asm": {
             "locked": "5.2",
@@ -633,11 +626,11 @@
             "requested": "0.1.0"
         },
         "com.netflix.nebula:nebula-gradle-interop": {
-            "locked": "0.5.0",
+            "locked": "0.6.0",
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.4.4",
+            "locked": "6.7.1",
             "requested": "latest.release"
         },
         "commons-lang:commons-lang": {
@@ -645,7 +638,7 @@
             "requested": "2.6"
         },
         "joda-time:joda-time": {
-            "locked": "2.9.9",
+            "locked": "2.10",
             "requested": "latest.release"
         },
         "junit:junit": {
@@ -653,7 +646,7 @@
             "requested": "4.12"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.3",
+            "locked": "3.5.4",
             "requested": "3.+"
         },
         "org.codehaus.gpars:gpars": {
@@ -672,9 +665,9 @@
             "locked": "4.5.0.201609210915-r",
             "requested": "4.5.0.201609210915-r"
         },
-        "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
-            "locked": "1.2.10",
-            "requested": "1.2.10"
+        "org.jetbrains.kotlin:kotlin-stdlib-jdk7": {
+            "locked": "1.2.61",
+            "requested": "1.2.61"
         },
         "org.ow2.asm:asm": {
             "locked": "5.2",
@@ -699,11 +692,11 @@
             "requested": "0.1.0"
         },
         "com.netflix.nebula:nebula-gradle-interop": {
-            "locked": "0.5.0",
+            "locked": "0.6.0",
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.4.4",
+            "locked": "6.7.1",
             "requested": "latest.release"
         },
         "commons-lang:commons-lang": {
@@ -711,7 +704,7 @@
             "requested": "2.6"
         },
         "joda-time:joda-time": {
-            "locked": "2.9.9",
+            "locked": "2.10",
             "requested": "latest.release"
         },
         "junit:junit": {
@@ -719,7 +712,7 @@
             "requested": "4.12"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.3",
+            "locked": "3.5.4",
             "requested": "3.+"
         },
         "org.codehaus.gpars:gpars": {
@@ -738,9 +731,9 @@
             "locked": "4.5.0.201609210915-r",
             "requested": "4.5.0.201609210915-r"
         },
-        "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
-            "locked": "1.2.10",
-            "requested": "1.2.10"
+        "org.jetbrains.kotlin:kotlin-stdlib-jdk7": {
+            "locked": "1.2.61",
+            "requested": "1.2.61"
         },
         "org.ow2.asm:asm": {
             "locked": "5.2",
@@ -765,11 +758,11 @@
             "requested": "0.1.0"
         },
         "com.netflix.nebula:nebula-gradle-interop": {
-            "locked": "0.5.0",
+            "locked": "0.6.0",
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.4.4",
+            "locked": "6.7.1",
             "requested": "latest.release"
         },
         "commons-lang:commons-lang": {
@@ -777,7 +770,7 @@
             "requested": "2.6"
         },
         "joda-time:joda-time": {
-            "locked": "2.9.9",
+            "locked": "2.10",
             "requested": "latest.release"
         },
         "junit:junit": {
@@ -785,7 +778,7 @@
             "requested": "4.12"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.3",
+            "locked": "3.5.4",
             "requested": "3.+"
         },
         "org.codehaus.gpars:gpars": {
@@ -804,9 +797,9 @@
             "locked": "4.5.0.201609210915-r",
             "requested": "4.5.0.201609210915-r"
         },
-        "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
-            "locked": "1.2.10",
-            "requested": "1.2.10"
+        "org.jetbrains.kotlin:kotlin-stdlib-jdk7": {
+            "locked": "1.2.61",
+            "requested": "1.2.61"
         },
         "org.ow2.asm:asm": {
             "locked": "5.2",
@@ -831,11 +824,11 @@
             "requested": "0.1.0"
         },
         "com.netflix.nebula:nebula-gradle-interop": {
-            "locked": "0.5.0",
+            "locked": "0.6.0",
             "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-test": {
-            "locked": "6.4.4",
+            "locked": "6.7.1",
             "requested": "latest.release"
         },
         "commons-lang:commons-lang": {
@@ -843,7 +836,7 @@
             "requested": "2.6"
         },
         "joda-time:joda-time": {
-            "locked": "2.9.9",
+            "locked": "2.10",
             "requested": "latest.release"
         },
         "junit:junit": {
@@ -851,7 +844,7 @@
             "requested": "4.12"
         },
         "org.apache.maven:maven-model-builder": {
-            "locked": "3.5.3",
+            "locked": "3.5.4",
             "requested": "3.+"
         },
         "org.codehaus.gpars:gpars": {
@@ -870,9 +863,9 @@
             "locked": "4.5.0.201609210915-r",
             "requested": "4.5.0.201609210915-r"
         },
-        "org.jetbrains.kotlin:kotlin-stdlib-jre7": {
-            "locked": "1.2.10",
-            "requested": "1.2.10"
+        "org.jetbrains.kotlin:kotlin-stdlib-jdk7": {
+            "locked": "1.2.61",
+            "requested": "1.2.61"
         },
         "org.ow2.asm:asm": {
             "locked": "5.2",
