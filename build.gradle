@@ -110,7 +110,7 @@ shadowJar {
     relocate 'org.codehaus.groovy.transform.powerassert', 'com.netflix.nebula.lint.org.codehaus.groovy.transform.powerassert'
 }
 
-jar.deleteAllActions()
+jar.enabled = false
 jar.dependsOn shadowJar
 
 publishing {
