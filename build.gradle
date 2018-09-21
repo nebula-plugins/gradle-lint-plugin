@@ -16,7 +16,7 @@
 import org.gradle.util.GradleVersion
 
 plugins {
-    id 'nebula.plugin-plugin' version '8.0.0'
+    id 'nebula.plugin-plugin' version '8.1.0'
     id 'nebula.kotlin' version '1.2.61'
     id 'com.github.johnrengelman.shadow' version '2.0.4'
     id 'java-gradle-plugin'
