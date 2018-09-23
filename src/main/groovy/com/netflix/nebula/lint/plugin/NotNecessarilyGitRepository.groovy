@@ -73,7 +73,7 @@ class NotNecessarilyGitRepository extends Repository {
     }
 
     @Override
-    void notifyIndexChanged() {
+    void notifyIndexChanged(boolean internal) {
         throw new UnsupportedOperationException('This is not necessarily a git repo')
     }
 

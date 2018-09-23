@@ -16,8 +16,8 @@
 import org.gradle.util.GradleVersion
 
 plugins {
-    id 'nebula.plugin-plugin' version '8.1.0'
-    id 'nebula.kotlin' version '1.2.61'
+    id 'nebula.plugin-plugin' version '8.1.2'
+    id 'nebula.kotlin' version '1.2.70-3'
     id 'com.github.johnrengelman.shadow' version '2.0.4'
     id 'java-gradle-plugin'
 }
@@ -44,10 +44,10 @@ dependencies {
     plugin('org.codenarc:CodeNarc:0.25.2') {
         transitive = false
     }
-    plugin 'com.netflix.nebula:gradle-info-plugin:3.3.5'
+    plugin 'com.netflix.nebula:gradle-info-plugin:latest.release'
     plugin 'commons-lang:commons-lang:2.6'
 
-    plugin ('org.eclipse.jgit:org.eclipse.jgit:4.5.0.201609210915-r') {
+    plugin ('org.eclipse.jgit:org.eclipse.jgit:5.0.1.201806211838-r') {
         transitive = false
     }
     plugin 'org.eclipse.jdt:core:3.1.1'
