@@ -19,8 +19,7 @@ class Issue39Spec extends TestKitSpecification {
             repositories { mavenCentral() }
 
             dependencies {
-                // guava is a transitive dependency
-                compile 'com.netflix.servo:servo-atlas:0.12.7'
+                compile group: 'com.google.guava', name: 'guava', version: '26.0-jre'
             }
         """
 
