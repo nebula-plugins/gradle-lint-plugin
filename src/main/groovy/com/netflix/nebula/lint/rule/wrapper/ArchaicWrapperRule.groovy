@@ -28,7 +28,11 @@ import java.util.regex.Pattern
 
 /**
  * @author Boaz Jan
+ *
+ * Gradle 5.0 introduces a task under `wrapper` name by default via build-init plugin
+ * @see <a href="https://docs.gradle.org/current/userguide/build_init_plugin.html">https://docs.gradle.org/current/userguide/build_init_plugin.html</a>
  */
+@Deprecated
 class ArchaicWrapperRule extends GradleLintRule implements GradleModelAware {
     private static
     final Pattern VERSION_PATTERN = Pattern.compile("((\\d+)\\.(\\d+)+)(\\.(\\d+)+)?(-(\\p{Alpha}+)-(\\d+[a-z]?))?(-(\\d{14}([-+]\\d{4})?))?");

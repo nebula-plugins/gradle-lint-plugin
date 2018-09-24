@@ -345,7 +345,11 @@ class GradleLintPluginSpec extends TestKitSpecification {
         new File(projectDir, "build/reports/gradleLint/${projectDir.name}.html").exists()
     }
 
+
     def 'test wrapper rule on a single module project'() {
+        setup:
+        gradleVersion = "4.10.2"
+
         when:
         buildFile << """
             plugins {
@@ -373,6 +377,7 @@ class GradleLintPluginSpec extends TestKitSpecification {
 
     def 'build fails for violations in manual lint'() {
         given:
+        gradleVersion = "4.10.2"
         buildFile << """
             plugins {
                 id 'nebula.lint'
@@ -398,6 +403,9 @@ class GradleLintPluginSpec extends TestKitSpecification {
 
     @Issue('#68')
     def 'lint task does not run when alwaysRun is off'() {
+        setup:
+        gradleVersion = "4.10.2"
+
         when:
         buildFile << """
             plugins {
@@ -427,6 +435,9 @@ class GradleLintPluginSpec extends TestKitSpecification {
     }
 
     def 'lint task does not run when alwaysRun is off via cli'() {
+        setup:
+        gradleVersion = "4.10.2"
+
         when:
         buildFile << """
             plugins {
@@ -455,6 +466,9 @@ class GradleLintPluginSpec extends TestKitSpecification {
     }
 
     def 'lint task does not run when autoGradleLint is excluded via cli'() {
+        setup:
+        gradleVersion = "4.10.2"
+
         when:
         buildFile << """
             plugins {
@@ -484,6 +498,9 @@ class GradleLintPluginSpec extends TestKitSpecification {
 
     @Unroll
     def 'lint task does not run for task #taskName'() {
+        setup:
+        gradleVersion = "4.10.2"
+
         when:
         buildFile << """
             plugins {
@@ -516,6 +533,9 @@ class GradleLintPluginSpec extends TestKitSpecification {
     }
 
     def 'autoLintGradle is always run'() {
+        setup:
+        gradleVersion = "4.10.2"
+
         createJavaSourceFile('public class Main { }')
         buildFile << """\
             plugins {
