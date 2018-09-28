@@ -200,19 +200,19 @@ class DependencyServiceSpec extends TestKitSpecification {
 
             plugins {
                 id 'java'
-                id 'nebula.integtest' version '3.2.1'
+                id 'nebula.integtest' version '5.1.2'
                 id 'nebula.lint'
             }
             
             task compileSourceSetOutput {
                 doLast {
-                  println('@@' + DependencyService.forProject(project).sourceSetByConf('compile').output.classesDir)
+                  println('@@' + DependencyService.forProject(project).sourceSetByConf('compile').java.outputDir)
                 }
             }
             
             task integTestSourceSetOutput  {
                 doLast {
-                   println('@@' + DependencyService.forProject(project).sourceSetByConf('integTestCompile').output.classesDir)
+                   println('@@' + DependencyService.forProject(project).sourceSetByConf('integTestCompile').java.outputDir)
                 }
             }
         """
