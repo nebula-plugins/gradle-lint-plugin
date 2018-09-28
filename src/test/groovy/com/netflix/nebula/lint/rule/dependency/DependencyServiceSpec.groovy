@@ -82,10 +82,13 @@ class DependencyServiceSpec extends TestKitSpecification {
 
             // a task to generate an unused dependency report for each configuration
             project.configurations.collect { it.name }.each { conf ->
-                task "\${conf}Unused"(dependsOn: compileTestJava) << {
-                  new File(projectDir, "\${conf}Unused.txt").text = DependencyService.forProject(project)
-                    .unusedDependencies(conf)
-                    .join('\\n')
+                task "\${conf}Unused"(dependsOn: compileTestJava) {
+                    doLast {
+                        new File(projectDir, "\${conf}Unused.txt").text = DependencyService.forProject(project)
+                        .unusedDependencies(conf)
+                        .join('\\n')
+                    }
+                  
                 }
             }
             """.stripMargin()
@@ -129,10 +132,12 @@ class DependencyServiceSpec extends TestKitSpecification {
 
             // a task to generate an undeclared dependency report for each configuration
             project.configurations.collect { it.name }.each { conf ->
-                task "\${conf}Undeclared"(dependsOn: compileTestJava) << {
-                  new File(projectDir, "\${conf}Undeclared.txt").text = DependencyService.forProject(project)
-                    .undeclaredDependencies(conf)
-                    .join('\\n')
+                task "\${conf}Undeclared"(dependsOn: compileTestJava) {
+                    doLast {
+                         new File(projectDir, "\${conf}Undeclared.txt").text = DependencyService.forProject(project)
+                        .undeclaredDependencies(conf)
+                        .join('\\n')
+                    }
                 }
             }
             """.stripMargin()
@@ -199,12 +204,16 @@ class DependencyServiceSpec extends TestKitSpecification {
                 id 'nebula.lint'
             }
             
-            task compileSourceSetOutput << {
-                println('@@' + DependencyService.forProject(project).sourceSetByConf('compile').output.classesDir)
+            task compileSourceSetOutput {
+                doLast {
+                  println('@@' + DependencyService.forProject(project).sourceSetByConf('compile').output.classesDir)
+                }
             }
             
-            task integTestSourceSetOutput << {
-                println('@@' + DependencyService.forProject(project).sourceSetByConf('integTestCompile').output.classesDir)
+            task integTestSourceSetOutput  {
+                doLast {
+                   println('@@' + DependencyService.forProject(project).sourceSetByConf('integTestCompile').output.classesDir)
+                }
             }
         """
 
@@ -266,11 +275,13 @@ class DependencyServiceSpec extends TestKitSpecification {
                 compile project(':core')
             }
 
-            task coreContents << {
-              new File(projectDir, "coreContents.txt").text = DependencyService.forProject(project)
-                .jarContents(configurations.compile.resolvedConfiguration.firstLevelModuleDependencies[0].module.id.module)
-                .classes
-                .join('\\n')
+            task coreContents {
+                doLast {
+                    new File(projectDir, "coreContents.txt").text = DependencyService.forProject(project)
+                    .jarContents(configurations.compile.resolvedConfiguration.firstLevelModuleDependencies[0].module.id.module)
+                    .classes
+                    .join('\\n')
+                }
             }
         """
 
@@ -319,10 +330,12 @@ class DependencyServiceSpec extends TestKitSpecification {
             
             import com.netflix.nebula.lint.rule.dependency.*
             
-            task resolvableAndResolvedConfigurations << {
-              new File(projectDir, "resolvableAndResolvedConfigurations.txt").text = DependencyService.forProject(project)
-                .resolvableAndResolvedConfigurations()
-                .join('\\n')
+            task resolvableAndResolvedConfigurations {
+                doLast {
+                    new File(projectDir, "resolvableAndResolvedConfigurations.txt").text = DependencyService.forProject(project)
+                    .resolvableAndResolvedConfigurations()
+                    .join('\\n')
+                }
             }
             """.stripIndent()
 
