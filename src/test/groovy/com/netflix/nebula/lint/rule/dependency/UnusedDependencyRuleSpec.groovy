@@ -500,7 +500,7 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             plugins {
                 id 'nebula.lint'
                 id 'java'
-                id 'nebula.integtest' version '3.3.0'
+                id 'nebula.integtest' version '5.1.2'
             }
             
             repositories { mavenCentral() }

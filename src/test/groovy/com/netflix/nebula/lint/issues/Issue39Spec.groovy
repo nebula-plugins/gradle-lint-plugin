@@ -8,7 +8,7 @@ class Issue39Spec extends TestKitSpecification {
         buildFile.text = """
             plugins {
                 id 'nebula.lint'
-                id 'nebula.integtest' version '3.2.1'
+                id 'nebula.integtest' version '5.1.2'
                 id 'java'
             }
 
