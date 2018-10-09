@@ -91,6 +91,20 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
 
         setupBuildGradleSimpleSetup(repo)
         buildFile << """\
+            
+            buildscript {
+              repositories {
+                maven {
+                  url "https://plugins.gradle.org/m2/"
+                }
+              }
+              dependencies {
+                classpath "io.franzbecker:gradle-lombok:1.14"
+              }
+            }
+            
+            apply plugin: "io.franzbecker.gradle-lombok"
+
             dependencies {
             ${deps.collect { "    compile '$it'" }.join('\n')}
             }
@@ -536,6 +550,20 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
 
         setupBuildGradleSimpleSetup(repo)
         buildFile << """\
+
+            buildscript {
+              repositories {
+                maven {
+                  url "https://plugins.gradle.org/m2/"
+                }
+              }
+              dependencies {
+                classpath "io.franzbecker:gradle-lombok:1.14"
+              }
+            }
+            
+            apply plugin: "io.franzbecker.gradle-lombok"
+            
             dependencies {
             ${deps.collect { "    compileOnly '$it'" }.join('\n')}
             }
