@@ -8,7 +8,7 @@ class GradleDependencySpec extends Specification {
     def 'serialize to and deserialize from String notation `#serialized`'() {
         when:
         def dep = new GradleDependency(group, name, version, classifier, ext, null, GradleDependency.Syntax.StringNotation)
-        
+
         then:
         dep.toNotation() == serialized
 
@@ -23,11 +23,12 @@ class GradleDependencySpec extends Specification {
         deser.ext == ext
 
         where:
-        group   | name  | version   | classifier    | ext   | serialized
-        'a'     | 'a'   | '1'       | 'tests'       | 'jar' | 'a:a:1:tests@jar'
-        'a'     | 'a'   | '1'       | 'tests'       | null  | 'a:a:1:tests'
-        'a'     | 'a'   | '1'       | null          | null  | 'a:a:1'
-        'a'     | 'a'   | null      | null          | null  | 'a:a'
-        null    | 'a'   | null      | null          | null  | ':a'
+        group | name | version | classifier | ext   | serialized
+        'a'   | 'a'  | '1'     | 'tests'    | 'jar' | 'a:a:1:tests@jar'
+        'a'   | 'a'  | null    | 'tests'    | 'jar' | 'a:a::tests@jar'
+        'a'   | 'a'  | '1'     | 'tests'    | null  | 'a:a:1:tests'
+        'a'   | 'a'  | '1'     | null       | null  | 'a:a:1'
+        'a'   | 'a'  | null    | null       | null  | 'a:a'
+        null  | 'a'  | null    | null       | null  | ':a'
     }
 }
