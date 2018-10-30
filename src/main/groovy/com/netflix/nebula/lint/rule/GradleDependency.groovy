@@ -71,7 +71,7 @@ class GradleDependency implements Cloneable {
     }
 
     static GradleDependency fromConstant(Object expr) {
-        def matcher = expr =~ /(?<group>[^:]+)?(:(?<name>[^:]+))(:(?<version>[^@:]+)(?<classifier>:[^@]+)?(?<ext>@.+)?)?/
+        def matcher = expr =~ /(?<group>[^:]+)?(:(?<name>[^:]+))(:(?<version>[^@:]+)?(?<classifier>:[^@]+)?(?<ext>@.+)?)?/
         if (matcher.matches()) {
             return new GradleDependency(
                     matcher.group('group'),
