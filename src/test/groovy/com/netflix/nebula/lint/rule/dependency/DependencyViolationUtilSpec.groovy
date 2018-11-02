@@ -70,5 +70,16 @@ class DependencyViolationUtilSpec extends Specification {
         1 * mockMethodCallExpression.getMethodAsString() >> 'compile'
     }
 
+    def 'replaces project dependency configuration'() {
+        setup:
+        GradleViolation mockViolation = Mock(GradleViolation)
+        MethodCallExpression mockMethodCallExpression = Mock(MethodCallExpression)
+
+        when:
+        DependencyViolationUtil.replaceProjectDependencyConfiguration(mockViolation, mockMethodCallExpression, "implementation", ":sub1")
+
+        then:
+        1 * mockViolation.replaceWith(mockMethodCallExpression, "implementation project(':sub1')")
+    }
 
 }

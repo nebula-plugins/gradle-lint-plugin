@@ -58,6 +58,75 @@ class OldGradleDeprecatedDependencyConfigurationRuleSpec extends TestKitSpecific
 
     }
 
+    def 'Replaces deprecated configurations - multi project - project dependency - #configuration for #replacementConfiguration'() {
+        def sub1 = addSubproject('sub1', """
+            repositories {
+                mavenCentral()
+            }
+            
+            dependencies {
+                $configuration 'com.google.guava:guava:19.0'
+                $configuration project(':sub2')
+            }
+
+            def x = "test"
+            """.stripIndent())
+
+        createJavaSourceFile(sub1, 'public class Sub1 {}')
+
+        def sub2 = addSubproject('sub2', """            
+            repositories {
+                mavenCentral()
+            }
+            
+            dependencies {
+                $configuration 'com.google.guava:guava:19.0'
+            }
+            """.stripIndent())
+
+        createJavaSourceFile(sub2, 'public class Sub2 {}')
+
+        buildFile << """
+            plugins {
+                id 'nebula.lint'
+            }
+            
+            subprojects {
+                apply plugin: 'java'
+                apply plugin: 'nebula.lint'
+            }
+              
+            allprojects {
+                  gradleLint.rules = ['deprecated-dependency-configuration']
+            }
+
+        """
+
+        when:
+        def result = runTasksSuccessfully('fixGradleLint', '--warning-mode=none')
+
+        then:
+        def buildGradle = new File(projectDir, 'sub1/build.gradle')
+        buildGradle.text.trim() == """
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    $replacementConfiguration 'com.google.guava:guava:19.0'
+    $replacementConfiguration project(':sub2')
+}
+
+def x = "test"
+        """.trim()
+
+        where:
+        configuration | replacementConfiguration
+        "compile"     | "compile"
+        "testCompile" | "testCompile"
+        "runtime"     | "runtime"
+    }
+
 
     def 'Replaces deprecated configuration - latest release - #configuration for #replacementConfiguration'() {
         buildFile << """

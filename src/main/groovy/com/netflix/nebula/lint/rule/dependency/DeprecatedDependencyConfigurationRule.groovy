@@ -18,6 +18,7 @@ class DeprecatedDependencyConfigurationRule extends GradleLintRule implements Gr
 
     private final String MINIMUM_GRADLE_VERSION = "4.7"
 
+    private final  String PROJECT_METHOD_NAME = 'project'
 
     @Override
     void visitAnyGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
@@ -39,6 +40,33 @@ class DeprecatedDependencyConfigurationRule extends GradleLintRule implements Gr
         handleDependencyVisit(call, conf, dep)
     }
 
+    @Override
+    void visitDependencies(MethodCallExpression call) {
+        if(!GradleKt.versionLessThan(project.gradle, MINIMUM_GRADLE_VERSION)) {
+            handleProjectDependencies(call)
+        }
+    }
+
+    private void handleProjectDependencies(MethodCallExpression call) {
+        List statements = call.arguments.expressions*.code*.statements.flatten().findAll  { it.expression instanceof MethodCallExpression }
+        statements.each { statement ->
+            String configuration = statement.expression.method.value
+            if(CONFIGURATION_REPLACEMENTS.containsKey(configuration)) {
+                MethodCallExpression statementMethodCallExpression = statement.expression
+                List<MethodCallExpression> projectDependencies = statementMethodCallExpression.arguments.expressions.flatten().findAll {
+                    it instanceof MethodCallExpression && ((MethodCallExpression) it).methodAsString == PROJECT_METHOD_NAME
+                }
+                if(!projectDependencies) {
+                    return
+                }
+                String project = projectDependencies.first().arguments.expressions.first().value
+                String configurationReplacement = CONFIGURATION_REPLACEMENTS.get(configuration)
+                GradleViolation violation = addBuildLintViolation("Configuration $configuration has been deprecated and should be replaced with $configurationReplacement", statementMethodCallExpression)
+                DependencyViolationUtil.replaceProjectDependencyConfiguration(violation, statementMethodCallExpression, configurationReplacement, project)
+            }
+        }
+    }
+
     private void handleDependencyVisit(MethodCallExpression call, String conf, GradleDependency dep) {
         if(CONFIGURATION_REPLACEMENTS.containsKey(conf) && !GradleKt.versionLessThan(project.gradle, MINIMUM_GRADLE_VERSION)) {
             if (call.arguments.expressions.size() == 1) {
@@ -48,7 +76,6 @@ class DeprecatedDependencyConfigurationRule extends GradleLintRule implements Gr
             }
         }
     }
-
 
     private void replaceSingleLineDependencyConfiguration(MethodCallExpression call, String conf, GradleDependency dep) {
         String configurationReplacement = CONFIGURATION_REPLACEMENTS.get(conf)

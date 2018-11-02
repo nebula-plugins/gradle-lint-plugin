@@ -6,6 +6,10 @@ import org.codehaus.groovy.ast.expr.MethodCallExpression
 
 class DependencyViolationUtil {
 
+    static void replaceProjectDependencyConfiguration(GradleViolation violation, MethodCallExpression call, String configuration, String project) {
+        violation.replaceWith(call, "$configuration project('$project')")
+    }
+
     static void replaceDependencyConfiguration(GradleViolation violation, MethodCallExpression call, String conf, GradleDependency dep) {
         violation.replaceWith(call, "$conf '${dep.toNotation()}'")
     }
