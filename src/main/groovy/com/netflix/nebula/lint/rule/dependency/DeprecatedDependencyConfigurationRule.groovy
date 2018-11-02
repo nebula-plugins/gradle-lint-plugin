@@ -47,6 +47,10 @@ class DeprecatedDependencyConfigurationRule extends GradleLintRule implements Gr
         }
     }
 
+    /**
+     * Responsible for replacing configurations in project dependencies only
+     * @param call
+     */
     private void handleProjectDependencies(MethodCallExpression call) {
         List statements = call.arguments.expressions*.code*.statements.flatten().findAll  { it.expression instanceof MethodCallExpression }
         statements.each { statement ->
