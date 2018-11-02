@@ -56,7 +56,7 @@ class DeprecatedDependencyConfigurationRuleSpec extends TestKitSpecification {
     }
 
 
-    def 'replace server dependency configuration - latest release - #configuration for #replacementConfiguration'() {
+    def 'Replaces deprecated configuration - latest release - #configuration for #replacementConfiguration'() {
         buildFile << """
             plugins {
                 id 'nebula.lint'
@@ -103,7 +103,7 @@ class DeprecatedDependencyConfigurationRuleSpec extends TestKitSpecification {
         "runtime"     | "runtimeOnly"
     }
 
-    def 'replace server dependency configuration - dynamic version  - #configuration for #replacementConfiguration'() {
+    def 'Replaces deprecated configuration - dynamic version  - #configuration for #replacementConfiguration'() {
         buildFile << """
             plugins {
                 id 'nebula.lint'
@@ -150,7 +150,7 @@ class DeprecatedDependencyConfigurationRuleSpec extends TestKitSpecification {
         "runtime"     | "runtimeOnly"
     }
 
-    def 'replace server dependency configuration - with excludes - #configuration for #replacementConfiguration'() {
+    def 'Replaces deprecated dconfiguration - with excludes - #configuration for #replacementConfiguration'() {
         buildFile << """
             plugins {
                 id 'nebula.lint'
