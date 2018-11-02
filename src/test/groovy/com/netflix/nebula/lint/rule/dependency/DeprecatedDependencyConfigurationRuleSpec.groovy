@@ -103,8 +103,8 @@ class DeprecatedDependencyConfigurationRuleSpec extends TestKitSpecification {
         def result = runTasksSuccessfully('fixGradleLint', '--warning-mode=none')
 
         then:
-        def buildGradle = new File(projectDir, 'sub1/build.gradle')
-        buildGradle.text.trim() == """
+        def sub1BuildGradle = new File(projectDir, 'sub1/build.gradle')
+        sub1BuildGradle.text.trim() == """
 repositories {
     mavenCentral()
 }
