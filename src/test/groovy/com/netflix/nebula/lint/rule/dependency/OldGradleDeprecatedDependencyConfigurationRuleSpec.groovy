@@ -59,7 +59,7 @@ class OldGradleDeprecatedDependencyConfigurationRuleSpec extends TestKitSpecific
     }
 
 
-    def 'replace server dependency configuration - latest release - #configuration for #replacementConfiguration'() {
+    def 'Replaces deprecated configuration - latest release - #configuration for #replacementConfiguration'() {
         buildFile << """
             plugins {
                 id 'nebula.lint'
@@ -104,7 +104,7 @@ class OldGradleDeprecatedDependencyConfigurationRuleSpec extends TestKitSpecific
 
     }
 
-    def 'replace server dependency configuration - dynamic version  - #configuration for #replacementConfiguration'() {
+    def 'Replaces deprecated configuration  - dynamic version  - #configuration for #replacementConfiguration'() {
         buildFile << """
             plugins {
                 id 'nebula.lint'
@@ -149,7 +149,7 @@ class OldGradleDeprecatedDependencyConfigurationRuleSpec extends TestKitSpecific
 
     }
 
-    def 'replace server dependency configuration - with excludes - #configuration for #replacementConfiguration'() {
+    def 'Replaces deprecated configuration  - with excludes - #configuration for #replacementConfiguration'() {
         buildFile << """
             plugins {
                 id 'nebula.lint'
