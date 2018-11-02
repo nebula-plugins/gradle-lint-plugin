@@ -1,5 +1,6 @@
 package com.netflix.nebula.lint.rule.dependency
 
+import com.netflix.nebula.interop.GradleKt
 import com.netflix.nebula.lint.GradleViolation
 import com.netflix.nebula.lint.rule.GradleDependency
 import com.netflix.nebula.lint.rule.GradleLintRule
@@ -14,6 +15,9 @@ class DeprecatedDependencyConfigurationRule extends GradleLintRule implements Gr
             "testCompile": "testImplementation",
             "runtime": "runtimeOnly"
     ]
+
+    private final String MINIMUM_GRADLE_VERSION = "4.7"
+
 
     @Override
     void visitAnyGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
@@ -36,7 +40,7 @@ class DeprecatedDependencyConfigurationRule extends GradleLintRule implements Gr
     }
 
     private void handleDependencyVisit(MethodCallExpression call, String conf, GradleDependency dep) {
-        if(CONFIGURATION_REPLACEMENTS.containsKey(conf)) {
+        if(CONFIGURATION_REPLACEMENTS.containsKey(conf) && !GradleKt.versionLessThan(project.gradle, MINIMUM_GRADLE_VERSION)) {
             if (call.arguments.expressions.size() == 1) {
                 replaceSingleLineDependencyConfiguration(call, conf, dep)
             } else {
