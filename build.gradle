@@ -39,6 +39,7 @@ configurations {
 dependencies {
     compile 'com.netflix.nebula:nebula-gradle-interop:latest.release'
     compile 'org.apache.maven:maven-model-builder:3.+'
+    plugin  'com.google.guava:guava:19.0'
 
     plugin 'org.ow2.asm:asm:5.2'
     plugin('org.codenarc:CodeNarc:0.25.2') {
