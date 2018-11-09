@@ -4,10 +4,6 @@
             "locked": "19.0",
             "requested": "19.0"
         },
-        "com.netflix.nebula:gradle-info-plugin": {
-            "locked": "4.0.3",
-            "requested": "latest.release"
-        },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "1.0.2",
             "requested": "latest.release"
@@ -61,10 +57,6 @@
         "com.google.guava:guava": {
             "locked": "19.0",
             "requested": "19.0"
-        },
-        "com.netflix.nebula:gradle-info-plugin": {
-            "locked": "4.0.3",
-            "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "1.0.2",
@@ -173,14 +165,22 @@
             "requested": "1.0-groovy-2.4"
         }
     },
+    "compileOnly": {
+        "com.netflix.nebula:gradle-info-plugin": {
+            "locked": "4.0.3",
+            "requested": "latest.release"
+        }
+    },
+    "compileOnlyDependenciesMetadata": {
+        "com.netflix.nebula:gradle-info-plugin": {
+            "locked": "4.0.3",
+            "requested": "latest.release"
+        }
+    },
     "default": {
         "com.google.guava:guava": {
             "locked": "19.0",
             "requested": "19.0"
-        },
-        "com.netflix.nebula:gradle-info-plugin": {
-            "locked": "4.0.3",
-            "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "1.0.2",
@@ -235,10 +235,6 @@
         "com.google.guava:guava": {
             "locked": "19.0",
             "requested": "19.0"
-        },
-        "com.netflix.nebula:gradle-info-plugin": {
-            "locked": "4.0.3",
-            "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "1.0.2",
@@ -711,10 +707,6 @@
             "locked": "19.0",
             "requested": "19.0"
         },
-        "com.netflix.nebula:gradle-info-plugin": {
-            "locked": "4.0.3",
-            "requested": "latest.release"
-        },
         "com.netflix.nebula:nebula-test": {
             "locked": "7.1.0",
             "requested": "latest.release"
@@ -756,10 +748,6 @@
         "com.google.guava:guava": {
             "locked": "19.0",
             "requested": "19.0"
-        },
-        "com.netflix.nebula:gradle-info-plugin": {
-            "locked": "4.0.3",
-            "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "1.0.2",
@@ -814,10 +802,6 @@
         "com.google.guava:guava": {
             "locked": "19.0",
             "requested": "19.0"
-        },
-        "com.netflix.nebula:gradle-info-plugin": {
-            "locked": "4.0.3",
-            "requested": "latest.release"
         },
         "com.netflix.nebula:nebula-gradle-interop": {
             "locked": "1.0.2",
