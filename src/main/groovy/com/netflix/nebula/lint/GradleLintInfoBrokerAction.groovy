@@ -1,7 +1,6 @@
 package com.netflix.nebula.lint
 
 import groovy.transform.Canonical
-import nebula.plugin.info.InfoBrokerPlugin
 import org.gradle.api.Project
 
 @Canonical
@@ -10,7 +9,7 @@ class GradleLintInfoBrokerAction extends GradleLintViolationAction {
 
     @Override
     void lintFinished(Collection<GradleViolation> violations) {
-        project.getPlugins().withType(InfoBrokerPlugin) {
+        project.getPlugins().withId('nebula.info-broker') {
             def reportItems = violations.collect { buildReportItem(it) }
             it.addReport('gradleLintViolations', reportItems)
         }
@@ -18,7 +17,7 @@ class GradleLintInfoBrokerAction extends GradleLintViolationAction {
 
     @Override
     void lintFixesApplied(Collection<GradleViolation> violations) {
-        project.getPlugins().withType(InfoBrokerPlugin) {
+        project.getPlugins().withId('nebula.info-broker') {
             def reportItems = violations.findAll { !it.fixes.any { it.reasonForNotFixing } }
                     .collect { buildReportItem(it) }
             it.addReport('fixedGradleLintViolations', reportItems)

@@ -37,6 +37,7 @@ configurations {
 }
 
 dependencies {
+    compileOnly 'com.netflix.nebula:gradle-info-plugin:latest.release'
     compile 'com.netflix.nebula:nebula-gradle-interop:latest.release'
     compile 'org.apache.maven:maven-model-builder:3.+'
     plugin  'com.google.guava:guava:19.0'
@@ -45,7 +46,6 @@ dependencies {
     plugin('org.codenarc:CodeNarc:0.25.2') {
         transitive = false
     }
-    plugin 'com.netflix.nebula:gradle-info-plugin:latest.release'
     plugin 'commons-lang:commons-lang:2.6'
 
     plugin ('org.eclipse.jgit:org.eclipse.jgit:5.0.1.201806211838-r') {
@@ -67,6 +67,7 @@ dependencies {
     }
     testCompile 'org.ow2.asm:asm-util:5.2'
     testCompile 'joda-time:joda-time:latest.release'
+    testCompile 'com.netflix.nebula:gradle-info-plugin:latest.release'
 }
 
 pluginBundle {
