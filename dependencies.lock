@@ -45,8 +45,8 @@
             "requested": "1.3.0"
         },
         "org.ow2.asm:asm": {
-            "locked": "5.2",
-            "requested": "5.2"
+            "locked": "7.0",
+            "requested": "7.0"
         },
         "org.spockframework:spock-core": {
             "locked": "1.0-groovy-2.4",
@@ -99,8 +99,8 @@
             "requested": "1.3.0"
         },
         "org.ow2.asm:asm": {
-            "locked": "5.2",
-            "requested": "5.2"
+            "locked": "7.0",
+            "requested": "7.0"
         },
         "org.spockframework:spock-core": {
             "locked": "1.0-groovy-2.4",
@@ -157,8 +157,8 @@
             "requested": "1.3.0"
         },
         "org.ow2.asm:asm": {
-            "locked": "5.2",
-            "requested": "5.2"
+            "locked": "7.0",
+            "requested": "7.0"
         },
         "org.spockframework:spock-core": {
             "locked": "1.0-groovy-2.4",
@@ -223,8 +223,8 @@
             "requested": "1.3.0"
         },
         "org.ow2.asm:asm": {
-            "locked": "5.2",
-            "requested": "5.2"
+            "locked": "7.0",
+            "requested": "7.0"
         },
         "org.spockframework:spock-core": {
             "locked": "1.0-groovy-2.4",
@@ -277,8 +277,8 @@
             "requested": "1.3.0"
         },
         "org.ow2.asm:asm": {
-            "locked": "5.2",
-            "requested": "5.2"
+            "locked": "7.0",
+            "requested": "7.0"
         },
         "org.spockframework:spock-core": {
             "locked": "1.0-groovy-2.4",
@@ -339,8 +339,8 @@
             "requested": "1.3.0"
         },
         "org.ow2.asm:asm": {
-            "locked": "5.2",
-            "requested": "5.2"
+            "locked": "7.0",
+            "requested": "7.0"
         },
         "org.ow2.asm:asm-util": {
             "locked": "5.2",
@@ -405,8 +405,8 @@
             "requested": "1.3.0"
         },
         "org.ow2.asm:asm": {
-            "locked": "5.2",
-            "requested": "5.2"
+            "locked": "7.0",
+            "requested": "7.0"
         },
         "org.ow2.asm:asm-util": {
             "locked": "5.2",
@@ -471,8 +471,8 @@
             "requested": "1.3.0"
         },
         "org.ow2.asm:asm": {
-            "locked": "5.2",
-            "requested": "5.2"
+            "locked": "7.0",
+            "requested": "7.0"
         },
         "org.ow2.asm:asm-util": {
             "locked": "5.2",
@@ -537,8 +537,8 @@
             "requested": "1.3.0"
         },
         "org.ow2.asm:asm": {
-            "locked": "5.2",
-            "requested": "5.2"
+            "locked": "7.0",
+            "requested": "7.0"
         },
         "org.ow2.asm:asm-util": {
             "locked": "5.2",
@@ -603,8 +603,8 @@
             "requested": "1.3.0"
         },
         "org.ow2.asm:asm": {
-            "locked": "5.2",
-            "requested": "5.2"
+            "locked": "7.0",
+            "requested": "7.0"
         },
         "org.ow2.asm:asm-util": {
             "locked": "5.2",
@@ -669,8 +669,8 @@
             "requested": "1.3.0"
         },
         "org.ow2.asm:asm": {
-            "locked": "5.2",
-            "requested": "5.2"
+            "locked": "7.0",
+            "requested": "7.0"
         },
         "org.ow2.asm:asm-util": {
             "locked": "5.2",
@@ -736,8 +736,8 @@
             "requested": "5.0.1.201806211838-r"
         },
         "org.ow2.asm:asm": {
-            "locked": "5.2",
-            "requested": "5.2"
+            "locked": "7.0",
+            "requested": "7.0"
         },
         "org.spockframework:spock-core": {
             "locked": "1.0-groovy-2.4",
@@ -790,8 +790,8 @@
             "requested": "1.3.0"
         },
         "org.ow2.asm:asm": {
-            "locked": "5.2",
-            "requested": "5.2"
+            "locked": "7.0",
+            "requested": "7.0"
         },
         "org.spockframework:spock-core": {
             "locked": "1.0-groovy-2.4",
@@ -844,8 +844,8 @@
             "requested": "1.3.0"
         },
         "org.ow2.asm:asm": {
-            "locked": "5.2",
-            "requested": "5.2"
+            "locked": "7.0",
+            "requested": "7.0"
         },
         "org.spockframework:spock-core": {
             "locked": "1.0-groovy-2.4",
@@ -906,8 +906,8 @@
             "requested": "1.3.0"
         },
         "org.ow2.asm:asm": {
-            "locked": "5.2",
-            "requested": "5.2"
+            "locked": "7.0",
+            "requested": "7.0"
         },
         "org.ow2.asm:asm-util": {
             "locked": "5.2",
@@ -972,8 +972,8 @@
             "requested": "1.3.0"
         },
         "org.ow2.asm:asm": {
-            "locked": "5.2",
-            "requested": "5.2"
+            "locked": "7.0",
+            "requested": "7.0"
         },
         "org.ow2.asm:asm-util": {
             "locked": "5.2",
@@ -1038,8 +1038,8 @@
             "requested": "1.3.0"
         },
         "org.ow2.asm:asm": {
-            "locked": "5.2",
-            "requested": "5.2"
+            "locked": "7.0",
+            "requested": "7.0"
         },
         "org.ow2.asm:asm-util": {
             "locked": "5.2",
@@ -1104,8 +1104,8 @@
             "requested": "1.3.0"
         },
         "org.ow2.asm:asm": {
-            "locked": "5.2",
-            "requested": "5.2"
+            "locked": "7.0",
+            "requested": "7.0"
         },
         "org.ow2.asm:asm-util": {
             "locked": "5.2",
@@ -1170,8 +1170,8 @@
             "requested": "1.3.0"
         },
         "org.ow2.asm:asm": {
-            "locked": "5.2",
-            "requested": "5.2"
+            "locked": "7.0",
+            "requested": "7.0"
         },
         "org.ow2.asm:asm-util": {
             "locked": "5.2",
@@ -1236,8 +1236,8 @@
             "requested": "1.3.0"
         },
         "org.ow2.asm:asm": {
-            "locked": "5.2",
-            "requested": "5.2"
+            "locked": "7.0",
+            "requested": "7.0"
         },
         "org.ow2.asm:asm-util": {
             "locked": "5.2",

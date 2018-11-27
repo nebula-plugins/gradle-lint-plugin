@@ -41,7 +41,7 @@ final class DependencyClassVisitor extends ClassVisitor {
     Set<ResolvedArtifact> indirectReferences = new HashSet()
 
     DependencyClassVisitor(Map<String, Collection<ResolvedArtifact>> classOwners, ClassLoader loader) {
-        super(Opcodes.ASM5)
+        super(Opcodes.ASM7)
         this.classOwners = classOwners
         this.loader = loader
     }
@@ -52,6 +52,7 @@ final class DependencyClassVisitor extends ClassVisitor {
     }
 
     void readObjectName(String type, boolean indirect = false) {
+        if(!type) return
         def owners = classOwners[Type.getObjectType(type).internalName] ?: Collections.emptySet()
         if(logger.isDebugEnabled()) {
             for (owner in owners) {
@@ -132,13 +133,13 @@ final class DependencyClassVisitor extends ClassVisitor {
         Type.getArgumentTypes(desc).each { readType(it.descriptor) }
         readType(Type.getReturnType(desc).descriptor)
         readSignature(signature)
-        exceptions.each { readType(it) }
+        exceptions.each { readObjectName(it) }
         return new DependencyMethodVisitor()
     }
 
     class DependencySignatureVisitor extends SignatureVisitor {
         DependencySignatureVisitor() {
-            super(Opcodes.ASM5)
+            super(Opcodes.ASM7)
         }
 
         @Override void visitClassType(String name) { readObjectName(name) }
@@ -153,7 +154,7 @@ final class DependencyClassVisitor extends ClassVisitor {
 
     class DependencyFieldVisitor extends FieldVisitor {
         DependencyFieldVisitor() {
-            super(Opcodes.ASM5)
+            super(Opcodes.ASM7)
         }
 
         @Override
@@ -171,12 +172,12 @@ final class DependencyClassVisitor extends ClassVisitor {
 
     class DependencyMethodVisitor extends MethodVisitor {
         DependencyMethodVisitor() {
-            super(Opcodes.ASM5)
+            super(Opcodes.ASM7)
         }
 
         @Override
         void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-            readType(owner)
+            readObjectName(owner)
             readType(Type.getReturnType(desc).descriptor)
             Type.getArgumentTypes(desc).collect { readType(it.descriptor) }
         }
@@ -188,7 +189,7 @@ final class DependencyClassVisitor extends ClassVisitor {
 
         @Override
         void visitTypeInsn(int opcode, String type) {
-            readType(type)
+            readObjectName(type)
         }
 
         @Override
@@ -216,7 +217,7 @@ final class DependencyClassVisitor extends ClassVisitor {
 
         @Override
         void visitTryCatchBlock(Label start, Label end, Label handler, String type) {
-            readType(type)
+            readObjectName(type)
         }
 
         @Override
@@ -258,7 +259,7 @@ final class DependencyClassVisitor extends ClassVisitor {
 
     class DependencyAnnotationVisitor extends AnnotationVisitor {
         DependencyAnnotationVisitor() {
-            super(Opcodes.ASM5)
+            super(Opcodes.ASM7)
         }
 
         @Override

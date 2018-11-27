@@ -42,7 +42,7 @@ dependencies {
     compile 'org.apache.maven:maven-model-builder:3.+'
     plugin  'com.google.guava:guava:19.0'
 
-    plugin 'org.ow2.asm:asm:5.2'
+    plugin 'org.ow2.asm:asm:7.0'
     plugin('org.codenarc:CodeNarc:0.25.2') {
         transitive = false
     }
