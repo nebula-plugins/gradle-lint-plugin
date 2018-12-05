@@ -241,7 +241,9 @@ class GradleLintPluginSpec extends TestKitSpecification {
         runTasksSuccessfully(taskName)
 
         buildFile.text.contains("compile 'com.google.guava:guava:18.0'")
-        new File(subDir, 'build.gradle').text.contains(" testCompile \"junit:junit:4.11\"")
+        String buildFileText = new File(subDir, 'build.gradle').text
+        buildFileText.contains("testCompile")
+        buildFileText.contains("junit:junit:4.11")
 
         where:
         taskName << ['fixGradleLint', 'fixLintGradle']
