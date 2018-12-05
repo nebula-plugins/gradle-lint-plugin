@@ -241,7 +241,7 @@ class GradleLintPluginSpec extends TestKitSpecification {
         runTasksSuccessfully(taskName)
 
         buildFile.text.contains("compile 'com.google.guava:guava:18.0'")
-        new File(subDir, 'build.gradle').text.contains("testCompile 'junit:junit:4.11'")
+        new File(subDir, 'build.gradle').text.contains(" testCompile \"junit:junit:4.11\"")
 
         where:
         taskName << ['fixGradleLint', 'fixLintGradle']
@@ -648,11 +648,10 @@ class GradleLintPluginSpec extends TestKitSpecification {
         """
 
         when:
-        runTasksFail("clean")
+        def failure  = runTasksFail("clean")
 
         then:
-        def failure = thrown(Exception)
-        failure.message.contains("Gradle Lint Plugin currently doesn't support kotlin build scripts." +
+        failure.output.contains("Gradle Lint Plugin currently doesn't support kotlin build scripts." +
               " Please, switch to groovy build script if you want to use linting.")
     }
 }

@@ -224,7 +224,7 @@ class MultiProjectCircularDependencyRuleSpec extends IntegrationSpec {
         def result = runTasksWithFailure('fixGradleLint')
 
         then:
-        result.standardOutput.contains("Could not get unknown property ':foo' for DefaultProjectDependency{dependencyProject='project ':bar'', configuration='default'}")
+        result.standardError.contains("Could not get unknown property ':foo' for DefaultProjectDependency{dependencyProject='project ':bar'', configuration='default'}")
     }
 
     def 'detects circular dependencies in multi project - with bad syntax excludes fails but not in lint'() {
@@ -259,6 +259,6 @@ class MultiProjectCircularDependencyRuleSpec extends IntegrationSpec {
         def result = runTasksWithFailure('fixGradleLint')
 
         then:
-        !result.standardOutput.contains("Could not get unknown property ':foo' for DefaultProjectDependency{dependencyProject='project ':bar'', configuration='default'}")
+        !result.standardError.contains("Could not get unknown property ':foo' for DefaultProjectDependency{dependencyProject='project ':bar'', configuration='default'}")
     }
 }
