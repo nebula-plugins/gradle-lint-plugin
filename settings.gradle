@@ -15,4 +15,3 @@
  */
 
 rootProject.name = 'gradle-lint-plugin'
-enableFeaturePreview("STABLE_PUBLISHING")
