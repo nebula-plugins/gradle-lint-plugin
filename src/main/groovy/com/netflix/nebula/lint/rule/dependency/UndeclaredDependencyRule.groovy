@@ -43,10 +43,12 @@ class UndeclaredDependencyRule extends GradleLintRule implements GradleModelAwar
                 violations.put(confName, new HashMap())
 
                 def undeclaredDependencies = dependencyService.undeclaredDependencies(confName)
-                if (! undeclaredDependencies.isEmpty()) {
+                def filteredUndeclaredDependencies = filterUndeclaredDependencies(undeclaredDependencies, confName)
+
+                if (! filteredUndeclaredDependencies.isEmpty()) {
                     def dependencyBlock = bookmark(DEPENDENCIES_BLOCK)
                     if (dependencyBlock != null) {
-                        undeclaredDependencies.each { undeclared ->
+                        filteredUndeclaredDependencies.each { undeclared ->
                             // only add the dependency in the lowest configuration that requires it
                             if (insertedDependencies.add(undeclared)) {
                                 // collect violations for handling later
@@ -69,6 +71,10 @@ class UndeclaredDependencyRule extends GradleLintRule implements GradleModelAwar
         }
 
         addUndeclaredDependenciesAlphabetically(violations)
+    }
+
+    Set<ModuleVersionIdentifier> filterUndeclaredDependencies(Set<ModuleVersionIdentifier> undeclaredDependencies, String configurationName) {
+        return undeclaredDependencies
     }
 
     private void addUndeclaredDependenciesAlphabetically(Map<String, Map> violations) {
