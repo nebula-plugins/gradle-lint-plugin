@@ -28,6 +28,7 @@ package com.netflix.nebula.lint.rule.dependency
 class FeaturePreviewsFixture {
     public static final String GRADLE_VERSION_WITH_EXPERIMENTAL_FEATURES = '4.5'
     public static final String GRADLE_VERSION_WITH_OPT_IN_FEATURES = '4.6'
+    private static final String GRADLE_VERSION_WITH_DEFAULT_FEATURES = '5.0'
     public static final String GRADLE_PROPERTIES_FILE = 'gradle.properties'
     public static final String GRADLE_SETTINGS_FILE = 'settings.gradle'
 
@@ -42,7 +43,7 @@ class FeaturePreviewsFixture {
                 """.stripIndent()
             return
         }
-        if (gradleVersion >= GRADLE_VERSION_WITH_OPT_IN_FEATURES && fileName == GRADLE_SETTINGS_FILE) {
+        if (gradleVersion >= GRADLE_VERSION_WITH_OPT_IN_FEATURES && gradleVersion <= GRADLE_VERSION_WITH_DEFAULT_FEATURES && fileName == GRADLE_SETTINGS_FILE) {
             file << """\
                 enableFeaturePreview('IMPROVED_POM_SUPPORT')
                 """.stripIndent()
