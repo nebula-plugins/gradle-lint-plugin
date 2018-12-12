@@ -25,6 +25,7 @@ import org.codenarc.rule.Violation
 import org.gradle.api.Action
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
+import org.gradle.api.internal.CollectionCallbackActionDecorator
 import org.gradle.api.plugins.quality.CodeNarcReports
 import org.gradle.api.plugins.quality.internal.CodeNarcReportsImpl
 import org.gradle.api.reporting.Report
@@ -46,8 +47,9 @@ class GradleLintReportTask extends DefaultTask implements VerificationTask, Repo
      */
     boolean ignoreFailures
 
-    GradleLintReportTask() {
-        reports = instantiator.newInstance(CodeNarcReportsImpl, this)
+    @Inject
+    GradleLintReportTask(CollectionCallbackActionDecorator collectionCallbackActionDecorator) {
+        reports = instantiator.newInstance(CodeNarcReportsImpl, this, collectionCallbackActionDecorator)
         outputs.upToDateWhen { false }
         group = 'lint'
     }
