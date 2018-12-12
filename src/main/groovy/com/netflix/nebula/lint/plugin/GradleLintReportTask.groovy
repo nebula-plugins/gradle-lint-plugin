@@ -34,6 +34,8 @@ import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.VerificationTask
 import org.gradle.internal.reflect.Instantiator
+import org.gradle.util.DeprecationLogger
+
 import static com.netflix.nebula.lint.StyledTextService.Styling.*
 
 import javax.inject.Inject
@@ -47,11 +49,12 @@ class GradleLintReportTask extends DefaultTask implements VerificationTask, Repo
      */
     boolean ignoreFailures
 
-    @Inject
-    GradleLintReportTask(CollectionCallbackActionDecorator collectionCallbackActionDecorator) {
-        reports = instantiator.newInstance(CodeNarcReportsImpl, this, collectionCallbackActionDecorator)
-        outputs.upToDateWhen { false }
-        group = 'lint'
+    GradleLintReportTask() {
+        DeprecationLogger.whileDisabled() {
+            reports = instantiator.newInstance(CodeNarcReportsImpl, this)
+            outputs.upToDateWhen { false }
+            group = 'lint'
+        }
     }
 
     @TaskAction
