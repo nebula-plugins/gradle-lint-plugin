@@ -50,11 +50,13 @@ class GradleLintReportTask extends DefaultTask implements VerificationTask, Repo
     boolean ignoreFailures
 
     GradleLintReportTask() {
+        CodeNarcReportsImpl codeNarcReports
         DeprecationLogger.whileDisabled() {
-            reports = instantiator.newInstance(CodeNarcReportsImpl, this)
-            outputs.upToDateWhen { false }
-            group = 'lint'
+            codeNarcReports = instantiator.newInstance(CodeNarcReportsImpl, this)
         }
+        reports = codeNarcReports
+        outputs.upToDateWhen { false }
+        group = 'lint'
     }
 
     @TaskAction
