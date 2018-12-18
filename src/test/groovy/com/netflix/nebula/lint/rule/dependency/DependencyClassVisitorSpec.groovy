@@ -257,6 +257,6 @@ class DependencyClassVisitorSpec extends Specification {
     static DefaultResolvedDependency gav(String g, String a, String v) {
         def mvid = new DefaultModuleVersionIdentifier(g, a, v)
         def id = new ResolvedConfigurationIdentifier(mvid, 'compile')
-        new DefaultResolvedDependency(0, id, null)
+        new DefaultResolvedDependency(id, null)
     }
 }
