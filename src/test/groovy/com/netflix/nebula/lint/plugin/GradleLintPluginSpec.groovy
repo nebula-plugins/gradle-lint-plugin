@@ -21,7 +21,7 @@ import spock.lang.Issue
 import spock.lang.Unroll
 
 class GradleLintPluginSpec extends TestKitSpecification {
-    private static final String V_4_POINT_6 = '4.6'
+    private static final String V_4_POINT_10 = '4.10.2'
 
     def 'run multiple rules on a single module project'() {
         when:
@@ -352,7 +352,7 @@ class GradleLintPluginSpec extends TestKitSpecification {
 
     def 'test wrapper rule on a single module project'() {
         setup:
-        gradleVersion = V_4_POINT_6
+        gradleVersion = V_4_POINT_10
 
         when:
         buildFile << """
@@ -361,11 +361,11 @@ class GradleLintPluginSpec extends TestKitSpecification {
                 id 'java'
             }
 
-            gradleLint.rules = ['archaic-wrapper']
+            gradleLint.rules = ['deprecated-task-operator']
 
-            task wrapper(type: Wrapper){
-                gradleVersion = '0.1'
-            }
+            task helloTask << {
+                println 'hello'
+            } 
         """
 
         then:
@@ -376,23 +376,23 @@ class GradleLintPluginSpec extends TestKitSpecification {
 
         then:
         console.findAll { it.startsWith('warning') }.size() == 1
-        console.any { it.contains('archaic-wrapper') }
+        console.any { it.contains('deprecated-task-operator') }
     }
 
     def 'build fails for violations in manual lint'() {
         given:
-        gradleVersion = V_4_POINT_6
+        gradleVersion = V_4_POINT_10
         buildFile << """
             plugins {
                 id 'nebula.lint'
                 id 'java'
             }
 
-            gradleLint.rules = ['archaic-wrapper']
+            gradleLint.rules = ['deprecated-task-operator']
 
-            task wrapper(type: Wrapper){
-                gradleVersion = '0.1'
-            }
+            task helloTask << {
+                println 'hello'
+            } 
         """
 
         when:
@@ -401,14 +401,14 @@ class GradleLintPluginSpec extends TestKitSpecification {
         then:
         def console = results.output.readLines()
         console.findAll { it.startsWith('warning') }.size() == 1
-        console.any { it.contains('archaic-wrapper') }
+        console.any { it.contains('deprecated-task-operator') }
         console.any { it.contains('This build contains 1 lint violation') }
     }
 
     @Issue('#68')
     def 'lint task does not run when alwaysRun is off'() {
         setup:
-        gradleVersion = V_4_POINT_6
+        gradleVersion = V_4_POINT_10
 
         when:
         buildFile << """
@@ -418,13 +418,13 @@ class GradleLintPluginSpec extends TestKitSpecification {
             }
 
             gradleLint {
-                rules = ['archaic-wrapper']
+                rules = ['deprecated-task-operator']
                 alwaysRun = false
             }
 
-            task wrapper(type: Wrapper){
-                gradleVersion = '0.1'
-            }
+            task helloTask << {
+                println 'hello'
+            } 
         """
 
         then:
@@ -435,12 +435,12 @@ class GradleLintPluginSpec extends TestKitSpecification {
         def console = results.output.readLines()
 
         then:
-        !console.any { it.contains('archaic-wrapper') }
+        !console.any { it.contains('deprecated-task-operator') }
     }
 
     def 'lint task does not run when alwaysRun is off via cli'() {
         setup:
-        gradleVersion = V_4_POINT_6
+        gradleVersion = V_4_POINT_10
 
         when:
         buildFile << """
@@ -450,12 +450,12 @@ class GradleLintPluginSpec extends TestKitSpecification {
             }
 
             gradleLint {
-                rules = ['archaic-wrapper']
+                rules = ['deprecated-task-operator']
             }
 
-            task wrapper(type: Wrapper){
-                gradleVersion = '0.1'
-            }
+            task helloTask << {
+                println 'hello'
+            } 
         """
 
         then:
@@ -466,12 +466,12 @@ class GradleLintPluginSpec extends TestKitSpecification {
         def console = results.output.readLines()
 
         then:
-        !console.any { it.contains('archaic-wrapper') }
+        !console.any { it.contains('deprecated-task-operator') }
     }
 
     def 'lint task does not run when autoGradleLint is excluded via cli'() {
         setup:
-        gradleVersion = V_4_POINT_6
+        gradleVersion = V_4_POINT_10
 
         when:
         buildFile << """
@@ -481,12 +481,12 @@ class GradleLintPluginSpec extends TestKitSpecification {
             }
 
             gradleLint {
-                rules = ['archaic-wrapper']
+                rules = ['deprecated-task-operator']
             }
 
-            task wrapper(type: Wrapper){
-                gradleVersion = '0.1'
-            }
+            task helloTask << {
+                println 'hello'
+            } 
         """
 
         then:
@@ -497,13 +497,13 @@ class GradleLintPluginSpec extends TestKitSpecification {
         def console = results.output.readLines()
 
         then:
-        !console.any { it.contains('archaic-wrapper') }
+        !console.any { it.contains('deprecated-task-operator') }
     }
 
     @Unroll
     def 'lint task does not run for task #taskName'() {
         setup:
-        gradleVersion = V_4_POINT_6
+        gradleVersion = V_4_POINT_10
 
         when:
         buildFile << """
@@ -513,12 +513,12 @@ class GradleLintPluginSpec extends TestKitSpecification {
             }
 
             gradleLint {
-                rules = ['archaic-wrapper']
+                rules = ['deprecated-task-operator']
             }
-
-            task wrapper(type: Wrapper){
-                gradleVersion = '0.1'
-            }
+            
+            task helloTask << {
+                println 'hello'
+            } 
         """
 
         then:
@@ -529,7 +529,7 @@ class GradleLintPluginSpec extends TestKitSpecification {
         def console = results.output.readLines()
 
         then:
-        !console.any { it.contains('archaic-wrapper') }
+        !console.any { it.contains('deprecated-task-operator') }
 
         where:
         taskName << ['help', 'tasks', 'dependencies', 'components',
@@ -538,7 +538,7 @@ class GradleLintPluginSpec extends TestKitSpecification {
 
     def 'autoLintGradle is always run'() {
         setup:
-        gradleVersion = V_4_POINT_6
+        gradleVersion = V_4_POINT_10
 
         createJavaSourceFile('public class Main { }')
         buildFile << """\
@@ -547,11 +547,11 @@ class GradleLintPluginSpec extends TestKitSpecification {
                 id 'nebula.lint'
             }
             
-            gradleLint.rules = ['archaic-wrapper']
+            gradleLint.rules = ['deprecated-task-operator']
             
-            task wrapper(type: Wrapper){
-                gradleVersion = '0.1'
-            }
+            task helloTask << {
+                println 'hello'
+            } 
             
             """.stripIndent()
 
