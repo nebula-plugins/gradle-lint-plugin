@@ -29,6 +29,10 @@ contacts {
         moniker 'Jon Schneider'
         github 'jkschneider'
     }
+    'roberto@perezalcolea.info' {
+        moniker 'Roberto Perez Alcolea'
+        github 'rpalcolea'
+    }
 }
 
 configurations {
