@@ -26,6 +26,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.VerificationTask
+import org.gradle.util.DeprecationLogger
 
 import static com.netflix.nebula.lint.StyledTextService.Styling.*
 
@@ -50,20 +51,23 @@ class FixGradleLintTask extends DefaultTask implements VerificationTask {
     
     @TaskAction
     void lintCorrections() {
-        def violations = new LintService().lint(project, false).violations
-                .unique { v1, v2 -> v1.is(v2) ? 0 : 1 }
+        //TODO: remove deprecation logger disabled once we fix issue with: configuration was resolved without accessing the project in a safe manner
+        DeprecationLogger.whileDisabled {
+            def violations = new LintService().lint(project, false).violations
+                    .unique { v1, v2 -> v1.is(v2) ? 0 : 1 }
 
-        (userDefinedListeners + infoBrokerAction + new GradleLintPatchAction(project)).each {
-            it.lintFinished(violations)
-        }
+            (userDefinedListeners + infoBrokerAction + new GradleLintPatchAction(project)).each {
+                it.lintFinished(violations)
+            }
 
-        def patchFile = new File(project.buildDir, GradleLintPatchAction.PATCH_NAME)
-        if(patchFile.exists()) {
-            new ApplyCommand(new NotNecessarilyGitRepository(project.projectDir)).setPatch(patchFile.newInputStream()).call()
-        }
+            def patchFile = new File(project.buildDir, GradleLintPatchAction.PATCH_NAME)
+            if(patchFile.exists()) {
+                new ApplyCommand(new NotNecessarilyGitRepository(project.projectDir)).setPatch(patchFile.newInputStream()).call()
+            }
 
-        (userDefinedListeners + infoBrokerAction + consoleOutputAction()).each {
-            it.lintFixesApplied(violations)
+            (userDefinedListeners + infoBrokerAction + consoleOutputAction()).each {
+                it.lintFixesApplied(violations)
+            }
         }
     }
 
