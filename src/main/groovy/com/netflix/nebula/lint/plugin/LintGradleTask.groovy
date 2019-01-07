@@ -19,6 +19,7 @@ import com.netflix.nebula.lint.*
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.tasks.TaskAction
+import org.gradle.util.DeprecationLogger
 
 import static com.netflix.nebula.lint.StyledTextService.Styling.*
 
@@ -34,11 +35,14 @@ class LintGradleTask extends DefaultTask {
 
     @TaskAction
     void lint() {
-        def violations = new LintService().lint(project, onlyCriticalRules).violations
-                .unique { v1, v2 -> v1.is(v2) ? 0 : 1 }
+        //TODO: remove deprecation logger disabled once we fix issue with: configuration was resolved without accessing the project in a safe manner
+        DeprecationLogger.whileDisabled {
+            def violations = new LintService().lint(project, onlyCriticalRules).violations
+                    .unique { v1, v2 -> v1.is(v2) ? 0 : 1 }
 
-        (listeners + new GradleLintPatchAction(project) + new GradleLintInfoBrokerAction(project) + consoleOutputAction).each {
-            it.lintFinished(violations)
+            (listeners + new GradleLintPatchAction(project) + new GradleLintInfoBrokerAction(project) + consoleOutputAction).each {
+                it.lintFinished(violations)
+            }
         }
     }
 
