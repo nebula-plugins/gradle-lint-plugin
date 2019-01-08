@@ -24,6 +24,7 @@ import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.execution.TaskExecutionGraphListener
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.tasks.compile.AbstractCompile
+import org.gradle.util.DeprecationLogger
 
 class GradleLintPlugin implements Plugin<Project> {
 
@@ -31,68 +32,72 @@ class GradleLintPlugin implements Plugin<Project> {
 
     @Override
     void apply(Project project) {
-        failForKotlinScript(project)
+        //TODO: remove deprecation logger disabled once we fix issue with: configuration was resolved without accessing the project in a safe manner
+        DeprecationLogger.whileDisabled {
 
-        LintRuleRegistry.classLoader = getClass().classLoader
-        def lintExt = project.extensions.create('gradleLint', GradleLintExtension)
+            failForKotlinScript(project)
 
-        if (project.rootProject == project) {
-            def autoLintTask = project.tasks.create(AUTO_LINT_GRADLE, LintGradleTask)
-            autoLintTask.listeners = lintExt.listeners
+            LintRuleRegistry.classLoader = getClass().classLoader
+            def lintExt = project.extensions.create('gradleLint', GradleLintExtension)
 
-            def manualLintTask = project.tasks.create('lintGradle', LintGradleTask)
-            manualLintTask.group = 'lint'
-            manualLintTask.failOnWarning = true
+            if (project.rootProject == project) {
+                def autoLintTask = project.tasks.create(AUTO_LINT_GRADLE, LintGradleTask)
+                autoLintTask.listeners = lintExt.listeners
 
-            def criticalLintTask = project.tasks.create('criticalLintGradle', LintGradleTask)
-            criticalLintTask.group = 'lint'
-            criticalLintTask.onlyCriticalRules = true
+                def manualLintTask = project.tasks.create('lintGradle', LintGradleTask)
+                manualLintTask.group = 'lint'
+                manualLintTask.failOnWarning = true
 
-            def fixTask = project.tasks.create('fixGradleLint', FixGradleLintTask)
-            fixTask.userDefinedListeners = lintExt.listeners
+                def criticalLintTask = project.tasks.create('criticalLintGradle', LintGradleTask)
+                criticalLintTask.group = 'lint'
+                criticalLintTask.onlyCriticalRules = true
 
-            def fixTask2 = project.tasks.create('fixLintGradle', FixGradleLintTask)
-            fixTask2.userDefinedListeners = lintExt.listeners
+                def fixTask = project.tasks.create('fixGradleLint', FixGradleLintTask)
+                fixTask.userDefinedListeners = lintExt.listeners
 
-            project.gradle.addListener(new LintListener() {
-                def allTasks
+                def fixTask2 = project.tasks.create('fixLintGradle', FixGradleLintTask)
+                fixTask2.userDefinedListeners = lintExt.listeners
 
-                @Override
-                void graphPopulated(TaskExecutionGraph graph) {
-                    allTasks = graph.allTasks
-                }
+                project.gradle.addListener(new LintListener() {
+                    def allTasks
 
-                @Override
-                void buildFinished(BuildResult result) {
-                    if (onlyIf()) {
-                        autoLintTask.lint()
+                    @Override
+                    void graphPopulated(TaskExecutionGraph graph) {
+                        allTasks = graph.allTasks
                     }
-                }
 
-                private boolean onlyIf() {
-                    def shouldLint = project.hasProperty('gradleLint.alwaysRun') ?
-                            Boolean.valueOf(project.property('gradleLint.alwaysRun').toString()) : lintExt.alwaysRun
-                    def excludedAutoLintGradle = project.gradle.startParameter.excludedTaskNames.contains(AUTO_LINT_GRADLE)
-                    def skipForSpecificTask = project.gradle.startParameter.taskNames.any { lintExt.skipForTasks.contains(it) }
-                    def hasFailedTask = !lintExt.autoLintAfterFailure && allTasks.any { it.state.failure != null }
-                    //when we already have failed critical lint task we don't want to run autolint
-                    def hasFailedCriticalLintTask = allTasks.any { it == criticalLintTask && it.state.failure != null }
-                    def hasExplicitLintTask = allTasks.any {
-                        it == fixTask || it == fixTask2 || it == manualLintTask || it == autoLintTask
+                    @Override
+                    void buildFinished(BuildResult result) {
+                        if (onlyIf()) {
+                            autoLintTask.lint()
+                        }
                     }
-                    shouldLint && !excludedAutoLintGradle && !skipForSpecificTask && !hasFailedTask &&
-                            !hasExplicitLintTask && !hasFailedCriticalLintTask
+
+                    private boolean onlyIf() {
+                        def shouldLint = project.hasProperty('gradleLint.alwaysRun') ?
+                                Boolean.valueOf(project.property('gradleLint.alwaysRun').toString()) : lintExt.alwaysRun
+                        def excludedAutoLintGradle = project.gradle.startParameter.excludedTaskNames.contains(AUTO_LINT_GRADLE)
+                        def skipForSpecificTask = project.gradle.startParameter.taskNames.any { lintExt.skipForTasks.contains(it) }
+                        def hasFailedTask = !lintExt.autoLintAfterFailure && allTasks.any { it.state.failure != null }
+                        //when we already have failed critical lint task we don't want to run autolint
+                        def hasFailedCriticalLintTask = allTasks.any { it == criticalLintTask && it.state.failure != null }
+                        def hasExplicitLintTask = allTasks.any {
+                            it == fixTask || it == fixTask2 || it == manualLintTask || it == autoLintTask
+                        }
+                        shouldLint && !excludedAutoLintGradle && !skipForSpecificTask && !hasFailedTask &&
+                                !hasExplicitLintTask && !hasFailedCriticalLintTask
+                    }
+                })
+            }
+
+            configureReportTask(project, lintExt)
+
+            project.plugins.withType(JavaBasePlugin) {
+                project.tasks.withType(AbstractCompile) { task ->
+                    project.rootProject.tasks.getByName('fixGradleLint').dependsOn(task)
+                    project.rootProject.tasks.getByName('lintGradle').dependsOn(task)
+                    project.rootProject.tasks.getByName('fixLintGradle').dependsOn(task)
                 }
-            })
-        }
-
-        configureReportTask(project, lintExt)
-
-        project.plugins.withType(JavaBasePlugin) {
-            project.tasks.withType(AbstractCompile) { task ->
-                project.rootProject.tasks.getByName('fixGradleLint').dependsOn(task)
-                project.rootProject.tasks.getByName('lintGradle').dependsOn(task)
-                project.rootProject.tasks.getByName('fixLintGradle').dependsOn(task)
             }
         }
     }
@@ -117,5 +122,5 @@ class GradleLintPlugin implements Plugin<Project> {
         }
     }
 
-    private static abstract class LintListener  extends BuildAdapter implements TaskExecutionGraphListener {}
+    private static abstract class LintListener extends BuildAdapter implements TaskExecutionGraphListener {}
 }
