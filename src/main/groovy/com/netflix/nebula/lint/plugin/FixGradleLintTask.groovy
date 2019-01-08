@@ -43,32 +43,30 @@ class FixGradleLintTask extends DefaultTask implements VerificationTask {
      * Whether or not the build should break when the verifications performed by this task fail.
      */
     boolean ignoreFailures
-    
+
     FixGradleLintTask() {
         outputs.upToDateWhen { false }
         group = 'lint'
     }
-    
+
     @TaskAction
     void lintCorrections() {
-        //TODO: remove deprecation logger disabled once we fix issue with: configuration was resolved without accessing the project in a safe manner
-        DeprecationLogger.whileDisabled {
-            def violations = new LintService().lint(project, false).violations
-                    .unique { v1, v2 -> v1.is(v2) ? 0 : 1 }
+        def violations = new LintService().lint(project, false).violations
+                .unique { v1, v2 -> v1.is(v2) ? 0 : 1 }
 
-            (userDefinedListeners + infoBrokerAction + new GradleLintPatchAction(project)).each {
-                it.lintFinished(violations)
-            }
-
-            def patchFile = new File(project.buildDir, GradleLintPatchAction.PATCH_NAME)
-            if(patchFile.exists()) {
-                new ApplyCommand(new NotNecessarilyGitRepository(project.projectDir)).setPatch(patchFile.newInputStream()).call()
-            }
-
-            (userDefinedListeners + infoBrokerAction + consoleOutputAction()).each {
-                it.lintFixesApplied(violations)
-            }
+        (userDefinedListeners + infoBrokerAction + new GradleLintPatchAction(project)).each {
+            it.lintFinished(violations)
         }
+
+        def patchFile = new File(project.buildDir, GradleLintPatchAction.PATCH_NAME)
+        if (patchFile.exists()) {
+            new ApplyCommand(new NotNecessarilyGitRepository(project.projectDir)).setPatch(patchFile.newInputStream()).call()
+        }
+
+        (userDefinedListeners + infoBrokerAction + consoleOutputAction()).each {
+            it.lintFixesApplied(violations)
+        }
+
     }
 
     GradleLintViolationAction consoleOutputAction() {
@@ -77,7 +75,7 @@ class FixGradleLintTask extends DefaultTask implements VerificationTask {
 
             @Override
             void lintFixesApplied(Collection<GradleViolation> violations) {
-                if(violations.empty) {
+                if (violations.empty) {
                     textOutput.withStyle(Green).println("Passed lint check with 0 violations; no corrections necessary")
                 } else {
                     textOutput.withStyle(Bold).text('\nThis project contains lint violations. ')
@@ -92,25 +90,22 @@ class FixGradleLintTask extends DefaultTask implements VerificationTask {
                     projectViolations.each { v ->
                         String buildFilePath = project.rootDir.toURI().relativize(v.file.toURI()).toString()
                         def unfixed = v.fixes.findAll { it.reasonForNotFixing != null }
-                        if(v.fixes.empty) {
+                        if (v.fixes.empty) {
                             textOutput.withStyle(Yellow).text('needs fixing'.padRight(15))
                             if (v.rule.priority == 1) {
                                 unfixedCriticalViolations++
                             }
-                        }
-                        else if(unfixed.empty) {
+                        } else if (unfixed.empty) {
                             textOutput.withStyle(Green).text('fixed'.padRight(15))
                             completelyFixed++
-                        }
-                        else if(unfixed.size() == v.fixes.size()) {
+                        } else if (unfixed.size() == v.fixes.size()) {
                             textOutput.withStyle(Yellow).text('unfixed'.padRight(15))
-                            if(v.rule.priority == 1) {
+                            if (v.rule.priority == 1) {
                                 unfixedCriticalViolations++
                             }
-                        }
-                        else {
+                        } else {
                             textOutput.withStyle(Yellow).text('semi-fixed'.padRight(15))
-                            if(v.rule.priority == 1) {
+                            if (v.rule.priority == 1) {
                                 unfixedCriticalViolations++
                             }
                         }
@@ -118,12 +113,14 @@ class FixGradleLintTask extends DefaultTask implements VerificationTask {
                         textOutput.text(v.rule.name.padRight(35))
                         textOutput.withStyle(Yellow).println(v.message)
 
-                        if(v.lineNumber)
+                        if (v.lineNumber) {
                             textOutput.withStyle(Bold).println(buildFilePath + ':' + v.lineNumber)
-                        if (v.sourceLine)
+                        }
+                        if (v.sourceLine) {
                             textOutput.println(v.sourceLine)
+                        }
 
-                        if(!unfixed.empty) {
+                        if (!unfixed.empty) {
                             textOutput.withStyle(Bold).println('reason not fixed: ')
                             unfixed.collect { it.reasonForNotFixing }.unique().each { textOutput.println(it.message) }
                         }
@@ -134,7 +131,7 @@ class FixGradleLintTask extends DefaultTask implements VerificationTask {
 
                 textOutput.withStyle(Green).println("Corrected $completelyFixed lint problems\n")
 
-                if(unfixedCriticalViolations > 0) {
+                if (unfixedCriticalViolations > 0) {
                     throw new GradleException("This build contains $unfixedCriticalViolations critical lint violation" +
                             "${unfixedCriticalViolations == 1 ? '' : 's'} that could not be automatically fixed")
                 }

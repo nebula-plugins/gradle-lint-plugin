@@ -60,36 +60,34 @@ class GradleLintReportTask extends DefaultTask implements VerificationTask, Repo
 
     @TaskAction
     void generateReport() {
-        //TODO: remove deprecation logger disabled once we fix issue with: configuration was resolved without accessing the project in a safe manner
-        DeprecationLogger.whileDisabled {
-            if (reports.enabled) {
-                def lintService = new LintService()
-                def results = lintService.lint(project, false)
-                def violationCount = results.violations.size()
-                def textOutput = new StyledTextService(getServices())
+        if (reports.enabled) {
+            def lintService = new LintService()
+            def results = lintService.lint(project, false)
+            def violationCount = results.violations.size()
+            def textOutput = new StyledTextService(getServices())
 
-                textOutput.text('Generated a report containing information about ')
-                textOutput.withStyle(Bold).text("$violationCount lint violation${violationCount == 1 ? '' : 's'}")
-                textOutput.println(' in this project')
+            textOutput.text('Generated a report containing information about ')
+            textOutput.withStyle(Bold).text("$violationCount lint violation${violationCount == 1 ? '' : 's'}")
+            textOutput.println(' in this project')
 
-                reports.enabled.each { Report r ->
-                    ReportWriter writer = null
+            reports.enabled.each { Report r ->
+                ReportWriter writer = null
 
-                    switch (r.name) {
-                        case 'xml': writer = new XmlReportWriter(outputFile: r.destination); break
-                        case 'html': writer = new HtmlReportWriter(outputFile: r.destination); break
-                        case 'text': writer = new TextReportWriter(outputFile: r.destination); break
-                    }
-
-                    writer.writeReport(new AnalysisContext(ruleSet: lintService.ruleSet(project)), results)
+                switch (r.name) {
+                    case 'xml': writer = new XmlReportWriter(outputFile: r.destination); break
+                    case 'html': writer = new HtmlReportWriter(outputFile: r.destination); break
+                    case 'text': writer = new TextReportWriter(outputFile: r.destination); break
                 }
 
-                int errors = results.violations.count { Violation v -> v.rule.priority == 1 }
-                if (errors > 0) {
-                    throw new GradleException("This build contains $errors critical lint violation${errors == 1 ? '' : 's'}")
-                }
+                writer.writeReport(new AnalysisContext(ruleSet: lintService.ruleSet(project)), results)
+            }
+
+            int errors = results.violations.count { Violation v -> v.rule.priority == 1 }
+            if (errors > 0) {
+                throw new GradleException("This build contains $errors critical lint violation${errors == 1 ? '' : 's'}")
             }
         }
+
     }
 
     @Inject

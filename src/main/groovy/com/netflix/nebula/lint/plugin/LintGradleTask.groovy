@@ -35,15 +35,13 @@ class LintGradleTask extends DefaultTask {
 
     @TaskAction
     void lint() {
-        //TODO: remove deprecation logger disabled once we fix issue with: configuration was resolved without accessing the project in a safe manner
-        DeprecationLogger.whileDisabled {
-            def violations = new LintService().lint(project, onlyCriticalRules).violations
-                    .unique { v1, v2 -> v1.is(v2) ? 0 : 1 }
+        def violations = new LintService().lint(project, onlyCriticalRules).violations
+                .unique { v1, v2 -> v1.is(v2) ? 0 : 1 }
 
-            (listeners + new GradleLintPatchAction(project) + new GradleLintInfoBrokerAction(project) + consoleOutputAction).each {
-                it.lintFinished(violations)
-            }
+        (listeners + new GradleLintPatchAction(project) + new GradleLintInfoBrokerAction(project) + consoleOutputAction).each {
+            it.lintFinished(violations)
         }
+
     }
 
     final def consoleOutputAction = new GradleLintViolationAction() {
@@ -84,10 +82,12 @@ class LintGradleTask extends DefaultTask {
                     }
                     textOutput.println()
 
-                    if (v.lineNumber)
+                    if (v.lineNumber) {
                         textOutput.withStyle(Bold).println(buildFilePath + ':' + v.lineNumber)
-                    if (v.sourceLine)
+                    }
+                    if (v.sourceLine) {
                         textOutput.println("$v.sourceLine")
+                    }
 
                     textOutput.println() // extra space between violations
                 }

@@ -32,8 +32,6 @@ class GradleLintPlugin implements Plugin<Project> {
 
     @Override
     void apply(Project project) {
-        //TODO: remove deprecation logger disabled once we fix issue with: configuration was resolved without accessing the project in a safe manner
-        DeprecationLogger.whileDisabled {
 
             failForKotlinScript(project)
 
@@ -69,10 +67,7 @@ class GradleLintPlugin implements Plugin<Project> {
                     @Override
                     void buildFinished(BuildResult result) {
                         if (onlyIf()) {
-                            //TODO: remove deprecation logger disabled once we fix issue with: configuration was resolved without accessing the project in a safe manner
-                            DeprecationLogger.whileDisabled {
-                                autoLintTask.lint()
-                            }
+                            autoLintTask.lint()
                         }
                     }
 
@@ -102,7 +97,7 @@ class GradleLintPlugin implements Plugin<Project> {
                     project.rootProject.tasks.getByName('fixLintGradle').dependsOn(task)
                 }
             }
-        }
+
     }
 
     def failForKotlinScript(Project project) {
