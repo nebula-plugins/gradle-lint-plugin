@@ -69,7 +69,10 @@ class GradleLintPlugin implements Plugin<Project> {
                     @Override
                     void buildFinished(BuildResult result) {
                         if (onlyIf()) {
-                            autoLintTask.lint()
+                            //TODO: remove deprecation logger disabled once we fix issue with: configuration was resolved without accessing the project in a safe manner
+                            DeprecationLogger.whileDisabled {
+                                autoLintTask.lint()
+                            }
                         }
                     }
 
