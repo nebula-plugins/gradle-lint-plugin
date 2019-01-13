@@ -268,6 +268,30 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
         def result = runTasksSuccessfully('compileJava', 'lintGradle')
     }
 
+    @Issue('#139')
+    def 'duplicate nested module/package classes do not cause violations'() {
+        setup:
+        buildFile.text = """
+            plugins {
+                id 'java'
+                id 'nebula.lint'
+            }
+
+            gradleLint.rules = ['duplicate-dependency-class']
+
+            repositories { mavenCentral() }
+
+            dependencies {
+                compile 'org.apache.logging.log4j:log4j-api:2.11.1'
+                testRuntime 'io.github.classgraph:classgraph:4.6.13'
+            }
+        """
+
+        expect:
+        createJavaSourceFile('public class Main{}')
+        def result = runTasksSuccessfully('compileJava', 'lintGradle')
+    }
+
     @Issue('#98')
     def 'duplicate classes between transitive dependencies cause violations when the transitive rule is used'() {
         setup:
