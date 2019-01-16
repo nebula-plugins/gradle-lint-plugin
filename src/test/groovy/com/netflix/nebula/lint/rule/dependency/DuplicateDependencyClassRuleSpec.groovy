@@ -268,7 +268,7 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
         def result = runTasksSuccessfully('compileJava', 'lintGradle')
     }
 
-    @Issue('#139')
+    @Issue('#223')
     def 'duplicate nested module/package classes do not cause violations'() {
         setup:
         buildFile.text = """
@@ -283,7 +283,7 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
 
             dependencies {
                 compile 'org.apache.logging.log4j:log4j-api:2.11.1'
-                testRuntime 'io.github.classgraph:classgraph:4.6.13'
+                compile 'io.github.classgraph:classgraph:4.6.13'
             }
         """
 
