@@ -109,6 +109,7 @@ shadowJar {
         include(dependency('org.eclipse.jgit:org.eclipse.jgit'))
         include(dependency('commons-lang:commons-lang'))
         include(dependency('org.codenarc:CodeNarc'))
+        include(dependency('org.ow2.asm:asm'))
     }
     relocate 'org.eclipse.jdt', 'com.netflix.nebula.lint.jdt'
     relocate 'org.eclipse.jgit', 'com.netflix.nebula.lint.jgit'
