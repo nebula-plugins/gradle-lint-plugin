@@ -119,7 +119,6 @@ shadowJar {
     relocate 'org.eclipse.jgit', 'com.netflix.nebula.lint.jgit'
     relocate 'org.apache.commons.lang', 'com.netflix.nebula.lint.commons.lang'
     relocate 'org.codenarc', 'com.netflix.nebula.lint.org.codenarc'
-    relocate 'org.ow2.asm', 'com.netflix.nebula.lint.org.ow2.asm'
     relocate 'org.objectweb.asm', 'com.netflix.nebula.lint.org.objectweb.asm'
     relocate 'org.objectweb.asm.common', 'com.netflix.nebula.lint.org.objectweb.asm.common'
     relocate 'org.objectweb.asm.tree.analysis', 'com.netflix.nebula.lint.org.objectweb.asm.tree.analysis'
