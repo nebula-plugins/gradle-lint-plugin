@@ -35,7 +35,6 @@ class GradleLintPlugin implements Plugin<Project> {
     @Override
     void apply(Project project) {
 
-
             Configuration configuration = configureLintConfiguration(project)
 
             failForKotlinScript(project)
