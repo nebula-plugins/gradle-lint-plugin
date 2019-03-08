@@ -111,7 +111,8 @@ class GradleLintPlugin implements Plugin<Project> {
     }
 
     private void configureLintConfiguration(Project project) {
-        Configuration configuration =  project.rootProject.configurations.maybeCreate(LINT_CONFIGURATION)
+        Project projectToConfigure = project.rootProject ?: project
+        Configuration configuration =  projectToConfigure.configurations.maybeCreate(LINT_CONFIGURATION)
         configuration.setVisible(true)
         configuration.setTransitive(true)
         configuration.setDescription("Configuration for Gradle Lint tasks")
