@@ -34,9 +34,9 @@ class GradleLintPlugin implements Plugin<Project> {
 
     @Override
     void apply(Project project) {
-            configureLintConfiguration()
 
-            Configuration configuration = project.getConfigurations().getAt(LINT_CONFIGURATION)
+
+            Configuration configuration = configureLintConfiguration(project)
 
             failForKotlinScript(project)
 
@@ -110,12 +110,13 @@ class GradleLintPlugin implements Plugin<Project> {
 
     }
 
-    private void configureLintConfiguration(Project project) {
+    private Configuration configureLintConfiguration(Project project) {
         Project projectToConfigure = project.rootProject ?: project
         Configuration configuration =  projectToConfigure.configurations.maybeCreate(LINT_CONFIGURATION)
         configuration.setVisible(true)
         configuration.setTransitive(true)
         configuration.setDescription("Configuration for Gradle Lint tasks")
+        return configuration
     }
 
     def failForKotlinScript(Project project) {
