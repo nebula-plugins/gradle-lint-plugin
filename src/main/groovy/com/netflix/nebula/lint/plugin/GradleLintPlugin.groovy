@@ -20,18 +20,23 @@ import org.gradle.BuildResult
 import org.gradle.api.BuildCancelledException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.artifacts.Configuration
 import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.execution.TaskExecutionGraphListener
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.tasks.compile.AbstractCompile
-import org.gradle.util.DeprecationLogger
+
 
 class GradleLintPlugin implements Plugin<Project> {
 
     public static final String AUTO_LINT_GRADLE = 'autoLintGradle'
+    private static final String LINT_CONFIGURATION = 'gradleLint'
 
     @Override
     void apply(Project project) {
+            configureLintConfiguration()
+
+            Configuration configuration = project.getConfigurations().getAt(LINT_CONFIGURATION)
 
             failForKotlinScript(project)
 
@@ -41,20 +46,25 @@ class GradleLintPlugin implements Plugin<Project> {
             if (project.rootProject == project) {
                 def autoLintTask = project.tasks.create(AUTO_LINT_GRADLE, LintGradleTask)
                 autoLintTask.listeners = lintExt.listeners
+                autoLintTask.setLintClassPath(configuration)
 
                 def manualLintTask = project.tasks.create('lintGradle', LintGradleTask)
                 manualLintTask.group = 'lint'
                 manualLintTask.failOnWarning = true
+                manualLintTask.setLintClassPath(configuration)
 
                 def criticalLintTask = project.tasks.create('criticalLintGradle', LintGradleTask)
                 criticalLintTask.group = 'lint'
                 criticalLintTask.onlyCriticalRules = true
+                criticalLintTask.setLintClassPath(configuration)
 
                 def fixTask = project.tasks.create('fixGradleLint', FixGradleLintTask)
                 fixTask.userDefinedListeners = lintExt.listeners
+                fixTask.setLintClassPath(configuration)
 
                 def fixTask2 = project.tasks.create('fixLintGradle', FixGradleLintTask)
                 fixTask2.userDefinedListeners = lintExt.listeners
+                fixTask2.setLintClassPath(configuration)
 
                 project.gradle.addListener(new LintListener() {
                     def allTasks
@@ -98,6 +108,13 @@ class GradleLintPlugin implements Plugin<Project> {
                 }
             }
 
+    }
+
+    private void configureLintConfiguration(Project project) {
+        Configuration configuration =  project.rootProject.configurations.maybeCreate(LINT_CONFIGURATION)
+        configuration.setVisible(true)
+        configuration.setTransitive(true)
+        configuration.setDescription("Configuration for Gradle Lint tasks")
     }
 
     def failForKotlinScript(Project project) {
