@@ -114,7 +114,8 @@ shadowJar {
     relocate 'org.eclipse.jgit', 'com.netflix.nebula.lint.jgit'
     relocate 'org.apache.commons.lang', 'com.netflix.nebula.lint.commons.lang'
     relocate 'org.codenarc', 'com.netflix.nebula.lint.org.codenarc'
-
+    relocate 'org.ow2.asm', 'com.netflix.nebula.lintorg.ow2.asm'
+    
     // powerassert is packed inside codenarc without relocation for some reason
     relocate 'org.codehaus.groovy.transform.powerassert', 'com.netflix.nebula.lint.org.codehaus.groovy.transform.powerassert'
 }
