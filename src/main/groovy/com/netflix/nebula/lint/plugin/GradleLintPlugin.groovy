@@ -98,7 +98,7 @@ class GradleLintPlugin implements Plugin<Project> {
                 })
             }
 
-            configureReportTask(project, lintExt)
+            configureReportTask(project, configuration, lintExt)
 
             project.plugins.withType(JavaBasePlugin) {
                 project.tasks.withType(AbstractCompile) { task ->
@@ -126,8 +126,10 @@ class GradleLintPlugin implements Plugin<Project> {
         }
     }
 
-    private void configureReportTask(Project project, GradleLintExtension extension) {
+    private void configureReportTask(Project project, Configuration configuration,  GradleLintExtension extension) {
         def task = project.tasks.create('generateGradleLintReport', GradleLintReportTask)
+        task.setLintClassPath(configuration)
+
         task.reports.all { report ->
             report.conventionMapping.with {
                 enabled = { report.name == extension.reportFormat }
