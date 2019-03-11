@@ -19,6 +19,6 @@ class MethodReference {
 
     @Override
     String toString() {
-        return "class: $className | methodName: $methodName | owner: $owner | methodDesc: $methodDesc | line: $line | isInterface: $isInterface"
+        return "className: $className | methodName: $methodName | owner: $owner | methodDesc: $methodDesc | line: $line | isInterface: $isInterface"
     }
 }
