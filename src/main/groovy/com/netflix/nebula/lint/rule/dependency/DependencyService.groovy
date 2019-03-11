@@ -165,6 +165,17 @@ class DependencyService {
     }
 
     /**
+     * Returns method references for all classes on a given configuration.
+     * This doesn't ignore packages at all.
+     * @param confName
+     * @return
+     */
+    @Memoized
+    Collection<MethodReference> methodReferences(String confName) {
+        return findMethodReferences(confName, Collections.EMPTY_LIST,  Collections.EMPTY_LIST)
+    }
+
+    /**
      * Returns method references for all classes on a given configuration
      * By default, ignores common java package references. Example: class: Main | methodName: <init> | owner: java/lang/Object | methodDesc: ()V
      * Custom ignored packages can be provided. The check is done for packages that startWith the given values.
@@ -173,14 +184,30 @@ class DependencyService {
      * @return
      */
     @Memoized
-    Collection<MethodReference> methodReferences(String confName, Collection<String> ignoredPackages = []) {
+    Collection<MethodReference> methodReferencesExcluding(String confName,  Collection<String> ignoredPackages = []) {
+        return findMethodReferences(confName, Collections.EMPTY_LIST,  ignoredPackages + DEFAULT_METHOD_REFERENCE_IGNORED_PACKAGES)
+    }
+
+    /**
+     * Returns method references for all classes on a given configuration
+     * By default, ignores common java package references. Example: class: Main | methodName: <init> | owner: java/lang/Object | methodDesc: ()V
+     * @param confName
+     * @param includeOnlyPackages
+     * @return
+     */
+    @Memoized
+    Collection<MethodReference> methodReferencesIncludeOnly(String confName, Collection<String> includeOnlyPackages) {
+        return findMethodReferences(confName, includeOnlyPackages,  Collections.EMPTY_LIST)
+    }
+
+    private Collection<MethodReference> findMethodReferences(String confName, Collection<String> includeOnlyPackages, Collection<String> ignoredPackages ) {
         Collection<MethodReference> allReferences = []
         sourceSetOutput(confName).files.findAll { it.exists() }.each { output ->
             Files.walkFileTree(output.toPath(), new SimpleFileVisitor<Path>() {
                 @Override
                 FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                     if (file.toFile().name.endsWith('.class')) {
-                        Collection<MethodReference> references = new MethodScanner().findCallingMethods(file, ignoredPackages + DEFAULT_METHOD_REFERENCE_IGNORED_PACKAGES)
+                        Collection<MethodReference> references = new MethodScanner().findCallingMethods(file, includeOnlyPackages, ignoredPackages)
                         allReferences.addAll(references)
                     }
                     return FileVisitResult.CONTINUE

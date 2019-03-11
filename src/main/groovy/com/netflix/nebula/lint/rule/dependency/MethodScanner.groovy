@@ -22,18 +22,20 @@ class MethodScanner {
         int line
 
         private final Collection<String> ignoredPackages
+        private final Collection<String> includeOnlyPackages
 
-        AppMethodVisitor(Collection<String> ignoredPackages) {
+        AppMethodVisitor(Collection<String> includeOnlyPackages, Collection<String> ignoredPackages) {
             super(Opcodes.ASM6)
             this.ignoredPackages = ignoredPackages
+            this.includeOnlyPackages = includeOnlyPackages
         }
 
         @Override
         void visitMethodInsn(int opcode, String owner, String name, String desc, boolean isInterface) {
-            boolean isIgnoredPackage = ignoredPackages.any { ignoredPackage ->
-                owner.startsWith(ignoredPackage)
+            if (!includeOnlyPackages.empty && includeOnlyPackages.any { included -> !owner.startsWith(included) }) {
+                return
             }
-            if(isIgnoredPackage) {
+            if (ignoredPackages.any { ignoredPackage -> owner.startsWith(ignoredPackage) }) {
                 return
             }
             methodReferences.add(new MethodReference(
@@ -42,8 +44,7 @@ class MethodScanner {
                     owner,
                     desc,
                     line,
-                    isInterface
-                )
+                    isInterface)
             )
         }
 
@@ -61,9 +62,9 @@ class MethodScanner {
         public String methodName
         public String methodDesc
 
-        AppClassVisitor(Collection<String> ignoredPackages) {
+        AppClassVisitor(Collection<String> includeOnlyPackages, Collection<String> ignoredPackages) {
             super(Opcodes.ASM6)
-            methodVisitor = new AppMethodVisitor(ignoredPackages)
+            methodVisitor = new AppMethodVisitor(includeOnlyPackages, ignoredPackages)
         }
 
         @Override
@@ -88,10 +89,10 @@ class MethodScanner {
     }
 
 
-    Collection<MethodReference> findCallingMethods(Path toScan, Collection ignoredPackages) throws Exception {
+    Collection<MethodReference> findCallingMethods(Path toScan, Collection<String> includeOnlyPackages, Collection<String> ignoredPackages) throws Exception {
         BufferedInputStream stream = toScan.newInputStream()
         stream.mark(Integer.MAX_VALUE)
-        this.classVisitor = new AppClassVisitor(ignoredPackages)
+        this.classVisitor = new AppClassVisitor(includeOnlyPackages, ignoredPackages)
         ClassReader reader = new ClassReader(stream)
         reader.accept(classVisitor, 0)
         stream.reset()
