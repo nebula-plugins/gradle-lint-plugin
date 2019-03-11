@@ -25,6 +25,7 @@ import java.util.zip.ZipException
 
 class DependencyService {
     private static final String EXTENSION_NAME = "gradleLintDependencyService"
+    private static final Collection<String> DEFAULT_METHOD_REFERENCE_IGNORED_PACKAGES = ["java/lang", "java/util", "java/net", "java/io", "java/nio", "java/swing"] //ignore java packages by default for method references
 
     static synchronized DependencyService forProject(Project project) {
         def extension = project.extensions.findByType(DependencyServiceExtension)
@@ -161,6 +162,32 @@ class DependencyService {
             else
                 return VersionNumber.parse(m2.version).compareTo(VersionNumber.parse(m1.version))
         }
+    }
+
+    /**
+     * Returns method references for all classes on a given configuration
+     * By default, ignores common java package references. Example: class: Main | methodName: <init> | owner: java/lang/Object | methodDesc: ()V
+     * Custom ignored packages can be provided. The check is done for packages that startWith the given values.
+     * @param confName
+     * @param ignoredPackages
+     * @return
+     */
+    @Memoized
+    Collection<MethodReference> methodReferences(String confName, Collection<String> ignoredPackages = []) {
+        Collection<MethodReference> allReferences = []
+        sourceSetOutput(confName).files.findAll { it.exists() }.each { output ->
+            Files.walkFileTree(output.toPath(), new SimpleFileVisitor<Path>() {
+                @Override
+                FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    if (file.toFile().name.endsWith('.class')) {
+                        Collection<MethodReference> references = new MethodScanner().findCallingMethods(file, ignoredPackages + DEFAULT_METHOD_REFERENCE_IGNORED_PACKAGES)
+                        allReferences.addAll(references)
+                    }
+                    return FileVisitResult.CONTINUE
+                }
+            })
+        }
+        return allReferences
     }
 
     @Memoized
