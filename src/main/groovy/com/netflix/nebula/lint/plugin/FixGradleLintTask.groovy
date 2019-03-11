@@ -30,7 +30,7 @@ import org.gradle.util.DeprecationLogger
 
 import static com.netflix.nebula.lint.StyledTextService.Styling.*
 
-class FixGradleLintTask extends AbstractLintTask implements VerificationTask {
+class FixGradleLintTask extends DefaultTask implements VerificationTask {
     List<GradleLintViolationAction> userDefinedListeners = []
 
     /**
