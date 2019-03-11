@@ -23,7 +23,7 @@ import org.gradle.util.DeprecationLogger
 
 import static com.netflix.nebula.lint.StyledTextService.Styling.*
 
-class LintGradleTask extends AbstractLintTask {
+class LintGradleTask extends DefaultTask {
     List<GradleLintViolationAction> listeners = []
 
     boolean failOnWarning = false

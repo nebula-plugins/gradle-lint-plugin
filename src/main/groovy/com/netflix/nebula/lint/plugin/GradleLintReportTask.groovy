@@ -39,7 +39,7 @@ import static com.netflix.nebula.lint.StyledTextService.Styling.*
 
 import javax.inject.Inject
 
-class GradleLintReportTask extends AbstractLintTask implements VerificationTask, Reporting<CodeNarcReports> {
+class GradleLintReportTask extends DefaultTask implements VerificationTask, Reporting<CodeNarcReports> {
     @Nested
     private final CodeNarcReportsImpl reports
 
