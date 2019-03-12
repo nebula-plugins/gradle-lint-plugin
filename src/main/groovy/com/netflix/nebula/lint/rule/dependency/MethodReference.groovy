@@ -1,5 +1,6 @@
 package com.netflix.nebula.lint.rule.dependency
 
+
 class MethodReference {
     String methodName
     String owner
@@ -7,14 +8,16 @@ class MethodReference {
     int line
     boolean isInterface
     OpCode opCode
+    Collection<ResolvedArtifactInfo> artifacts
 
-    MethodReference(String methodName, String owner, String methodDesc, int line, boolean isInterface, int code) {
+    MethodReference(String methodName, String owner, String methodDesc, int line, boolean isInterface, int code, Collection<ResolvedArtifactInfo> artifacts) {
         this.methodName = methodName
         this.owner = owner
         this.methodDesc = methodDesc
         this.line = line
         this.isInterface = isInterface
         this.opCode = OpCode.findByCode(code)
+        this.artifacts = artifacts
     }
 
     @Override

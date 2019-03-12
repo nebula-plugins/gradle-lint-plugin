@@ -274,7 +274,6 @@ class FindMethodReferencesSpec extends IntegrationSpec {
         methodReferences.contains "source: Main.java - filePath: com/netflix/test/Main.java - name: com/netflix/test/Main - methodReferences: methodName: sameThreadExecutor - owner: com/google/common/util/concurrent/MoreExecutors - methodDesc: ()Lcom/google/common/util/concurrent/ListeningExecutorService; - line: 8 - isInterface: false - opCode: INVOKESTATIC"
     }
 
-
     def createJavaSourceFile(String source) {
         createJavaSourceFile(projectDir, source)
     }

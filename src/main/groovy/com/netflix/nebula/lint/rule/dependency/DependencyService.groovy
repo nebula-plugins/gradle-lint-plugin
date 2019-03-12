@@ -201,13 +201,14 @@ class DependencyService {
     }
 
     private Collection<ClassInformation> findMethodReferences(String confName, Collection<String> includeOnlyPackages, Collection<String> ignoredPackages ) {
+        Map<String, Collection<ResolvedArtifact>> artifactsByClass = artifactsByClass(confName)
         Collection<ClassInformation> classesInfo = []
         sourceSetOutput(confName).files.findAll { it.exists() }.each { output ->
             Files.walkFileTree(output.toPath(), new SimpleFileVisitor<Path>() {
                 @Override
                 FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                     if (file.toFile().name.endsWith('.class')) {
-                        ClassInformation classInformation = new MethodScanner().findMethodReferences(file, includeOnlyPackages, ignoredPackages)
+                        ClassInformation classInformation = new MethodScanner().findMethodReferences(artifactsByClass, file, includeOnlyPackages, ignoredPackages)
                         classesInfo.add(classInformation)
                     }
                     return FileVisitResult.CONTINUE
@@ -250,6 +251,9 @@ class DependencyService {
                     return FileVisitResult.CONTINUE
                 }
             })
+        }
+        references.each {
+            println it.dump()
         }
 
         return references
