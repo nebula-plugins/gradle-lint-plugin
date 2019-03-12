@@ -274,6 +274,232 @@ class FindMethodReferencesSpec extends IntegrationSpec {
         methodReferences.contains "source: Main.java - filePath: com/netflix/test/Main.java - name: com/netflix/test/Main - methodReferences: methodName: sameThreadExecutor - owner: com/google/common/util/concurrent/MoreExecutors - methodDesc: ()Lcom/google/common/util/concurrent/ListeningExecutorService; - line: 8 - isInterface: false - opCode: INVOKESTATIC"
     }
 
+    def 'gets dependency references'() {
+        buildFile.text = """\
+            import com.netflix.nebula.lint.rule.dependency.*
+
+            plugins {
+                id 'java'
+            }
+
+            apply plugin: 'nebula.lint'
+
+            repositories { mavenCentral() }
+            dependencies {
+                compile 'com.google.guava:guava:19.0'
+            }
+
+            import groovy.json.*
+
+             // a task to generate an unused dependency report for each configuration
+            project.configurations.collect { it.name }.each { conf ->
+                task "\${conf}MethodReferences"(dependsOn: compileTestJava) {
+                    doLast {
+                        println new JsonBuilder( DependencyService.forProject(project).methodReferences(conf) ).toPrettyString() 
+                    }
+                }
+            }
+            """.stripMargin()
+
+        createJavaSourceFile("""
+           package com.netflix.test;
+
+           import com.google.common.collect.Sets;
+           import com.google.common.util.concurrent.ListeningExecutorService;
+           import com.google.common.util.concurrent.MoreExecutors;
+           import java.util.HashMap;
+           import java.util.Set;
+           
+           public class Main {
+               ListeningExecutorService les = MoreExecutors.sameThreadExecutor();
+               Set<String> tester = Sets.newSetFromMap(new HashMap<>());
+           }
+        """)
+
+
+        when:
+        def result = runTasksSuccessfully('compileMethodReferences')
+
+        then:
+        result.standardOutput.contains("""[
+    {
+        "methodReferences": [
+            {
+                "opCode": "INVOKESPECIAL",
+                "isInterface": false,
+                "owner": "java/lang/Object",
+                "methodDesc": "()V",
+                "line": 10,
+                "methodName": "<init>",
+                "artifacts": [
+                    
+                ]
+            },
+            {
+                "opCode": "INVOKESTATIC",
+                "isInterface": false,
+                "owner": "com/google/common/util/concurrent/MoreExecutors",
+                "methodDesc": "()Lcom/google/common/util/concurrent/ListeningExecutorService;",
+                "line": 11,
+                "methodName": "sameThreadExecutor",
+                "artifacts": [
+                    {
+                        "type": "jar",
+                        "version": "19.0",
+                        "name": "guava",
+                        "organization": "com.google.guava"
+                    }
+                ]
+            },
+            {
+                "opCode": "INVOKESPECIAL",
+                "isInterface": false,
+                "owner": "java/util/HashMap",
+                "methodDesc": "()V",
+                "line": 12,
+                "methodName": "<init>",
+                "artifacts": [
+                    
+                ]
+            },
+            {
+                "opCode": "INVOKESTATIC",
+                "isInterface": false,
+                "owner": "com/google/common/collect/Sets",
+                "methodDesc": "(Ljava/util/Map;)Ljava/util/Set;",
+                "line": 12,
+                "methodName": "newSetFromMap",
+                "artifacts": [
+                    {
+                        "type": "jar",
+                        "version": "19.0",
+                        "name": "guava",
+                        "organization": "com.google.guava"
+                    }
+                ]
+            }
+        ],
+        "filePath": "com/netflix/test/Main.java",
+        "source": "Main.java",
+        "name": "com/netflix/test/Main"
+    }
+]
+""")
+            }
+
+    def 'gets dependency references - multiple dependencies'() {
+        buildFile.text = """\
+            import com.netflix.nebula.lint.rule.dependency.*
+
+            plugins {
+                id 'java'
+            }
+
+            apply plugin: 'nebula.lint'
+
+            repositories { mavenCentral() }
+            dependencies {
+                compile 'com.google.guava:guava:19.0'
+                compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
+            }
+
+            import groovy.json.*
+
+             // a task to generate an unused dependency report for each configuration
+            project.configurations.collect { it.name }.each { conf ->
+                task "\${conf}MethodReferences"(dependsOn: compileTestJava) {
+                    doLast {
+                        println new JsonBuilder( DependencyService.forProject(project).methodReferencesExcluding(conf) ).toPrettyString() 
+                    }
+                }                     
+            }
+            """.stripMargin()
+
+        createJavaSourceFile("""
+           package com.netflix.test;
+
+           import org.apache.commons.lang3.StringUtils;
+           import com.google.common.collect.Sets;
+           import com.google.common.util.concurrent.ListeningExecutorService;
+           import com.google.common.util.concurrent.MoreExecutors;
+           import java.util.*; 
+           
+           public class Main {
+               ListeningExecutorService les = MoreExecutors.sameThreadExecutor();
+               Set<String> tester = Sets.newSetFromMap(new HashMap<>());
+               public void test() {
+                    System.out.println(StringUtils.deleteWhitespace("   ab  c  "));    
+               }      
+           }
+        """)
+
+
+        when:
+        def result = runTasks('compileMethodReferences')
+
+        then:
+        result.standardOutput.contains("""[
+    {
+        "methodReferences": [
+            {
+                "opCode": "INVOKESTATIC",
+                "isInterface": false,
+                "owner": "com/google/common/util/concurrent/MoreExecutors",
+                "methodDesc": "()Lcom/google/common/util/concurrent/ListeningExecutorService;",
+                "line": 11,
+                "methodName": "sameThreadExecutor",
+                "artifacts": [
+                    {
+                        "type": "jar",
+                        "version": "19.0",
+                        "name": "guava",
+                        "organization": "com.google.guava"
+                    }
+                ]
+            },
+            {
+                "opCode": "INVOKESTATIC",
+                "isInterface": false,
+                "owner": "com/google/common/collect/Sets",
+                "methodDesc": "(Ljava/util/Map;)Ljava/util/Set;",
+                "line": 12,
+                "methodName": "newSetFromMap",
+                "artifacts": [
+                    {
+                        "type": "jar",
+                        "version": "19.0",
+                        "name": "guava",
+                        "organization": "com.google.guava"
+                    }
+                ]
+            },
+            {
+                "opCode": "INVOKESTATIC",
+                "isInterface": false,
+                "owner": "org/apache/commons/lang3/StringUtils",
+                "methodDesc": "(Ljava/lang/String;)Ljava/lang/String;",
+                "line": 14,
+                "methodName": "deleteWhitespace",
+                "artifacts": [
+                    {
+                        "type": "jar",
+                        "version": "3.8.1",
+                        "name": "commons-lang3",
+                        "organization": "org.apache.commons"
+                    }
+                ]
+            }
+        ],
+        "filePath": "com/netflix/test/Main.java",
+        "source": "Main.java",
+        "name": "com/netflix/test/Main"
+    }
+]
+""")
+    }
+
+
+
     def createJavaSourceFile(String source) {
         createJavaSourceFile(projectDir, source)
     }
