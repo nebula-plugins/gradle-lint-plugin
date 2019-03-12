@@ -39,7 +39,6 @@ class MethodScanner {
                 return
             }
             methodReferences.add(new MethodReference(
-                    classVisitor.className,
                     name,
                     owner,
                     desc,
@@ -66,7 +65,7 @@ class MethodScanner {
 
         AppClassVisitor(Collection<String> includeOnlyPackages, Collection<String> ignoredPackages) {
             super(Opcodes.ASM6)
-            methodVisitor = new AppMethodVisitor(includeOnlyPackages, ignoredPackages)
+            this.methodVisitor = new AppMethodVisitor(includeOnlyPackages, ignoredPackages)
         }
 
         @Override
@@ -91,7 +90,7 @@ class MethodScanner {
     }
 
 
-    Collection<MethodReference> findCallingMethods(Path toScan, Collection<String> includeOnlyPackages, Collection<String> ignoredPackages) throws Exception {
+    ClassInformation findMethodReferences(Path toScan, Collection<String> includeOnlyPackages, Collection<String> ignoredPackages) throws Exception {
         BufferedInputStream stream = toScan.newInputStream()
         stream.mark(Integer.MAX_VALUE)
         this.classVisitor = new AppClassVisitor(includeOnlyPackages, ignoredPackages)
@@ -99,6 +98,6 @@ class MethodScanner {
         reader.accept(classVisitor, 0)
         stream.reset()
         stream.close()
-        return methodReferences
+        return new ClassInformation(classVisitor.source, classVisitor.className, methodReferences)
     }
 }

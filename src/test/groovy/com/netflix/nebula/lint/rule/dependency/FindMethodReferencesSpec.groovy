@@ -51,9 +51,7 @@ class FindMethodReferencesSpec extends IntegrationSpec {
         String methodReferences =  new File(projectDir, 'compileMethodReferences.txt').text
 
         then:
-        methodReferences.contains("className: Main | methodName: <init> | owner: java/lang/Object | methodDesc: ()V | line: 8")
-        methodReferences.contains("className: Main | methodName: sameThreadExecutor | owner: com/google/common/util/concurrent/MoreExecutors | methodDesc: ()Lcom/google/common/util/concurrent/ListeningExecutorService; | line: 9 | isInterface: false | opCode: INVOKESTATIC")
-        methodReferences.contains("className: Main | methodName: newSetFromMap | owner: com/google/common/collect/Sets | methodDesc: (Ljava/util/Map;)Ljava/util/Set; | line: 10 | isInterface: false | opCode: INVOKESTATIC")
+        methodReferences == "source: Main.java - name: Main - methodReferences: methodName: <init> - owner: java/lang/Object - methodDesc: ()V - line: 8 - isInterface: false - opCode: INVOKESPECIAL | methodName: sameThreadExecutor - owner: com/google/common/util/concurrent/MoreExecutors - methodDesc: ()Lcom/google/common/util/concurrent/ListeningExecutorService; - line: 9 - isInterface: false - opCode: INVOKESTATIC | methodName: <init> - owner: java/util/HashMap - methodDesc: ()V - line: 10 - isInterface: false - opCode: INVOKESPECIAL | methodName: newSetFromMap - owner: com/google/common/collect/Sets - methodDesc: (Ljava/util/Map;)Ljava/util/Set; - line: 10 - isInterface: false - opCode: INVOKESTATIC"
     }
 
 
@@ -104,9 +102,7 @@ class FindMethodReferencesSpec extends IntegrationSpec {
         String methodReferences =  new File(projectDir, 'compileMethodReferences.txt').text
 
         then:
-        !methodReferences.contains("className: Main | methodName: <init> | owner: java/lang/Object | methodDesc: ()V | line: 8")
-        methodReferences.contains("className: Main | methodName: sameThreadExecutor | owner: com/google/common/util/concurrent/MoreExecutors | methodDesc: ()Lcom/google/common/util/concurrent/ListeningExecutorService; | line: 9 | isInterface: false | opCode: INVOKESTATIC")
-        methodReferences.contains("className: Main | methodName: newSetFromMap | owner: com/google/common/collect/Sets | methodDesc: (Ljava/util/Map;)Ljava/util/Set; | line: 10 | isInterface: false | opCode: INVOKESTATIC")
+        methodReferences == "source: Main.java - name: Main - methodReferences: methodName: sameThreadExecutor - owner: com/google/common/util/concurrent/MoreExecutors - methodDesc: ()Lcom/google/common/util/concurrent/ListeningExecutorService; - line: 9 - isInterface: false - opCode: INVOKESTATIC | methodName: newSetFromMap - owner: com/google/common/collect/Sets - methodDesc: (Ljava/util/Map;)Ljava/util/Set; - line: 10 - isInterface: false - opCode: INVOKESTATIC"
     }
 
     def 'find method references - include only'() {
@@ -156,9 +152,7 @@ class FindMethodReferencesSpec extends IntegrationSpec {
         String methodReferences =  new File(projectDir, 'compileMethodReferences.txt').text
 
         then:
-        !methodReferences.contains("className: Main | methodName: <init> | owner: java/lang/Object | methodDesc: ()V | line: 8")
-        !methodReferences.contains("className: Main | methodName: sameThreadExecutor | owner: com/google/common/util/concurrent/MoreExecutors | methodDesc: ()Lcom/google/common/util/concurrent/ListeningExecutorService; | line: 9 | isInterface: false | opCode: INVOKESTATIC")
-        methodReferences.contains("className: Main | methodName: newSetFromMap | owner: com/google/common/collect/Sets | methodDesc: (Ljava/util/Map;)Ljava/util/Set; | line: 10 | isInterface: false | opCode: INVOKESTATIC")
+        methodReferences == "source: Main.java - name: Main - methodReferences: methodName: newSetFromMap - owner: com/google/common/collect/Sets - methodDesc: (Ljava/util/Map;)Ljava/util/Set; - line: 10 - isInterface: false - opCode: INVOKESTATIC"
     }
 
 
@@ -209,9 +203,7 @@ class FindMethodReferencesSpec extends IntegrationSpec {
         String methodReferences =  new File(projectDir, 'compileMethodReferences.txt').text
 
         then:
-        !methodReferences.contains("className: Main | methodName: <init> | owner: java/lang/Object | methodDesc: ()V | line: 8")
-        !methodReferences.contains("className: Main | methodName: newSetFromMap | owner: com/google/common/collect/Sets | methodDesc: (Ljava/util/Map;)Ljava/util/Set; | line: 10")
-        methodReferences.contains("className: Main | methodName: sameThreadExecutor | owner: com/google/common/util/concurrent/MoreExecutors | methodDesc: ()Lcom/google/common/util/concurrent/ListeningExecutorService; | line: 9 | isInterface: false | opCode: INVOKESTATIC")
+        methodReferences == "source: Main.java - name: Main - methodReferences: methodName: sameThreadExecutor - owner: com/google/common/util/concurrent/MoreExecutors - methodDesc: ()Lcom/google/common/util/concurrent/ListeningExecutorService; - line: 9 - isInterface: false - opCode: INVOKESTATIC"
     }
 
     def 'find method references - multiple classes'() {
@@ -267,8 +259,8 @@ class FindMethodReferencesSpec extends IntegrationSpec {
         String methodReferences =  new File(projectDir, 'compileMethodReferences.txt').text
 
         then:
-        methodReferences.contains("className: Main | methodName: sameThreadExecutor | owner: com/google/common/util/concurrent/MoreExecutors | methodDesc: ()Lcom/google/common/util/concurrent/ListeningExecutorService; | line: 6 | isInterface: false | opCode: INVOKESTATIC")
-        methodReferences.contains("className: Main2 | methodName: newSetFromMap | owner: com/google/common/collect/Sets | methodDesc: (Ljava/util/Map;)Ljava/util/Set; | line: 7 | isInterface: false | opCode: INVOKESTATIC")
+        methodReferences == "source: Main2.java - name: Main2 - methodReferences: methodName: newSetFromMap - owner: com/google/common/collect/Sets - methodDesc: (Ljava/util/Map;)Ljava/util/Set; - line: 7 - isInterface: false - opCode: INVOKESTATIC\n" +
+                "source: Main.java - name: Main - methodReferences: methodName: sameThreadExecutor - owner: com/google/common/util/concurrent/MoreExecutors - methodDesc: ()Lcom/google/common/util/concurrent/ListeningExecutorService; - line: 6 - isInterface: false - opCode: INVOKESTATIC"
     }
 
 

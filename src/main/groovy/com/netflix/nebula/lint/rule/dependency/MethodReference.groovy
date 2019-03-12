@@ -1,7 +1,6 @@
 package com.netflix.nebula.lint.rule.dependency
 
 class MethodReference {
-    String className
     String methodName
     String owner
     String methodDesc
@@ -9,8 +8,7 @@ class MethodReference {
     boolean isInterface
     OpCode opCode
 
-    MethodReference(String className, String methodName, String owner, String methodDesc, int line, boolean isInterface, int code) {
-        this.className = className
+    MethodReference(String methodName, String owner, String methodDesc, int line, boolean isInterface, int code) {
         this.methodName = methodName
         this.owner = owner
         this.methodDesc = methodDesc
@@ -21,7 +19,7 @@ class MethodReference {
 
     @Override
     String toString() {
-        return "className: $className | methodName: $methodName | owner: $owner | methodDesc: $methodDesc | line: $line | isInterface: $isInterface | opCode: ${opCode.name()}"
+        return "methodName: $methodName - owner: $owner - methodDesc: $methodDesc - line: $line - isInterface: $isInterface - opCode: ${opCode.name()}"
     }
 
     enum OpCode {

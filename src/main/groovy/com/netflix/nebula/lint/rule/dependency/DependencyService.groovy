@@ -171,7 +171,7 @@ class DependencyService {
      * @return
      */
     @Memoized
-    Collection<MethodReference> methodReferences(String confName) {
+    Collection<ClassInformation> methodReferences(String confName) {
         return findMethodReferences(confName, Collections.EMPTY_LIST,  Collections.EMPTY_LIST)
     }
 
@@ -184,7 +184,7 @@ class DependencyService {
      * @return
      */
     @Memoized
-    Collection<MethodReference> methodReferencesExcluding(String confName,  Collection<String> ignoredPackages = []) {
+    Collection<ClassInformation> methodReferencesExcluding(String confName,  Collection<String> ignoredPackages = []) {
         return findMethodReferences(confName, Collections.EMPTY_LIST,  ignoredPackages + DEFAULT_METHOD_REFERENCE_IGNORED_PACKAGES)
     }
 
@@ -196,25 +196,25 @@ class DependencyService {
      * @return
      */
     @Memoized
-    Collection<MethodReference> methodReferencesIncludeOnly(String confName, Collection<String> includeOnlyPackages) {
+    Collection<ClassInformation> methodReferencesIncludeOnly(String confName, Collection<String> includeOnlyPackages) {
         return findMethodReferences(confName, includeOnlyPackages,  Collections.EMPTY_LIST)
     }
 
-    private Collection<MethodReference> findMethodReferences(String confName, Collection<String> includeOnlyPackages, Collection<String> ignoredPackages ) {
-        Collection<MethodReference> allReferences = []
+    private Collection<ClassInformation> findMethodReferences(String confName, Collection<String> includeOnlyPackages, Collection<String> ignoredPackages ) {
+        Collection<ClassInformation> classesInfo = []
         sourceSetOutput(confName).files.findAll { it.exists() }.each { output ->
             Files.walkFileTree(output.toPath(), new SimpleFileVisitor<Path>() {
                 @Override
                 FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                     if (file.toFile().name.endsWith('.class')) {
-                        Collection<MethodReference> references = new MethodScanner().findCallingMethods(file, includeOnlyPackages, ignoredPackages)
-                        allReferences.addAll(references)
+                        ClassInformation classInformation = new MethodScanner().findMethodReferences(file, includeOnlyPackages, ignoredPackages)
+                        classesInfo.add(classInformation)
                     }
                     return FileVisitResult.CONTINUE
                 }
             })
         }
-        return allReferences
+        return classesInfo
     }
 
     @Memoized
