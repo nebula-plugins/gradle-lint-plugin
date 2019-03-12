@@ -49,7 +49,7 @@ class FindMethodReferencesSpec extends IntegrationSpec {
 
 
         when:
-        def x = runTasksSuccessfully('compileMethodReferences')
+        runTasksSuccessfully('compileMethodReferences')
         String methodReferences =  new File(projectDir, 'compileMethodReferences.txt').text
 
         then:
