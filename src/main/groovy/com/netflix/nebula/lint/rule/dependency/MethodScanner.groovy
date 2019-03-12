@@ -44,7 +44,9 @@ class MethodScanner {
                     owner,
                     desc,
                     line,
-                    isInterface)
+                    isInterface,
+                    opcode
+            )
             )
         }
 
