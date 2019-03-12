@@ -252,10 +252,6 @@ class DependencyService {
                 }
             })
         }
-        references.each {
-            println it.dump()
-        }
-
         return references
     }
 
