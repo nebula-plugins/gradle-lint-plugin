@@ -33,6 +33,8 @@ class FindMethodReferencesSpec extends IntegrationSpec {
             """.stripMargin()
 
         createJavaSourceFile("""
+           package com.netflix.test;
+
            import com.google.common.collect.Sets;
            import com.google.common.util.concurrent.ListeningExecutorService;
            import com.google.common.util.concurrent.MoreExecutors;
@@ -47,11 +49,11 @@ class FindMethodReferencesSpec extends IntegrationSpec {
 
 
         when:
-        runTasksSuccessfully('compileMethodReferences')
+        def x = runTasksSuccessfully('compileMethodReferences')
         String methodReferences =  new File(projectDir, 'compileMethodReferences.txt').text
 
         then:
-        methodReferences == "source: Main.java - name: Main - methodReferences: methodName: <init> - owner: java/lang/Object - methodDesc: ()V - line: 8 - isInterface: false - opCode: INVOKESPECIAL | methodName: sameThreadExecutor - owner: com/google/common/util/concurrent/MoreExecutors - methodDesc: ()Lcom/google/common/util/concurrent/ListeningExecutorService; - line: 9 - isInterface: false - opCode: INVOKESTATIC | methodName: <init> - owner: java/util/HashMap - methodDesc: ()V - line: 10 - isInterface: false - opCode: INVOKESPECIAL | methodName: newSetFromMap - owner: com/google/common/collect/Sets - methodDesc: (Ljava/util/Map;)Ljava/util/Set; - line: 10 - isInterface: false - opCode: INVOKESTATIC"
+        methodReferences == "source: Main.java - filePath: com/netflix/test/Main.java - name: com/netflix/test/Main - methodReferences: methodName: <init> - owner: java/lang/Object - methodDesc: ()V - line: 10 - isInterface: false - opCode: INVOKESPECIAL | methodName: sameThreadExecutor - owner: com/google/common/util/concurrent/MoreExecutors - methodDesc: ()Lcom/google/common/util/concurrent/ListeningExecutorService; - line: 11 - isInterface: false - opCode: INVOKESTATIC | methodName: <init> - owner: java/util/HashMap - methodDesc: ()V - line: 12 - isInterface: false - opCode: INVOKESPECIAL | methodName: newSetFromMap - owner: com/google/common/collect/Sets - methodDesc: (Ljava/util/Map;)Ljava/util/Set; - line: 12 - isInterface: false - opCode: INVOKESTATIC"
     }
 
 
@@ -84,6 +86,8 @@ class FindMethodReferencesSpec extends IntegrationSpec {
             """.stripMargin()
 
         createJavaSourceFile("""
+            package com.netflix.test;
+
            import com.google.common.collect.Sets;
            import com.google.common.util.concurrent.ListeningExecutorService;
            import com.google.common.util.concurrent.MoreExecutors;
@@ -102,7 +106,7 @@ class FindMethodReferencesSpec extends IntegrationSpec {
         String methodReferences =  new File(projectDir, 'compileMethodReferences.txt').text
 
         then:
-        methodReferences == "source: Main.java - name: Main - methodReferences: methodName: sameThreadExecutor - owner: com/google/common/util/concurrent/MoreExecutors - methodDesc: ()Lcom/google/common/util/concurrent/ListeningExecutorService; - line: 9 - isInterface: false - opCode: INVOKESTATIC | methodName: newSetFromMap - owner: com/google/common/collect/Sets - methodDesc: (Ljava/util/Map;)Ljava/util/Set; - line: 10 - isInterface: false - opCode: INVOKESTATIC"
+        methodReferences == "source: Main.java - filePath: com/netflix/test/Main.java - name: com/netflix/test/Main - methodReferences: methodName: sameThreadExecutor - owner: com/google/common/util/concurrent/MoreExecutors - methodDesc: ()Lcom/google/common/util/concurrent/ListeningExecutorService; - line: 11 - isInterface: false - opCode: INVOKESTATIC | methodName: newSetFromMap - owner: com/google/common/collect/Sets - methodDesc: (Ljava/util/Map;)Ljava/util/Set; - line: 12 - isInterface: false - opCode: INVOKESTATIC"
     }
 
     def 'find method references - include only'() {
@@ -134,6 +138,7 @@ class FindMethodReferencesSpec extends IntegrationSpec {
             """.stripMargin()
 
         createJavaSourceFile("""
+           package com.netflix.test;
            import com.google.common.collect.Sets;
            import com.google.common.util.concurrent.ListeningExecutorService;
            import com.google.common.util.concurrent.MoreExecutors;
@@ -152,7 +157,7 @@ class FindMethodReferencesSpec extends IntegrationSpec {
         String methodReferences =  new File(projectDir, 'compileMethodReferences.txt').text
 
         then:
-        methodReferences == "source: Main.java - name: Main - methodReferences: methodName: newSetFromMap - owner: com/google/common/collect/Sets - methodDesc: (Ljava/util/Map;)Ljava/util/Set; - line: 10 - isInterface: false - opCode: INVOKESTATIC"
+        methodReferences == "source: Main.java - filePath: com/netflix/test/Main.java - name: com/netflix/test/Main - methodReferences: methodName: newSetFromMap - owner: com/google/common/collect/Sets - methodDesc: (Ljava/util/Map;)Ljava/util/Set; - line: 11 - isInterface: false - opCode: INVOKESTATIC"
     }
 
 
@@ -185,6 +190,8 @@ class FindMethodReferencesSpec extends IntegrationSpec {
             """.stripMargin()
 
         createJavaSourceFile("""
+           package com.netflix.test;
+
            import com.google.common.collect.Sets;
            import com.google.common.util.concurrent.ListeningExecutorService;
            import com.google.common.util.concurrent.MoreExecutors;
@@ -203,7 +210,7 @@ class FindMethodReferencesSpec extends IntegrationSpec {
         String methodReferences =  new File(projectDir, 'compileMethodReferences.txt').text
 
         then:
-        methodReferences == "source: Main.java - name: Main - methodReferences: methodName: sameThreadExecutor - owner: com/google/common/util/concurrent/MoreExecutors - methodDesc: ()Lcom/google/common/util/concurrent/ListeningExecutorService; - line: 9 - isInterface: false - opCode: INVOKESTATIC"
+        methodReferences == "source: Main.java - filePath: com/netflix/test/Main.java - name: com/netflix/test/Main - methodReferences: methodName: sameThreadExecutor - owner: com/google/common/util/concurrent/MoreExecutors - methodDesc: ()Lcom/google/common/util/concurrent/ListeningExecutorService; - line: 11 - isInterface: false - opCode: INVOKESTATIC"
     }
 
     def 'find method references - multiple classes'() {
@@ -235,6 +242,8 @@ class FindMethodReferencesSpec extends IntegrationSpec {
             """.stripMargin()
 
         createJavaSourceFile("""
+           package com.netflix.test;
+
            import com.google.common.util.concurrent.ListeningExecutorService;
            import com.google.common.util.concurrent.MoreExecutors;
            
@@ -244,6 +253,8 @@ class FindMethodReferencesSpec extends IntegrationSpec {
         """)
 
         createJavaSourceFile("""
+           package com.netflix.test;
+           
            import com.google.common.collect.Sets;
            import java.util.HashMap;
            import java.util.Set;
@@ -259,8 +270,8 @@ class FindMethodReferencesSpec extends IntegrationSpec {
         String methodReferences =  new File(projectDir, 'compileMethodReferences.txt').text
 
         then:
-        methodReferences == "source: Main2.java - name: Main2 - methodReferences: methodName: newSetFromMap - owner: com/google/common/collect/Sets - methodDesc: (Ljava/util/Map;)Ljava/util/Set; - line: 7 - isInterface: false - opCode: INVOKESTATIC\n" +
-                "source: Main.java - name: Main - methodReferences: methodName: sameThreadExecutor - owner: com/google/common/util/concurrent/MoreExecutors - methodDesc: ()Lcom/google/common/util/concurrent/ListeningExecutorService; - line: 6 - isInterface: false - opCode: INVOKESTATIC"
+        methodReferences == "source: Main2.java - filePath: com/netflix/test/Main2.java - name: com/netflix/test/Main2 - methodReferences: methodName: newSetFromMap - owner: com/google/common/collect/Sets - methodDesc: (Ljava/util/Map;)Ljava/util/Set; - line: 9 - isInterface: false - opCode: INVOKESTATIC\n" +
+                "source: Main.java - filePath: com/netflix/test/Main.java - name: com/netflix/test/Main - methodReferences: methodName: sameThreadExecutor - owner: com/google/common/util/concurrent/MoreExecutors - methodDesc: ()Lcom/google/common/util/concurrent/ListeningExecutorService; - line: 8 - isInterface: false - opCode: INVOKESTATIC"
     }
 
 
@@ -269,12 +280,12 @@ class FindMethodReferencesSpec extends IntegrationSpec {
     }
 
     def createJavaSourceFile(File projectDir, String source) {
-        createJavaFile(projectDir, source, 'src/main/java')
+        createJavaFile(projectDir, source, 'src/main/java/com/netflix/test')
     }
 
     def createJavaFile(File projectDir, String source, String sourceFolderPath) {
         def sourceFolder = new File(projectDir, sourceFolderPath)
         sourceFolder.mkdirs()
-        new File(sourceFolder, JavaFixture.fullyQualifiedName(source).replaceAll(/\./, '/') + '.java').text = source
+        new File(projectDir.toString() + '/src/main/java', JavaFixture.fullyQualifiedName(source).replaceAll(/\./, '/') + '.java').text = source
     }
 }
