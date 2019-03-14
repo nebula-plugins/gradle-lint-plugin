@@ -25,6 +25,9 @@ class MultiProjectCircularDependencyRule extends GradleLintRule implements Gradl
 
         projectDependecies.each { MethodCallExpression projectDependency ->
             String dependsOn = findProjectName(projectDependency)
+            if(!dependsOn) {
+                return
+            }
             ProjectDependency dependency = new ProjectDependency(project.name, dependsOn)
             allProjectDependencies << dependency
             if (isCircularDependency(allProjectDependencies, dependency)) {
@@ -34,7 +37,10 @@ class MultiProjectCircularDependencyRule extends GradleLintRule implements Gradl
     }
 
     private String findProjectName(Expression projectDependency) {
-        String projectName = projectDependency.arguments.expressions.find { it instanceof ConstantExpression }.value
+        String projectName = projectDependency?.arguments?.expressions?.find { it instanceof ConstantExpression }?.value
+        if(!projectName) {
+            return null
+        }
         return projectName.replace(PROJECT_GRADLE_REFERENCE, EMPTY_STRING)
     }
 
