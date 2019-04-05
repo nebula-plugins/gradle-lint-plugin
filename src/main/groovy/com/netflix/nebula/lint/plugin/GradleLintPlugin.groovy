@@ -94,9 +94,11 @@ class GradleLintPlugin implements Plugin<Project> {
                         List<Task> allTasks = taskGraph.allTasks
                         if (onlyIf(allTasks)) {
                             LinkedList tasks = taskGraph.executionPlan.executionQueue
-                            if (!tasks.empty) {
-                                Task lastTask = tasks.last?.task
-                                lastTask.finalizedBy(autoLintTask)
+                            Task lastTask = tasks.last?.task
+                            taskGraph.afterTask {
+                                if(it.name == lastTask.name) {
+                                    autoLintTask.lint()
+                                }
                             }
                         }
                     }
