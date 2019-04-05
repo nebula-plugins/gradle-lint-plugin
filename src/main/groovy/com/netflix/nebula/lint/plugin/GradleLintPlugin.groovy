@@ -105,9 +105,9 @@ class GradleLintPlugin implements Plugin<Project> {
 
                             @Override
                             void afterExecute(Task task, TaskState taskState) {
-                                if((taskState.failure && lintExt.autoLintAfterFailure) || task.name == lastTask.name) {
+                                if((taskState.failure && lintExt.autoLintAfterFailure) || (task.name == lastTask.name && !taskState.failure)) {
                                     autoLintTask.lint()
-                                }
+                                } 
                             }
                         })
                     }
