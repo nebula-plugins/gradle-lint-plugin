@@ -16,15 +16,13 @@
 package com.netflix.nebula.lint.plugin
 
 import org.gradle.BuildAdapter
-import org.gradle.BuildResult
 import org.gradle.api.BuildCancelledException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.execution.TaskExecutionGraph
+import org.gradle.api.Task
 import org.gradle.api.execution.TaskExecutionGraphListener
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.tasks.compile.AbstractCompile
-import org.gradle.util.DeprecationLogger
 
 class GradleLintPlugin implements Plugin<Project> {
 
@@ -56,36 +54,32 @@ class GradleLintPlugin implements Plugin<Project> {
                 def fixTask2 = project.tasks.create('fixLintGradle', FixGradleLintTask)
                 fixTask2.userDefinedListeners = lintExt.listeners
 
-                project.gradle.addListener(new LintListener() {
-                    def allTasks
 
-                    @Override
-                    void graphPopulated(TaskExecutionGraph graph) {
-                        allTasks = graph.allTasks
-                    }
+                project.gradle.taskGraph.whenReady { taskGraph ->
+                        List<Task> allTasks = taskGraph.allTasks
+                        Closure onlyIf =  { ->
+                            def shouldLint = project.hasProperty('gradleLint.alwaysRun') ?
+                                    Boolean.valueOf(project.property('gradleLint.alwaysRun').toString()) : lintExt.alwaysRun
+                            def excludedAutoLintGradle = project.gradle.startParameter.excludedTaskNames.contains(AUTO_LINT_GRADLE)
+                            def skipForSpecificTask = project.gradle.startParameter.taskNames.any { lintExt.skipForTasks.contains(it) }
+                            def hasFailedTask = !lintExt.autoLintAfterFailure && allTasks.any { it.state.failure != null }
+                            //when we already have failed critical lint task we don't want to run autolint
+                            def hasFailedCriticalLintTask = allTasks.any { it == criticalLintTask && it.state.failure != null }
+                            def hasExplicitLintTask = allTasks.any {
+                                it == fixTask || it == fixTask2 || it == manualLintTask || it == autoLintTask
+                            }
+                            shouldLint && !excludedAutoLintGradle && !skipForSpecificTask && !hasFailedTask &&
+                                    !hasExplicitLintTask && !hasFailedCriticalLintTask
+                        }
 
-                    @Override
-                    void buildFinished(BuildResult result) {
-                        if (onlyIf()) {
-                            autoLintTask.lint()
+                        if(onlyIf()) {
+                            LinkedList tasks = taskGraph.executionPlan.executionQueue
+                            if(!tasks.empty) {
+                                Task lastTask = tasks.last?.task
+                                lastTask.finalizedBy(autoLintTask)
+                            }
                         }
                     }
-
-                    private boolean onlyIf() {
-                        def shouldLint = project.hasProperty('gradleLint.alwaysRun') ?
-                                Boolean.valueOf(project.property('gradleLint.alwaysRun').toString()) : lintExt.alwaysRun
-                        def excludedAutoLintGradle = project.gradle.startParameter.excludedTaskNames.contains(AUTO_LINT_GRADLE)
-                        def skipForSpecificTask = project.gradle.startParameter.taskNames.any { lintExt.skipForTasks.contains(it) }
-                        def hasFailedTask = !lintExt.autoLintAfterFailure && allTasks.any { it.state.failure != null }
-                        //when we already have failed critical lint task we don't want to run autolint
-                        def hasFailedCriticalLintTask = allTasks.any { it == criticalLintTask && it.state.failure != null }
-                        def hasExplicitLintTask = allTasks.any {
-                            it == fixTask || it == fixTask2 || it == manualLintTask || it == autoLintTask
-                        }
-                        shouldLint && !excludedAutoLintGradle && !skipForSpecificTask && !hasFailedTask &&
-                                !hasExplicitLintTask && !hasFailedCriticalLintTask
-                    }
-                })
             }
 
             configureReportTask(project, lintExt)
