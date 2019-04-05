@@ -15,11 +15,14 @@
  */
 package com.netflix.nebula.lint.plugin
 
+import com.netflix.nebula.interop.GradleKt
 import org.gradle.BuildAdapter
+import org.gradle.BuildResult
 import org.gradle.api.BuildCancelledException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.execution.TaskExecutionGraphListener
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.tasks.compile.AbstractCompile
@@ -27,6 +30,7 @@ import org.gradle.api.tasks.compile.AbstractCompile
 class GradleLintPlugin implements Plugin<Project> {
 
     public static final String AUTO_LINT_GRADLE = 'autoLintGradle'
+    private static final String GRADLE_FIVE_ZERO = '5.0'
 
     @Override
     void apply(Project project) {
@@ -54,32 +58,49 @@ class GradleLintPlugin implements Plugin<Project> {
                 def fixTask2 = project.tasks.create('fixLintGradle', FixGradleLintTask)
                 fixTask2.userDefinedListeners = lintExt.listeners
 
+                Closure onlyIf = { allTasks ->
+                    def shouldLint = project.hasProperty('gradleLint.alwaysRun') ?
+                            Boolean.valueOf(project.property('gradleLint.alwaysRun').toString()) : lintExt.alwaysRun
+                    def excludedAutoLintGradle = project.gradle.startParameter.excludedTaskNames.contains(AUTO_LINT_GRADLE)
+                    def skipForSpecificTask = project.gradle.startParameter.taskNames.any { lintExt.skipForTasks.contains(it) }
+                    def hasFailedTask = !lintExt.autoLintAfterFailure && allTasks.any { it.state.failure != null }
+                    //when we already have failed critical lint task we don't want to run autolint
+                    def hasFailedCriticalLintTask = allTasks.any { it == criticalLintTask && it.state.failure != null }
+                    def hasExplicitLintTask = allTasks.any {
+                        it == fixTask || it == fixTask2 || it == manualLintTask || it == autoLintTask
+                    }
+                    shouldLint && !excludedAutoLintGradle && !skipForSpecificTask && !hasFailedTask &&
+                            !hasExplicitLintTask && !hasFailedCriticalLintTask
+                }
 
-                project.gradle.taskGraph.whenReady { taskGraph ->
-                        List<Task> allTasks = taskGraph.allTasks
-                        Closure onlyIf =  { ->
-                            def shouldLint = project.hasProperty('gradleLint.alwaysRun') ?
-                                    Boolean.valueOf(project.property('gradleLint.alwaysRun').toString()) : lintExt.alwaysRun
-                            def excludedAutoLintGradle = project.gradle.startParameter.excludedTaskNames.contains(AUTO_LINT_GRADLE)
-                            def skipForSpecificTask = project.gradle.startParameter.taskNames.any { lintExt.skipForTasks.contains(it) }
-                            def hasFailedTask = !lintExt.autoLintAfterFailure && allTasks.any { it.state.failure != null }
-                            //when we already have failed critical lint task we don't want to run autolint
-                            def hasFailedCriticalLintTask = allTasks.any { it == criticalLintTask && it.state.failure != null }
-                            def hasExplicitLintTask = allTasks.any {
-                                it == fixTask || it == fixTask2 || it == manualLintTask || it == autoLintTask
-                            }
-                            shouldLint && !excludedAutoLintGradle && !skipForSpecificTask && !hasFailedTask &&
-                                    !hasExplicitLintTask && !hasFailedCriticalLintTask
+                if(GradleKt.versionLessThan(project.gradle, GRADLE_FIVE_ZERO)) {
+                    project.gradle.addListener(new LintListener() {
+                        def allTasks
+
+                        @Override
+                        void graphPopulated(TaskExecutionGraph graph) {
+                            allTasks = graph.allTasks
                         }
 
-                        if(onlyIf()) {
+                        @Override
+                        void buildFinished(BuildResult result) {
+                            if (onlyIf(allTasks)) {
+                                autoLintTask.lint()
+                            }
+                        }
+                    })
+                } else {
+                    project.gradle.taskGraph.whenReady { taskGraph ->
+                        List<Task> allTasks = taskGraph.allTasks
+                        if (onlyIf(allTasks)) {
                             LinkedList tasks = taskGraph.executionPlan.executionQueue
-                            if(!tasks.empty) {
+                            if (!tasks.empty) {
                                 Task lastTask = tasks.last?.task
                                 lastTask.finalizedBy(autoLintTask)
                             }
                         }
                     }
+                }
             }
 
             configureReportTask(project, lintExt)
