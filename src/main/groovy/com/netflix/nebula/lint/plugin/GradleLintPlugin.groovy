@@ -60,24 +60,11 @@ class GradleLintPlugin implements Plugin<Project> {
             def fixTask2 = project.tasks.create('fixLintGradle', FixGradleLintTask)
             fixTask2.userDefinedListeners = lintExt.listeners
 
-            Closure onlyIf = { allTasks ->
-                def shouldLint = project.hasProperty('gradleLint.alwaysRun') ?
-                        Boolean.valueOf(project.property('gradleLint.alwaysRun').toString()) : lintExt.alwaysRun
-                def excludedAutoLintGradle = project.gradle.startParameter.excludedTaskNames.contains(AUTO_LINT_GRADLE)
-                def skipForSpecificTask = project.gradle.startParameter.taskNames.any { lintExt.skipForTasks.contains(it) }
-                def hasFailedTask = !lintExt.autoLintAfterFailure && allTasks.any { it.state.failure != null }
-                //when we already have failed critical lint task we don't want to run autolint
-                def hasFailedCriticalLintTask = allTasks.any { it == criticalLintTask && it.state.failure != null }
-                def hasExplicitLintTask = allTasks.any {
-                    it == fixTask || it == fixTask2 || it == manualLintTask || it == autoLintTask
-                }
-                shouldLint && !excludedAutoLintGradle && !skipForSpecificTask && !hasFailedTask &&
-                        !hasExplicitLintTask && !hasFailedCriticalLintTask
-            }
-
+            List<Task> lintTasks = [fixTask, fixTask2, manualLintTask, autoLintTask]
+            
             if (GradleKt.versionLessThan(project.gradle, GRADLE_FIVE_ZERO)) {
                 project.gradle.addListener(new LintListener() {
-                    def allTasks
+                    List<Task> allTasks
 
                     @Override
                     void graphPopulated(TaskExecutionGraph graph) {
@@ -86,7 +73,18 @@ class GradleLintPlugin implements Plugin<Project> {
 
                     @Override
                     void buildFinished(BuildResult result) {
-                        if (onlyIf(allTasks)) {
+                        def hasFailedTask = !lintExt.autoLintAfterFailure && allTasks.any { it.state.failure != null }
+                        if(hasFailedTask) {
+                            return
+                        }
+
+                        if (hasValidTaskConfiguration(project, lintExt)) {
+                            if(hasExplicitLintTask(allTasks, lintTasks)) {
+                                return
+                            }
+                            if(hasFailedCriticalLintTask(allTasks, criticalLintTask)) {
+                                return
+                            }
                             autoLintTask.lint()
                         }
                     }
@@ -94,7 +92,7 @@ class GradleLintPlugin implements Plugin<Project> {
             } else {
                 project.gradle.taskGraph.whenReady { taskGraph ->
                     List<Task> allTasks = taskGraph.allTasks
-                    if (onlyIf(allTasks)) {
+                    if (hasValidTaskConfiguration(project, lintExt)) {
                         LinkedList tasks = taskGraph.executionPlan.executionQueue
                         Task lastTask = tasks.last?.task
                         taskGraph.addTaskExecutionListener(new TaskExecutionListener() {
@@ -105,9 +103,15 @@ class GradleLintPlugin implements Plugin<Project> {
 
                             @Override
                             void afterExecute(Task task, TaskState taskState) {
+                                if(hasExplicitLintTask(allTasks, lintTasks)) {
+                                    return
+                                }
+                                if(hasFailedCriticalLintTask(allTasks, criticalLintTask)) {
+                                    return
+                                }
                                 if((taskState.failure && lintExt.autoLintAfterFailure) || (task.name == lastTask.name && !taskState.failure)) {
                                     autoLintTask.lint()
-                                } 
+                                }
                             }
                         })
                     }
@@ -125,6 +129,24 @@ class GradleLintPlugin implements Plugin<Project> {
             }
         }
 
+    }
+
+    private boolean hasValidTaskConfiguration(Project project, GradleLintExtension lintExt) {
+        boolean shouldLint = project.hasProperty('gradleLint.alwaysRun') ?
+                Boolean.valueOf(project.property('gradleLint.alwaysRun').toString()) : lintExt.alwaysRun
+        boolean excludedAutoLintGradle = project.gradle.startParameter.excludedTaskNames.contains(AUTO_LINT_GRADLE)
+        boolean skipForSpecificTask = project.gradle.startParameter.taskNames.any { lintExt.skipForTasks.contains(it) }
+        return shouldLint && !excludedAutoLintGradle && !skipForSpecificTask
+    }
+
+    private boolean hasExplicitLintTask(List<Task> allTasks, List<Task> lintTasks) {
+        allTasks.any {
+            lintTasks.contains(it)
+        }
+    }
+
+    private boolean hasFailedCriticalLintTask(List<Task> tasks, Task criticalLintTask) {
+        return tasks.any { it == criticalLintTask && it.state.failure != null }
     }
 
     def failForKotlinScript(Project project) {
