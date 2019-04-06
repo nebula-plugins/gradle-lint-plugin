@@ -61,7 +61,7 @@ class GradleLintPlugin implements Plugin<Project> {
             fixTask2.userDefinedListeners = lintExt.listeners
 
             List<Task> lintTasks = [fixTask, fixTask2, manualLintTask, autoLintTask]
-            
+
             if (GradleKt.versionLessThan(project.gradle, GRADLE_FIVE_ZERO)) {
                 project.gradle.addListener(new LintListener() {
                     List<Task> allTasks
@@ -74,19 +74,12 @@ class GradleLintPlugin implements Plugin<Project> {
                     @Override
                     void buildFinished(BuildResult result) {
                         def hasFailedTask = !lintExt.autoLintAfterFailure && allTasks.any { it.state.failure != null }
-                        if(hasFailedTask) {
+                        if(hasFailedTask || !hasValidTaskConfiguration(project, lintExt) ||
+                                hasExplicitLintTask(allTasks, lintTasks) ||
+                                hasFailedCriticalLintTask(allTasks, criticalLintTask)) {
                             return
                         }
-
-                        if (hasValidTaskConfiguration(project, lintExt)) {
-                            if(hasExplicitLintTask(allTasks, lintTasks)) {
-                                return
-                            }
-                            if(hasFailedCriticalLintTask(allTasks, criticalLintTask)) {
-                                return
-                            }
-                            autoLintTask.lint()
-                        }
+                        autoLintTask.lint()
                     }
                 })
             } else {
@@ -103,10 +96,7 @@ class GradleLintPlugin implements Plugin<Project> {
 
                             @Override
                             void afterExecute(Task task, TaskState taskState) {
-                                if(hasExplicitLintTask(allTasks, lintTasks)) {
-                                    return
-                                }
-                                if(hasFailedCriticalLintTask(allTasks, criticalLintTask)) {
+                                if(hasExplicitLintTask(allTasks, lintTasks) || hasFailedCriticalLintTask(allTasks, criticalLintTask)) {
                                     return
                                 }
                                 if((taskState.failure && lintExt.autoLintAfterFailure) || (task.name == lastTask.name && !taskState.failure)) {
