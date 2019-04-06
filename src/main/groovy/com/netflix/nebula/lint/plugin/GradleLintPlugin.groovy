@@ -62,50 +62,10 @@ class GradleLintPlugin implements Plugin<Project> {
 
             List<Task> lintTasks = [fixTask, fixTask2, manualLintTask, autoLintTask]
 
-            if (GradleKt.versionLessThan(project.gradle, GRADLE_FIVE_ZERO)) {
-                project.gradle.addListener(new LintListener() {
-                    List<Task> allTasks
-
-                    @Override
-                    void graphPopulated(TaskExecutionGraph graph) {
-                        allTasks = graph.allTasks
-                    }
-
-                    @Override
-                    void buildFinished(BuildResult result) {
-                        def hasFailedTask = !lintExt.autoLintAfterFailure && allTasks.any { it.state.failure != null }
-                        if(hasFailedTask || !hasValidTaskConfiguration(project, lintExt) ||
-                                hasExplicitLintTask(allTasks, lintTasks) ||
-                                hasFailedCriticalLintTask(allTasks, criticalLintTask)) {
-                            return
-                        }
-                        autoLintTask.lint()
-                    }
-                })
+            if (project.gradle.gradleVersion == GRADLE_FIVE_ZERO || GradleKt.versionGreaterThan(project.gradle, GRADLE_FIVE_ZERO)) {
+                configureAutoLint(autoLintTask, project, lintExt, lintTasks, criticalLintTask)
             } else {
-                project.gradle.taskGraph.whenReady { taskGraph ->
-                    List<Task> allTasks = taskGraph.allTasks
-                    if (hasValidTaskConfiguration(project, lintExt)) {
-                        LinkedList tasks = taskGraph.executionPlan.executionQueue
-                        Task lastTask = tasks.last?.task
-                        taskGraph.addTaskExecutionListener(new TaskExecutionListener() {
-                            @Override
-                            void beforeExecute(Task task) {
-                                //DO NOTHING
-                            }
-
-                            @Override
-                            void afterExecute(Task task, TaskState taskState) {
-                                if(hasExplicitLintTask(allTasks, lintTasks) || hasFailedCriticalLintTask(allTasks, criticalLintTask)) {
-                                    return
-                                }
-                                if((taskState.failure && lintExt.autoLintAfterFailure) || (task.name == lastTask.name && !taskState.failure)) {
-                                    autoLintTask.lint()
-                                }
-                            }
-                        })
-                    }
-                }
+                configureLegacyAutoLint(autoLintTask, project, lintExt, lintTasks, criticalLintTask)
             }
         }
 
@@ -119,6 +79,54 @@ class GradleLintPlugin implements Plugin<Project> {
             }
         }
 
+    }
+
+    private void configureAutoLint(LintGradleTask autoLintTask, Project project, GradleLintExtension lintExt, List<Task> lintTasks, Task criticalLintTask) {
+        project.gradle.taskGraph.whenReady { taskGraph ->
+            List<Task> allTasks = taskGraph.allTasks
+            if (hasValidTaskConfiguration(project, lintExt)) {
+                LinkedList tasks = taskGraph.executionPlan.executionQueue
+                Task lastTask = tasks.last?.task
+                taskGraph.addTaskExecutionListener(new TaskExecutionListener() {
+                    @Override
+                    void beforeExecute(Task task) {
+                        //DO NOTHING
+                    }
+
+                    @Override
+                    void afterExecute(Task task, TaskState taskState) {
+                        if(hasExplicitLintTask(allTasks, lintTasks) || hasFailedCriticalLintTask(allTasks, criticalLintTask)) {
+                            return
+                        }
+                        if((taskState.failure && lintExt.autoLintAfterFailure) || (task.name == lastTask.name && !taskState.failure)) {
+                            autoLintTask.lint()
+                        }
+                    }
+                })
+            }
+        }
+    }
+
+    private void configureLegacyAutoLint(LintGradleTask autoLintTask, Project project, GradleLintExtension lintExt, List<Task> lintTasks, Task criticalLintTask) {
+        project.gradle.addListener(new LintListener() {
+            List<Task> allTasks
+
+            @Override
+            void graphPopulated(TaskExecutionGraph graph) {
+                allTasks = graph.allTasks
+            }
+
+            @Override
+            void buildFinished(BuildResult result) {
+                def hasFailedTask = !lintExt.autoLintAfterFailure && allTasks.any { it.state.failure != null }
+                if(hasFailedTask || !hasValidTaskConfiguration(project, lintExt) ||
+                        hasExplicitLintTask(allTasks, lintTasks) ||
+                        hasFailedCriticalLintTask(allTasks, criticalLintTask)) {
+                    return
+                }
+                autoLintTask.lint()
+            }
+        })
     }
 
     private boolean hasValidTaskConfiguration(Project project, GradleLintExtension lintExt) {
