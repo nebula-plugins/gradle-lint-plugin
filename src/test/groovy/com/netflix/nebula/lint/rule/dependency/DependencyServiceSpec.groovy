@@ -312,7 +312,9 @@ class DependencyServiceSpec extends TestKitSpecification {
 
             dependencies {
                 compile '${dependency}'
+                compileOnly '${dependency}'
                 testCompile '${dependency}'
+                testCompileOnly '${dependency}'
 
                 implementation '${dependency}'
                 testImplementation '${dependency}'
@@ -361,6 +363,9 @@ class DependencyServiceSpec extends TestKitSpecification {
 
         !configurationNames.contains('implementation')
         !configurationNames.contains('testImplementation')
+
+        !configurationNames.contains('compileOnly')
+        !configurationNames.contains('testCompileOnly')
 
         !configurationNames.contains('apiElements')
         !configurationNames.contains('runtimeElements')

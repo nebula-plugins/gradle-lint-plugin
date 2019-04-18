@@ -468,31 +468,6 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
         !results.output.contains('unused-dependency')
     }
 
-    @Issue('46')
-    def 'remove unused compileOnly dependencies'() {
-        when:
-        buildFile.text = """
-            plugins {
-                id 'nebula.lint'
-                id 'war'
-            }
-
-            gradleLint.rules = ['unused-dependency']
-
-            repositories { mavenCentral() }
-
-            dependencies {
-                compileOnly 'com.google.guava:guava:19.0'
-            }
-        """
-
-        createJavaSourceFile('public class A {}')
-
-        then:
-        def results = runTasksSuccessfully('compileJava')
-        results.output.contains('unused-dependency')
-    }
-
     @Issue('53')
     def 'only one violation reported when a dependency is unused by multiple configurations'() {
         when:
