@@ -436,7 +436,9 @@ class DependencyService {
     boolean isResolvable(Configuration conf) {
         // isCanBeResolved was added in Gradle 3.3. Previously, all configurations were resolvable
         if (Configuration.class.declaredMethods.any { it.name == 'isCanBeResolved' }) {
-            return conf.canBeResolved
+            //compileOnly and its flavors are marked as resolvable but only for backward compatibility purposes
+            //in reality they shouldn't be
+            return conf.canBeResolved && !conf.name.toLowerCase().endsWith("compileonly")
         }
         return true
     }
