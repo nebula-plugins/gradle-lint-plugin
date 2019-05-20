@@ -58,6 +58,9 @@ allprojects {
 }
 ```
 
+## Warning
+Gradle Lint Plugin currently doesn't support kotlin build scripts. Please, switch to groovy build script if you want to use linting.
+
 ## License
 
 Copyright 2015-2018-2019 Netflix, Inc.
