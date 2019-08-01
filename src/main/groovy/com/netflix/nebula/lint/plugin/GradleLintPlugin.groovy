@@ -38,63 +38,61 @@ class GradleLintPlugin implements Plugin<Project> {
             LintRuleRegistry.classLoader = getClass().classLoader
             def lintExt = project.extensions.create('gradleLint', GradleLintExtension)
 
-            if (project.rootProject == project) {
-                def autoLintTask = project.tasks.create(AUTO_LINT_GRADLE, LintGradleTask)
-                autoLintTask.listeners = lintExt.listeners
+            def autoLintTask = project.tasks.create(AUTO_LINT_GRADLE, LintGradleTask)
+            autoLintTask.listeners = lintExt.listeners
 
-                def manualLintTask = project.tasks.create('lintGradle', LintGradleTask)
-                manualLintTask.group = 'lint'
-                manualLintTask.failOnWarning = true
+            def manualLintTask = project.tasks.create('lintGradle', LintGradleTask)
+            manualLintTask.group = 'lint'
+            manualLintTask.failOnWarning = true
 
-                def criticalLintTask = project.tasks.create('criticalLintGradle', LintGradleTask)
-                criticalLintTask.group = 'lint'
-                criticalLintTask.onlyCriticalRules = true
+            def criticalLintTask = project.tasks.create('criticalLintGradle', LintGradleTask)
+            criticalLintTask.group = 'lint'
+            criticalLintTask.onlyCriticalRules = true
 
-                def fixTask = project.tasks.create('fixGradleLint', FixGradleLintTask)
-                fixTask.userDefinedListeners = lintExt.listeners
+            def fixTask = project.tasks.create('fixGradleLint', FixGradleLintTask)
+            fixTask.userDefinedListeners = lintExt.listeners
 
-                def fixTask2 = project.tasks.create('fixLintGradle', FixGradleLintTask)
-                fixTask2.userDefinedListeners = lintExt.listeners
+            def fixTask2 = project.tasks.create('fixLintGradle', FixGradleLintTask)
+            fixTask2.userDefinedListeners = lintExt.listeners
 
-                project.gradle.addListener(new LintListener() {
-                    def allTasks
+            project.gradle.addListener(new LintListener() {
+                def allTasks
 
-                    @Override
-                    void graphPopulated(TaskExecutionGraph graph) {
-                        allTasks = graph.allTasks
+                @Override
+                void graphPopulated(TaskExecutionGraph graph) {
+                    allTasks = graph.allTasks
+                }
+
+                @Override
+                void buildFinished(BuildResult result) {
+                    if (onlyIf()) {
+                        autoLintTask.lint()
                     }
+                }
 
-                    @Override
-                    void buildFinished(BuildResult result) {
-                        if (onlyIf()) {
-                            autoLintTask.lint()
-                        }
+                private boolean onlyIf() {
+                    def shouldLint = project.hasProperty('gradleLint.alwaysRun') ?
+                            Boolean.valueOf(project.property('gradleLint.alwaysRun').toString()) : lintExt.alwaysRun
+                    def excludedAutoLintGradle = project.gradle.startParameter.excludedTaskNames.contains(AUTO_LINT_GRADLE)
+                    def skipForSpecificTask = project.gradle.startParameter.taskNames.any { lintExt.skipForTasks.contains(it) }
+                    def hasFailedTask = !lintExt.autoLintAfterFailure && allTasks.any { it.state.failure != null }
+                    //when we already have failed critical lint task we don't want to run autolint
+                    def hasFailedCriticalLintTask = allTasks.any { it == criticalLintTask && it.state.failure != null }
+                    def hasExplicitLintTask = allTasks.any {
+                        it == fixTask || it == fixTask2 || it == manualLintTask || it == autoLintTask
                     }
-
-                    private boolean onlyIf() {
-                        def shouldLint = project.hasProperty('gradleLint.alwaysRun') ?
-                                Boolean.valueOf(project.property('gradleLint.alwaysRun').toString()) : lintExt.alwaysRun
-                        def excludedAutoLintGradle = project.gradle.startParameter.excludedTaskNames.contains(AUTO_LINT_GRADLE)
-                        def skipForSpecificTask = project.gradle.startParameter.taskNames.any { lintExt.skipForTasks.contains(it) }
-                        def hasFailedTask = !lintExt.autoLintAfterFailure && allTasks.any { it.state.failure != null }
-                        //when we already have failed critical lint task we don't want to run autolint
-                        def hasFailedCriticalLintTask = allTasks.any { it == criticalLintTask && it.state.failure != null }
-                        def hasExplicitLintTask = allTasks.any {
-                            it == fixTask || it == fixTask2 || it == manualLintTask || it == autoLintTask
-                        }
-                        shouldLint && !excludedAutoLintGradle && !skipForSpecificTask && !hasFailedTask &&
-                                !hasExplicitLintTask && !hasFailedCriticalLintTask
-                    }
-                })
-            }
+                    shouldLint && !excludedAutoLintGradle && !skipForSpecificTask && !hasFailedTask &&
+                            !hasExplicitLintTask && !hasFailedCriticalLintTask
+                }
+            })
 
             configureReportTask(project, lintExt)
 
             project.plugins.withType(JavaBasePlugin) {
                 project.tasks.withType(AbstractCompile) { task ->
-                    project.rootProject.tasks.getByName('fixGradleLint').dependsOn(task)
-                    project.rootProject.tasks.getByName('lintGradle').dependsOn(task)
-                    project.rootProject.tasks.getByName('fixLintGradle').dependsOn(task)
+                    project.tasks.getByName('fixGradleLint').dependsOn(task)
+                    project.tasks.getByName('lintGradle').dependsOn(task)
+                    project.tasks.getByName('fixLintGradle').dependsOn(task)
                 }
             }
 
