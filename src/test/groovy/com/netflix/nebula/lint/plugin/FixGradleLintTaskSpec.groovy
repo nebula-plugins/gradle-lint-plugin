@@ -175,7 +175,7 @@ dependencies {\r
 
             gradleLint.rules = ['all-dependencies']
             """.stripIndent()
-        gradleVersion = '2.13'
+        gradleVersion = '4.2' //we don't support older versions anymore
 
         when:
         def results = runTasksSuccessfully('assemble', 'lintGradle')

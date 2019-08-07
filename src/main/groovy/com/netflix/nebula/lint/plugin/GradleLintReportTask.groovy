@@ -32,14 +32,11 @@ import org.gradle.api.reporting.Reporting
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.VerificationTask
-import org.gradle.internal.reflect.Instantiator
-import org.gradle.util.DeprecationLogger
 
 import static com.netflix.nebula.lint.StyledTextService.Styling.*
 
-import javax.inject.Inject
-
 class GradleLintReportTask extends DefaultTask implements VerificationTask, Reporting<CodeNarcReports> {
+
     @Nested
     private final CodeNarcReportsImpl reports
 
@@ -50,9 +47,7 @@ class GradleLintReportTask extends DefaultTask implements VerificationTask, Repo
 
     GradleLintReportTask() {
         CodeNarcReportsImpl codeNarcReports
-        DeprecationLogger.whileDisabled() {
-            codeNarcReports = instantiator.newInstance(CodeNarcReportsImpl, this)
-        }
+        codeNarcReports = project.objects.newInstance(CodeNarcReportsImpl.class, this)
         reports = codeNarcReports
         outputs.upToDateWhen { false }
         group = 'lint'
@@ -88,11 +83,6 @@ class GradleLintReportTask extends DefaultTask implements VerificationTask, Repo
             }
         }
 
-    }
-
-    @Inject
-    Instantiator getInstantiator() {
-        null // see http://gradle.1045684.n5.nabble.com/injecting-dependencies-into-task-instances-td5712637.html
     }
 
     /**
