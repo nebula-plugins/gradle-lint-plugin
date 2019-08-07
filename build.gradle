@@ -154,3 +154,6 @@ if (GradleVersion.version(project.gradle.gradleVersion).compareTo(GradleVersion.
 compileKotlin.dependsOn compileGroovy
 compileKotlin.classpath += files(compileGroovy.destinationDir)
 classes.dependsOn compileKotlin
+
+targetCompatibility = JavaVersion.VERSION_1_8
+sourceCompatibility = JavaVersion.VERSION_1_8
