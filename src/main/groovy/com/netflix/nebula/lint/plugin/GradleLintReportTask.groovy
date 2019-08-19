@@ -32,6 +32,11 @@ import org.gradle.api.reporting.Reporting
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.VerificationTask
+import org.gradle.util.DeprecationLogger
+import org.gradle.internal.reflect.Instantiator
+import org.gradle.util.GradleVersion
+
+import javax.inject.Inject
 
 import static com.netflix.nebula.lint.StyledTextService.Styling.*
 
@@ -47,7 +52,14 @@ class GradleLintReportTask extends DefaultTask implements VerificationTask, Repo
 
     GradleLintReportTask() {
         CodeNarcReportsImpl codeNarcReports
-        codeNarcReports = project.objects.newInstance(CodeNarcReportsImpl.class, this)
+        if(GradleVersion.version(project.gradle.gradleVersion).compareTo(GradleVersion.version('4.4.1')) > 0) {
+            codeNarcReports = project.objects.newInstance(CodeNarcReportsImpl.class, this)
+        } else {
+            //TODO: remove this once we don't have customers in Gradle 4.1
+            DeprecationLogger.whileDisabled() {
+                codeNarcReports = instantiator.newInstance(CodeNarcReportsImpl, this)
+            }
+        }
         reports = codeNarcReports
         outputs.upToDateWhen { false }
         group = 'lint'
@@ -83,6 +95,11 @@ class GradleLintReportTask extends DefaultTask implements VerificationTask, Repo
             }
         }
 
+    }
+
+    @Inject
+    Instantiator getInstantiator() {
+        null // see http://gradle.1045684.n5.nabble.com/injecting-dependencies-into-task-instances-td5712637.html
     }
 
     /**
