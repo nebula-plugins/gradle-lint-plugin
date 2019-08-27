@@ -57,8 +57,8 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
 
         where:
         deps                            | message
-        [guava, collections]            | "$collections in configuration ':compile' has 310 classes duplicated by $guava"
-        [guava_transitive, collections] | "$collections in configuration ':compile' has 310 classes duplicated by $guava"
+        [guava, collections]            | "$collections in configuration ':compile' has 309 classes duplicated by $guava"
+        [guava_transitive, collections] | "$collections in configuration ':compile' has 309 classes duplicated by $guava"
         [asm, asm_asm]                  | "$asm_asm in configuration ':compile' has 21 classes duplicated by $asm"
     }
     
@@ -118,7 +118,7 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
         def result = runTasksSuccessfully('compileJava')
         
         then:
-        result.output.contains("$collections in configuration ':compile' has 310 classes duplicated by $guava")
+        result.output.contains("$collections in configuration ':compile' has 309 classes duplicated by $guava")
     }
 
     @Issue('43')
@@ -147,7 +147,7 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
         def result = runTasksSuccessfully('compileJava')
 
         then:
-        !result.output.contains("$collections in configuration ':compile' has 310 classes duplicated by $guava")
+        !result.output.contains("$collections in configuration ':compile' has 309 classes duplicated by $guava")
     }
 
     /**
@@ -215,7 +215,7 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
         def result = runTasksSuccessfully('compileJava')
 
         then:
-        !result.output.contains("$collections in configuration ':compile' has 310 classes duplicated by $guava")
+        !result.output.contains("$collections in configuration ':compile' has 309 classes duplicated by $guava")
     }
 
     def 'duplicate classes between transitive dependencies do not cause violations'() {
@@ -241,7 +241,7 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
         def result = runTasksSuccessfully('compileJava', 'lintGradle')
 
         then:
-        !result.output.contains("com.google.collections:google-collections:1.0 in configuration ':compile' has 385 classes duplicated by com.google.guava:guava:10.0.1")
+        !result.output.contains("com.google.collections:google-collections:1.0 in configuration ':compile' has 384 classes duplicated by com.google.guava:guava:10.0.1")
     }
 
     @Issue('#139')
@@ -292,6 +292,36 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
         def result = runTasksSuccessfully('compileJava', '--info')
 
         then:
-        result.output.contains("com.google.collections:google-collections:1.0 in configuration ':compile' has 385 classes duplicated by com.google.guava:guava:10.0.1")
+        result.output.contains("com.google.collections:google-collections:1.0 in configuration ':compile' has 384 classes duplicated by com.google.guava:guava:10.0.1")
+    }
+
+    @Issue('#246')
+    def 'duplicate META-INF/versions/9/module-info do not cause violations'() {
+        debug = true
+
+        buildFile.text = """
+            plugins {
+                id 'java'
+                id 'nebula.lint'
+            }
+
+            gradleLint.rules = ['duplicate-dependency-class', 'transitive-duplicate-dependency-class']
+
+            repositories { mavenCentral() }
+
+            dependencies {
+                // these dependencies both have META-INF/versions/9/module-info
+                compile 'io.github.classgraph:classgraph:4.8.45'
+                compile 'org.apache.logging.log4j:log4j-api:2.12.0'
+            }
+            """.stripIndent()
+
+        when:
+        createJavaSourceFile('public class Main{}')
+        def result = runTasksSuccessfully('compileJava', 'lintGradle')
+
+        then:
+        !result.output.contains("io.github.classgraph:classgraph:4.8.45 in configuration ':compile' has 1 classes duplicated by org.apache.logging.log4j:log4j-api:2.12.0")
+        !result.output.contains("This project contains lint violations")
     }
 }

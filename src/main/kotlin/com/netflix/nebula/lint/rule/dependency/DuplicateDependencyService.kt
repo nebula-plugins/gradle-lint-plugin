@@ -29,7 +29,13 @@ class DuplicateDependencyService(val project: Project) {
         val dependencyClasses = dependencyService.jarContents(mvid.module)?.classes ?: return emptyList()
         val dupeDependencyClasses = dependencyService.artifactsByClass(conf)
                 .filter {
-                    !BLACKLISTED_CLASSES.contains(it.key)
+                    var allowable = true
+                    BLACKLISTED_CLASSES.forEach { bc ->
+                        if (it.key.contains(bc)) {
+                            allowable = false
+                        }
+                    }
+                    allowable
                 }
                 .filter {
                     // don't count artifacts that have the same ModuleIdentifier, which are different versions of the same
