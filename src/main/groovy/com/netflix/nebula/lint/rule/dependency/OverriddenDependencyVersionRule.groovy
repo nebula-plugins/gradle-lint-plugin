@@ -10,11 +10,12 @@ import org.gradle.api.attributes.AttributeContainer
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.DefaultVersionComparator
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.DefaultVersionSelectorScheme
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.LatestVersionSelector
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.VersionParser
 
 class OverriddenDependencyVersionRule extends GradleLintRule implements GradleModelAware {
     String description = 'be declarative about first order dependency versions that are changed by conflict resolution'
 
-    def selectorScheme = new DefaultVersionSelectorScheme(new DefaultVersionComparator())
+    def selectorScheme = new DefaultVersionSelectorScheme(new DefaultVersionComparator(), new VersionParser())
 
     def resolvableAndResolvedConfigurations
 
