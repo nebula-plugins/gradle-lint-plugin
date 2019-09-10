@@ -98,7 +98,7 @@ class GradleLintPlugin implements Plugin<Project> {
                         if(hasExplicitLintTask(allTasks, lintTasks) || hasFailedCriticalLintTask(allTasks, criticalLintTask)) {
                             return
                         }
-                        if((taskState.failure && lintExt.autoLintAfterFailure) || (task.name == lastTask.name && !taskState.failure)) {
+                        if((taskState.failure && lintExt.autoLintAfterFailure) || (task.path == lastTask.path && !taskState.failure)) {
                             autoLintTask.lint()
                         }
                     }
