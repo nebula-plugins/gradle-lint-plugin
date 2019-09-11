@@ -189,6 +189,134 @@ class GradleLintPluginSpec extends TestKitSpecification {
         result.output.readLines().findAll { it.contains('warning   dependency-parentheses')}.size() == 1
     }
 
+    def 'run rules on multi-module only once when task fails'() {
+        setup:
+        buildFile.text = """
+            plugins {
+                id 'nebula.lint'
+            }
+
+            allprojects {
+                apply plugin: 'nebula.lint'
+                gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
+            }
+
+            subprojects {
+                apply plugin: 'java'
+                dependencies {
+                    compile('com.google.guava:guava:18.0')
+                }
+            }
+        """
+
+        addSubproject('sub', """
+            dependencies {
+                testCompile group: 'junit',
+                    name: 'junit',
+                    version: '4.11'
+            }
+
+            task hello {
+                doLast {
+                  throw new RuntimeException("test")
+                }
+            }
+        """)
+
+        addSubproject('sub2', """
+            dependencies {
+                testCompile group: 'junit',
+                    name: 'junit',
+                    version: '4.11'
+            }
+
+            task hello {
+                doLast {
+                  println "hello"
+                }
+            }
+        """)
+
+        when:
+        def result = runTasksFail("hello")
+
+        then:
+        result.output.readLines().findAll { it.contains('warning   dependency-tuple')}.size() == 2
+        result.output.readLines().findAll { it.contains('warning   dependency-parentheses')}.size() == 1
+    }
+
+    def 'run rules on multi-module only once when task fails - parallel'() {
+        setup:
+        buildFile.text = """
+            plugins {
+                id 'nebula.lint'
+            }
+
+            allprojects {
+                apply plugin: 'nebula.lint'
+                gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
+            }
+
+            subprojects {
+                apply plugin: 'java'
+                dependencies {
+                    compile('com.google.guava:guava:18.0')
+                }
+            }
+        """
+
+        addSubproject('sub', """
+            dependencies {
+                testCompile group: 'junit',
+                    name: 'junit',
+                    version: '4.11'
+            }
+
+            task hello {
+                doLast {
+                  throw new RuntimeException("test")
+                }
+            }
+        """)
+
+        addSubproject('sub2', """
+            dependencies {
+                testCompile group: 'junit',
+                    name: 'junit',
+                    version: '4.11'
+            }
+
+            task hello {
+                doLast {
+                  throw new RuntimeException("test")
+                }
+            }
+        """)
+
+        addSubproject('sub3', """
+            dependencies {
+                testCompile group: 'junit',
+                    name: 'junit',
+                    version: '4.11'
+            }
+
+            task hello {
+                doLast {
+                  throw new RuntimeException("test")
+                }
+            }
+        """)
+
+
+        when:
+        def result = runTasksFail("hello", "--parallel")
+
+        then:
+        result.output.readLines().findAll { it.contains('warning   dependency-tuple')}.size() == 3
+        result.output.readLines().findAll { it.contains('warning   dependency-parentheses')}.size() == 1
+    }
+
+
     def 'run rules on multi-module only once in parallel'() {
         setup:
         buildFile.text = """
@@ -243,7 +371,7 @@ class GradleLintPluginSpec extends TestKitSpecification {
         def result = runTasksSuccessfully("assemble", "--parallel")
 
         then:
-        result.output.readLines().findAll { it.contains('warning   dependency-tuple')}.size() == 2
+        result.output.readLines().findAll { it.contains('warning   dependency-tuple')}.size() == 3
         result.output.readLines().findAll { it.contains('warning   dependency-parentheses')}.size() == 1
     }
 
