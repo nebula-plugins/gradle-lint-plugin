@@ -28,7 +28,6 @@ fi
 
 EXIT=$?
 
-rm -f "$HOME/.gradle/caches/modules-2/modules-2.lock"
-rm -rf "$HOME/.gradle/caches/$GRADLE_VERSION/plugin-resolution"
+rm -f "$HOME/.gradle/caches"
 
 exit $EXIT
