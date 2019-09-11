@@ -15,10 +15,10 @@ elif [ "$TRAVIS_PULL_REQUEST" == "false" ] && [ "$TRAVIS_TAG" != "" ]; then
   echo -e 'Build Branch for Release => Branch ['$TRAVIS_BRANCH']  Tag ['$TRAVIS_TAG']'
   case "$TRAVIS_TAG" in
   *-rc\.*)
-    ./gradlew -Prelease.travisci=true -Psonatype.username=$sonatypeUsername -Psonatype.password=$sonatypePassword -Pbintray.user=$bintrayUser -Pbintray.apiKey=$bintrayKey  -Prelease.useLastTag=true candidate $SWITCHES --refresh-dependencies
+    ./gradlew -Prelease.travisci=true -Psonatype.username=$sonatypeUsername -Psonatype.password=$sonatypePassword -Pbintray.user=$bintrayUser -Pbintray.apiKey=$bintrayKey  -Prelease.useLastTag=true candidate $SWITCHES
     ;;
   *)
-    ./gradlew -Prelease.travisci=true -Dgradle.publish.key=$gradlePluginPublishKey -Dgradle.publish.secret=$gradlePluginPublishSecret -Psonatype.username=$sonatypeUsername -Psonatype.password=$sonatypePassword -Pbintray.user=$bintrayUser -Pbintray.apiKey=$bintrayKey  -Prelease.useLastTag=true final $SWITCHES --refresh-dependencies
+    ./gradlew -Prelease.travisci=true -Dgradle.publish.key=$gradlePluginPublishKey -Dgradle.publish.secret=$gradlePluginPublishSecret -Psonatype.username=$sonatypeUsername -Psonatype.password=$sonatypePassword -Pbintray.user=$bintrayUser -Pbintray.apiKey=$bintrayKey  -Prelease.useLastTag=true final $SWITCHES
     ;;
   esac
 else
