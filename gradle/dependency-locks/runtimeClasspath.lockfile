@@ -2,7 +2,7 @@
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
 com.google.guava:guava:19.0
-com.netflix.nebula:nebula-gradle-interop:1.0.8
+com.netflix.nebula:nebula-gradle-interop:1.0.9
 com.netflix.nebula:nebula-test:7.3.0
 commons-lang:commons-lang:2.6
 javax.inject:javax.inject:1
