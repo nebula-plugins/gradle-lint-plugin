@@ -92,11 +92,6 @@ pluginBundle {
             tags = ['nebula', 'lint']
         }
     }
-
-    mavenCoordinates {
-        groupId = 'com.netflix.nebula'
-        artifactId = 'gradle-lint-plugin'
-    }
 }
 
 // Relocate jgit dependency not available in Maven Central
