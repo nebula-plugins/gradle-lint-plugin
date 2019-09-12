@@ -23,6 +23,10 @@ import spock.lang.Unroll
 class GradleLintPluginSpec extends TestKitSpecification {
     private static final String V_4_POINT_10 = '4.10.2'
 
+    def setup() {
+        debug = true
+    }
+
     def 'run multiple rules on a single module project'() {
         when:
         buildFile << """
@@ -91,6 +95,8 @@ class GradleLintPluginSpec extends TestKitSpecification {
         console.any { it.contains('dependency-tuple') }
     }
 
+
+
     def 'run rules on multi-module project where one of the subprojects has no build.gradle'() {
         when:
         buildFile << """
@@ -138,6 +144,241 @@ class GradleLintPluginSpec extends TestKitSpecification {
         then:
         runTasksSuccessfully('lintGradle')
     }
+
+    def 'run rules on multi-module only once'() {
+        setup:
+        buildFile.text = """
+            plugins {
+                id 'nebula.lint'
+            }
+
+            allprojects {
+                apply plugin: 'nebula.lint'
+                gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
+            }
+
+            subprojects {
+                apply plugin: 'java'
+                dependencies {
+                    compile('com.google.guava:guava:18.0')
+                }
+            }
+        """
+
+        addSubproject('sub', """
+            dependencies {
+                testCompile group: 'junit',
+                    name: 'junit',
+                    version: '4.11'
+            }
+
+            task taskA {}
+        """)
+
+        addSubproject('sub2', """
+            dependencies {
+                testCompile group: 'junit',
+                    name: 'junit',
+                    version: '4.11'
+            }
+
+            task taskB {}
+        """)
+
+        when:
+        def result = runTasksSuccessfully("assemble")
+
+        then:
+        result.output.readLines().findAll { it.contains('warning   dependency-tuple')}.size() == 2
+        result.output.readLines().findAll { it.contains('warning   dependency-parentheses')}.size() == 1
+    }
+
+    def 'run rules on multi-module only once when task fails'() {
+        setup:
+        buildFile.text = """
+            plugins {
+                id 'nebula.lint'
+            }
+
+            allprojects {
+                apply plugin: 'nebula.lint'
+                gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
+            }
+
+            subprojects {
+                apply plugin: 'java'
+                dependencies {
+                    compile('com.google.guava:guava:18.0')
+                }
+            }
+        """
+
+        addSubproject('sub', """
+            dependencies {
+                testCompile group: 'junit',
+                    name: 'junit',
+                    version: '4.11'
+            }
+
+            task hello {
+                doLast {
+                  throw new RuntimeException("test")
+                }
+            }
+        """)
+
+        addSubproject('sub2', """
+            dependencies {
+                testCompile group: 'junit',
+                    name: 'junit',
+                    version: '4.11'
+            }
+
+            task hello {
+                doLast {
+                  println "hello"
+                }
+            }
+        """)
+
+        when:
+        def result = runTasksFail("hello")
+
+        then:
+        result.output.readLines().findAll { it.contains('warning   dependency-tuple')}.size() == 2
+        result.output.readLines().findAll { it.contains('warning   dependency-parentheses')}.size() == 1
+    }
+
+    def 'run rules on multi-module only once when task fails - parallel'() {
+        setup:
+        buildFile.text = """
+            plugins {
+                id 'nebula.lint'
+            }
+
+            allprojects {
+                apply plugin: 'nebula.lint'
+                gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
+            }
+
+            subprojects {
+                apply plugin: 'java'
+                dependencies {
+                    compile('com.google.guava:guava:18.0')
+                }
+            }
+        """
+
+        addSubproject('sub', """
+            dependencies {
+                testCompile group: 'junit',
+                    name: 'junit',
+                    version: '4.11'
+            }
+
+            task hello {
+                doLast {
+                  throw new RuntimeException("test")
+                }
+            }
+        """)
+
+        addSubproject('sub2', """
+            dependencies {
+                testCompile group: 'junit',
+                    name: 'junit',
+                    version: '4.11'
+            }
+
+            task hello {
+                doLast {
+                  throw new RuntimeException("test")
+                }
+            }
+        """)
+
+        addSubproject('sub3', """
+            dependencies {
+                testCompile group: 'junit',
+                    name: 'junit',
+                    version: '4.11'
+            }
+
+            task hello {
+                doLast {
+                  throw new RuntimeException("test")
+                }
+            }
+        """)
+
+
+        when:
+        def result = runTasksFail("hello", "--parallel")
+
+        then:
+        result.output.readLines().findAll { it.contains('warning   dependency-tuple')}.size() == 3
+        result.output.readLines().findAll { it.contains('warning   dependency-parentheses')}.size() == 1
+    }
+
+
+    def 'run rules on multi-module only once in parallel'() {
+        setup:
+        buildFile.text = """
+            plugins {
+                id 'nebula.lint'
+            }
+
+            allprojects {
+                apply plugin: 'nebula.lint'
+                gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
+            }
+
+            subprojects {
+                apply plugin: 'java'
+                dependencies {
+                    compile('com.google.guava:guava:18.0')
+                }
+            }
+        """
+
+        addSubproject('sub', """
+            dependencies {
+                testCompile group: 'junit',
+                    name: 'junit',
+                    version: '4.11'
+            }
+
+            task taskA {}
+        """)
+
+        addSubproject('sub2', """
+            dependencies {
+                testCompile group: 'junit',
+                    name: 'junit',
+                    version: '4.11'
+            }
+
+            task taskB {}
+        """)
+
+        addSubproject('sub3', """
+            dependencies {
+                testCompile group: 'junit',
+                    name: 'junit',
+                    version: '4.11'
+            }
+
+            task taskB {}
+        """)
+
+        when:
+        def result = runTasksSuccessfully("assemble", "--parallel")
+
+        then:
+        result.output.readLines().findAll { it.contains('warning   dependency-tuple')}.size() == 3
+        result.output.readLines().findAll { it.contains('warning   dependency-parentheses')}.size() == 1
+    }
+
 
     def 'run only critical rules and skip normal ones'() {
         when:
