@@ -83,10 +83,12 @@ class GradleLintPlugin implements Plugin<Project> {
 
     private void configureAutoLint(LintGradleTask autoLintTask, Project project, GradleLintExtension lintExt, List<Task> lintTasks, Task criticalLintTask) {
         List<Task> lintTasksToVerify = lintTasks + criticalLintTask
-        if(lintExt.autoLintAfterFailure) {
-            configureAutoLintWithFailures(autoLintTask, project, lintExt, lintTasksToVerify)
-        } else {
-            configureAutoLintWithoutFailures(autoLintTask, project, lintExt, lintTasksToVerify, criticalLintTask)
+        project.afterEvaluate {
+           if(lintExt.autoLintAfterFailure) {
+               configureAutoLintWithFailures(autoLintTask, project, lintExt, lintTasksToVerify)
+           } else {
+               configureAutoLintWithoutFailures(autoLintTask, project, lintExt, lintTasksToVerify, criticalLintTask)
+           }
         }
     }
 
@@ -103,9 +105,8 @@ class GradleLintPlugin implements Plugin<Project> {
         if(!hasValidTaskConfiguration(project, lintExt) || hasExplicitLintTask) {
             return
         }
-        project.afterEvaluate {
-            finalizeAllTasksWithAutoLint(project, lintTasksToVerify, autoLintTask)
-        }
+        finalizeAllTasksWithAutoLint(project, lintTasksToVerify, autoLintTask)
+
     }
 
     /**
