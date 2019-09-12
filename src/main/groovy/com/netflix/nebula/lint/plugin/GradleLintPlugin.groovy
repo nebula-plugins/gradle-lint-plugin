@@ -99,7 +99,7 @@ class GradleLintPlugin implements Plugin<Project> {
      * @param lintTasksToVerify
      */
     private void configureAutoLintWithFailures(LintGradleTask autoLintTask, Project project, GradleLintExtension lintExt, List<Task> lintTasksToVerify) {
-        boolean hasExplicitLintTask = project.gradle.startParameter.taskNames.any { lintTasksToVerify.path.contains(it) }
+        boolean hasExplicitLintTask = project.gradle.startParameter.taskNames.any { lintTasksToVerify.name.contains(it) }
         if(!hasValidTaskConfiguration(project, lintExt) || hasExplicitLintTask) {
             return
         }

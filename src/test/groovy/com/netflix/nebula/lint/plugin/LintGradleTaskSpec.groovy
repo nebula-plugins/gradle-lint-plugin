@@ -19,6 +19,9 @@ import com.netflix.nebula.lint.TestKitSpecification
 import org.gradle.testkit.runner.TaskOutcome
 
 class LintGradleTaskSpec extends TestKitSpecification {
+    def setup () {
+        debug = true
+    }
     def 'mark violations that have no auto-remediation'() {
         given:
         buildFile.text = """
