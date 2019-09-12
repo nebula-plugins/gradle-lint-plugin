@@ -23,6 +23,10 @@ import spock.lang.Unroll
 class GradleLintPluginSpec extends TestKitSpecification {
     private static final String V_4_POINT_10 = '4.10.2'
 
+    def setup() {
+        debug = true
+    }
+
     def 'run multiple rules on a single module project'() {
         when:
         buildFile << """

@@ -29,6 +29,8 @@ import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.tasks.TaskState
 import org.gradle.api.tasks.compile.AbstractCompile
 
+import java.lang.reflect.Array
+
 class GradleLintPlugin implements Plugin<Project> {
 
     public static final String AUTO_LINT_GRADLE = 'autoLintGradle'
@@ -82,6 +84,42 @@ class GradleLintPlugin implements Plugin<Project> {
     }
 
     private void configureAutoLint(LintGradleTask autoLintTask, Project project, GradleLintExtension lintExt, List<Task> lintTasks, Task criticalLintTask) {
+        List<Task> lintTasksToVerify = lintTasks + criticalLintTask
+        if(lintExt.autoLintAfterFailure) {
+            configureAutoLintWithFailures(autoLintTask, project, lintExt, lintTasksToVerify)
+        } else {
+            configureAutoLintWithoutFailures(autoLintTask, project, lintExt, lintTasksToVerify, criticalLintTask)
+        }
+    }
+
+    /**
+     * finalizes all tasks with autoLint if the build doesn't have explicit lint task and has valid configuration
+     * Hooks into failed tasks, too
+     * @param autoLintTask
+     * @param project
+     * @param lintExt
+     * @param lintTasksToVerify
+     */
+    private void configureAutoLintWithFailures(LintGradleTask autoLintTask, Project project, GradleLintExtension lintExt, List<Task> lintTasksToVerify) {
+        boolean hasExplicitLintTask = project.gradle.startParameter.taskNames.any { lintTasksToVerify.path.contains(it) }
+        if(!hasValidTaskConfiguration(project, lintExt) || hasExplicitLintTask) {
+            return
+        }
+        project.afterEvaluate {
+            finalizeAllTasksWithAutoLint(project, lintTasksToVerify, autoLintTask)
+        }
+    }
+
+    /**
+     * finalizes all tasks with autoLint if the build doesn't have explicit lint task and has valid configuration
+     * Does not hook into failed tasks, too
+     * @param autoLintTask
+     * @param project
+     * @param lintExt
+     * @param lintTasks
+     * @param criticalLintTask
+     */
+    private void configureAutoLintWithoutFailures(LintGradleTask autoLintTask, Project project, GradleLintExtension lintExt, List<Task> lintTasks, Task criticalLintTask) {
         project.gradle.taskGraph.whenReady { taskGraph ->
             List<Task> allTasks = taskGraph.allTasks
             if (hasValidTaskConfiguration(project, lintExt)) {
@@ -98,7 +136,7 @@ class GradleLintPlugin implements Plugin<Project> {
                         if(hasExplicitLintTask(allTasks, lintTasks) || hasFailedCriticalLintTask(allTasks, criticalLintTask)) {
                             return
                         }
-                        if((taskState.failure && lintExt.autoLintAfterFailure) || (task.path == lastTask.path && !taskState.failure)) {
+                        if(task.path == lastTask.path && !taskState.failure) {
                             autoLintTask.lint()
                         }
                     }
@@ -107,6 +145,33 @@ class GradleLintPlugin implements Plugin<Project> {
         }
     }
 
+    /**
+     * Finalizes all tasks that aren't lint related with autoLint
+     * This works with --parallel and failed tasks
+     * @param project
+     * @param lintTasks
+     * @param autoLintTask
+     */
+    private void finalizeAllTasksWithAutoLint(Project project, List<Task> lintTasks, Task autoLintTask) {
+        project.tasks.configureEach { task ->
+            if (!lintTasks.contains(task)) {
+                task.finalizedBy autoLintTask
+            }
+        }
+        project.childProjects.values().each { subProject ->
+            finalizeAllTasksWithAutoLint(subProject, lintTasks, autoLintTask)
+        }
+    }
+
+    /**
+     * Configures autoLint for build in old versions of Gradle
+     * This approach is not valid on new Gradle versions since lint can do configuration resolution and doing this in BuildListener is now considered un-managed thread and bad practice
+     * @param autoLintTask
+     * @param project
+     * @param lintExt
+     * @param lintTasks
+     * @param criticalLintTask
+     */
     private void configureLegacyAutoLint(LintGradleTask autoLintTask, Project project, GradleLintExtension lintExt, List<Task> lintTasks, Task criticalLintTask) {
         project.gradle.addListener(new LintListener() {
             List<Task> allTasks
@@ -142,6 +207,7 @@ class GradleLintPlugin implements Plugin<Project> {
             lintTasks.contains(it)
         }
     }
+
 
     private boolean hasFailedCriticalLintTask(List<Task> tasks, Task criticalLintTask) {
         return tasks.any { it == criticalLintTask && it.state.failure != null }
