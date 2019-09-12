@@ -46,8 +46,18 @@ dependencies {
     compile 'org.apache.maven:maven-model-builder:3.+'
     plugin  'com.google.guava:guava:19.0'
 
-    plugin 'org.ow2.asm:asm:7.+'
-    plugin 'org.ow2.asm:asm-commons:7.+'
+    plugin('org.ow2.asm:asm:7.+') {
+        version {
+            reject '7.2-beta'
+            because 'avoid getting prerelease versions'
+        }
+    }
+    plugin('org.ow2.asm:asm-commons:7.+') {
+        version {
+            reject '7.2-beta'
+            because 'avoid getting prerelease versions'
+        }
+    }
     plugin('org.codenarc:CodeNarc:0.25.2') {
         transitive = false
     }
