@@ -29,8 +29,6 @@ import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.tasks.TaskState
 import org.gradle.api.tasks.compile.AbstractCompile
 
-import java.lang.reflect.Array
-
 class GradleLintPlugin implements Plugin<Project> {
 
     public static final String AUTO_LINT_GRADLE = 'autoLintGradle'
