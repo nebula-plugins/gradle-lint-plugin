@@ -18,15 +18,24 @@ package com.netflix.nebula.lint.plugin
 import com.netflix.nebula.lint.*
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
-import org.gradle.util.DeprecationLogger
 
 import static com.netflix.nebula.lint.StyledTextService.Styling.*
 
 class LintGradleTask extends DefaultTask {
+    @Input
+    @Optional
     List<GradleLintViolationAction> listeners = []
 
+    @Input
+    @Optional
     boolean failOnWarning = false
+
+    @Input
+    @Optional
     boolean onlyCriticalRules = false
 
     LintGradleTask() {
@@ -35,15 +44,16 @@ class LintGradleTask extends DefaultTask {
 
     @TaskAction
     void lint() {
-        def violations = new LintService().lint(project, onlyCriticalRules).violations
+        def violations = new LintService().lint(project, getOnlyCriticalRules()).violations
                 .unique { v1, v2 -> v1.is(v2) ? 0 : 1 }
 
-        (listeners + new GradleLintPatchAction(project) + new GradleLintInfoBrokerAction(project) + consoleOutputAction).each {
+        (getListeners() + new GradleLintPatchAction(project) + new GradleLintInfoBrokerAction(project) + consoleOutputAction).each {
             it.lintFinished(violations)
         }
 
     }
 
+    @Internal
     final def consoleOutputAction = new GradleLintViolationAction() {
         @Override
         void lintFinished(Collection<GradleViolation> violations) {
@@ -102,7 +112,7 @@ class LintGradleTask extends DefaultTask {
                     throw new GradleException("This build contains $errors critical lint violation${errors == 1 ? '' : 's'}")
                 }
 
-                if (failOnWarning) {
+                if (getFailOnWarning()) {
                     throw new GradleException("This build contains $warnings lint violation${warnings == 1 ? '' : 's'}")
                 }
             }
