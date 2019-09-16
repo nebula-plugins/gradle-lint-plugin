@@ -32,11 +32,11 @@ class LintGradleTask extends DefaultTask {
 
     @Input
     @Optional
-    boolean failOnWarning = false
+    Boolean failOnWarning = false
 
     @Input
     @Optional
-    boolean onlyCriticalRules = false
+    Boolean onlyCriticalRules = false
 
     LintGradleTask() {
         group = 'lint'
