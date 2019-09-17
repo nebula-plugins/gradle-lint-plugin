@@ -1,9 +1,11 @@
 package com.netflix.nebula.lint.rule
 
+import groovy.transform.CompileStatic
 import org.codenarc.rule.Rule
 import org.codenarc.rule.Violation
 import org.codenarc.source.SourceCode
 
+@CompileStatic
 class FixmeRule implements Rule {
     @Override
     List<Violation> applyTo(SourceCode sourceCode) {

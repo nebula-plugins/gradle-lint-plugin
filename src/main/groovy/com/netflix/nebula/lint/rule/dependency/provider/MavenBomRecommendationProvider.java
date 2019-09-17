@@ -20,6 +20,7 @@ package com.netflix.nebula.lint.rule.dependency.provider;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import groovy.transform.CompileStatic;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Parent;
@@ -53,6 +54,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+@CompileStatic
 public class MavenBomRecommendationProvider extends ClasspathBasedRecommendationProvider {
     private final Logger log = LoggerFactory.getLogger(MavenBomRecommendationProvider.class);
     private Supplier<Map<String, String>> recommendations = Suppliers.memoize(new Supplier<Map<String, String>>() {

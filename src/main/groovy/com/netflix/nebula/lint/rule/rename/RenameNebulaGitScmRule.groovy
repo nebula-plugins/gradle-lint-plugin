@@ -16,6 +16,9 @@
 
 package com.netflix.nebula.lint.rule.rename
 
+import groovy.transform.CompileStatic
+
+@CompileStatic
 class RenameNebulaGitScmRule extends PluginRenamedRule {
     RenameNebulaGitScmRule() {
         super('gradle-git-scm', 'nebula.gradle-git-scm')

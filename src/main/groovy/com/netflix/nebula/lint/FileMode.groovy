@@ -16,8 +16,11 @@
 
 package com.netflix.nebula.lint
 
+import groovy.transform.CompileStatic
+
 import static java.nio.file.Files.isSymbolicLink
 
+@CompileStatic
 enum FileMode {
     Regular(100644),
     Symlink(120000),

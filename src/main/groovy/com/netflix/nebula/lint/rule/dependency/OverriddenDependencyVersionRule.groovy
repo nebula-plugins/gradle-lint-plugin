@@ -3,6 +3,8 @@ package com.netflix.nebula.lint.rule.dependency
 import com.netflix.nebula.lint.rule.GradleDependency
 import com.netflix.nebula.lint.rule.GradleLintRule
 import com.netflix.nebula.lint.rule.GradleModelAware
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.gradle.api.artifacts.ComponentMetadata
 import org.gradle.api.artifacts.ModuleVersionIdentifier
@@ -12,6 +14,7 @@ import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.DefaultV
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.LatestVersionSelector
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.VersionParser
 
+@CompileStatic
 class OverriddenDependencyVersionRule extends GradleLintRule implements GradleModelAware {
     String description = 'be declarative about first order dependency versions that are changed by conflict resolution'
 
@@ -26,6 +29,7 @@ class OverriddenDependencyVersionRule extends GradleLintRule implements GradleMo
     }
 
     @Override
+    @CompileDynamic
     void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
         if (!resolvableAndResolvedConfigurations.collect { it.name }.contains(conf)) {
             return // we won't slow down the build by resolving the configuration if it hasn't been already

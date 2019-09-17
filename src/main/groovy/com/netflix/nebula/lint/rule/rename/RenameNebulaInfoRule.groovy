@@ -16,6 +16,9 @@
 
 package com.netflix.nebula.lint.rule.rename
 
+import groovy.transform.CompileStatic
+
+@CompileStatic
 class RenameNebulaInfoRule extends PluginRenamedRule {
     RenameNebulaInfoRule() {
         super('info', 'nebula.info')

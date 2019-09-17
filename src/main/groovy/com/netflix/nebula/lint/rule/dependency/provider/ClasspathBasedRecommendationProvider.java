@@ -18,6 +18,7 @@
 
 package com.netflix.nebula.lint.rule.dependency.provider;
 
+import groovy.transform.CompileStatic;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
@@ -34,6 +35,7 @@ import java.nio.file.Paths;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+@CompileStatic
 public abstract class ClasspathBasedRecommendationProvider extends AbstractRecommendationProvider {
     private final Logger log = LoggerFactory.getLogger(ClasspathBasedRecommendationProvider.class);
     protected Project project;

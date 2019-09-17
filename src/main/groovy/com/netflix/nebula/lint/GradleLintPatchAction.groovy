@@ -17,6 +17,8 @@
 package com.netflix.nebula.lint
 
 import groovy.transform.Canonical
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 import org.apache.commons.lang.StringUtils
 import org.gradle.api.Project
 
@@ -24,6 +26,7 @@ import static FileMode.Symlink
 import static com.netflix.nebula.lint.PatchType.*
 import static java.nio.file.Files.readSymbolicLink
 
+@CompileStatic
 @Canonical
 class GradleLintPatchAction extends GradleLintViolationAction {
     Project project
@@ -71,6 +74,7 @@ class GradleLintPatchAction extends GradleLintViolationAction {
         return headers.collect { "|$it" }.join('\n')
     }
 
+    @CompileDynamic
     String patch(List<GradleLintFix> fixes) {
         List<List<GradleLintFix>> patchSets = []
 

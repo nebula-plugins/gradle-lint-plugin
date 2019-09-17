@@ -3,6 +3,7 @@ package com.netflix.nebula.lint.rule.task
 
 import com.netflix.nebula.lint.GradleViolation
 import com.netflix.nebula.lint.rule.GradleLintRule
+import groovy.transform.CompileStatic
 import org.apache.commons.lang.StringUtils
 import org.codehaus.groovy.ast.expr.BinaryExpression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
@@ -47,6 +48,7 @@ class TaskDefinitionOperatorRule extends GradleLintRule {
         return changes
     }
 
+    @CompileStatic
     private String extractClosureCodeBlock(String taskName, String originalClosure) {
         String codeBlock = originalClosure.replace(TASK_INDICATOR, EMPTY_STRING)
                 .replace(taskName, EMPTY_STRING)

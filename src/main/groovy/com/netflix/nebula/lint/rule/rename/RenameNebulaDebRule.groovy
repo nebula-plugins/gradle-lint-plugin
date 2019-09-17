@@ -16,6 +16,9 @@
 
 package com.netflix.nebula.lint.rule.rename
 
+import groovy.transform.CompileStatic
+
+@CompileStatic
 class RenameNebulaDebRule extends PluginRenamedRule {
     RenameNebulaDebRule() {
         super('deb', 'nebula.deb')

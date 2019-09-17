@@ -16,7 +16,7 @@ import java.nio.file.Path
 class MethodScanner {
     private AppClassVisitor classVisitor
 
-    private ArrayList<MethodReference> methodReferences = []
+    private List<MethodReference> methodReferences = []
 
     private class AppMethodVisitor extends MethodVisitor {
 

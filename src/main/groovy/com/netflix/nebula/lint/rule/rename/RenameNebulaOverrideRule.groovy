@@ -16,6 +16,9 @@
 
 package com.netflix.nebula.lint.rule.rename
 
+import groovy.transform.CompileStatic
+
+@CompileStatic
 class RenameNebulaOverrideRule extends PluginRenamedRule {
     RenameNebulaOverrideRule() {
         super('nebula-override', 'nebula.override')

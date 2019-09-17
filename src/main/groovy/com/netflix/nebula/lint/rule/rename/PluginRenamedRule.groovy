@@ -19,8 +19,10 @@ package com.netflix.nebula.lint.rule.rename
 import com.netflix.nebula.lint.rule.GradleLintRule
 import com.netflix.nebula.lint.rule.GradlePlugin
 import groovy.transform.Canonical
+import groovy.transform.CompileStatic
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 
+@CompileStatic
 @Canonical
 class PluginRenamedRule extends GradleLintRule {
     String deprecatedPluginName

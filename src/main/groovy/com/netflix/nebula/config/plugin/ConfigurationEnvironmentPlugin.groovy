@@ -1,5 +1,6 @@
 package com.netflix.nebula.config.plugin
 
+import groovy.transform.CompileStatic
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
@@ -9,6 +10,7 @@ import org.gradle.api.Project
  * new lint rules that may depend on manipulating dependencies in a
  * configuration-dependent way.
  */
+@CompileStatic
 class ConfigurationEnvironmentPlugin implements Plugin<Project> {
     @Override
     void apply(Project project) {

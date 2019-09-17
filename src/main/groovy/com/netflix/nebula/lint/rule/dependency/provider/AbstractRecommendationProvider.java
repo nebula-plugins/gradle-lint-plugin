@@ -18,6 +18,9 @@
 
 package com.netflix.nebula.lint.rule.dependency.provider;
 
+import groovy.transform.CompileStatic;
+
+@CompileStatic
 public abstract class AbstractRecommendationProvider implements RecommendationProvider {
     protected String name;
 

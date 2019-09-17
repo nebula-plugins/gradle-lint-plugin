@@ -16,6 +16,9 @@
 
 package com.netflix.nebula.lint.rule.rename
 
+import groovy.transform.CompileStatic
+
+@CompileStatic
 class RenameNebulaOspackageApplicationRule extends PluginRenamedRule {
     RenameNebulaOspackageApplicationRule() {
         super('nebula-ospackage-application', 'nebula.ospackage-application')

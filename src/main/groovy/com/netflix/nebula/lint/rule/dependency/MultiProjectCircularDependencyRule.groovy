@@ -2,12 +2,15 @@ package com.netflix.nebula.lint.rule.dependency
 
 import com.netflix.nebula.lint.rule.GradleLintRule
 import com.netflix.nebula.lint.rule.GradleModelAware
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 import groovy.transform.TupleConstructor
 import org.codehaus.groovy.ast.expr.ConstantExpression
 import org.codehaus.groovy.ast.expr.Expression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 
 
+@CompileStatic
 class MultiProjectCircularDependencyRule extends GradleLintRule implements GradleModelAware {
     String description = 'Detect circular dependencies in multi projects'
 
@@ -36,6 +39,7 @@ class MultiProjectCircularDependencyRule extends GradleLintRule implements Gradl
         }
     }
 
+    @CompileDynamic
     private String findProjectName(Expression projectDependency) {
         String projectName = projectDependency?.arguments?.expressions?.find { it instanceof ConstantExpression }?.value
         if(!projectName) {
@@ -45,6 +49,7 @@ class MultiProjectCircularDependencyRule extends GradleLintRule implements Gradl
     }
 
 
+    @CompileDynamic
     private List<MethodCallExpression> findProjectDependecies(MethodCallExpression call) {
         List expressions = call.arguments.expressions*.code*.statements.flatten().expression
         List<MethodCallExpression> dependencyExpressions = expressions.findAll { it instanceof MethodCallExpression }.arguments.expressions.flatten().findAll {

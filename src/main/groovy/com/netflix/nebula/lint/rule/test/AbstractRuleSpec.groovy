@@ -22,6 +22,8 @@ import com.netflix.nebula.lint.plugin.NotNecessarilyGitRepository
 import com.netflix.nebula.lint.rule.BuildFiles
 import com.netflix.nebula.lint.rule.GradleLintRule
 import com.netflix.nebula.lint.rule.GradleModelAware
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 import nebula.test.ProjectSpec
 import org.codenarc.analyzer.StringSourceAnalyzer
 import org.codenarc.results.Results
@@ -29,6 +31,7 @@ import org.codenarc.ruleset.CompositeRuleSet
 import org.codenarc.ruleset.RuleSet
 import org.eclipse.jgit.api.ApplyCommand
 
+@CompileStatic
 abstract class AbstractRuleSpec extends ProjectSpec {
     def setupSpec() {
         Results.mixin ResultsAssert
@@ -60,6 +63,7 @@ abstract class AbstractRuleSpec extends ProjectSpec {
         new StringSourceAnalyzer(project.buildFile.text).analyze(configureRuleSet(configureBuildFile(rules)))
     }
 
+    @CompileDynamic
     String correct(GradleLintRule... rules) {
         def analyzer = new StringSourceAnalyzer(project.buildFile.text)
         def rulesWithBuildFile = configureBuildFile(rules)

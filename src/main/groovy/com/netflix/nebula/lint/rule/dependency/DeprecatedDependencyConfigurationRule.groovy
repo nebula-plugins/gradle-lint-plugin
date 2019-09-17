@@ -5,8 +5,11 @@ import com.netflix.nebula.lint.GradleViolation
 import com.netflix.nebula.lint.rule.GradleDependency
 import com.netflix.nebula.lint.rule.GradleLintRule
 import com.netflix.nebula.lint.rule.GradleModelAware
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 
+@CompileStatic
 class DeprecatedDependencyConfigurationRule extends GradleLintRule implements GradleModelAware {
     String description = 'Replace deprecated configurations in dependencies'
 
@@ -51,6 +54,7 @@ class DeprecatedDependencyConfigurationRule extends GradleLintRule implements Gr
      * Responsible for replacing configurations in project dependencies only
      * @param call
      */
+    @CompileDynamic
     private void handleProjectDependencies(MethodCallExpression call) {
         List statements = call.arguments.expressions*.code*.statements.flatten().findAll  { it.expression instanceof MethodCallExpression }
         statements.each { statement ->
@@ -71,6 +75,7 @@ class DeprecatedDependencyConfigurationRule extends GradleLintRule implements Gr
         }
     }
 
+    @CompileDynamic
     private void handleDependencyVisit(MethodCallExpression call, String conf, GradleDependency dep) {
         if(CONFIGURATION_REPLACEMENTS.containsKey(conf) && !GradleKt.versionLessThan(project.gradle, MINIMUM_GRADLE_VERSION)) {
             if (call.arguments.expressions.size() == 1) {

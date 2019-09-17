@@ -16,6 +16,8 @@
 
 package com.netflix.nebula.lint.rule.dependency
 
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 import org.gradle.api.artifacts.ResolvedArtifact
 import org.objectweb.asm.*
 import org.objectweb.asm.signature.SignatureReader
@@ -23,6 +25,7 @@ import org.objectweb.asm.signature.SignatureVisitor
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+@CompileStatic
 final class DependencyClassVisitor extends ClassVisitor {
     private Map<String, Collection<ResolvedArtifact>> classOwners
     private String className
@@ -51,6 +54,7 @@ final class DependencyClassVisitor extends ClassVisitor {
             new SignatureReader(signature).accept(new DependencySignatureVisitor())
     }
 
+    @CompileDynamic
     void readObjectName(String type, boolean indirect = false) {
         if(!type) return
         def owners = classOwners[Type.getObjectType(type).internalName] ?: Collections.emptySet()
