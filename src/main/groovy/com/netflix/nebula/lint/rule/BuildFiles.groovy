@@ -1,9 +1,12 @@
 package com.netflix.nebula.lint.rule
 
+import groovy.transform.CompileStatic
+
 /**
  * This class provides transformation from multiple build files to one concatenated text which is used for applying
  * lint rules. We keep original mapping so we can get based on line number in concatenated text original line and file.
  */
+@CompileStatic
 class BuildFiles {
 
     private Map<LineRange, File> orderedFiles = new LinkedHashMap<>()
@@ -53,7 +56,7 @@ class BuildFiles {
         } else {
             new Original(
                     file: orderedFiles.values().first(),
-                    line: null
+                    line: null as Integer
             )
         }
     }

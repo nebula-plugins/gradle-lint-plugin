@@ -16,6 +16,8 @@
 
 package com.netflix.nebula.lint
 
+import groovy.transform.CompileStatic
+
 import java.nio.file.Files
 
 /**
@@ -59,6 +61,7 @@ abstract class GradleLintMultilineFix extends GradleLintFix {
     Integer to() { affectedLines.to }
 }
 
+@CompileStatic
 class GradleLintReplaceWith extends GradleLintMultilineFix {
     Integer fromColumn // the first affected column of the first line (1-based, inclusive)
     Integer toColumn // the last affected column of the last line (1-based, exclusive)
@@ -78,6 +81,7 @@ class GradleLintReplaceWith extends GradleLintMultilineFix {
     String changes() { changes }
 }
 
+@CompileStatic
 class GradleLintDeleteLines extends GradleLintMultilineFix {
 
     GradleLintDeleteLines(GradleViolation violation, File affectedFile, Range<Integer> affectedLines) {
@@ -90,6 +94,7 @@ class GradleLintDeleteLines extends GradleLintMultilineFix {
     String changes() { null }
 }
 
+@CompileStatic
 class GradleLintInsertAfter extends GradleLintFix {
     Integer afterLine // 1-based
     String changes
@@ -111,6 +116,7 @@ class GradleLintInsertAfter extends GradleLintFix {
     String changes() { changes }
 }
 
+@CompileStatic
 class GradleLintInsertBefore extends GradleLintFix {
     Integer beforeLine // 1-based
     String changes
@@ -132,6 +138,7 @@ class GradleLintInsertBefore extends GradleLintFix {
     String changes() { changes }
 }
 
+@CompileStatic
 class GradleLintDeleteFile extends GradleLintMultilineFix implements RequiresOwnPatchset {
     GradleLintDeleteFile(GradleViolation violation, File affectedFile) {
         this.violation = violation
@@ -144,6 +151,7 @@ class GradleLintDeleteFile extends GradleLintMultilineFix implements RequiresOwn
     String changes() { null }
 }
 
+@CompileStatic
 class GradleLintCreateFile extends GradleLintInsertBefore implements RequiresOwnPatchset {
     FileMode fileMode
 

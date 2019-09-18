@@ -19,9 +19,11 @@
 package com.netflix.nebula.lint.rule.dependency
 
 import com.netflix.nebula.lint.rule.GradleDependency
+import groovy.transform.CompileStatic
 import groovy.transform.Immutable
 
 @Immutable
+@CompileStatic
 class ModuleDescriptor {
     String group
     String name

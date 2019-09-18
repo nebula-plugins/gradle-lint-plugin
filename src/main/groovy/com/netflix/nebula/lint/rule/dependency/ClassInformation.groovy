@@ -1,5 +1,8 @@
 package com.netflix.nebula.lint.rule.dependency
 
+import groovy.transform.CompileStatic
+
+@CompileStatic
 class ClassInformation {
     String filePath
     String source

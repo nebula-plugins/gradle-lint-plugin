@@ -15,6 +15,9 @@
  */
 package com.netflix.nebula.lint.rule.rename
 
+import groovy.transform.CompileStatic
+
+@CompileStatic
 class RenameNebulaReleaseRule extends PluginRenamedRule {
     RenameNebulaReleaseRule() {
         super('nebula.nebula-release', 'nebula.release')

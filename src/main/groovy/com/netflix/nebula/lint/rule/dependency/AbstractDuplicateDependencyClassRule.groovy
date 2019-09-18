@@ -3,18 +3,21 @@ package com.netflix.nebula.lint.rule.dependency
 import com.netflix.nebula.lint.rule.GradleDependency
 import com.netflix.nebula.lint.rule.GradleLintRule
 import com.netflix.nebula.lint.rule.GradleModelAware
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ModuleVersionIdentifier
 
+@CompileStatic
 abstract class AbstractDuplicateDependencyClassRule extends GradleLintRule implements GradleModelAware {
     String description = 'classpaths with duplicate classes may break unpredictably depending on the order in which dependencies are provided to the classpath'
 
     Set<Configuration> directlyUsedConfigurations = [] as Set
     Set<ModuleVersionIdentifier> ignoredDependencies = [] as Set
 
-    def resolvableAndResolvedConfigurations
+    Set<Configuration> resolvableAndResolvedConfigurations
 
     abstract protected List<ModuleVersionIdentifier> moduleIds(Configuration conf)
 

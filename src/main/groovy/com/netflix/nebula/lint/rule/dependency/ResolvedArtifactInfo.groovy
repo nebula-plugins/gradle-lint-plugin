@@ -1,7 +1,9 @@
 package com.netflix.nebula.lint.rule.dependency
 
+import groovy.transform.CompileStatic
 import org.gradle.api.artifacts.ResolvedArtifact
 
+@CompileStatic
 class ResolvedArtifactInfo {
     String organization
     String name

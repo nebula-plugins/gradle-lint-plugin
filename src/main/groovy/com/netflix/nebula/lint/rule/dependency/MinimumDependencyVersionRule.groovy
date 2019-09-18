@@ -3,6 +3,7 @@ package com.netflix.nebula.lint.rule.dependency
 import com.netflix.nebula.lint.rule.GradleDependency
 import com.netflix.nebula.lint.rule.GradleLintRule
 import com.netflix.nebula.lint.rule.GradleModelAware
+import groovy.transform.CompileStatic
 import org.codehaus.groovy.ast.ASTNode
 import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.ast.expr.Expression
@@ -18,10 +19,11 @@ import org.gradle.util.VersionNumber
  * Continuing confluence of these two plugins may eventually result in a different way to parameterize the rule.
  */
 @Incubating
+@CompileStatic
 class MinimumDependencyVersionRule extends GradleLintRule implements GradleModelAware {
     String description = 'pull up dependencies to a minimum version if necessary'
-    def alreadyAdded = [] as Set
-    def resolvableAndResolvedConfigurations
+    Set alreadyAdded = [] as Set
+    Set<Configuration> resolvableAndResolvedConfigurations
 
     @Lazy
     List<GradleDependency> minimumVersions = {
@@ -32,7 +34,7 @@ class MinimumDependencyVersionRule extends GradleLintRule implements GradleModel
                     collect { GradleDependency.fromConstant(it) }?.
                     findAll { it != null } ?:
                     []
-        } else []
+        } else [] as List<GradleDependency>
     }()
 
     @Override

@@ -17,11 +17,14 @@
 package com.netflix.nebula.lint.rule
 
 import groovy.transform.Canonical
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 import org.gradle.api.artifacts.ModuleIdentifier
 import org.gradle.api.artifacts.ModuleVersionIdentifier
 import org.gradle.api.internal.artifacts.DefaultModuleIdentifier
 import org.gradle.api.internal.artifacts.DefaultModuleVersionIdentifier
 
+@CompileStatic
 @Canonical
 class GradleDependency implements Cloneable {
     String group
@@ -38,10 +41,12 @@ class GradleDependency implements Cloneable {
         EvaluatedArbitraryCode
     }
 
+    @CompileDynamic
     ModuleVersionIdentifier toModuleVersion() {
         return new DefaultModuleVersionIdentifier(group, name, version)
     }
-    
+
+    @CompileDynamic
     ModuleIdentifier toModule() {
         return new DefaultModuleIdentifier(group, name)
     }

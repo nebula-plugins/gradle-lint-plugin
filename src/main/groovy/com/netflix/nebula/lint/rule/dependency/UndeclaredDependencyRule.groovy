@@ -2,12 +2,15 @@ package com.netflix.nebula.lint.rule.dependency
 
 import com.netflix.nebula.lint.rule.GradleLintRule
 import com.netflix.nebula.lint.rule.GradleModelAware
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 import org.codehaus.groovy.ast.ASTNode
 import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.gradle.api.artifacts.ModuleVersionIdentifier
 import org.gradle.api.plugins.JavaPluginConvention
 
+@CompileStatic
 class UndeclaredDependencyRule extends GradleLintRule implements GradleModelAware {
     private static final String DEPENDENCIES_BLOCK = 'rootDependenciesBlock'
 
@@ -77,7 +80,8 @@ class UndeclaredDependencyRule extends GradleLintRule implements GradleModelAwar
         return undeclaredDependencies
     }
 
-    private void addUndeclaredDependenciesAlphabetically(Map<String, Map> violations) {
+    @CompileDynamic
+    private void addUndeclaredDependenciesAlphabetically(Map<String, HashMap<String, ASTNode>> violations) {
         TreeMap<String, Map> sortedViolations = new TreeMap<String, Map>()
         sortedViolations.putAll(violations)
 

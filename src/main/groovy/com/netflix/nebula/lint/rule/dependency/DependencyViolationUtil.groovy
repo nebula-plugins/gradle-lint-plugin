@@ -2,8 +2,10 @@ package com.netflix.nebula.lint.rule.dependency
 
 import com.netflix.nebula.lint.GradleViolation
 import com.netflix.nebula.lint.rule.GradleDependency
+import groovy.transform.CompileStatic
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 
+@CompileStatic
 class DependencyViolationUtil {
 
     static void replaceProjectDependencyConfiguration(GradleViolation violation, MethodCallExpression call, String configuration, String project) {

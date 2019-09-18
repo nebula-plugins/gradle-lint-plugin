@@ -3,12 +3,14 @@ package com.netflix.nebula.lint.rule.dependency
 import com.netflix.nebula.lint.rule.GradleDependency
 import com.netflix.nebula.lint.rule.GradleLintRule
 import com.netflix.nebula.lint.rule.GradleModelAware
+import groovy.transform.CompileStatic
 import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.gradle.api.artifacts.ModuleIdentifier
 import org.gradle.api.artifacts.ModuleVersionIdentifier
 import org.gradle.api.plugins.JavaPluginConvention
 
+@CompileStatic
 class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
     String description = 'remove unused dependencies, relocate dependencies to the correct configuration, and ensure that directly used transitives are declared as first order dependencies'
     static final List<String> shouldBeRuntime = ['xerces', 'xercesImpl', 'xml-apis']

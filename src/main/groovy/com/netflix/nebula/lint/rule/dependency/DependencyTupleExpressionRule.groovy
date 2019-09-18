@@ -20,8 +20,10 @@ import com.netflix.nebula.lint.rule.GradleAstUtil
 import com.netflix.nebula.lint.rule.GradleDependency
 import com.netflix.nebula.lint.rule.GradleLintRule
 import com.netflix.nebula.lint.rule.GradleModelAware
+import groovy.transform.CompileStatic
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 
+@CompileStatic
 class DependencyTupleExpressionRule extends GradleLintRule implements GradleModelAware {
     String description = "use the more compact string representation of a dependency when possible"
 

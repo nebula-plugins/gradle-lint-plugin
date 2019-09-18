@@ -16,6 +16,9 @@
 
 package com.netflix.nebula.lint
 
+import groovy.transform.CompileStatic
+
+@CompileStatic
 enum UnfixedViolationReason {
     OverlappingPatch('one or more fixes overlap with another, run fixGradleLint again to apply the change')
 

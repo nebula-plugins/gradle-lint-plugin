@@ -15,6 +15,9 @@
  */
 package com.netflix.nebula.lint.rule.rename
 
+import groovy.transform.CompileStatic
+
+@CompileStatic
 class RenameNebulaJavadocJarRule extends PluginRenamedRule {
     RenameNebulaJavadocJarRule() {
         super('nebula-javadoc-jar', 'nebula.javadoc-jar')

@@ -16,6 +16,9 @@
 
 package com.netflix.nebula.lint.rule.rename
 
+import groovy.transform.CompileStatic
+
+@CompileStatic
 class RenameNebulaOspackageDaemonRule extends PluginRenamedRule {
     RenameNebulaOspackageDaemonRule() {
         super('nebula-ospackage-daemon', 'nebula.ospackage-daemon')

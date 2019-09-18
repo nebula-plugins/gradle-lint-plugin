@@ -16,10 +16,12 @@
 
 package com.netflix.nebula.lint.rule.dependency
 
+import groovy.transform.CompileStatic
 import groovy.transform.Memoized
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+@CompileStatic
 class ClassHierarchyUtils {
     private static Logger logger = LoggerFactory.getLogger(ClassHierarchyUtils)
 
