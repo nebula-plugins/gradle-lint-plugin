@@ -17,7 +17,6 @@
 package com.netflix.nebula.lint
 
 import com.netflix.nebula.lint.rule.BuildFiles
-import groovy.transform.CompileStatic
 import groovy.transform.EqualsAndHashCode
 import org.codehaus.groovy.ast.ASTNode
 import org.codehaus.groovy.ast.expr.ArgumentListExpression
@@ -28,7 +27,6 @@ import org.codenarc.rule.Violation
 
 import java.util.concurrent.atomic.AtomicInteger
 
-@CompileStatic
 @EqualsAndHashCode(includes = 'id')
 class GradleViolation extends Violation {
     BuildFiles files
