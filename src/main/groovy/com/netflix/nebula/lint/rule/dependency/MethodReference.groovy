@@ -35,7 +35,7 @@ class MethodReference {
         INVOKEINTERFACE(185),
         INVOKEDYNAMIC(186)
 
-        private int code
+        int code
 
         OpCode(int code) {
             this.code = code
