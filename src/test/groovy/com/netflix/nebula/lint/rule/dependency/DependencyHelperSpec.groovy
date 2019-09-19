@@ -45,7 +45,7 @@ class DependencyHelperSpec extends IntegrationSpec {
         writeHelloWorld('test.nebula')
 
         expect:
-        def results = runTasks('fixGradleLint', '--stacktrace')
+        def results = runTasks('fixGradleLint', '--stacktrace', '--warning-mode', 'none')
         buildFile.text.contains(depResult)
         if (dep != depResult) {
             !buildFile.text.contains(dep)
@@ -53,19 +53,19 @@ class DependencyHelperSpec extends IntegrationSpec {
 
         where:
         dep | depResult
-        'compile \'test.nebula:foo:1.0.0\'' | 'compile \'test.nebula:foo\''
-        'testCompile \'test.nebula:foo:1.0.0\'' | 'testCompile \'test.nebula:foo\''
-        'compile \'test.nebula:foo:1.0.0:tests\'' | 'compile \'test.nebula:foo::tests\''
-        'compile "test.nebula:foo:${myVersion}"' | 'compile "test.nebula:foo"'
-        'runtime group: \'test.nebula\', name: \'foo\', version: \'1.0.0\'' | 'runtime group: \'test.nebula\', name: \'foo\''
-        'runtime group: \'test.nebula\', name: \'foo\', version: myVersion' | 'runtime group: \'test.nebula\', name: \'foo\''
-        'compile \'test.nebula:foo:1.0.0\',\n' + (' ' * 20)  + '\'a:b:1.0.0\'' | 'compile \'test.nebula:foo:1.0.0\',\n' + (' ' * 8) + '\'a:b:1.0.0\'' // opt to ignore lists of strings for now
-        'compile(\'test.nebula:foo:1.0.0\') { transitive = false }' | 'compile(\'test.nebula:foo\') { transitive = false }'
-        'compile(\'test.nebula:foo:1.0.0\') { }' | 'compile(\'test.nebula:foo\') { }'
-        'compile("test.nebula:foo:${myVersion}") { transitive = false }' | 'compile("test.nebula:foo") { transitive = false }'
-        'compile(group: \'test.nebula\', name: \'foo\', version: \'1.0.0\') { transitive = false }' | 'compile(group: \'test.nebula\', name: \'foo\') { transitive = false }'
-        'compile(\'test.nebula:foo:1.0.0\') { force = true }' | 'compile(\'test.nebula:foo:1.0.0\') { force = true }'
-        'compile(group: \'test.nebula\', name: \'foo\', version: \'1.0.0\') { force = true }' | 'compile(group: \'test.nebula\', name: \'foo\', version: \'1.0.0\') { force = true }'
+        'implementation \'test.nebula:foo:1.0.0\'' | 'implementation \'test.nebula:foo\''
+        'testImplementation \'test.nebula:foo:1.0.0\'' | 'testImplementation \'test.nebula:foo\''
+        'implementation \'test.nebula:foo:1.0.0:tests\'' | 'implementation \'test.nebula:foo::tests\''
+        'implementation "test.nebula:foo:${myVersion}"' | 'implementation "test.nebula:foo"'
+        'runtimeOnly group: \'test.nebula\', name: \'foo\', version: \'1.0.0\'' | 'runtimeOnly group: \'test.nebula\', name: \'foo\''
+        'runtimeOnly group: \'test.nebula\', name: \'foo\', version: myVersion' | 'runtimeOnly group: \'test.nebula\', name: \'foo\''
+        'implementation \'test.nebula:foo:1.0.0\',\n' + (' ' * 20)  + '\'a:b:1.0.0\'' | 'implementation \'test.nebula:foo:1.0.0\',\n' + (' ' * 8) + '\'a:b:1.0.0\'' // opt to ignore lists of strings for now
+        'implementation(\'test.nebula:foo:1.0.0\') { transitive = false }' | 'implementation(\'test.nebula:foo\') { transitive = false }'
+        'implementation(\'test.nebula:foo:1.0.0\') { }' | 'implementation(\'test.nebula:foo\') { }'
+        'implementation("test.nebula:foo:${myVersion}") { transitive = false }' | 'implementation("test.nebula:foo") { transitive = false }'
+        'implementation(group: \'test.nebula\', name: \'foo\', version: \'1.0.0\') { transitive = false }' | 'implementation(group: \'test.nebula\', name: \'foo\') { transitive = false }'
+        'implementation(\'test.nebula:foo:1.0.0\') { force = true }' | 'implementation(\'test.nebula:foo:1.0.0\') { force = true }'
+        'implementation(group: \'test.nebula\', name: \'foo\', version: \'1.0.0\') { force = true }' | 'implementation(group: \'test.nebula\', name: \'foo\', version: \'1.0.0\') { force = true }'
     }
 
     @Unroll('should transform(replace) #dep -> #depResult')
