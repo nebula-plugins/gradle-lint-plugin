@@ -10,7 +10,6 @@ import org.gradle.api.artifacts.ModuleIdentifier
 import org.gradle.api.artifacts.ModuleVersionIdentifier
 import org.gradle.api.plugins.JavaPluginConvention
 
-@CompileStatic
 class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
     String description = 'remove unused dependencies, relocate dependencies to the correct configuration, and ensure that directly used transitives are declared as first order dependencies'
     static final List<String> shouldBeRuntime = ['xerces', 'xercesImpl', 'xml-apis']
