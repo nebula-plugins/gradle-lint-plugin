@@ -20,13 +20,10 @@ import com.netflix.nebula.lint.rule.GradleAstUtil
 import com.netflix.nebula.lint.rule.GradleDependency
 import com.netflix.nebula.lint.rule.GradleLintRule
 import com.netflix.nebula.lint.rule.GradleModelAware
-import groovy.transform.CompileDynamic
-import groovy.transform.CompileStatic
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.specs.Specs
 
-@CompileStatic
 class UnusedDependencyExcludeRule extends GradleLintRule implements GradleModelAware {
     String description = 'excludes that have no effect on the classpath should be removed for clarity'
 
@@ -53,7 +50,6 @@ class UnusedDependencyExcludeRule extends GradleLintRule implements GradleModelA
         }
     }
 
-    @CompileDynamic
     private boolean isExcludeUnnecessary(String group, String name) {
         // Since Gradle does not expose any information about which excludes were effective, we will create a new configuration
         // lintExcludeConf, add the dependency and resolve it.
