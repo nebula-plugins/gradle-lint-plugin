@@ -7,6 +7,8 @@ import com.netflix.nebula.lint.rule.GradleLintRule
 import com.netflix.nebula.lint.rule.GradleModelAware
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import org.codehaus.groovy.ast.expr.ConstantExpression
+import org.codehaus.groovy.ast.expr.Expression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 
 @CompileStatic
@@ -67,11 +69,25 @@ class DeprecatedDependencyConfigurationRule extends GradleLintRule implements Gr
                 if(!projectDependencies) {
                     return
                 }
-                String project = projectDependencies.first().arguments.expressions.first().value
+                String project = extractProject(projectDependencies.first().arguments.expressions.first())
+                if(!project) {
+                    //Could not extract project as expression is not supported
+                    return
+                }
                 String configurationReplacement = CONFIGURATION_REPLACEMENTS.get(configuration)
                 GradleViolation violation = addBuildLintViolation("Configuration $configuration has been deprecated and should be replaced with $configurationReplacement", statementMethodCallExpression)
                 DependencyViolationUtil.replaceProjectDependencyConfiguration(violation, statementMethodCallExpression, configurationReplacement, project)
             }
+        }
+    }
+
+    @CompileDynamic
+    private String extractProject(Expression expression) {
+        if(expression instanceof ConstantExpression) {
+            return expression.value
+        } else {
+            // other types not supportedd
+            return null
         }
     }
 
