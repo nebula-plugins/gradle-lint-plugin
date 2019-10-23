@@ -115,7 +115,7 @@ class DependencyService {
      * @param configuration
      * @return
      */
-    private Configuration findAndReplaceDeprecatedConfiguration(Configuration configuration) {
+    Configuration findAndReplaceDeprecatedConfiguration(Configuration configuration) {
         if(configuration.name == 'compile') {
             return project.configurations.findByName('compileClasspath')
         } else if(configuration.name.endsWith('Compile') && configuration.name != 'providedCompile') {
@@ -422,7 +422,7 @@ class DependencyService {
         }
     }
 
-    private Configuration getResolvableConfigurationOrParent(String confName) {
+    Configuration getResolvableConfigurationOrParent(String confName) {
         Configuration configuration = project.configurations.getByName(confName)
         if(isResolvable(confName)) {
             return configuration
