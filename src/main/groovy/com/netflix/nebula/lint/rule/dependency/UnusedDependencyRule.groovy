@@ -3,7 +3,6 @@ package com.netflix.nebula.lint.rule.dependency
 import com.netflix.nebula.lint.rule.GradleDependency
 import com.netflix.nebula.lint.rule.GradleLintRule
 import com.netflix.nebula.lint.rule.GradleModelAware
-import groovy.transform.CompileStatic
 import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.gradle.api.artifacts.ModuleIdentifier
@@ -37,38 +36,32 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
                 compileOnlyDependencies.add(mid)
             }
 
-            if (!dependencyService.isRuntime(conf) && dependencyService.isResolvable(conf)) {
+            if (!dependencyService.isRuntime(conf) && (dependencyService.isResolvable(conf) || dependencyService.hasResolvableParentConfiguration(conf))) {
                 def jarContents = dependencyService.jarContents(mid)
                 if (!jarContents) {
                     return // dependency being substituted by resolution rule?
                 }
                 if (jarContents.isWebjar) {
-                    addBuildLintViolation('webjars should be in the runtime configuration', call)
-                            .replaceWith(call, "runtime '${dep.toNotation()}'")
+                    addBuildLintViolation('webjars should be in the runtimeOnly configuration', call)
                 } else if (jarContents.nothingButMetaInf) {
                     addBuildLintViolation('this dependency should be removed since its artifact is empty', call)
-                            .delete(call)
                 } else if (jarContents.classes.isEmpty()) {
                     // webjars, resource bundles, etc
-                    addBuildLintViolation("this dependency should be moved to the runtime configuration since it has no classes", call)
-                            .replaceWith(call, "runtime '${dep.toNotation()}'")
+                    addBuildLintViolation("this dependency should be moved to the runtimeOnly configuration since it has no classes", call)
                 } else if (shouldBeRuntime.contains(dep.name)) {
-                    addBuildLintViolation("this dependency should be moved to the runtime configuration", call)
-                            .replaceWith(call, "runtime '${dep.toNotation()}'")
+                    addBuildLintViolation("this dependency should be moved to the runtimeOnly configuration", call)
                 } else if (dependencyService.unusedDependencies(conf).contains(mid)) {
                     def requiringSourceSet = dependencyService.parentSourceSetConfigurations(conf)
                             .find { parent -> dependencyService.usedDependencies(parent.name).contains(mid) }
 
                     if (jarContents.isServiceProvider) {
-                        addBuildLintViolation("this dependency is a service provider unused at compile time and can be moved to the runtime configuration", call)
-                                .replaceWith(call, "runtime '${dep.toNotation()}'")
+                        addBuildLintViolation("this dependency is a service provider unused at compileClasspath time and can be moved to the runtimeOnly configuration", call)
                     }
                     // is there some extending configuration that needs this dependency?
-                    if (requiringSourceSet && !dependencyService.firstLevelDependenciesInConf(requiringSourceSet)
+                    if (requiringSourceSet && !dependencyService.firstLevelDependenciesInConf(requiringSourceSet, conf)
                             .collect { it.module }.contains(mid) && conf != 'compileOnly') {
                         // never move compileOnly dependencies
                         addBuildLintViolation("this dependency should be moved to configuration $requiringSourceSet.name", call)
-                                .replaceWith(call, "${requiringSourceSet.name} '${dep.toNotation()}'")
                     } else {
                         addBuildLintViolation('this dependency is unused and can be removed', call)
                                 .delete(call)
@@ -87,8 +80,6 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
 
     @Override
     protected void visitClassComplete(ClassNode node) {
-        def dependenciesBlock = bookmark('dependencies')
-
         Set<ModuleVersionIdentifier> insertedDependencies = [] as Set
 
         def convention = project.convention.findPlugin(JavaPluginConvention)
@@ -103,12 +94,10 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
                     // TODO this may be too specialized, should we just be moving deps down conf hierarchies as necessary?
                     if (runtimeDeclaration) {
                         addBuildLintViolation("this dependency should be moved to configuration $confName", runtimeDeclaration)
-                                .replaceWith(runtimeDeclaration, "$confName '$undeclared'")
                     } else if(!compileOnlyDependencies.contains(undeclared.module)) {
                         // only add the dependency in the lowest configuration that requires it
                         if(insertedDependencies.add(undeclared)) {
                             addBuildLintViolation("one or more classes in $undeclared are required by your code directly")
-                                    .insertIntoClosure(dependenciesBlock, "$confName '$undeclared'")
                         }
                     }
                 }

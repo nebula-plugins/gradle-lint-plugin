@@ -7,6 +7,7 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.*
 import org.gradle.api.file.FileCollection
 import org.gradle.api.internal.artifacts.DefaultModuleIdentifier
+import org.gradle.api.internal.artifacts.DefaultModuleVersionIdentifier
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.SourceSet
 import org.gradle.util.VersionNumber
@@ -81,7 +82,14 @@ class DependencyService {
         extendingConfs(conf)
 
         def artifactsByClass = [:].withDefault { [] }
-        def artifactsToScan = terminalConfs*.resolvedConfiguration*.resolvedArtifacts.flatten().toSet() as Set<ResolvedArtifact>
+        def artifactsToScan = terminalConfs.collect { Configuration terminalConf ->
+            if(isResolvable(terminalConf)) {
+               return terminalConf.resolvedConfiguration.resolvedArtifacts
+            } else {
+                Configuration parent = terminalConf.extendsFrom.find { isResolvable(it) }
+                return findAndReplaceDeprecatedConfiguration(parent).resolvedConfiguration.resolvedArtifacts
+            }
+        }.flatten()
 
         GParsPool.withPool {
             artifactsToScan
@@ -100,6 +108,21 @@ class DependencyService {
         }
 
         return artifactsByClass
+    }
+
+    /**
+     * Replaces compile configuration for compileClasspath so we find proper usage of dependencies
+     * @param configuration
+     * @return
+     */
+    private Configuration findAndReplaceDeprecatedConfiguration(Configuration configuration) {
+        if(configuration.name == 'compile') {
+            return project.configurations.findByName('compileClasspath')
+        } else if(configuration.name.endsWith('Compile') && configuration.name != 'providedCompile') {
+            return project.configurations.findByName(configuration.name + 'Classpath')
+        } else {
+            return configuration
+        }
     }
 
     /**
@@ -270,9 +293,21 @@ class DependencyService {
         }
         .toSet()
 
-        def declared = conf.resolvedConfiguration.firstLevelModuleDependencies.collect { it.module.id }
+        def declared = findDeclaredDependencies(conf)
 
         return (required - declared).toSorted(DEPENDENCY_COMPARATOR).toSet()
+    }
+
+    private findDeclaredDependencies(Configuration configuration) {
+        def declared = configuration.resolvedConfiguration.firstLevelModuleDependencies.collect { it.module.id }
+        project.configurations.findAll { it.extendsFrom.contains(configuration )}.each { Configuration childConfig ->
+            if(isResolvable(childConfig)) {
+                declared.addAll childConfig.resolvedConfiguration.firstLevelModuleDependencies.collect { it.module.id }
+            } else {
+                declared.addAll childConfig.dependencies.collect { new DefaultModuleVersionIdentifier(it.group, it.name, it.version) }
+            }
+        }
+        return declared
     }
 
     /**
@@ -287,6 +322,10 @@ class DependencyService {
      */
     @Memoized
     boolean isRuntime(String confName) {
+        if (confName == 'runtime' || confName == 'runtimeOnly') {
+            return true
+        }
+
         if (confName == 'compileOnly')
             return false
 
@@ -313,7 +352,9 @@ class DependencyService {
 
         // if any configuration path does NOT contain a sourceSet conf in it somewhere, it is a runtime-only concern
         return terminalPaths.any { path ->
-            !path.any { sourceSetConfs.contains(it.name) }
+            !path.any { config ->
+                sourceSetConfs.contains(config.name) || config.extendsFrom.name.any { parentConfigName -> sourceSetConfs.contains(parentConfigName) }
+            }
         }
     }
 
@@ -359,16 +400,16 @@ class DependencyService {
         if (!references)
             return Collections.emptySet()
 
-        def conf = project.configurations.getByName(confName)
+        def resolvableConfig = findAndReplaceDeprecatedConfiguration(getResolvableConfigurationOrParent(confName))
         try {
-            def unused = firstLevelDependenciesInConf(conf)
+            def unused = firstLevelDependenciesInConf(resolvableConfig, project.configurations.findByName(confName))
 
             // remove all directly used dependencies
             unused.removeAll(references.direct.collect { it.moduleVersion.id })
 
             // dependencies that are indirectly used but not present in the transitive graph
             def neededBecauseOfAnIndirectRef = references.indirect.collect { it.moduleVersion.id }
-            conf.resolvedConfiguration.firstLevelModuleDependencies.each { d ->
+            resolvableConfig.resolvedConfiguration.firstLevelModuleDependencies.each { d ->
                 neededBecauseOfAnIndirectRef.removeAll(transitiveDependencies(d))
             }
 
@@ -381,18 +422,42 @@ class DependencyService {
         }
     }
 
+    private Configuration getResolvableConfigurationOrParent(String confName) {
+        Configuration configuration = project.configurations.getByName(confName)
+        if(isResolvable(confName)) {
+            return configuration
+        } else if(hasResolvableParentConfiguration(confName)) {
+            return configuration.extendsFrom.find { isResolvable(it.name) }
+        } else {
+            return configuration
+        }
+    }
+
     /**
-     * @param confName
+     * @param resolvableConfig
+     * @param declaredConfig
      * @return first level module dependencies (with resolved versions) declared to this conf directly, and
-     * not to extended configurations
+     *          not to extended configurations
+     */
+    Set<ModuleVersionIdentifier> firstLevelDependenciesInConf(Configuration resolvableConfig, String declaredConfig ) {
+        return firstLevelDependenciesInConf(resolvableConfig, project.configurations.findByName(declaredConfig))
+    }
+
+    /**
+     *
+     * @param resolvableConfig
+     * @param declaredConfig
+     * @return first level module dependencies (with resolved versions) declared to this conf directly, and
+     *         not to extended configurations
      */
     @Memoized
-    Set<ModuleVersionIdentifier> firstLevelDependenciesInConf(Configuration conf) {
-        def dependencies = conf.resolvedConfiguration.firstLevelModuleDependencies.collect { it.module.id }
-        def declared = conf.dependencies.collect { new DefaultModuleIdentifier(it.group, it.name) }
+    Set<ModuleVersionIdentifier> firstLevelDependenciesInConf(Configuration resolvableConfig, Configuration declaredConfig ) {
+        def dependencies = resolvableConfig.resolvedConfiguration.firstLevelModuleDependencies.collect { it.module.id }
+        def declared = declaredConfig.dependencies.collect { new DefaultModuleIdentifier(it.group, it.name) }
         dependencies.retainAll { declared.contains(it.module) }
         dependencies.toSet()
     }
+
 
     /**
      * @param dep
@@ -438,9 +503,17 @@ class DependencyService {
         if (Configuration.class.declaredMethods.any { it.name == 'isCanBeResolved' }) {
             //compileOnly and its flavors are marked as resolvable but only for backward compatibility purposes
             //in reality they shouldn't be
-            return conf.canBeResolved && !conf.name.toLowerCase().endsWith("compileonly")
+            return conf.canBeResolved  && !conf.name.toLowerCase().endsWith("compileonly")
         }
         return true
+    }
+
+    boolean hasResolvableParentConfiguration(String conf) {
+        try {
+            return project.configurations.getByName(conf).extendsFrom.any { it.canBeResolved }
+        } catch (UnknownConfigurationException ignored) {
+            return false
+        }
     }
 
     Set<Configuration> allExtendsFrom(Configuration conf) {
@@ -461,10 +534,12 @@ class DependencyService {
     }
 
     SourceSet sourceSetByConf(String conf) {
-        project.convention.findPlugin(JavaPluginConvention)?.sourceSets?.find { it.compileConfigurationName == conf } ?:
-                project.configurations.findAll { it.extendsFrom.contains(project.configurations.getByName(conf)) }
+        project.convention.findPlugin(JavaPluginConvention)?.sourceSets?.find { it.compileConfigurationName == conf }
+                ?: project.convention.findPlugin(JavaPluginConvention)?.sourceSets?.find { sourceSet -> project.configurations.getByName(conf).extendsFrom.any { it.name ==  sourceSet.compileConfigurationName } } //find source set from parent
+                ?: project.configurations.findAll { it.extendsFrom.contains(project.configurations.getByName(conf)) }
                         .collect { sourceSetByConf(it.name) }
                         .find { true } // get the first source set, if one is available that matches
+
     }
 
     private Iterable<File> sourceSetClasspath(String conf) {

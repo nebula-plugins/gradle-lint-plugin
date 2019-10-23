@@ -61,73 +61,85 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
         createJavaSourceFile(main)
 
         then:
-        runTasksSuccessfully('compileJava', 'fixGradleLint')
+        def result = runTasksSuccessfully('compileJava', 'autoLintGradle')
 
-        dependencies(buildFile) == expected
+        expectedWarnings.each {
+            assert result.output.contains(it)
+        }
 
         where:
-        deps               | expected
-        [guava, asm]       | [guava]
-        [springfox]        | [guava]
-        [guava, springfox] | [guava]
+        deps               | expectedWarnings
+        [guava, asm]       | ['warning   unused-dependency                  this dependency is unused and can be removed']
+        [springfox]        | ['warning   unused-dependency                  one or more classes in com.google.guava:guava:18.0 are required by your code directly', 'warning   unused-dependency                  this dependency is unused and can be removed']
+        [guava, springfox] | ['warning   unused-dependency                  this dependency is unused and can be removed']
     }
 
     @Unroll
-    def 'runtime dependencies with configuration \'#conf\' that are used at compile time are transformed into compile dependencies'() {
+    def 'unused api dependencies are marked for deletion'() {
         when:
-        buildFile.text = """
-            plugins {
-                id 'nebula.lint'
-                id 'war'
-            }
-
-            gradleLint.rules = ['unused-dependency']
-
-            repositories { mavenCentral() }
-
-            dependencies {
-                compile '$springfox'
-
-                $conf '$guava'
-            }
-        """
+        buildFile.text = """\
+            |plugins {
+            |    id 'nebula.lint'
+            |    id 'java-library'
+            |}
+            |
+            |gradleLint.rules = ['unused-dependency']
+            |
+            |repositories { mavenCentral() }
+            |
+            |dependencies {
+            ${deps.collect { "|   api '$it'" }.join('\n')}
+            |}
+            |""".stripMargin()
 
         createJavaSourceFile(main)
 
         then:
-        runTasksSuccessfully('fixGradleLint')
-        dependencies(buildFile) == [guava]
+        def result = runTasksSuccessfully('compileJava', 'autoLintGradle')
+
+        expectedWarnings.each {
+            assert result.output.contains(it)
+        }
 
         where:
-        conf << ['runtime', 'providedRuntime']
+        deps               | expectedWarnings
+        [guava, asm]       | ['warning   unused-dependency                  this dependency is unused and can be removed']
+        [springfox]        | ['warning   unused-dependency                  one or more classes in com.google.guava:guava:18.0 are required by your code directly', 'warning   unused-dependency                  this dependency is unused and can be removed']
+        [guava, springfox] | ['warning   unused-dependency                  this dependency is unused and can be removed']
     }
 
     @Unroll
-    def 'runtime dependencies with configuration \'#conf\' that are unused at compile time are left alone'() {
+    def 'unused implementation dependencies are marked for deletion'() {
         when:
-        buildFile.text = """
-            plugins {
-                id 'nebula.lint'
-                id 'war'
-            }
+        buildFile.text = """\
+            |plugins {
+            |    id 'nebula.lint'
+            |    id 'java-library'
+            |}
+            |
+            |gradleLint.rules = ['unused-dependency']
+            |
+            |repositories { mavenCentral() }
+            |
+            |dependencies {
+            ${deps.collect { "|   implementation '$it'" }.join('\n')}
+            |}
+            |""".stripMargin()
 
-            gradleLint.rules = ['unused-dependency']
-
-            repositories { mavenCentral() }
-
-            dependencies {
-                compile '$springfox'
-
-                $conf '$guava'
-            }
-        """
+        createJavaSourceFile(main)
 
         then:
-        runTasksSuccessfully('fixGradleLint')
-        dependencies(buildFile, conf) == [guava]
+        def result = runTasksSuccessfully('compileJava', 'autoLintGradle')
+
+        expectedWarnings.each {
+            assert result.output.contains(it)
+        }
 
         where:
-        conf << ['runtime', 'providedRuntime']
+        deps               | expectedWarnings
+        [guava, asm]       | ['warning   unused-dependency                  this dependency is unused and can be removed']
+        [springfox]        | ['warning   unused-dependency                  one or more classes in com.google.guava:guava:18.0 are required by your code directly', 'warning   unused-dependency                  this dependency is unused and can be removed']
+        [guava, springfox] | ['warning   unused-dependency                  this dependency is unused and can be removed']
     }
 
     def 'find dependency references in test code'() {
@@ -225,7 +237,7 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
         createJavaSourceFile(main)
 
         then:
-        runTasksSuccessfully('assemble', 'fixGradleLint')
+        def x = runTasksSuccessfully('assemble', 'fixGradleLint')
 
         // also, provided dependencies are NOT moved to compile
         dependencies(buildFile, 'providedCompile') == [guava]
@@ -259,7 +271,7 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
         dependencies(buildFile, 'compile') == ['com.google.inject.extensions:guice-servlet:3.0', 'javax.servlet:servlet-api:2.5']
     }
 
-    def 'dependencies are moved to a configuration that matches the source set(s) that refer to them'() {
+    def 'suggest that dependencies should be moved to a configuration that matches the source set(s) that refer to them'() {
         when:
         buildFile.text = """
             plugins {
@@ -272,7 +284,7 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             repositories { mavenCentral() }
 
             dependencies {
-                compile 'junit:junit:4.12'
+                implementation 'junit:junit:4.12'
             }
         """
 
@@ -287,9 +299,9 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
         ''')
 
         then:
-        runTasksSuccessfully('compileTestJava', 'fixGradleLint')
-        dependencies(buildFile, 'compile') == []
-        dependencies(buildFile, 'testCompile') == ['junit:junit:4.12']
+        def result = runTasksSuccessfully('compileTestJava', 'autoLintGradle')
+        result.output.contains('warning   unused-dependency                  one or more classes in junit:junit:4.12 are required by your code directly (no auto-fix available)')
+        result.output.contains('warning   unused-dependency                  this dependency is unused and can be removed')
     }
 
     def 'webjars should be moved to runtime'() {
@@ -305,17 +317,15 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             repositories { mavenCentral() }
 
             dependencies {
-                compile 'org.webjars:acorn:0.5.0'
+                implementation 'org.webjars:acorn:0.5.0'
             }
         """
 
         createJavaSourceFile('public class Main {}')
 
         then:
-        runTasksSuccessfully('assemble', 'fixGradleLint')
-
-        dependencies(buildFile, 'compile') == []
-        dependencies(buildFile, 'runtime') == ['org.webjars:acorn:0.5.0']
+        def result = runTasksSuccessfully('assemble', 'autoLintGradle')
+        result.output.contains('warning   unused-dependency                  webjars should be in the runtimeOnly configuration (no auto-fix available)')
     }
 
     def 'dependencies present in more than one configuration as first order dependencies can be removed from one of them'() {
@@ -354,7 +364,7 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
         dependencies(buildFile, 'testCompile') == ['junit:junit:4.11']
     }
 
-    def 'service providers are moved to the runtime configuration if their classes are unused at compile time'() {
+    def 'service providers should be moved to the runtime configuration if their classes are unused at compile time'() {
         when:
         buildFile.text = """
             plugins {
@@ -367,17 +377,16 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             repositories { mavenCentral() }
 
             dependencies {
-                compile 'mysql:mysql-connector-java:6.0.2'
+                implementation 'mysql:mysql-connector-java:6.0.2'
             }
         """
 
         createJavaSourceFile('public class Main {}')
 
         then:
-        runTasksSuccessfully('compileJava', 'fixGradleLint')
-
-        dependencies(buildFile, 'compile') == []
-        dependencies(buildFile, 'runtime') == ['mysql:mysql-connector-java:6.0.2']
+        def result = runTasksSuccessfully('compileJava', 'autoLintGradle')
+        result.output.contains('warning   unused-dependency                  this dependency is a service provider unused at compileClasspath time and can be moved to the runtimeOnly configuration (no auto-fix available)')
+        result.output.contains('warning   unused-dependency                  this dependency is unused and can be removed')
     }
 
     def 'remove \'family\' jars in favor of the components that make them up'() {
@@ -393,7 +402,7 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             repositories { mavenCentral() }
 
             dependencies {
-                compile 'com.amazonaws:aws-java-sdk:1.10.76'
+                implementation 'com.amazonaws:aws-java-sdk:1.10.76'
             }
         """
 
@@ -404,9 +413,9 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             }''')
 
         then:
-        runTasksSuccessfully('compileJava', 'fixGradleLint')
-        dependencies(buildFile, 'compile') == ['com.amazonaws:aws-java-sdk-core:1.10.76']
-        dependencies(buildFile, 'runtime') == []
+        def result = runTasksSuccessfully('compileJava', 'autoLintGradle')
+        result.output.contains('warning   unused-dependency                  one or more classes in com.amazonaws:aws-java-sdk-core:1.10.76 are required by your code directly (no auto-fix available)')
+        result.output.contains('warning   unused-dependency                  this dependency should be removed since its artifact is empty (no auto-fix available)')
     }
 
     def 'dependencies block in a root project which does not have the java plugin applied'() {
@@ -529,38 +538,5 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
         def results = runTasksSuccessfully('classes', 'testClasses')
         println(results.output)
         results.output.readLines().count { it.contains('unused-dependency') } == 1
-    }
-
-    @Unroll
-    def 'ignore configurations from java library plugin'() {
-        when:
-        buildFile.text = """\
-            |plugins {
-            |    id 'nebula.lint'
-            |    id 'java-library'
-            |}
-            |
-            |gradleLint.rules = ['unused-dependency']
-            |
-            |repositories { mavenCentral() }
-            |
-            |dependencies {
-            ${deps.collect { "|   implementation '$it'" }.join('\n')}
-            |}
-            |""".stripMargin()
-
-        createJavaSourceFile(main)
-
-        then:
-        runTasksSuccessfully('compileJava', 'fixGradleLint')
-
-        buildFile.text.contains("compile '${guava}'")
-        buildFile.text.contains('implementation')
-
-        where:
-        deps               | expected
-        [guava, asm]       | [guava]
-        [springfox]        | [guava]
-        [guava, springfox] | [guava]
     }
 }
