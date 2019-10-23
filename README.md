@@ -62,7 +62,7 @@ allprojects {
 Gradle Lint Plugin currently doesn't support:
 
 * kotlin build scripts. Please, switch to groovy build script if you want to use linting. [#166](https://github.com/nebula-plugins/gradle-lint-plugin/issues/166)
-* `api` and `implementation` dependencies configurations [#126](https://github.com/nebula-plugins/gradle-lint-plugin/issues/126) [#203](https://github.com/nebula-plugins/gradle-lint-plugin/issues/203)
+
 
 ## License
 
