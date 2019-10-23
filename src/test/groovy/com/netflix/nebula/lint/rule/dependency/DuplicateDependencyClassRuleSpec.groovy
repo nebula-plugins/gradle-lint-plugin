@@ -43,7 +43,7 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
             repositories { mavenCentral() }
 
             dependencies {
-                ${deps.collect { "compile '$it'" }.join('\n') }
+                ${deps.collect { "implementation '$it'" }.join('\n') }
             }
         """
 
@@ -57,9 +57,9 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
 
         where:
         deps                            | message
-        [guava, collections]            | "$collections in configuration ':compile' has 309 classes duplicated by $guava"
-        [guava_transitive, collections] | "$collections in configuration ':compile' has 309 classes duplicated by $guava"
-        [asm, asm_asm]                  | "$asm_asm in configuration ':compile' has 21 classes duplicated by $asm"
+        [guava, collections]            | "$collections in configuration ':implementation' has 309 classes duplicated by $guava"
+        [guava_transitive, collections] | "$collections in configuration ':implementation' has 309 classes duplicated by $guava"
+        [asm, asm_asm]                  | "$asm_asm in configuration ':implementation' has 21 classes duplicated by $asm"
     }
     
     @Issue('47')
@@ -76,8 +76,8 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
             repositories { mavenCentral() }
 
             dependencies {
-                compile 'log4j:log4j:1.2.16'
-                testCompile 'org.slf4j:slf4j-log4j12:1.7.7' // transitively depends on log4j:1.2.17
+                implementation 'log4j:log4j:1.2.16'
+                testImplementation 'org.slf4j:slf4j-log4j12:1.7.7' // transitively depends on log4j:1.2.17
             }
         """
 
@@ -108,8 +108,8 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
             ]
             
             dependencies {
-                compile deps.guava
-                compile deps.collections
+                implementation deps.guava
+                implementation deps.collections
             }
         """
         
@@ -118,7 +118,7 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
         def result = runTasksSuccessfully('compileJava')
         
         then:
-        result.output.contains("$collections in configuration ':compile' has 309 classes duplicated by $guava")
+        result.output.contains("$collections in configuration ':implementation' has 309 classes duplicated by $guava")
     }
 
     @Issue('43')
@@ -136,9 +136,9 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
             
             dependencies {
                 gradleLint.ignore('duplicate-dependency-class') {
-                    compile '$guava'
+                    implementation '$guava'
                 }
-                compile '$collections'
+                implementation '$collections'
             }
         """
 
@@ -147,7 +147,7 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
         def result = runTasksSuccessfully('compileJava')
 
         then:
-        !result.output.contains("$collections in configuration ':compile' has 309 classes duplicated by $guava")
+        !result.output.contains("$collections in configuration ':implementation' has 309 classes duplicated by $guava")
     }
 
     /**
@@ -175,8 +175,8 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
             repositories { mavenCentral() }
 
             dependencies {
-                compile 'org.hornetq:hornetq-core-client:2.4.5.Final'
-                compile 'org.hornetq:hornetq-commons:2.4.5.Final'
+                implementation 'org.hornetq:hornetq-core-client:2.4.5.Final'
+                implementation 'org.hornetq:hornetq-commons:2.4.5.Final'
             }
         """
 
@@ -204,9 +204,9 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
 
             dependencies {
                 gradleLint.ignore('duplicate-dependency-class') {
-                    compile deps.guava
+                    implementation deps.guava
                 }
-                compile '$collections'
+                implementation '$collections'
             }
         """
 
@@ -215,7 +215,7 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
         def result = runTasksSuccessfully('compileJava')
 
         then:
-        !result.output.contains("$collections in configuration ':compile' has 309 classes duplicated by $guava")
+        !result.output.contains("$collections in configuration ':implementation' has 309 classes duplicated by $guava")
     }
 
     def 'duplicate classes between transitive dependencies do not cause violations'() {
@@ -231,8 +231,8 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
             repositories { mavenCentral() }
 
             dependencies {
-                compile 'com.google.guava:guava-gwt:10.0.1' // guava transitive
-                compile 'org.jvnet.hudson.plugins:maven-dependency-update-trigger:1.2' // google-collections transitive
+                implementation 'com.google.guava:guava-gwt:10.0.1' // guava transitive
+                implementation 'org.jvnet.hudson.plugins:maven-dependency-update-trigger:1.2' // google-collections transitive
             }
         """
 
@@ -241,7 +241,7 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
         def result = runTasksSuccessfully('compileJava', 'lintGradle')
 
         then:
-        !result.output.contains("com.google.collections:google-collections:1.0 in configuration ':compile' has 384 classes duplicated by com.google.guava:guava:10.0.1")
+        !result.output.contains("com.google.collections:google-collections:1.0 in configuration ':implementation' has 384 classes duplicated by com.google.guava:guava:10.0.1")
     }
 
     @Issue('#139')
@@ -258,7 +258,7 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
             repositories { mavenCentral() }
 
             dependencies {
-                compile 'org.slf4j:slf4j-api:1.8.0-alpha2'
+                implementation 'org.slf4j:slf4j-api:1.8.0-alpha2'
                 testRuntime 'org.slf4j:slf4j-simple:1.8.0-alpha2'
             }
         """
@@ -282,8 +282,8 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
             repositories { mavenCentral() }
 
             dependencies {
-                compile 'com.google.guava:guava-gwt:10.0.1' // guava transitive
-                compile 'org.jvnet.hudson.plugins:maven-dependency-update-trigger:1.2' // google-collections transitive
+                implementation 'com.google.guava:guava-gwt:10.0.1' // guava transitive
+                implementation 'org.jvnet.hudson.plugins:maven-dependency-update-trigger:1.2' // google-collections transitive
             }
         """
 
@@ -292,7 +292,7 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
         def result = runTasksSuccessfully('compileJava', '--info')
 
         then:
-        result.output.contains("com.google.collections:google-collections:1.0 in configuration ':compile' has 384 classes duplicated by com.google.guava:guava:10.0.1")
+        result.output.contains("com.google.collections:google-collections:1.0 in configuration ':implementation' has 384 classes duplicated by com.google.guava:guava:10.0.1")
     }
 
     @Issue('#246')
@@ -311,8 +311,8 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
 
             dependencies {
                 // these dependencies both have META-INF/versions/9/module-info
-                compile 'io.github.classgraph:classgraph:4.8.45'
-                compile 'org.apache.logging.log4j:log4j-api:2.12.0'
+                implementation 'io.github.classgraph:classgraph:4.8.45'
+                implementation 'org.apache.logging.log4j:log4j-api:2.12.0'
             }
             """.stripIndent()
 
@@ -321,7 +321,7 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
         def result = runTasksSuccessfully('compileJava', 'lintGradle')
 
         then:
-        !result.output.contains("io.github.classgraph:classgraph:4.8.45 in configuration ':compile' has 1 classes duplicated by org.apache.logging.log4j:log4j-api:2.12.0")
+        !result.output.contains("io.github.classgraph:classgraph:4.8.45 in configuration ':implementation' has 1 classes duplicated by org.apache.logging.log4j:log4j-api:2.12.0")
         !result.output.contains("This project contains lint violations")
     }
 }

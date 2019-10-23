@@ -15,6 +15,7 @@ abstract class AbstractDuplicateDependencyClassRule extends GradleLintRule imple
     Set<ModuleVersionIdentifier> ignoredDependencies = [] as Set
 
     Set<Configuration> resolvableAndResolvedConfigurations
+    DependencyService dependencyService
 
     abstract protected List<ModuleVersionIdentifier> moduleIds(Configuration conf)
 
@@ -31,7 +32,7 @@ abstract class AbstractDuplicateDependencyClassRule extends GradleLintRule imple
 
     @Override
     protected void beforeApplyTo() {
-        def dependencyService = DependencyService.forProject(project)
+        dependencyService = DependencyService.forProject(project)
         resolvableAndResolvedConfigurations = dependencyService.resolvableAndResolvedConfigurations()
     }
 
@@ -50,8 +51,9 @@ abstract class AbstractDuplicateDependencyClassRule extends GradleLintRule imple
     @Override
     protected void visitClassComplete(ClassNode node) {
         for (Configuration conf : directlyUsedConfigurations) {
-            if (resolvableAndResolvedConfigurations.contains(conf)) {
-                def moduleIds = moduleIds(conf)
+            if (resolvableAndResolvedConfigurations.contains(conf) || dependencyService.hasResolvableParentConfiguration(conf.name)) {
+                Configuration toResolve = dependencyService.findResolvableConfiguration(conf.name)
+                def moduleIds = moduleIds(toResolve)
                 def duplicateDependencyService = Class.forName('com.netflix.nebula.lint.rule.dependency.DuplicateDependencyService').newInstance(project)
                 def checkForDuplicates = duplicateDependencyService.class.methods.find {
                     it.name == 'violationsForModules'

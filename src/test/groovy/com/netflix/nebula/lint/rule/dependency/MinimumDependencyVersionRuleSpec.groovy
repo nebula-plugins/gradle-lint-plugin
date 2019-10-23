@@ -20,27 +20,53 @@ class MinimumDependencyVersionRuleSpec extends TestKitSpecification {
         """.stripIndent()
     }
 
-    def 'first order dependency versions not meeting the minimum are upgraded'() {
+    def 'warn first order dependency versions not meeting the minimum - api configuration'() {
+        when:
+        buildFile.text = """
+            plugins {
+                id 'nebula.lint'
+                id 'nebula.configEnvironment'
+                id 'java-library'
+            }
+
+            gradleLint.rules = ['minimum-dependency-version']
+
+            repositories { mavenCentral() }
+            
+            dependencies {
+                api 'com.google.guava:guava:18.+'
+            }
+        """.stripIndent()
+
+        createJavaSourceFile('public class Main {}')
+
+        then:
+        def result = runTasksSuccessfully(*tasks)
+        result.output.contains('needs fixing   minimum-dependency-version         com.google.guava:guava is below the minimum version of 19.0')
+    }
+
+
+    def 'warn first order dependency versions not meeting the minimum'() {
         when:
         buildFile << """
             dependencies {
-                compile 'com.google.guava:guava:18.+'
+                implementation 'com.google.guava:guava:18.+'
             }
         """
 
         createJavaSourceFile('public class Main {}')
 
         then:
-        runTasksSuccessfully(*tasks)
-        dependencies(buildFile, 'compile') == ['com.google.guava:guava:19.0']
+        def result = runTasksSuccessfully(*tasks)
+        result.output.contains('needs fixing   minimum-dependency-version         com.google.guava:guava is below the minimum version of 19.0')
     }
 
-    def 'transitive dependencies not meeting the minimum result in a first-order dependency being added'() {
+    def 'warn transitive dependencies not meeting the minimum result in a first-order dependency'() {
         when:
         buildFile << """
             dependencies {
                 // depends on guava 18.0
-                compile 'io.grpc:grpc-core:0.13.2'
+                implementation 'io.grpc:grpc-core:0.13.2'
             }
         """
 
@@ -48,19 +74,17 @@ class MinimumDependencyVersionRuleSpec extends TestKitSpecification {
 
         then:
         def results = runTasksSuccessfully(*tasks)
-        println(results.output)
-        println(buildFile.text)
-        dependencies(buildFile, 'compile') == ['com.google.guava:guava:19.0', 'io.grpc:grpc-core:0.13.2']
+        results.output.contains('needs fixing   minimum-dependency-version         com.google.guava:guava is below the minimum version of 19.0')
     }
 
     /**
      * FIXME how to implement this?
      */
     @Ignore
-    def 'resolution strategies preventing us from reaching the minimum version are changed'() {
+    def 'warn resolution strategies preventing us from reaching the minimum version are changed'() {
         when:
         buildFile << """
-            configurations.compile {
+            configurations.implementation {
                 resolutionStrategy {
                     eachDependency { details ->
                         if (details.requested.name == 'guava') {
@@ -71,7 +95,7 @@ class MinimumDependencyVersionRuleSpec extends TestKitSpecification {
             }
 
             dependencies {
-                compile 'com.google.guava:guava:18.0'
+                implementation 'com.google.guava:guava:18.0'
             }
         """
 
@@ -82,42 +106,42 @@ class MinimumDependencyVersionRuleSpec extends TestKitSpecification {
         dependencies(buildFile, 'compile') == ['com.google.guava:guava:19.0']
     }
 
-    def "interpolated values are changed if necessary"() {
+    def "warn interpolated values should be changed if necessary"() {
         when:
         buildFile << """
             ext.GUAVA_VERSION = '18.0'
 
             dependencies {
-                compile "com.google.guava:guava:\$GUAVA_VERSION"
+                implementation "com.google.guava:guava:\$GUAVA_VERSION"
             }
         """
 
         createJavaSourceFile('public class Main {}')
 
         then:
-        runTasksSuccessfully(*tasks)
-        dependencies(buildFile, 'compile') == ['com.google.guava:guava:19.0']
+        def result = runTasksSuccessfully(*tasks)
+        result.output.contains('needs fixing   minimum-dependency-version         com.google.guava:guava is below the minimum version of 19.0')
     }
 
-    def "forces preventing us from reaching the minimum version are updated"() {
+    def "warn when forces preventing us from reaching the minimum version" () {
         when:
         buildFile << """
-            configurations.compile {
+            configurations.compileClasspath {
                 resolutionStrategy {
                     force 'com.google.guava:guava:18.0'
                 }
             }
 
             dependencies {
-                compile 'com.google.guava:guava:latest.release' // there is a version 19.0 out
+                implementation 'com.google.guava:guava:latest.release' // there is a version 19.0 out
             }
         """
 
         createJavaSourceFile('public class Main {}')
 
         then:
-        runTasksSuccessfully(*tasks)
-        buildFile.text.contains("force 'com.google.guava:guava:19.0'")
+        def result = runTasksSuccessfully(*tasks)
+        result.output.contains("needs fixing   minimum-dependency-version         this dependency does not meet the minimum version of 19.0")
     }
 
     def 'leave dependencies without a version alone'() {
@@ -132,7 +156,7 @@ class MinimumDependencyVersionRuleSpec extends TestKitSpecification {
             }
 
             dependencies {
-                compile 'com.google.guava:guava'
+                implementation 'com.google.guava:guava'
             }
         """
 
@@ -140,34 +164,6 @@ class MinimumDependencyVersionRuleSpec extends TestKitSpecification {
 
         then:
         runTasksSuccessfully(*tasks)
-        dependencies(buildFile, 'compile') == ['com.google.guava:guava']
-    }
-
-    def 'ignore configurations from java library plugin'() {
-        // TODO: Sometime, refactor the project to support java library adjustments
-
-        given:
-        definePluginOutsideOfPluginBlock = true
-
-        buildFile.delete()
-
-        buildFile << """
-            apply plugin: 'nebula.lint'
-            apply plugin: 'nebula.configEnvironment'
-            apply plugin: 'java-library'
-            gradleLint.rules = ['minimum-dependency-version']
-            repositories { mavenCentral() }
-            dependencies {
-                implementation 'com.google.guava:guava:18.+'
-            }
-            """.stripIndent()
-
-        createJavaSourceFile('public class Main {}')
-
-        when:
-        runTasksSuccessfully(*tasks)
-
-        then:
-        dependencies(buildFile, 'implementation') == ['com.google.guava:guava:18.+']
+        dependencies(buildFile, 'implementation') == ['com.google.guava:guava']
     }
 }

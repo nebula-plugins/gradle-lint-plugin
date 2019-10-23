@@ -32,7 +32,7 @@ class UnusedDependencyExcludeRuleSpec extends AbstractRuleSpec {
         project.buildFile << """
             apply plugin: 'java'
             dependencies {
-                compile('commons-configuration:commons-configuration:1.10') {
+                implementation('commons-configuration:commons-configuration:1.10') {
                     exclude group: 'com.google.guava', module: 'guava'
                 }
             }
@@ -44,7 +44,7 @@ class UnusedDependencyExcludeRuleSpec extends AbstractRuleSpec {
                 mavenCentral()
             }
             dependencies {
-                compile('commons-configuration:commons-configuration:1.10') {
+                implementation('commons-configuration:commons-configuration:1.10') {
                     exclude group: 'com.google.guava', module: 'guava'
                 }
             }
@@ -56,13 +56,44 @@ class UnusedDependencyExcludeRuleSpec extends AbstractRuleSpec {
         results.violates()
     }
 
+    def 'unused exclude violates - api configuration'() {
+        when:
+        // trivial case: no dependencies
+        project.buildFile << """
+            apply plugin: 'java-library'
+            dependencies {
+                api('commons-configuration:commons-configuration:1.10') {
+                    exclude group: 'com.google.guava', module: 'guava'
+                }
+            }
+        """
+
+        project.with {
+            apply plugin: 'java-library'
+            repositories {
+                mavenCentral()
+            }
+            dependencies {
+                api('commons-configuration:commons-configuration:1.10') {
+                    exclude group: 'com.google.guava', module: 'guava'
+                }
+            }
+        }
+
+        def results = runRulesAgainst(rule)
+
+        then:
+        results.violates()
+    }
+
+
     def 'exclude matching a transitive dependency does not violate'() {
         when:
         // trivial case: no dependencies
         project.buildFile << """
             apply plugin: 'java'
             dependencies {
-                compile('commons-configuration:commons-configuration:1.10') {
+                implementation('commons-configuration:commons-configuration:1.10') {
                     exclude group: 'commons-lang', module: 'commons-lang'
                 }
             }
@@ -74,7 +105,7 @@ class UnusedDependencyExcludeRuleSpec extends AbstractRuleSpec {
                 mavenCentral()
             }
             dependencies {
-                compile('commons-configuration:commons-configuration:1.10') {
+                implementation('commons-configuration:commons-configuration:1.10') {
                     exclude group: 'commons-lang', module: 'commons-lang'
                 }
             }
@@ -93,7 +124,7 @@ class UnusedDependencyExcludeRuleSpec extends AbstractRuleSpec {
         project.buildFile << """
             apply plugin: 'java'
             dependencies {
-                compile('dne:dne:1.0') {
+                implementation('dne:dne:1.0') {
                     exclude group: 'com.google.guava', module: 'guava'
                 }
             }
@@ -105,7 +136,7 @@ class UnusedDependencyExcludeRuleSpec extends AbstractRuleSpec {
                 mavenCentral()
             }
             dependencies {
-                compile('dne:dne:1.0') {
+                implementation('dne:dne:1.0') {
                     exclude group: 'com.google.guava', module: 'guava'
                 }
             }

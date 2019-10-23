@@ -51,7 +51,7 @@ class MethodScanner {
                     line,
                     isInterface,
                     opcode,
-                    artifacts.collect { ResolvedArtifactInfo.fromResolvedArtifact(it)}
+                    artifacts.unique().collect { ResolvedArtifactInfo.fromResolvedArtifact(it)}
             )
             )
         }

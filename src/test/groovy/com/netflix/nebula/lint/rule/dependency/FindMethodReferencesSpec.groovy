@@ -16,7 +16,7 @@ class FindMethodReferencesSpec extends IntegrationSpec {
 
             repositories { mavenCentral() }
             dependencies {
-                compile 'com.google.guava:guava:19.0'
+                implementation 'com.google.guava:guava:19.0'
             }
 
              // a task to generate an unused dependency report for each configuration
@@ -69,7 +69,7 @@ class FindMethodReferencesSpec extends IntegrationSpec {
 
             repositories { mavenCentral() }
             dependencies {
-                compile 'com.google.guava:guava:19.0'
+                implementation 'com.google.guava:guava:19.0'
             }
 
              // a task to generate an unused dependency report for each configuration
@@ -121,7 +121,7 @@ class FindMethodReferencesSpec extends IntegrationSpec {
 
             repositories { mavenCentral() }
             dependencies {
-                compile 'com.google.guava:guava:19.0'
+                implementation 'com.google.guava:guava:19.0'
             }
 
              // a task to generate an unused dependency report for each configuration
@@ -173,7 +173,7 @@ class FindMethodReferencesSpec extends IntegrationSpec {
 
             repositories { mavenCentral() }
             dependencies {
-                compile 'com.google.guava:guava:19.0'
+                implementation 'com.google.guava:guava:19.0'
             }
 
              // a task to generate an unused dependency report for each configuration
@@ -225,7 +225,7 @@ class FindMethodReferencesSpec extends IntegrationSpec {
 
             repositories { mavenCentral() }
             dependencies {
-                compile 'com.google.guava:guava:19.0'
+                implementation 'com.google.guava:guava:19.0'
             }
 
              // a task to generate an unused dependency report for each configuration
@@ -286,7 +286,7 @@ class FindMethodReferencesSpec extends IntegrationSpec {
 
             repositories { mavenCentral() }
             dependencies {
-                compile 'com.google.guava:guava:19.0'
+                implementation 'com.google.guava:guava:19.0'
             }
 
             import groovy.json.*
@@ -399,8 +399,8 @@ class FindMethodReferencesSpec extends IntegrationSpec {
 
             repositories { mavenCentral() }
             dependencies {
-                compile 'com.google.guava:guava:19.0'
-                compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
+                implementation 'com.google.guava:guava:19.0'
+                implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
             }
 
             import groovy.json.*

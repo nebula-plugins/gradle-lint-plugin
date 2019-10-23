@@ -79,7 +79,6 @@ class MinimumDependencyVersionRule extends GradleLintRule implements GradleModel
 
         if (VersionNumber.parse(resolved.moduleVersion.id.version).compareTo(VersionNumber.parse(minVersionConstraint.version)) < 0) {
             addBuildLintViolation("this dependency does not meet the minimum version of $minVersionConstraint.version", decl)
-                    .replaceWith(decl, "'${minVersionConstraint.toNotation()}'")
             alreadyAdded += minVersionConstraint
         }
     }
@@ -120,7 +119,6 @@ class MinimumDependencyVersionRule extends GradleLintRule implements GradleModel
             def dependenciesBlock = bookmark('dependencies')
             if (dependenciesBlock) {
                 addBuildLintViolation("$constraint.group:$constraint.name is below the minimum version of $constraint.version")
-                        .insertIntoClosure(dependenciesBlock, "$conf.name '${constraint.toNotation()}'")
             } else {
                 addBuildLintViolation("$constraint.group:$constraint.name is below the minimum version of $constraint.version")
                 // FIXME insert new dependencies block with this dependency

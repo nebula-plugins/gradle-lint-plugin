@@ -25,7 +25,7 @@ class DependencyServiceSpec extends TestKitSpecification {
         project.with {
             apply plugin: 'war'
             dependencies {
-                compile 'com.google.guava:guava:latest.release'
+                implementation 'com.google.guava:guava:19.0'
                 providedCompile 'commons-lang:commons-lang:latest.release'
             }
         }
@@ -35,7 +35,7 @@ class DependencyServiceSpec extends TestKitSpecification {
         project.configurations.compileClasspath.resolve()
 
         then:
-        service.isResolved('compile')
+        service.isResolved('implementation')
         service.isResolved('providedCompile')
     }
 
@@ -73,11 +73,11 @@ class DependencyServiceSpec extends TestKitSpecification {
 
             repositories { mavenCentral() }
             dependencies {
-                compile 'com.google.inject.extensions:guice-servlet:3.0' // used directly
-                compile 'javax.servlet:servlet-api:2.5' // used indirectly through guice-servlet
-                compile 'commons-lang:commons-lang:2.6' // unused
-                testCompile 'junit:junit:4.11'
-                testCompile 'commons-lang:commons-lang:2.6' // unused
+                implementation 'com.google.inject.extensions:guice-servlet:3.0' // used directly
+                implementation 'javax.servlet:servlet-api:2.5' // used indirectly through guice-servlet
+                implementation 'commons-lang:commons-lang:2.6' // unused
+                testImplementation 'junit:junit:4.11'
+                testImplementation 'commons-lang:commons-lang:2.6' // unused
             }
 
             // a task to generate an unused dependency report for each configuration
@@ -106,12 +106,12 @@ class DependencyServiceSpec extends TestKitSpecification {
         ''')
 
         then:
-        runTasksSuccessfully('compileUnused')
-        new File(projectDir, 'compileUnused.txt').readLines() == ['commons-lang:commons-lang']
+        runTasksSuccessfully('implementationUnused')
+        new File(projectDir, 'implementationUnused.txt').readLines() == ['commons-lang:commons-lang']
 
         then:
-        runTasksSuccessfully('testCompileUnused')
-        new File(projectDir, 'testCompileUnused.txt').readLines() == ['commons-lang:commons-lang']
+        runTasksSuccessfully('testImplementationUnused')
+        new File(projectDir, 'testImplementationUnused.txt').readLines() == ['commons-lang:commons-lang']
     }
 
     @Unroll
@@ -127,7 +127,7 @@ class DependencyServiceSpec extends TestKitSpecification {
 
             repositories { mavenCentral() }
             dependencies {
-                compile 'io.springfox:springfox-core:2.0.2'
+                implementation 'io.springfox:springfox-core:2.0.2'
             }
 
             // a task to generate an undeclared dependency report for each configuration
@@ -161,7 +161,7 @@ class DependencyServiceSpec extends TestKitSpecification {
             }
         }
 
-        def deps = DependencyService.forProject(project).firstLevelDependenciesInConf(project.configurations.testCompile)
+        def deps = DependencyService.forProject(project).firstLevelDependenciesInConf(project.configurations.testCompile, 'testCompile')
 
         project.configurations.compile.incoming.afterResolve {
             project.configurations.compile.incoming.resolutionResult.root.dependencies
@@ -232,21 +232,6 @@ class DependencyServiceSpec extends TestKitSpecification {
         dir.split('/')[-1] == 'integTest'        
     }
 
-    def 'identify configurations used at runtime (not in the compile scope of one of the project\'s source sets)'() {
-        when:
-        def service = DependencyService.forProject(project)
-
-        def troubleConf = project.configurations.create('trouble')
-
-        project.configurations.compile.extendsFrom(troubleConf)
-        project.configurations.runtime.extendsFrom(troubleConf)
-
-        then:
-        !service.isRuntime('compile')
-        service.isRuntime('runtime')
-        service.isRuntime('trouble')
-    }
-
     def 'identify parent source sets'() {
         expect:
         DependencyService.forProject(project).parentSourceSetConfigurations('compile')*.name == ['testCompile']
@@ -272,13 +257,13 @@ class DependencyServiceSpec extends TestKitSpecification {
             import com.netflix.nebula.lint.rule.dependency.*
 
             dependencies {
-                compile project(':core')
+                implementation project(':core')
             }
 
             task coreContents {
                 doLast {
                     new File(projectDir, "coreContents.txt").text = DependencyService.forProject(project)
-                    .jarContents(configurations.compile.resolvedConfiguration.firstLevelModuleDependencies[0].module.id.module)
+                    .jarContents(configurations.compileClasspath.resolvedConfiguration.firstLevelModuleDependencies[0].module.id.module)
                     .classes
                     .join('\\n')
                 }

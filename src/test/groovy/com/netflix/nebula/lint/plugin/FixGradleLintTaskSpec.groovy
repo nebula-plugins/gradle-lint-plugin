@@ -82,64 +82,6 @@ class FixGradleLintTaskSpec extends TestKitSpecification {
         buildFile.text.contains('compile \'commons-lang:commons-lang:2.6\'')
     }
 
-    def 'lint fixes violation in all applied files with bookmark rule'() {
-        given:
-        buildFile << """
-            plugins {
-                id 'nebula.lint'
-                id 'java'
-            }
-            
-            repositories {
-                mavenCentral()
-            }
-            
-            def someVariable = 1
-
-            gradleLint.rules = ['minimum-dependency-version']
-            
-            dependencies {
-                compile 'commons-lang:commons-lang:2.5'
-            }
-
-            allprojects {
-                apply from: 'dependencies.gradle'
-            }
-        """
-        File dependenciesFile = new File(projectDir, 'dependencies.gradle')
-        dependenciesFile.text = """
-
-            def someVariable = 2
-
-            dependencies {
-                compile 'com.google.guava:guava:18.0'
-            }
-            
-            apply from: 'another.gradle'
-"""
-
-        File another = new File(projectDir, 'another.gradle')
-        another.text = """
-            dependencies {
-                compile 'com.google.guava:guava:17.0'
-            }
-"""
-
-        createJavaSourceFile('public class Main {}')
-
-        when:
-        def results = runTasksSuccessfully('fixGradleLint', '-PgradleLint.minVersions=commons-lang:commons-lang:2.6,com.google.guava:guava:19.0')
-
-        then:
-        results.output.count('fixed          minimum-dependency-version') == 3
-        results.output.contains('another.gradle:3')
-        results.output.contains('dependencies.gradle:6')
-        results.output.contains('build.gradle:16')
-        dependenciesFile.text.contains('compile \'com.google.guava:guava:19.0\'')
-        buildFile.text.contains('compile \'commons-lang:commons-lang:2.6\'')
-        another.text.contains('compile \'com.google.guava:guava:19.0\'')
-    }
-
     @Issue('#37')
     def 'patches involving carriage returns apply'() {
         when:

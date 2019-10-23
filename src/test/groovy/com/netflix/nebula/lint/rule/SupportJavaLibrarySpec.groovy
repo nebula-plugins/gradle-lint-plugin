@@ -30,7 +30,7 @@ class SupportJavaLibrarySpec extends TestKitSpecification {
         def result = runTasksSuccessfully('fixGradleLint')
 
         then:
-        !result.output.contains('This project contains lint violations.')
+        result.output.contains('This project contains lint violations.')
     }
 
     def 'verify rules are working - testing undeclared dependency'() {
