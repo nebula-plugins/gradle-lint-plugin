@@ -52,7 +52,7 @@ abstract class AbstractDuplicateDependencyClassRule extends GradleLintRule imple
     protected void visitClassComplete(ClassNode node) {
         for (Configuration conf : directlyUsedConfigurations) {
             if (resolvableAndResolvedConfigurations.contains(conf) || dependencyService.hasResolvableParentConfiguration(conf.name)) {
-                Configuration toResolve = dependencyService.findAndReplaceDeprecatedConfiguration(dependencyService.getResolvableConfigurationOrParent(conf.name))
+                Configuration toResolve = dependencyService.findResolvableConfiguration(conf.name)
                 def moduleIds = moduleIds(toResolve)
                 def duplicateDependencyService = Class.forName('com.netflix.nebula.lint.rule.dependency.DuplicateDependencyService').newInstance(project)
                 def checkForDuplicates = duplicateDependencyService.class.methods.find {

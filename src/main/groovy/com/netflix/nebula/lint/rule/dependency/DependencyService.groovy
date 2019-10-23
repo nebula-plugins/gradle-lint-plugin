@@ -110,12 +110,16 @@ class DependencyService {
         return artifactsByClass
     }
 
+    Configuration findResolvableConfiguration(String confName) {
+        return findAndReplaceDeprecatedConfiguration(getResolvableConfigurationOrParent(confName))
+    }
+
     /**
      * Replaces compile configuration for compileClasspath so we find proper usage of dependencies
      * @param configuration
      * @return
      */
-    Configuration findAndReplaceDeprecatedConfiguration(Configuration configuration) {
+    private Configuration findAndReplaceDeprecatedConfiguration(Configuration configuration) {
         if(configuration.name == 'compile') {
             return project.configurations.findByName('compileClasspath')
         } else if(configuration.name.endsWith('Compile') && configuration.name != 'providedCompile') {
@@ -400,7 +404,7 @@ class DependencyService {
         if (!references)
             return Collections.emptySet()
 
-        def resolvableConfig = findAndReplaceDeprecatedConfiguration(getResolvableConfigurationOrParent(confName))
+        def resolvableConfig = findResolvableConfiguration(confName)
         try {
             def unused = firstLevelDependenciesInConf(resolvableConfig, project.configurations.findByName(confName))
 
@@ -422,7 +426,7 @@ class DependencyService {
         }
     }
 
-    Configuration getResolvableConfigurationOrParent(String confName) {
+    private Configuration getResolvableConfigurationOrParent(String confName) {
         Configuration configuration = project.configurations.getByName(confName)
         if(isResolvable(confName)) {
             return configuration
