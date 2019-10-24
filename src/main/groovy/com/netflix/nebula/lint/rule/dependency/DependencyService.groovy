@@ -308,7 +308,7 @@ class DependencyService {
             if(isResolvable(childConfig)) {
                 declared.addAll childConfig.resolvedConfiguration.firstLevelModuleDependencies.collect { it.module.id }
             } else {
-                declared.addAll childConfig.dependencies.collect { new DefaultModuleVersionIdentifier(it.group, it.name, it.version) }
+                declared.addAll getResolvableConfigurationOrParent(childConfig.name).resolvedConfiguration.firstLevelModuleDependencies.collect { it.module.id }
             }
         }
         return declared
