@@ -21,7 +21,7 @@ To apply this plugin:
 ```groovy
 buildscript { repositories { jcenter() } }
 plugins {
-  id 'nebula.lint' version '15.0.0'
+  id 'nebula.lint' version '15.0.1'
 }
 ```
     
