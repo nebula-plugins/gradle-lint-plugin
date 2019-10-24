@@ -21,7 +21,7 @@ To apply this plugin:
 ```groovy
 buildscript { repositories { jcenter() } }
 plugins {
-  id 'nebula.lint' version '9.3.2'
+  id 'nebula.lint' version '15.0.0'
 }
 ```
     
@@ -57,6 +57,20 @@ allprojects {
   gradleLint.rules = ['all-dependency'] // add as many rules here as you'd like
 }
 ```
+## api/implementation support 
+
+[#257](
+https://github.com/nebula-plugins/gradle-lint-plugin/pull/257)  introduced api/implementation configuration support.
+
+This allows to show warnings around api/implementation configurations
+
+Since we need to do some major work to keep track of declared configurations and then replace code with the proper configuration, we decided to just show warnings for now.
+
+This work includes finding dependency information for non resolvable configurations so we look into the parents
+
+If [gradle/gradle#11106](https://github.com/gradle/gradle/issues/11106) lands some day, we could definitely enhance this experience.
+
+While it is great to have automatic fix, not having it is worse. So for now warning about this with the same detail as before is much better than a broken experience with new gradle configurations
 
 ## Warning
 Gradle Lint Plugin currently doesn't support:
