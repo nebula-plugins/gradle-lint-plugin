@@ -123,6 +123,10 @@ class DependencyService {
         if(configuration.name == 'compile') {
             return project.configurations.findByName('compileClasspath')
         } else if(configuration.name.endsWith('Compile') && configuration.name != 'providedCompile') {
+            Configuration modernConfiguration = project.configurations.findByName(configuration.name + 'Classpath')
+            if(!modernConfiguration) {
+                return configuration
+            }
             return project.configurations.findByName(configuration.name + 'Classpath')
         } else {
             return configuration
