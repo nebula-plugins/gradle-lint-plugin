@@ -59,8 +59,7 @@ allprojects {
 ```
 ## api/implementation support 
 
-[#257](
-https://github.com/nebula-plugins/gradle-lint-plugin/pull/257)  introduced api/implementation configuration support.
+[v15.0.0](https://github.com/nebula-plugins/gradle-lint-plugin/releases/tag/v15.0.0)  introduced api/implementation configuration support.
 
 This allows to show warnings around api/implementation configurations
 
