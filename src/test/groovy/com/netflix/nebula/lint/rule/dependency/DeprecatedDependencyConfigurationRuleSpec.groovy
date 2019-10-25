@@ -27,26 +27,10 @@ class DeprecatedDependencyConfigurationRuleSpec extends TestKitSpecification {
         """
 
         when:
-        def result = runTasksSuccessfully('fixGradleLint', '--warning-mode=none')
+        def result = runTasksSuccessfully('autoLintGradle', '--warning-mode=none')
 
         then:
-        def buildGradle = new File(projectDir, 'build.gradle')
-        buildGradle.text.trim() == """
-            plugins {
-                id 'nebula.lint'
-                id 'java'
-            }
-
-            gradleLint.rules = ['deprecated-dependency-configuration']
-
-            repositories {
-                mavenCentral()
-            }
-            
-            dependencies {
-                $replacementConfiguration 'com.google.guava:guava:19.0'
-            }
-        """.trim()
+        result.output.contains("warning   deprecated-dependency-configurationConfiguration $configuration has been deprecated and should be replaced with $replacementConfiguration (no auto-fix available)")
 
         where:
         configuration | replacementConfiguration
@@ -100,22 +84,10 @@ class DeprecatedDependencyConfigurationRuleSpec extends TestKitSpecification {
         """
 
         when:
-        def result = runTasksSuccessfully('fixGradleLint', '--warning-mode=none')
+        def result = runTasksSuccessfully('autoLintGradle', '--warning-mode=none')
 
         then:
-        def sub1BuildGradle = new File(projectDir, 'sub1/build.gradle')
-        sub1BuildGradle.text.trim() == """
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    $replacementConfiguration 'com.google.guava:guava:19.0'
-    $replacementConfiguration project(':sub2')
-}
-
-def x = "test"
-        """.trim()
+        result.output.contains("warning   deprecated-dependency-configurationConfiguration $configuration has been deprecated and should be replaced with $replacementConfiguration (no auto-fix available)")
 
         where:
         configuration | replacementConfiguration
@@ -144,26 +116,10 @@ def x = "test"
         """
 
         when:
-        def result = runTasksSuccessfully('fixGradleLint', '--warning-mode=none')
+        def result = runTasksSuccessfully('autoLintGradle', '--warning-mode=none')
 
         then:
-        def buildGradle = new File(projectDir, 'build.gradle')
-        buildGradle.text.trim() == """
-            plugins {
-                id 'nebula.lint'
-                id 'java'
-            }
-
-            gradleLint.rules = ['deprecated-dependency-configuration']
-
-            repositories {
-                mavenCentral()
-            }
-            
-            dependencies {
-                $replacementConfiguration 'org.apache.tomcat:tomcat-catalina:latest.release'
-            }
-        """.trim()
+        result.output.contains("warning   deprecated-dependency-configurationConfiguration $configuration has been deprecated and should be replaced with $replacementConfiguration (no auto-fix available)")
 
         where:
         configuration | replacementConfiguration
@@ -191,26 +147,10 @@ def x = "test"
         """
 
         when:
-        def result = runTasksSuccessfully('fixGradleLint', '--warning-mode=none')
+        def result = runTasksSuccessfully('autoLintGradle', '--warning-mode=none')
 
         then:
-        def buildGradle = new File(projectDir, 'build.gradle')
-        buildGradle.text.trim() == """
-            plugins {
-                id 'nebula.lint'
-                id 'java'
-            }
-
-            gradleLint.rules = ['deprecated-dependency-configuration']
-
-            repositories {
-                mavenCentral()
-            }
-            
-            dependencies {
-                $replacementConfiguration 'org.apache.tomcat:tomcat-catalina:7.+'
-            }
-        """.trim()
+        result.output.contains("warning   deprecated-dependency-configurationConfiguration $configuration has been deprecated and should be replaced with $replacementConfiguration (no auto-fix available)")
 
         where:
         configuration | replacementConfiguration
@@ -240,28 +180,10 @@ def x = "test"
         """
 
         when:
-        def result = runTasksSuccessfully('fixGradleLint', '--warning-mode=none')
+        def result = runTasksSuccessfully('autoLintGradle', '--warning-mode=none')
 
         then:
-        def buildGradle = new File(projectDir, 'build.gradle')
-        buildGradle.text.trim() == """
-            plugins {
-                id 'nebula.lint'
-                id 'java'
-            }
-
-            gradleLint.rules = ['deprecated-dependency-configuration']
-
-            repositories {
-                mavenCentral()
-            }
-            
-            dependencies {
-                $replacementConfiguration('org.apache.tomcat:tomcat-catalina:latest.release') {
-                    exclude module: "spring-boot-starter-tomcat"
-                }
-            }
-        """.trim()
+        result.output.contains("warning   deprecated-dependency-configurationConfiguration $configuration has been deprecated and should be replaced with $replacementConfiguration (no auto-fix available)")
 
         where:
         configuration | replacementConfiguration
