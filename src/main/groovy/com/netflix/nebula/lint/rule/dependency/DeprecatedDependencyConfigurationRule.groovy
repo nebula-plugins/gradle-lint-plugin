@@ -75,8 +75,7 @@ class DeprecatedDependencyConfigurationRule extends GradleLintRule implements Gr
                     return
                 }
                 String configurationReplacement = CONFIGURATION_REPLACEMENTS.get(configuration)
-                GradleViolation violation = addBuildLintViolation("Configuration $configuration has been deprecated and should be replaced with $configurationReplacement", statementMethodCallExpression)
-                DependencyViolationUtil.replaceProjectDependencyConfiguration(violation, statementMethodCallExpression, configurationReplacement, project)
+                addBuildLintViolation("Configuration $configuration has been deprecated and should be replaced with $configurationReplacement", statementMethodCallExpression)
             }
         }
     }
@@ -104,13 +103,11 @@ class DeprecatedDependencyConfigurationRule extends GradleLintRule implements Gr
 
     private void replaceSingleLineDependencyConfiguration(MethodCallExpression call, String conf, GradleDependency dep) {
         String configurationReplacement = CONFIGURATION_REPLACEMENTS.get(conf)
-        GradleViolation violation = addBuildLintViolation("Configuration $conf has been deprecated and should be replaced with $configurationReplacement", call)
-        DependencyViolationUtil.replaceDependencyConfiguration(violation, call, configurationReplacement, dep)
+        addBuildLintViolation("Configuration $conf has been deprecated and should be replaced with $configurationReplacement", call)
     }
 
     private void replaceMultiLineDependencyConfiguration(MethodCallExpression call, String conf) {
         String configurationReplacement = CONFIGURATION_REPLACEMENTS.get(conf)
-        GradleViolation violation = addBuildLintViolation("Configuration $conf has been deprecated and should be replaced with $configurationReplacement", call)
-        DependencyViolationUtil.replaceDependencyConfiguration(violation, call, configurationReplacement)
+        addBuildLintViolation("Configuration $conf has been deprecated and should be replaced with $configurationReplacement", call)
     }
 }
