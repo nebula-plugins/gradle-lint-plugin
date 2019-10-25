@@ -111,7 +111,11 @@ class DependencyService {
     }
 
     Configuration findResolvableConfiguration(String confName) {
-        return findAndReplaceDeprecatedConfiguration(getResolvableConfigurationOrParent(confName))
+        Configuration resolvableConfiguration = getResolvableConfigurationOrParent(confName)
+        if(!resolvableConfiguration) {
+            return null
+        }
+        return findAndReplaceDeprecatedConfiguration(resolvableConfiguration)
     }
 
     /**
@@ -409,6 +413,9 @@ class DependencyService {
             return Collections.emptySet()
 
         def resolvableConfig = findResolvableConfiguration(confName)
+        if(!resolvableConfig) {
+            return [] as Set
+        }
         try {
             def unused = firstLevelDependenciesInConf(resolvableConfig, project.configurations.findByName(confName))
 
