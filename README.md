@@ -14,17 +14,17 @@ It assists a centralized build tools team in gently introducing and maintaining 
 
 ## Getting Started
 
-Read the [full documentation](https://github.com/nebula-plugins/gradle-lint-plugin/wiki). 
+Read the [full documentation](https://github.com/nebula-plugins/gradle-lint-plugin/wiki).
 
-To apply this plugin:
+To apply this plugin, please get the latest version from the [Gradle plugin portal](https://plugins.gradle.org/plugin/nebula.lint) and add the following to `build.gradle`:
 
 ```groovy
 buildscript { repositories { jcenter() } }
 plugins {
-  id 'nebula.lint' version '15.0.1'
+  id 'nebula.lint' version '<latest version from the Gradle plugin portal>'
 }
 ```
-    
+
 *Important:* For now, in a multi-module build you **must** apply lint to the root project, at a minimum.
 
 Alternatively:
@@ -57,7 +57,7 @@ allprojects {
   gradleLint.rules = ['all-dependency'] // add as many rules here as you'd like
 }
 ```
-## api/implementation support 
+## api/implementation support
 
 [v15.0.0](https://github.com/nebula-plugins/gradle-lint-plugin/releases/tag/v15.0.0)  introduced api/implementation configuration support.
 
@@ -92,4 +92,3 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-
