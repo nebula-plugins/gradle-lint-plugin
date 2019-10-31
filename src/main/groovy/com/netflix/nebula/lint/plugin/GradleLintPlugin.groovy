@@ -26,6 +26,7 @@ import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.execution.TaskExecutionGraphListener
 import org.gradle.api.execution.TaskExecutionListener
 import org.gradle.api.plugins.JavaBasePlugin
+import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.TaskState
 import org.gradle.api.tasks.compile.AbstractCompile
 
@@ -46,21 +47,27 @@ class GradleLintPlugin implements Plugin<Project> {
             def autoLintTask = project.tasks.create(AUTO_LINT_GRADLE, LintGradleTask)
             autoLintTask.listeners = lintExt.listeners
 
-            def manualLintTask = project.tasks.create('lintGradle', LintGradleTask)
-            manualLintTask.group = 'lint'
-            manualLintTask.failOnWarning = true
+            def manualLintTask = project.tasks.register('lintGradle', LintGradleTask) {
+                group = 'lint'
+                failOnWarning = true
+            }
 
-            def criticalLintTask = project.tasks.create('criticalLintGradle', LintGradleTask)
-            criticalLintTask.group = 'lint'
-            criticalLintTask.onlyCriticalRules = true
 
-            def fixTask = project.tasks.create('fixGradleLint', FixGradleLintTask)
-            fixTask.userDefinedListeners = lintExt.listeners
+            def criticalLintTask = project.tasks.register('criticalLintGradle', LintGradleTask) {
+                group = 'lint'
+                onlyCriticalRules = true
+            }
 
-            def fixTask2 = project.tasks.create('fixLintGradle', FixGradleLintTask)
-            fixTask2.userDefinedListeners = lintExt.listeners
 
-            List<Task> lintTasks = [fixTask, fixTask2, manualLintTask, autoLintTask]
+            def fixTask = project.tasks.register('fixGradleLint', FixGradleLintTask) {
+                userDefinedListeners = lintExt.listeners
+            }
+
+            def fixTask2 = project.tasks.register('fixLintGradle', FixGradleLintTask) {
+                userDefinedListeners = lintExt.listeners
+            }
+
+            List<TaskProvider> lintTasks = [fixTask, fixTask2, manualLintTask, autoLintTask]
 
             if (project.gradle.gradleVersion == GRADLE_FIVE_ZERO || GradleKt.versionGreaterThan(project.gradle, GRADLE_FIVE_ZERO)) {
                 configureAutoLint(autoLintTask, project, lintExt, lintTasks, criticalLintTask)
@@ -81,8 +88,8 @@ class GradleLintPlugin implements Plugin<Project> {
 
     }
 
-    private void configureAutoLint(LintGradleTask autoLintTask, Project project, GradleLintExtension lintExt, List<Task> lintTasks, Task criticalLintTask) {
-        List<Task> lintTasksToVerify = lintTasks + criticalLintTask
+    private void configureAutoLint(Task autoLintTask, Project project, GradleLintExtension lintExt, List<TaskProvider> lintTasks, TaskProvider criticalLintTask) {
+        List<TaskProvider> lintTasksToVerify = lintTasks + criticalLintTask
         project.afterEvaluate {
            if(lintExt.autoLintAfterFailure) {
                configureAutoLintWithFailures(autoLintTask, project, lintExt, lintTasksToVerify)
@@ -100,7 +107,7 @@ class GradleLintPlugin implements Plugin<Project> {
      * @param lintExt
      * @param lintTasksToVerify
      */
-    private void configureAutoLintWithFailures(LintGradleTask autoLintTask, Project project, GradleLintExtension lintExt, List<Task> lintTasksToVerify) {
+    private void configureAutoLintWithFailures(Task autoLintTask, Project project, GradleLintExtension lintExt, List<TaskProvider> lintTasksToVerify) {
         boolean hasExplicitLintTask = project.gradle.startParameter.taskNames.any { lintTasksToVerify.name.contains(it) }
         if(!hasValidTaskConfiguration(project, lintExt) || hasExplicitLintTask) {
             return
@@ -118,7 +125,7 @@ class GradleLintPlugin implements Plugin<Project> {
      * @param lintTasks
      * @param criticalLintTask
      */
-    private void configureAutoLintWithoutFailures(LintGradleTask autoLintTask, Project project, GradleLintExtension lintExt, List<Task> lintTasks, Task criticalLintTask) {
+    private void configureAutoLintWithoutFailures(Task autoLintTask, Project project, GradleLintExtension lintExt, List<TaskProvider> lintTasks, TaskProvider criticalLintTask) {
         project.gradle.taskGraph.whenReady { taskGraph ->
             List<Task> allTasks = taskGraph.allTasks
             if (hasValidTaskConfiguration(project, lintExt)) {
@@ -151,7 +158,7 @@ class GradleLintPlugin implements Plugin<Project> {
      * @param lintTasks
      * @param autoLintTask
      */
-    private void finalizeAllTasksWithAutoLint(Project project, List<Task> lintTasks, Task autoLintTask) {
+    private void finalizeAllTasksWithAutoLint(Project project, List<TaskProvider> lintTasks, Task autoLintTask) {
         project.tasks.configureEach { task ->
             if (!lintTasks.contains(task)) {
                 task.finalizedBy autoLintTask
@@ -171,7 +178,7 @@ class GradleLintPlugin implements Plugin<Project> {
      * @param lintTasks
      * @param criticalLintTask
      */
-    private void configureLegacyAutoLint(LintGradleTask autoLintTask, Project project, GradleLintExtension lintExt, List<Task> lintTasks, Task criticalLintTask) {
+    private void configureLegacyAutoLint(Task autoLintTask, Project project, GradleLintExtension lintExt, List<TaskProvider> lintTasks, TaskProvider criticalLintTask) {
         project.gradle.addListener(new LintListener() {
             List<Task> allTasks
 
@@ -201,14 +208,14 @@ class GradleLintPlugin implements Plugin<Project> {
         return shouldLint && !excludedAutoLintGradle && !skipForSpecificTask
     }
 
-    private boolean hasExplicitLintTask(List<Task> allTasks, List<Task> lintTasks) {
+    private boolean hasExplicitLintTask(List<Task> allTasks, List<TaskProvider> lintTasks) {
         allTasks.any {
             lintTasks.contains(it)
         }
     }
 
 
-    private boolean hasFailedCriticalLintTask(List<Task> tasks, Task criticalLintTask) {
+    private boolean hasFailedCriticalLintTask(List<Task> tasks, TaskProvider criticalLintTask) {
         return tasks.any { it == criticalLintTask && it.state.failure != null }
     }
 
