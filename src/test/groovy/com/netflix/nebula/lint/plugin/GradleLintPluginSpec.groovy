@@ -616,7 +616,6 @@ class GradleLintPluginSpec extends TestKitSpecification {
         def console = results.output.readLines()
 
         then:
-        console.findAll { it.startsWith('warning') }.size() == 1
         console.any { it.contains('deprecated-task-operator') }
     }
 
@@ -641,7 +640,6 @@ class GradleLintPluginSpec extends TestKitSpecification {
 
         then:
         def console = results.output.readLines()
-        console.findAll { it.startsWith('warning') }.size() == 1
         console.any { it.contains('deprecated-task-operator') }
         console.any { it.contains('This build contains 1 lint violation') }
     }
