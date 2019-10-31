@@ -67,7 +67,7 @@ class GradleLintPlugin implements Plugin<Project> {
                 userDefinedListeners = lintExt.listeners
             }
 
-            List<TaskProvider> lintTasks = [fixTask, fixTask2, manualLintTask, autoLintTask]
+            List<TaskProvider> lintTasks = [fixTask, fixTask2, manualLintTask]
 
             if (project.gradle.gradleVersion == GRADLE_FIVE_ZERO || GradleKt.versionGreaterThan(project.gradle, GRADLE_FIVE_ZERO)) {
                 configureAutoLint(autoLintTask, project, lintExt, lintTasks, criticalLintTask)
@@ -160,7 +160,7 @@ class GradleLintPlugin implements Plugin<Project> {
      */
     private void finalizeAllTasksWithAutoLint(Project project, List<TaskProvider> lintTasks, Task autoLintTask) {
         project.tasks.configureEach { task ->
-            if (!lintTasks.contains(task)) {
+            if (!lintTasks.contains(task) && !task.name.contains(AUTO_LINT_GRADLE)) {
                 task.finalizedBy autoLintTask
             }
         }
