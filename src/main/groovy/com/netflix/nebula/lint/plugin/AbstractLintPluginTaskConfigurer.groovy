@@ -2,11 +2,16 @@ package com.netflix.nebula.lint.plugin
 
 import org.gradle.api.Project
 import org.gradle.api.Task
-import org.gradle.api.plugins.JavaBasePlugin
-import org.gradle.api.tasks.compile.AbstractCompile
+
 
 abstract class AbstractLintPluginTaskConfigurer {
+    public static final String LINT_GROUP = 'lint'
     public static final String AUTO_LINT_GRADLE = 'autoLintGradle'
+    public static final String LINT_GRADLE = 'lintGradle'
+    public static final String CRITICAL_LINT_GRADLE = 'criticalLintGradle'
+    public static final String FIX_GRADLE_LINT = 'fixGradleLint'
+    public static final String FIX_LINT_GRADLE = 'fixLintGradle'
+    public static final String GENERATE_GRADLE_LINT_REPORT = 'generateGradleLintReport'
 
     void configure(Project project) {
         def lintExt = project.extensions.create('gradleLint', GradleLintExtension)
@@ -16,15 +21,7 @@ abstract class AbstractLintPluginTaskConfigurer {
 
     abstract void createTasks(Project project, GradleLintExtension lintExtension)
 
-    protected void wireJavaPlugin(Project project) {
-        project.plugins.withType(JavaBasePlugin) {
-            project.tasks.withType(AbstractCompile) { task ->
-                project.rootProject.tasks.getByName('fixGradleLint').dependsOn(task)
-                project.rootProject.tasks.getByName('lintGradle').dependsOn(task)
-                project.rootProject.tasks.getByName('fixLintGradle').dependsOn(task)
-            }
-        }
-    }
+    abstract void wireJavaPlugin(Project project)
 
     protected static boolean hasValidTaskConfiguration(Project project, GradleLintExtension lintExt) {
         boolean shouldLint = project.hasProperty('gradleLint.alwaysRun') ?
