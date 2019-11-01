@@ -4,6 +4,8 @@ import org.gradle.BuildResult
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.execution.TaskExecutionGraph
+import org.gradle.api.plugins.JavaBasePlugin
+import org.gradle.api.tasks.compile.AbstractCompile
 
 /**
  * Configure gradle lint tasks for gradle versions older than 5.
@@ -16,18 +18,18 @@ class LegacyGradleLintPluginTaskConfigurer extends AbstractLintPluginTaskConfigu
             def autoLintTask = project.tasks.create(AUTO_LINT_GRADLE, LintGradleTask)
             autoLintTask.listeners = lintExt.listeners
 
-            def manualLintTask = project.tasks.create('lintGradle', LintGradleTask)
-            manualLintTask.group = 'lint'
+            def manualLintTask = project.tasks.create(LINT_GRADLE, LintGradleTask)
+            manualLintTask.group = LINT_GROUP
             manualLintTask.failOnWarning = true
 
-            def criticalLintTask = project.tasks.create('criticalLintGradle', LintGradleTask)
-            criticalLintTask.group = 'lint'
+            def criticalLintTask = project.tasks.create(CRITICAL_LINT_GRADLE, LintGradleTask)
+            criticalLintTask.group = LINT_GROUP
             criticalLintTask.onlyCriticalRules = true
 
-            def fixTask = project.tasks.create('fixGradleLint', FixGradleLintTask)
+            def fixTask = project.tasks.create(FIX_GRADLE_LINT, FixGradleLintTask)
             fixTask.userDefinedListeners = lintExt.listeners
 
-            def fixTask2 = project.tasks.create('fixLintGradle', FixGradleLintTask)
+            def fixTask2 = project.tasks.create(FIX_LINT_GRADLE, FixGradleLintTask)
             fixTask2.userDefinedListeners = lintExt.listeners
 
             List<Task> lintTasks = [fixTask, fixTask2, manualLintTask, autoLintTask]
@@ -37,6 +39,18 @@ class LegacyGradleLintPluginTaskConfigurer extends AbstractLintPluginTaskConfigu
         }
 
         configureReportTask(project, lintExt)
+    }
+
+
+    @Override
+    void wireJavaPlugin(Project project) {
+        project.plugins.withType(JavaBasePlugin) {
+            project.tasks.withType(AbstractCompile) { task ->
+                project.rootProject.tasks.getByName(FIX_GRADLE_LINT).dependsOn(task)
+                project.rootProject.tasks.getByName(LINT_GRADLE).dependsOn(task)
+                project.rootProject.tasks.getByName(FIX_LINT_GRADLE).dependsOn(task)
+            }
+        }
     }
 
     /**
@@ -71,7 +85,7 @@ class LegacyGradleLintPluginTaskConfigurer extends AbstractLintPluginTaskConfigu
     }
 
     private void configureReportTask(Project project, GradleLintExtension extension) {
-        def task = project.tasks.create('generateGradleLintReport', GradleLintReportTask)
+        def task = project.tasks.create(GENERATE_GRADLE_LINT_REPORT, GradleLintReportTask)
         task.reports.all { report ->
             report.conventionMapping.with {
                 enabled = { report.name == extension.reportFormat }
