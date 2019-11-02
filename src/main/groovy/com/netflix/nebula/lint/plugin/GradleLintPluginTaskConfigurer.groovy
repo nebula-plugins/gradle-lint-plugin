@@ -49,26 +49,29 @@ class GradleLintPluginTaskConfigurer extends AbstractLintPluginTaskConfigurer {
     @Override
     void wireJavaPlugin(Project project) {
         project.plugins.withType(JavaBasePlugin) {
-            project.tasks.withType(AbstractCompile) { abstractCompileTask ->
-                project.rootProject.tasks.named(FIX_GRADLE_LINT).configure(new Action<Task>() {
-                    @Override
-                    void execute(Task fixGradleLintTask) {
-                        fixGradleLintTask.dependsOn(abstractCompileTask)
-                    }
-                })
-                project.rootProject.tasks.named(LINT_GRADLE).configure(new Action<Task>() {
-                    @Override
-                    void execute(Task lintGradleTask) {
-                        lintGradleTask.dependsOn(abstractCompileTask)
-                    }
-                })
-                project.rootProject.tasks.named(FIX_LINT_GRADLE).configure(new Action<Task>() {
-                    @Override
-                    void execute(Task fixLintGradleTask) {
-                        fixLintGradleTask.dependsOn(abstractCompileTask)
-                    }
-                })
-            }
+            project.tasks.withType(AbstractCompile).configureEach(new Action<AbstractCompile>() {
+                @Override
+                void execute(AbstractCompile abstractCompileTask) {
+                    project.rootProject.tasks.named(FIX_GRADLE_LINT).configure(new Action<Task>() {
+                        @Override
+                        void execute(Task fixGradleLintTask) {
+                            fixGradleLintTask.dependsOn(abstractCompileTask)
+                        }
+                    })
+                    project.rootProject.tasks.named(LINT_GRADLE).configure(new Action<Task>() {
+                        @Override
+                        void execute(Task lintGradleTask) {
+                            lintGradleTask.dependsOn(abstractCompileTask)
+                        }
+                    })
+                    project.rootProject.tasks.named(FIX_LINT_GRADLE).configure(new Action<Task>() {
+                        @Override
+                        void execute(Task fixLintGradleTask) {
+                            fixLintGradleTask.dependsOn(abstractCompileTask)
+                        }
+                    })
+                }
+            })
         }
     }
 
