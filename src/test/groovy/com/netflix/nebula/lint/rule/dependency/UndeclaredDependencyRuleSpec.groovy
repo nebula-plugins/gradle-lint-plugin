@@ -558,7 +558,7 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
                 }
               }
               dependencies {
-                classpath "io.franzbecker:gradle-lombok:1.14"
+                classpath "io.franzbecker:gradle-lombok:3.2.0"
               }
             }
             
