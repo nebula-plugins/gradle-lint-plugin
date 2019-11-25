@@ -16,6 +16,7 @@
 package com.netflix.nebula.lint.plugin
 
 import com.netflix.nebula.lint.TestKitSpecification
+import spock.lang.IgnoreIf
 import spock.lang.Issue
 
 class FixGradleLintTaskSpec extends TestKitSpecification {
@@ -108,6 +109,7 @@ dependencies {\r
      * Because Gradle changed the internal APIs we are using to performed stylized text logging...
      * This verifies that our reflection hack continues to be backwards compatible
      */
+    @IgnoreIf({ jvm.isJava9Compatible() })
     def 'Make sure logging works on older gradle version'() {
         buildFile << """\
             plugins {

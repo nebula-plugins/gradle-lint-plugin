@@ -1,11 +1,13 @@
 package com.netflix.nebula.lint.rule.dependency
 
 import com.netflix.nebula.lint.TestKitSpecification
+import spock.lang.IgnoreIf
 import spock.lang.Subject
 import spock.lang.Unroll
 
 @Unroll
 @Subject(DeprecatedDependencyConfigurationRule)
+@IgnoreIf({ jvm.isJava9Compatible() })
 class OldGradleDeprecatedDependencyConfigurationRuleSpec extends TestKitSpecification {
 
     //Should not replace with gradle < 4.7
