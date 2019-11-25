@@ -7,6 +7,7 @@ import nebula.test.IntegrationSpec
 import nebula.test.dependencies.DependencyGraphBuilder
 import nebula.test.dependencies.GradleDependencyGenerator
 import org.codehaus.groovy.ast.expr.MethodCallExpression
+import spock.lang.IgnoreIf
 import spock.lang.Unroll
 
 class DependencyHelperSpec extends IntegrationSpec {
@@ -55,7 +56,6 @@ class DependencyHelperSpec extends IntegrationSpec {
         dep | depResult
         'implementation \'test.nebula:foo:1.0.0\'' | 'implementation \'test.nebula:foo\''
         'testImplementation \'test.nebula:foo:1.0.0\'' | 'testImplementation \'test.nebula:foo\''
-        'implementation \'test.nebula:foo:1.0.0:tests\'' | 'implementation \'test.nebula:foo::tests\''
         'implementation "test.nebula:foo:${myVersion}"' | 'implementation "test.nebula:foo"'
         'runtimeOnly group: \'test.nebula\', name: \'foo\', version: \'1.0.0\'' | 'runtimeOnly group: \'test.nebula\', name: \'foo\''
         'runtimeOnly group: \'test.nebula\', name: \'foo\', version: myVersion' | 'runtimeOnly group: \'test.nebula\', name: \'foo\''
