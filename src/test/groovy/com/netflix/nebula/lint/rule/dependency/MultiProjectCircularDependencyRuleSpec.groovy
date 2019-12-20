@@ -20,13 +20,13 @@ class MultiProjectCircularDependencyRuleSpec extends IntegrationSpec {
         addSubproject('foo', '''\
             apply plugin: 'java'
             dependencies {
-                 compile group: 'com.google.guava', name: 'guava', version: '23.5-jre'
+                 implementation group: 'com.google.guava', name: 'guava', version: '23.5-jre'
             }
             '''.stripIndent())
         addSubproject('bar', '''\
             apply plugin: 'java'
             dependencies {
-                compile group: 'com.google.guava', name: 'guava', version: '23.5-jre' 
+                implementation group: 'com.google.guava', name: 'guava', version: '23.5-jre' 
             }
             '''.stripIndent())
 
@@ -51,15 +51,15 @@ class MultiProjectCircularDependencyRuleSpec extends IntegrationSpec {
         addSubproject('foo', '''\
             apply plugin: 'java'
             dependencies {
-                 compile project(':bar')
-                 compile group: 'com.google.guava', name: 'guava', version: '23.5-jre'
+                 implementation project(':bar')
+                 implementation group: 'com.google.guava', name: 'guava', version: '23.5-jre'
             }
             '''.stripIndent())
         addSubproject('bar', '''\
             apply plugin: 'java'
             dependencies {
-                compile project(':foo')
-                compile group: 'com.google.guava', name: 'guava', version: '23.5-jre' 
+                implementation project(':foo')
+                implementation group: 'com.google.guava', name: 'guava', version: '23.5-jre' 
             }
             '''.stripIndent())
 
@@ -84,17 +84,17 @@ class MultiProjectCircularDependencyRuleSpec extends IntegrationSpec {
         addSubproject('foo', '''\
             apply plugin: 'java'
             dependencies {
-                 compile(project(':bar')) {
+                 implementation(project(':bar')) {
                     exclude group: 'org.unwanted', module: 'x'
                  }
-                 compile group: 'com.google.guava', name: 'guava', version: '23.5-jre'
+                 implementation group: 'com.google.guava', name: 'guava', version: '23.5-jre'
             }
             '''.stripIndent())
         addSubproject('bar', '''\
             apply plugin: 'java'
             dependencies {
-                compile project(':foo')
-                compile group: 'com.google.guava', name: 'guava', version: '23.5-jre' 
+                implementation project(':foo')
+                implementation group: 'com.google.guava', name: 'guava', version: '23.5-jre' 
             }
             '''.stripIndent())
 
@@ -120,27 +120,27 @@ class MultiProjectCircularDependencyRuleSpec extends IntegrationSpec {
         addSubproject('foo', '''\
             apply plugin: 'java'
             dependencies {
-                 compile 'com.github.zafarkhaja:java-semver:latest.release\'
-                 compile 'com.google.guava:guava:20.0\'
-                 compile 'com.netflix.nebula:nebula-core:latest.release\'
-                 compile 'commons-lang:commons-lang:latest.release\'
-                 compile 'joda-time:joda-time:latest.release\'
-                 compile 'org.ajoberstar:gradle-git:1.4.+\'        
-                 compile project(':bar')
-                 compile group: 'com.google.guava', name: 'guava', version: '23.5-jre'
+                 implementation 'com.github.zafarkhaja:java-semver:latest.release\'
+                 implementation 'com.google.guava:guava:20.0\'
+                 implementation 'com.netflix.nebula:nebula-core:latest.release\'
+                 implementation 'commons-lang:commons-lang:latest.release\'
+                 implementation 'joda-time:joda-time:latest.release\'
+                 implementation 'org.ajoberstar:gradle-git:1.4.+\'        
+                 implementation project(':bar')
+                 implementation group: 'com.google.guava', name: 'guava', version: '23.5-jre'
             }
             '''.stripIndent())
         addSubproject('bar', '''\
             apply plugin: 'java'
             dependencies {
-                 compile 'com.github.zafarkhaja:java-semver:latest.release\'
-                 compile 'com.google.guava:guava:20.0\'
-                 compile 'com.netflix.nebula:nebula-core:latest.release\'
-                 compile 'commons-lang:commons-lang:latest.release\'
-                 compile 'joda-time:joda-time:latest.release\'
-                 compile 'org.ajoberstar:gradle-git:1.4.+'   
-                 compile project(':foo')
-                 compile group: 'com.google.guava', name: 'guava', version: '23.5-jre' 
+                 implementation 'com.github.zafarkhaja:java-semver:latest.release\'
+                 implementation 'com.google.guava:guava:20.0\'
+                 implementation 'com.netflix.nebula:nebula-core:latest.release\'
+                 implementation 'commons-lang:commons-lang:latest.release\'
+                 implementation 'joda-time:joda-time:latest.release\'
+                 implementation 'org.ajoberstar:gradle-git:1.4.+'   
+                 implementation project(':foo')
+                 implementation group: 'com.google.guava', name: 'guava', version: '23.5-jre' 
             }
             '''.stripIndent())
 
@@ -165,23 +165,23 @@ class MultiProjectCircularDependencyRuleSpec extends IntegrationSpec {
         addSubproject('foo', '''\
             apply plugin: 'java'
             dependencies {
-                 compile project(':bar')
-                 compile project(':baz')
-                 compile group: 'com.google.guava', name: 'guava', version: '23.5-jre'
+                 implementation project(':bar')
+                 implementation project(':baz')
+                 implementation group: 'com.google.guava', name: 'guava', version: '23.5-jre'
             }
             '''.stripIndent())
         addSubproject('bar', '''\
             apply plugin: 'java'
             dependencies {
-                compile project(':foo')
-                compile group: 'com.google.guava', name: 'guava', version: '23.5-jre' 
+                implementation project(':foo')
+                implementation group: 'com.google.guava', name: 'guava', version: '23.5-jre' 
             }
             '''.stripIndent())
         addSubproject('baz', '''\
             apply plugin: 'java'
             dependencies {
-                compile project(':foo')
-                compile group: 'com.google.guava', name: 'guava', version: '23.5-jre' 
+                implementation project(':foo')
+                implementation group: 'com.google.guava', name: 'guava', version: '23.5-jre' 
             }
             '''.stripIndent())
 
@@ -207,15 +207,15 @@ class MultiProjectCircularDependencyRuleSpec extends IntegrationSpec {
         addSubproject('foo', '''\
             apply plugin: 'java'
             dependencies {
-                 compile project ':bar'
-                 compile group: 'com.google.guava', name: 'guava', version: '23.5-jre'
+                 implementation project ':bar'
+                 implementation group: 'com.google.guava', name: 'guava', version: '23.5-jre'
             }
             '''.stripIndent())
         addSubproject('bar', '''\
             apply plugin: 'java'
             dependencies {
-                compile project ':foo'
-                compile group: 'com.google.guava', name: 'guava', version: '23.5-jre' 
+                implementation project ':foo'
+                implementation group: 'com.google.guava', name: 'guava', version: '23.5-jre' 
             }
             '''.stripIndent())
 
@@ -240,17 +240,17 @@ class MultiProjectCircularDependencyRuleSpec extends IntegrationSpec {
         addSubproject('foo', '''\
             apply plugin: 'java'
             dependencies {
-                 compile project(':bar') {
+                 implementation project(':bar') {
                     exclude group: 'org.unwanted', module: 'x'
                  }
-                 compile group: 'com.google.guava', name: 'guava', version: '23.5-jre'
+                 implementation group: 'com.google.guava', name: 'guava', version: '23.5-jre'
             }
             '''.stripIndent())
         addSubproject('bar', '''\
             apply plugin: 'java'
             dependencies {
-                compile project(':foo')
-                compile group: 'com.google.guava', name: 'guava', version: '23.5-jre' 
+                implementation project(':foo')
+                implementation group: 'com.google.guava', name: 'guava', version: '23.5-jre' 
             }
             '''.stripIndent())
 

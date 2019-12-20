@@ -24,7 +24,7 @@ class FixGradleLintTaskCriticalRulesSpec extends IntegrationSpec {
             gradleLint.criticalRules = ['test-user-action-required']
             
             dependencies {
-                compile('commons-lang:commons-lang:2.6')
+                implementation('commons-lang:commons-lang:2.6')
             }
         """
 
