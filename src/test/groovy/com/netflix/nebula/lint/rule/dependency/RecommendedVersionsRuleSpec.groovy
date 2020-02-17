@@ -34,7 +34,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         if (settingsFile.exists()) {
             settingsFile.delete()
         }
-        def propertiesFile = new File("gradle.properties")
+        def propertiesFile = new File(projectDir, "gradle.properties")
         if (propertiesFile.exists()) {
             propertiesFile.delete()
         }
