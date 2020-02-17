@@ -19,55 +19,96 @@
 package com.netflix.nebula.lint.rule.dependency
 
 import com.netflix.nebula.lint.TestKitSpecification
-
+import nebula.test.dependencies.Coordinate
+import nebula.test.dependencies.maven.Pom
+import spock.lang.Unroll
 
 class SupportJavaLibrarySpec extends TestKitSpecification {
-    def 'handles java-library plugin'() {
-        given:
-        setupWithJavaLibraryAndAllRules()
+    private static final def sample = new Coordinate('sample', 'alpha', '1.0')
+    private static final def junit = new Coordinate('junit', 'junit', '4.11')
+    def repo
 
-        when:
-        def result = runTasksSuccessfully('fixGradleLint')
+    def setup() {
+        repo = new File(projectDir, 'repo')
+        repo.mkdirs()
 
-        then:
-        result.output.contains('This project contains lint violations.')
-    }
+        def samplePom = new Pom(sample.getGroup(), sample.getArtifact(), sample.getVersion())
+        samplePom.addDependency(junit.getGroup(), junit.getArtifact(), junit.getVersion())
+        ArtifactHelpers.setupSamplePomWith(repo, sample, samplePom.generate())
+        ArtifactHelpers.setupSampleJar(repo, sample)
 
-    def 'verify rules are working - testing undeclared dependency'() {
-        given:
-        setupWithJavaLibraryAndAllRules(true)
-
-        when:
-        def result = runTasksSuccessfully('fixGradleLint')
-
-        then:
-        result.output.contains('undeclared-dependency')
-        result.output.contains('This project contains lint violations.')
-    }
-
-    private def setupWithJavaLibraryAndAllRules(boolean undeclaredDependency = false) {
         definePluginOutsideOfPluginBlock = true
+    }
 
-        def configuration
-        if (undeclaredDependency) {
-            configuration = 'implementation'
-        } else {
-            configuration = 'testCompile'
+    @Unroll
+    def 'handles java-library plugin with dependency on #configuration'() {
+        given:
+        setupWithJavaLibraryAndAllRules(configuration)
+
+        when:
+        def result = runTasksSuccessfully('fixGradleLint')
+
+        then:
+        result.output.contains('This project contains lint violations.')
+        result.output.contains('unused-dependency')
+
+        def sub1BuildFileText = new File("$projectDir/sub1", 'build.gradle').text
+        def expectedDependencies = """
+            dependencies {
+            }
+            """.stripIndent()
+        sub1BuildFileText.contains(expectedDependencies)
+
+        where:
+//        configuration << ['testImplementation', 'testCompile', 'implementation'] // coming up!
+        configuration << ['testCompile']
+    }
+
+    @Unroll
+    def 'undeclared dependency - handles java-library plugin with dependency on #configuration'() {
+        given:
+        setupWithJavaLibraryAndAllRules(configuration, true)
+
+        when:
+        def result = runTasksSuccessfully('fixGradleLint')
+
+        then:
+        result.output.contains('This project contains lint violations.')
+        result.output.contains('undeclared-dependency')
+        result.output.contains('unused-dependency')
+
+        def sub1BuildFileText = new File("$projectDir/sub1", 'build.gradle').text
+        def expectedDependencies = """
+            dependencies {
+                testCompile '$junit'
+            }
+            """.stripIndent() // TODO: fix to make this testImplementation!
+        sub1BuildFileText.contains(expectedDependencies)
+
+        where:
+        configuration << ['testImplementation', 'testCompile', 'implementation']
+    }
+
+    private def setupWithJavaLibraryAndAllRules(String configuration, boolean undeclaredDependency = false) {
+        def deps = [sample]
+        if (!undeclaredDependency) {
+            deps.add(junit)
         }
 
         buildFile << """
-        allprojects {
-            apply plugin: 'nebula.lint'
-            apply plugin: 'java-library'
-            dependencies {
-                ${configuration} 'junit:junit:4.11'
-            }
-            gradleLint.rules=['all-dependency']
-            repositories {
-                mavenCentral()
-            }
-        }
-        """.stripIndent()
+        |allprojects {
+        |    apply plugin: 'nebula.lint'
+        |    apply plugin: 'java-library'
+        |    dependencies {
+        |    ${deps.collect { "    $configuration '$it'" }.join('\n\t')}
+        |    }
+        |    gradleLint.rules=['all-dependency']
+        |    repositories {
+        |        maven { url "${repo.toURI().toURL()}" }
+        |        mavenCentral()
+        |    }
+        |}
+        |""".stripMargin()
 
         addSubproject('sub1', """
             dependencies {
