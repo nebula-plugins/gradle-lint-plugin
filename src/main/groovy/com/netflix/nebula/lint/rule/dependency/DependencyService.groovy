@@ -311,28 +311,31 @@ class DependencyService {
 
     @Memoized
     Set<ModuleVersionIdentifier> undeclaredDependencies(String confName) {
-        def references = classReferences(confName)
-        if (!references)
-            return Collections.emptySet()
-
-        def conf = project.configurations.getByName(confName)
-        def required = (references.direct + references.indirect).collect { it.moduleVersion.id }
-                .groupBy { it.module }
-                .values()
-                .collect {
-            it.sort { d1, d2 -> VersionNumber.parse(d2.version).compareTo(VersionNumber.parse(d1.version)) }.first()
-        }
-        .toSet()
-
-        def declared = findDeclaredDependencies(conf)
+        Collection<ModuleVersionIdentifier> required = findRequiredDependencies(confName)
+        Collection<ModuleVersionIdentifier> declared = findDeclaredDependencies(project.configurations.getByName(confName))
 
         return (required - declared).toSorted(DEPENDENCY_COMPARATOR).toSet()
     }
 
-    private findDeclaredDependencies(Configuration configuration) {
+    protected Collection<ModuleVersionIdentifier> findRequiredDependencies(String confName) {
+        DependencyReferences references = classReferences(confName)
+        if (!references)
+            return Collections.emptySet()
+
+        Collection<ModuleVersionIdentifier> required = (references.direct + references.indirect).collect { it.moduleVersion.id as ModuleVersionIdentifier }
+                .groupBy { it.module }
+                .values()
+                .collect {
+                    it.sort { d1, d2 -> VersionNumber.parse(d2.version).compareTo(VersionNumber.parse(d1.version)) }.first()
+                }
+                .toSet()
+        return required
+    }
+
+    private Collection<ModuleVersionIdentifier> findDeclaredDependencies(Configuration configuration) {
         def declared = configuration.resolvedConfiguration.firstLevelModuleDependencies.collect { it.module.id }
-        project.configurations.findAll { it.extendsFrom.contains(configuration )}.each { Configuration childConfig ->
-            if(isResolvable(childConfig)) {
+        project.configurations.findAll { it.extendsFrom.contains(configuration) }.each { Configuration childConfig ->
+            if (isResolvable(childConfig)) {
                 declared.addAll childConfig.resolvedConfiguration.firstLevelModuleDependencies.collect { it.module.id }
             } else {
                 declared.addAll getResolvableConfigurationOrParent(childConfig.name).resolvedConfiguration.firstLevelModuleDependencies.collect { it.module.id }
@@ -568,8 +571,10 @@ class DependencyService {
     }
 
     SourceSet sourceSetByConf(String conf) {
-        project.convention.findPlugin(JavaPluginConvention)?.sourceSets?.find { it.compileConfigurationName == conf }
-                ?: project.convention.findPlugin(JavaPluginConvention)?.sourceSets?.find { sourceSet -> project.configurations.getByName(conf).extendsFrom.any { it.name ==  sourceSet.compileConfigurationName } } //find source set from parent
+        project.convention.findPlugin(JavaPluginConvention)?.sourceSets?.find {
+            it.compileClasspathConfigurationName == conf || it.compileConfigurationName == conf
+        }
+                ?: project.convention.findPlugin(JavaPluginConvention)?.sourceSets?.find { sourceSet -> project.configurations.getByName(conf).extendsFrom.any { it.name ==  sourceSet.compileClasspathConfigurationName } } //find source set from parent
                 ?: project.configurations.findAll { it.extendsFrom.contains(project.configurations.getByName(conf)) }
                         .collect { sourceSetByConf(it.name) }
                         .find { true } // get the first source set, if one is available that matches
@@ -577,7 +582,7 @@ class DependencyService {
     }
 
     private Iterable<File> sourceSetClasspath(String conf) {
-        def sourceSet = sourceSetByConf(conf == 'compileOnly' ? 'compile' : conf)
+        def sourceSet = sourceSetByConf(resolvableConf(conf))
         if (sourceSet) return sourceSet.compileClasspath
 
         // android
@@ -586,8 +591,12 @@ class DependencyService {
         return project.tasks.findByName('compileReleaseJavaWithJavac')?.classpath
     }
 
+    private static String resolvableConf(String conf) {
+        declaredToResolvableConfigurations.containsKey(conf) ? declaredToResolvableConfigurations.get(conf) : conf
+    }
+
     private FileCollection sourceSetOutput(String conf) {
-        def sourceSet = sourceSetByConf(conf == 'compileOnly' ? 'compile' : conf)
+        def sourceSet = sourceSetByConf(resolvableConf(conf))
         if (sourceSet) {
             if (GradleKt.versionLessThan(project.gradle, "4.0")) {
                 return project.files(sourceSet.output.classesDir)

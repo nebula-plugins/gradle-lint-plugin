@@ -300,9 +300,96 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
         ''')
 
         then:
-        def result = runTasksSuccessfully('compileTestJava', 'autoLintGradle')
-        result.output.contains('warning   unused-dependency                  one or more classes in junit:junit:4.12 are required by your code directly (no auto-fix available)')
-        result.output.contains('warning   unused-dependency                  this dependency is unused and can be removed')
+        def result = runTasksSuccessfully('compileTestJava', 'fixGradleLint')
+        result.output.contains('fixed          unused-dependency                  this dependency should be moved to configuration testImplementation')
+        !result.output.contains('unfixed        unused-dependency')
+        !result.output.contains('this dependency is unused and can be removed')
+    }
+
+    def 'suggest that dependencies should be moved - used in only 1 nested configuration'() {
+        buildFile.text = """
+            buildscript {
+                repositories { maven { url "https://plugins.gradle.org/m2/" } }
+                dependencies {
+                    classpath "com.netflix.nebula:nebula-project-plugin:7.0.7"
+                }
+            }
+            plugins {
+                id 'nebula.lint'
+                id 'java'
+            }
+            apply plugin: "nebula.integtest"
+            gradleLint.rules = ['unused-dependency']
+            repositories { mavenCentral() }
+            dependencies {
+                implementation 'junit:junit:4.12'
+            }
+        """
+
+        createJavaSourceFile('public class Main {}')
+
+        createJavaFile(projectDir, '''
+            import org.junit.Test;
+            public class Test1 {
+                @Test
+                public void test() {}
+            }
+        ''', 'src/integTest/java')
+
+        when:
+        def result = runTasksSuccessfully('compileTestJava', 'fixGradleLint')
+
+        then:
+        result.output.contains('fixed          unused-dependency                  this dependency should be moved to configuration integTestImplementation')
+        !result.output.contains('unfixed        unused-dependency')
+        !result.output.contains('this dependency is unused and can be removed')
+    }
+
+    def 'suggest that dependencies should be moved - used in 2 configurations in a hierarchy'() {
+        buildFile.text = """
+            buildscript {
+                repositories { maven { url "https://plugins.gradle.org/m2/" } }
+                dependencies {
+                    classpath "com.netflix.nebula:nebula-project-plugin:7.0.7"
+                }
+            }
+            plugins {
+                id 'nebula.lint'
+                id 'java'
+            }
+            apply plugin: "nebula.integtest"
+            gradleLint.rules = ['unused-dependency']
+            repositories { mavenCentral() }
+            dependencies {
+                implementation 'junit:junit:4.12'
+            }
+        """
+
+        createJavaSourceFile('public class Main {}')
+
+        createJavaTestFile(projectDir, '''
+            import org.junit.Test;
+            public class Test1 {
+                @Test
+                public void test() {}
+            }
+        ''')
+
+        createJavaFile(projectDir, '''
+            import org.junit.Test;
+            public class Test1 {
+                @Test
+                public void test() {}
+            }
+        ''', 'src/integTest/java')
+
+        when:
+        def result = runTasksSuccessfully('compileTestJava', 'fixGradleLint')
+
+        then:
+        result.output.contains('fixed          unused-dependency                  this dependency should be moved to configuration testImplementation')
+        !result.output.contains('unfixed        unused-dependency')
+        !result.output.contains('this dependency is unused and can be removed')
     }
 
     def 'webjars should be moved to runtime'() {
@@ -546,7 +633,6 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
     def 'does not fail with dependency constraints'() {
         setup:
         def expectedWarnings = [
-                'warning   unused-dependency                  one or more classes in com.google.guava:guava:18.0 are required by your code directly (no auto-fix available)',
                 'warning   unused-dependency                  this dependency is unused and can be removed'
         ]
 
