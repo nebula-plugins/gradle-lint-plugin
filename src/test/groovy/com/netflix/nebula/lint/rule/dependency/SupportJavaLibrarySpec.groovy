@@ -16,7 +16,7 @@
  *
  */
 
-package com.netflix.nebula.lint.rule
+package com.netflix.nebula.lint.rule.dependency
 
 import com.netflix.nebula.lint.TestKitSpecification
 
