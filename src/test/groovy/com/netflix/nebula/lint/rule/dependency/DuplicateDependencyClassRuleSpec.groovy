@@ -17,11 +17,11 @@
 package com.netflix.nebula.lint.rule.dependency
 
 import com.netflix.nebula.lint.TestKitSpecification
-import org.gradle.api.Project
-import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.Issue
+import spock.lang.Subject
 import spock.lang.Unroll
 
+@Subject(FirstOrderDuplicateDependencyClassRule)
 class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
     static def guava = 'com.google.guava:guava:18.0'
     static def collections = 'com.google.collections:google-collections:1.0'
