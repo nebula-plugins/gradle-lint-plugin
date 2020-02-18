@@ -1,7 +1,9 @@
 package com.netflix.nebula.lint.rule.dependency
 
 import nebula.test.IntegrationSpec
+import spock.lang.Subject
 
+@Subject(DependencyService)
 class FindMethodReferencesSpec extends IntegrationSpec {
 
     def 'find method references no exclusion'() {
@@ -49,8 +51,8 @@ class FindMethodReferencesSpec extends IntegrationSpec {
 
 
         when:
-        runTasksSuccessfully('compileMethodReferences')
-        String methodReferences =  new File(projectDir, 'compileMethodReferences.txt').text
+        runTasksSuccessfully('compileClasspathMethodReferences')
+        String methodReferences = new File(projectDir, 'compileClasspathMethodReferences.txt').text
 
         then:
         methodReferences == "source: Main.java - filePath: com/netflix/test/Main.java - name: com/netflix/test/Main - methodReferences: methodName: <init> - owner: java/lang/Object - methodDesc: ()V - line: 10 - isInterface: false - opCode: INVOKESPECIAL | methodName: sameThreadExecutor - owner: com/google/common/util/concurrent/MoreExecutors - methodDesc: ()Lcom/google/common/util/concurrent/ListeningExecutorService; - line: 11 - isInterface: false - opCode: INVOKESTATIC | methodName: <init> - owner: java/util/HashMap - methodDesc: ()V - line: 12 - isInterface: false - opCode: INVOKESPECIAL | methodName: newSetFromMap - owner: com/google/common/collect/Sets - methodDesc: (Ljava/util/Map;)Ljava/util/Set; - line: 12 - isInterface: false - opCode: INVOKESTATIC"
@@ -102,8 +104,8 @@ class FindMethodReferencesSpec extends IntegrationSpec {
 
 
         when:
-        runTasksSuccessfully('compileMethodReferences')
-        String methodReferences =  new File(projectDir, 'compileMethodReferences.txt').text
+        runTasksSuccessfully('compileClasspathMethodReferences')
+        String methodReferences = new File(projectDir, 'compileClasspathMethodReferences.txt').text
 
         then:
         methodReferences == "source: Main.java - filePath: com/netflix/test/Main.java - name: com/netflix/test/Main - methodReferences: methodName: sameThreadExecutor - owner: com/google/common/util/concurrent/MoreExecutors - methodDesc: ()Lcom/google/common/util/concurrent/ListeningExecutorService; - line: 11 - isInterface: false - opCode: INVOKESTATIC | methodName: newSetFromMap - owner: com/google/common/collect/Sets - methodDesc: (Ljava/util/Map;)Ljava/util/Set; - line: 12 - isInterface: false - opCode: INVOKESTATIC"
@@ -153,8 +155,8 @@ class FindMethodReferencesSpec extends IntegrationSpec {
 
 
         when:
-        def r = runTasksSuccessfully('compileMethodReferences')
-        String methodReferences =  new File(projectDir, 'compileMethodReferences.txt').text
+        def r = runTasksSuccessfully('compileClasspathMethodReferences')
+        String methodReferences = new File(projectDir, 'compileClasspathMethodReferences.txt').text
 
         then:
         methodReferences == "source: Main.java - filePath: com/netflix/test/Main.java - name: com/netflix/test/Main - methodReferences: methodName: newSetFromMap - owner: com/google/common/collect/Sets - methodDesc: (Ljava/util/Map;)Ljava/util/Set; - line: 11 - isInterface: false - opCode: INVOKESTATIC"
@@ -206,8 +208,8 @@ class FindMethodReferencesSpec extends IntegrationSpec {
 
 
         when:
-        runTasksSuccessfully('compileMethodReferences')
-        String methodReferences =  new File(projectDir, 'compileMethodReferences.txt').text
+        runTasksSuccessfully('compileClasspathMethodReferences')
+        String methodReferences = new File(projectDir, 'compileClasspathMethodReferences.txt').text
 
         then:
         methodReferences == "source: Main.java - filePath: com/netflix/test/Main.java - name: com/netflix/test/Main - methodReferences: methodName: sameThreadExecutor - owner: com/google/common/util/concurrent/MoreExecutors - methodDesc: ()Lcom/google/common/util/concurrent/ListeningExecutorService; - line: 11 - isInterface: false - opCode: INVOKESTATIC"
@@ -266,8 +268,8 @@ class FindMethodReferencesSpec extends IntegrationSpec {
 
 
         when:
-        runTasksSuccessfully('compileMethodReferences')
-        String methodReferences =  new File(projectDir, 'compileMethodReferences.txt').text
+        runTasksSuccessfully('compileClasspathMethodReferences')
+        String methodReferences = new File(projectDir, 'compileClasspathMethodReferences.txt').text
 
         then:
         methodReferences.contains "source: Main2.java - filePath: com/netflix/test/Main2.java - name: com/netflix/test/Main2 - methodReferences: methodName: newSetFromMap - owner: com/google/common/collect/Sets - methodDesc: (Ljava/util/Map;)Ljava/util/Set; - line: 9 - isInterface: false - opCode: INVOKESTATIC"
@@ -318,7 +320,7 @@ class FindMethodReferencesSpec extends IntegrationSpec {
 
 
         when:
-        def result = runTasksSuccessfully('compileMethodReferences')
+        def result = runTasksSuccessfully('compileClasspathMethodReferences')
 
         then:
         result.standardOutput.contains("""[
@@ -435,7 +437,7 @@ class FindMethodReferencesSpec extends IntegrationSpec {
 
 
         when:
-        def result = runTasks('compileMethodReferences')
+        def result = runTasks('compileClasspathMethodReferences')
 
         then:
         result.standardOutput.contains("""[

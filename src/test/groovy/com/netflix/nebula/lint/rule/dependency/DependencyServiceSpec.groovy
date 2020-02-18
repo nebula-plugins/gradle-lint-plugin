@@ -5,10 +5,12 @@ import org.gradle.api.Project
 import org.gradle.api.internal.artifacts.DefaultResolvedDependency
 import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.Issue
+import spock.lang.Subject
 import spock.lang.Unroll
 
 import static com.netflix.nebula.lint.rule.dependency.DependencyClassVisitorSpec.gav
 
+@Subject(DependencyService)
 class DependencyServiceSpec extends TestKitSpecification {
     Project project
 
@@ -148,8 +150,8 @@ class DependencyServiceSpec extends TestKitSpecification {
         ''')
 
         then:
-        runTasksSuccessfully('compileUndeclared')
-        new File(projectDir, 'compileUndeclared.txt').readLines() == ['com.google.guava:guava:18.0']
+        runTasksSuccessfully('compileClasspathUndeclared')
+        new File(projectDir, 'compileClasspathUndeclared.txt').readLines() == ['com.google.guava:guava:18.0']
     }
 
     def 'first level dependencies in conf'() {
@@ -343,8 +345,11 @@ class DependencyServiceSpec extends TestKitSpecification {
         configurationNames.size() > 0
 
         // sample the configurations
-        configurationNames.contains('compile')
-        configurationNames.contains('testCompile')
+        configurationNames.contains('compileClasspath')
+        configurationNames.contains('testCompileClasspath')
+
+        !configurationNames.contains('compile')
+        !configurationNames.contains('testCompile')
 
         !configurationNames.contains('implementation')
         !configurationNames.contains('testImplementation')
@@ -355,8 +360,11 @@ class DependencyServiceSpec extends TestKitSpecification {
         !configurationNames.contains('apiElements')
         !configurationNames.contains('runtimeElements')
 
-        configurationNames.contains('runtime')
-        configurationNames.contains('testRuntime')
+        configurationNames.contains('runtimeClasspath')
+        configurationNames.contains('testRuntimeClasspath')
+
+        !configurationNames.contains('runtime')
+        !configurationNames.contains('testRuntime')
 
         !configurationNames.contains('runtimeOnly')
         !configurationNames.contains('testRuntimeOnly')

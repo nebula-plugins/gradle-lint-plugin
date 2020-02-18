@@ -172,7 +172,7 @@ class DependencyService {
     }
 
     Set<Configuration> resolvableConfigurations() {
-        return project.configurations.findAll { isResolvable(it) }
+        return project.configurations.findAll { isResolvable(it) }.findAll { !hasAResolutionAlternative(it) }
     }
 
     /**
@@ -535,14 +535,27 @@ class DependencyService {
         }
     }
 
-    boolean isResolvable(Configuration conf) {
+    static boolean isResolvable(Configuration conf) {
         // isCanBeResolved was added in Gradle 3.3. Previously, all configurations were resolvable
         if (Configuration.class.declaredMethods.any { it.name == 'isCanBeResolved' }) {
             //compileOnly and its flavors are marked as resolvable but only for backward compatibility purposes
             //in reality they shouldn't be
-            return conf.canBeResolved  && !conf.name.toLowerCase().endsWith("compileonly")
+            return conf.canBeResolved && !conf.name.toLowerCase().endsWith("compileonly")
         }
         return true
+    }
+
+    static boolean hasAResolutionAlternative(Configuration configuration) {
+        // 'getResolutionAlternatives' is a method on DefaultConfiguration as of Gradle 6.0
+        def method = configuration.metaClass.getMetaMethod('getResolutionAlternatives')
+        if (method != null) {
+            def alternatives = configuration.getResolutionAlternatives()
+            if (alternatives != null && alternatives.size > 0) {
+                return true
+            }
+        }
+
+        return false
     }
 
     boolean hasResolvableParentConfiguration(String conf) {
