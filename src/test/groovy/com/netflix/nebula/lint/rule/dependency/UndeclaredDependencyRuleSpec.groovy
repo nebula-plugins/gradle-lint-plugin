@@ -18,7 +18,10 @@ package com.netflix.nebula.lint.rule.dependency
 import com.netflix.nebula.lint.TestKitSpecification
 import nebula.test.dependencies.Coordinate
 import nebula.test.dependencies.maven.Pom
+import spock.lang.Subject
+import spock.lang.Unroll
 
+@Subject(UndeclaredDependencyRule)
 class UndeclaredDependencyRuleSpec extends TestKitSpecification {
     private static final def sample = new Coordinate('sample', 'alpha', '1.0')
     private static final def commonsLogging = new Coordinate('commons-logging', 'commons-logging', '1.2')
@@ -41,7 +44,8 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
         definePluginOutsideOfPluginBlock = true
     }
 
-    def 'simple - add undeclared dependencies as first-orders'() {
+    @Unroll
+    def 'simple - add undeclared dependencies as first-orders for #configuration configuration'() {
         given:
         def repo = new File(projectDir, 'repo')
         repo.mkdirs()
@@ -51,10 +55,10 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
         ArtifactHelpers.setupSamplePomWith(repo, sample, samplePom.generate())
         ArtifactHelpers.setupSampleJar(repo, sample)
 
-        setupBuildGradleSimpleSetup(repo)
+        setupBuildGradleSimpleSetup(repo, configuration == 'api')
         buildFile << """\
             dependencies {
-            ${deps.collect { "    compile '$it'" }.join('\n')}
+            ${deps.collect { "    $configuration '$it'" }.join('\n')}
             }
             """.stripIndent()
 
@@ -70,13 +74,17 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
         for (def expectedDependency : expected) {
             assert dependencies.contains(expectedDependency.toString())
         }
+        assert buildFile.text.contains("$configuration '${commonsLogging.toString()}'")
 
         where:
-        deps     | expected
-        [sample] | [sample, commonsLogging]
+        deps     | expected                 | configuration
+//        [sample] | [sample, commonsLogging] | 'implementation'
+        [sample] | [sample, commonsLogging] | 'compile'
+//        [sample] | [sample, commonsLogging] | 'api'
     }
 
-    def 'adds dependencies alphabetically'() {
+    @Unroll
+    def 'adds dependencies alphabetically for #configuration configuration'() {
         given:
         def repo = new File(projectDir, 'repo')
         repo.mkdirs()
@@ -106,7 +114,7 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
             apply plugin: "io.franzbecker.gradle-lombok"
 
             dependencies {
-            ${deps.collect { "    compile '$it'" }.join('\n')}
+            ${deps.collect { "    $configuration '$it'" }.join('\n')}
             }
             """.stripIndent()
 
@@ -156,20 +164,22 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
 
         def expectedOrderingForDependencies = """\
             dependencies {
-                compile '${sample.toString()}'
-                compile '${commonsLang.toString()}'
-                compile '${commonsLogging.toString()}'
-                testCompile '${junit.toString()}'
+                $configuration '${sample.toString()}'
+                $configuration '${commonsLang.toString()}'
+                $configuration '${commonsLogging.toString()}'
+                test${configuration.capitalize()} '${junit.toString()}'
             }
             """.stripIndent()
         buildFile.text.contains(expectedOrderingForDependencies)
 
         where:
-        deps     | expected
-        [sample] | [sample, commonsLogging, junit, commonsLang]
+        deps     | expected                                     | configuration
+        [sample] | [sample, commonsLogging, junit, commonsLang] | 'compile'
+//        [sample] | [sample, commonsLogging, junit, commonsLang] | 'implementation'
     }
 
-    def 'adds from even transitive runtime scope'() {
+    @Unroll
+    def 'adds from even transitive runtime scope for #configuration configuration'() {
         given:
         def repo = new File(projectDir, 'repo')
         repo.mkdirs()
@@ -182,7 +192,7 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
         setupBuildGradleSimpleSetup(repo)
         buildFile << """\
             dependencies {
-            ${deps.collect { "    compile '$it'" }.join('\n')}
+            ${deps.collect { "    $configuration '$it'" }.join('\n')}
             }
             """.stripIndent()
 
@@ -198,14 +208,16 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
         for (def expectedDependency : expected) {
             assert dependencies.contains(expectedDependency.toString())
         }
-        assert buildFile.text.contains("compile '${commonsLogging.toString()}'")
+        assert buildFile.text.contains("$configuration '${commonsLogging.toString()}'")
 
         where:
-        deps     | expected
-        [sample] | [sample, commonsLogging]
+        deps     | expected                 | configuration
+//        [sample] | [sample, commonsLogging] | 'implementation'
+        [sample] | [sample, commonsLogging] | 'compile'
     }
 
-    def 'when defined dynamically, resolve to static version'() {
+    @Unroll
+    def 'when defined dynamically, resolve to static version for #configuration configuration'() {
         given:
         def repo = new File(projectDir, 'repo')
         repo.mkdirs()
@@ -218,7 +230,7 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
         setupBuildGradleSimpleSetup(repo)
         buildFile << """\
             dependencies {
-            ${deps.collect { "    compile '$it'" }.join('\n')}
+            ${deps.collect { "    $configuration '$it'" }.join('\n')}
             }
             """.stripIndent()
 
@@ -234,13 +246,17 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
         for (def expectedDependency : expected) {
             assert dependencies.contains(expectedDependency.toString())
         }
+        assert buildFile.text.contains("$configuration '${sample.toString()}'")
+        assert buildFile.text.contains("$configuration '${commonsLogging.toString()}'")
 
         where:
-        deps     | expected
-        [sample] | [sample, commonsLogging]
+        deps     | expected                 | configuration
+//        [sample] | [sample, commonsLogging] | 'implementation'
+        [sample] | [sample, commonsLogging] | 'compile'
     }
 
-    def 'adds when required in test code'() {
+    @Unroll
+    def 'adds when required in test code for #configuration configuration'() {
         given:
         def repo = new File(projectDir, 'repo')
         repo.mkdirs()
@@ -253,7 +269,7 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
         setupBuildGradleSimpleSetup(repo)
         buildFile << """\
             dependencies {
-            ${deps.collect { "    testCompile '$it'" }.join('\n')}
+            ${deps.collect { "    $configuration '$it'" }.join('\n')}
             }
             """.stripIndent()
 
@@ -277,15 +293,18 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
         def dependencies = dependencies(buildFile)
         for (def expectedDependency : expected) {
             assert dependencies.contains(expectedDependency.toString())
-            assert buildFile.text.contains("testCompile '${expectedDependency.toString()}'")
         }
+        assert buildFile.text.contains("$configuration '${sample.toString()}'")
+        assert buildFile.text.contains("$configuration '${junit.toString()}'")
 
         where:
-        deps     | expected
-        [sample] | [sample, junit]
+        deps     | expected        | configuration
+//        [sample] | [sample, junit] | 'testImplementation'
+        [sample] | [sample, junit] | 'testCompile'
     }
 
-    def 'adds when required through the type hierarchy '() {
+    @Unroll
+    def 'adds when required through the type hierarchy for #configuration configuration'() {
         def repo = new File(projectDir, 'repo')
         repo.mkdirs()
 
@@ -297,7 +316,7 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
         setupBuildGradleSimpleSetup(repo)
         buildFile << """\
             dependencies {
-            ${deps.collect { "    compile '$it'" }.join('\n')}
+            ${deps.collect { "    $configuration '$it'" }.join('\n')}
             }
             """.stripIndent()
 
@@ -319,11 +338,13 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
         }
 
         where:
-        deps     | expected
-        [sample] | [sample, commonsLogging]
+        deps     | expected                 | configuration
+        [sample] | [sample, commonsLogging] | 'compile'
+//        [sample] | [sample, commonsLogging] | 'implementation'
     }
 
-    def 'adds when defining plugin in plugin block'() {
+    @Unroll
+    def 'adds when defining plugin in plugin block for #configuration configuration'() {
         definePluginOutsideOfPluginBlock = false
         def repo = new File(projectDir, 'repo')
         repo.mkdirs()
@@ -348,7 +369,7 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
             }
 
             dependencies {
-            ${deps.collect { "   compile '$it'" }.join('\n')}
+            ${deps.collect { "   $configuration '$it'" }.join('\n')}
             }
             """.stripIndent()
 
@@ -362,13 +383,17 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
         for (def expectedDependency : expected) {
             assert dependencies.contains(expectedDependency.toString())
         }
+        assert buildFile.text.contains("$configuration '${sample.toString()}'")
+        assert buildFile.text.contains("$configuration '${commonsLogging.toString()}'")
 
         where:
-        deps     | expected
-        [sample] | [sample, commonsLogging]
+        deps     | expected                 | configuration
+//        [sample] | [sample, commonsLogging] | 'implementation'
+        [sample] | [sample, commonsLogging] | 'compile'
     }
 
-    def 'when defined in allprojects block - adds dependencies to smallest scope for subprojects'() {
+    @Unroll
+    def 'when defined in allprojects block - adds dependencies to smallest scope for subprojects for #configuration configuration'() {
         given:
         def repo = new File(projectDir, 'repo')
         repo.mkdirs()
@@ -380,7 +405,7 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
 
         def dependencyBlock = """\
             dependencies {
-            ${deps.collect { "    compile '$it'" }.join('\n')}
+            ${deps.collect { "    $configuration '$it'" }.join('\n')}
             }
             """.stripIndent()
         setupBuildGradleSetupForAllprojects(repo, dependencyBlock)
@@ -402,11 +427,13 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
         assert dependencies(new File(projectDir, 'sub1/build.gradle')).contains(commonsLogging.toString())
 
         where:
-        deps     | expected
-        [sample] | [sample, commonsLogging]
+        deps     | expected                 | configuration
+//        [sample] | [sample, commonsLogging] | 'implementation'
+        [sample] | [sample, commonsLogging] | 'compile'
     }
 
-    def 'when defined in parent build file - adds dependencies to smallest scope for subprojects'() {
+    @Unroll
+    def 'when defined in parent build file - adds dependencies to smallest scope for subprojects for #configuration configuration'() {
         given:
         def repo = new File(projectDir, 'repo')
         repo.mkdirs()
@@ -420,7 +447,7 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
         buildFile << """\
             subprojects {
                 dependencies {
-                ${deps.collect { "    compile '$it'" }.join('\\n')}
+                ${deps.collect { "    $configuration '$it'" }.join('\\n')}
                 }
             }
             """.stripIndent()
@@ -442,11 +469,13 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
         assert dependencies(new File(projectDir, 'sub1/build.gradle')).contains(commonsLogging.toString())
 
         where:
-        deps     | expected
-        [sample] | [sample, commonsLogging]
+        deps     | expected                 | configuration
+//        [sample] | [sample, commonsLogging] | 'implementation'
+        [sample] | [sample, commonsLogging] | 'compile'
     }
 
-    def 'when defined in subproject build files - adds dependencies to smallest scope for subprojects'() {
+    @Unroll
+    def 'when defined in subproject build files - adds dependencies to smallest scope for subprojects for #configuration configuration'() {
         given:
         def repo = new File(projectDir, 'repo')
         repo.mkdirs()
@@ -460,13 +489,13 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
 
         addSubproject('sub1', """\
             dependencies {
-            ${deps.collect { "    compile '$it'" }.join('\n')}
+            ${deps.collect { "    $configuration '$it'" }.join('\n')}
             }
             """.stripIndent())
 
         addSubproject('sub2', """\
             dependencies {
-            ${deps.collect { "    compile '$it'" }.join('\n')}
+            ${deps.collect { "    $configuration '$it'" }.join('\n')}
             }
             """.stripIndent())
 
@@ -492,11 +521,13 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
             assert sub2Dependencies.contains(expectedDependency.toString())
         }
         where:
-        deps     | expected
-        [sample] | [sample, commonsLogging]
+        deps     | expected                 | configuration
+//        [sample] | [sample, commonsLogging] | 'implementation'
+        [sample] | [sample, commonsLogging] | 'compile'
     }
 
-    def 'handles empty subprojects build file'() {
+    @Unroll
+    def 'handles empty subprojects build file for #configuration configuration'() {
         given:
         def repo = new File(projectDir, 'repo')
         repo.mkdirs()
@@ -510,7 +541,7 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
         buildFile << """\
             subprojects {
                 dependencies {
-                ${deps.collect { "    compile '$it'" }.join('\\n')}
+                ${deps.collect { "    $configuration '$it'" }.join('\\n')}
                 }
             }
             """.stripIndent()
@@ -535,7 +566,9 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
         assert dependencies(new File(projectDir, 'sub1/build.gradle')).contains(commonsLogging.toString())
 
         where:
-        deps << [sample]
+        deps   | configuration
+//        sample | 'implementation'
+        sample | 'compile'
     }
 
     def 'when using compileOnly configuration, transitives are resolved before linting so no changes are made'() {
@@ -587,7 +620,7 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
             """.stripIndent())
 
         then:
-        def result = runTasksSuccessfully('fixGradleLint')
+        runTasksSuccessfully('fixGradleLint')
 
         def dependencies = dependencies(buildFile)
         for (def expectedDependency : expected) {
@@ -600,10 +633,12 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
         [sample] | [sample]
     }
 
-    def setupBuildGradleSimpleSetup(File repo) {
+    def setupBuildGradleSimpleSetup(File repo, boolean usesJavaLibraryPlugin = false) {
+        String languagePlugin = usesJavaLibraryPlugin ? 'java-library' : 'java'
+
         buildFile << """\
             apply plugin: 'nebula.lint'
-            apply plugin: 'java'
+            apply plugin: '$languagePlugin'
             gradleLint.rules = ['undeclared-dependency']
             repositories {
                 maven { url "${repo.toURI().toURL()}" }
