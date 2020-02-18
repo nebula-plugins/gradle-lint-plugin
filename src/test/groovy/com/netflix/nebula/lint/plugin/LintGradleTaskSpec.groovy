@@ -16,13 +16,20 @@
 package com.netflix.nebula.lint.plugin
 
 import com.netflix.nebula.lint.TestKitSpecification
+import com.netflix.nebula.lint.rule.dependency.DependencyParenthesesRule
+import com.netflix.nebula.lint.rule.dependency.FirstOrderDuplicateDependencyClassRule
 import org.gradle.testkit.runner.TaskOutcome
+import spock.lang.Subject
+import spock.lang.Unroll
 
+@Subject([FirstOrderDuplicateDependencyClassRule, DependencyParenthesesRule])
 class LintGradleTaskSpec extends TestKitSpecification {
-    def setup () {
+    def setup() {
         debug = true
     }
-    def 'mark violations that have no auto-remediation'() {
+
+    @Unroll
+    def 'mark violations that have no auto-remediation - configuration #configuration'() {
         given:
         buildFile.text = """
             plugins {
@@ -35,8 +42,8 @@ class LintGradleTaskSpec extends TestKitSpecification {
             repositories { mavenCentral() }
 
             dependencies {
-                compile 'com.google.guava:guava:18.0'
-                compile 'com.google.collections:google-collections:1.0'
+                $configuration 'com.google.guava:guava:18.0'
+                $configuration 'com.google.collections:google-collections:1.0'
             }
         """
 
@@ -46,6 +53,9 @@ class LintGradleTaskSpec extends TestKitSpecification {
 
         then:
         result.output.contains('(no auto-fix available)')
+
+        where:
+        configuration << ['compile', 'implementation']
     }
 
     def 'critical rule failures cause build failure'() {

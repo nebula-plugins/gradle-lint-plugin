@@ -4,10 +4,14 @@ import com.netflix.nebula.interop.GradleKt
 import groovy.transform.Memoized
 import groovyx.gpars.GParsPool
 import org.gradle.api.Project
-import org.gradle.api.artifacts.*
+import org.gradle.api.artifacts.Configuration
+import org.gradle.api.artifacts.ModuleIdentifier
+import org.gradle.api.artifacts.ModuleVersionIdentifier
+import org.gradle.api.artifacts.ResolvedArtifact
+import org.gradle.api.artifacts.ResolvedDependency
+import org.gradle.api.artifacts.UnknownConfigurationException
 import org.gradle.api.file.FileCollection
 import org.gradle.api.internal.artifacts.DefaultModuleIdentifier
-import org.gradle.api.internal.artifacts.DefaultModuleVersionIdentifier
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.SourceSet
 import org.gradle.util.VersionNumber
@@ -27,6 +31,21 @@ import java.util.zip.ZipException
 class DependencyService {
     private static final String EXTENSION_NAME = "gradleLintDependencyService"
     private static final Collection<String> DEFAULT_METHOD_REFERENCE_IGNORED_PACKAGES = ["java/lang", "java/util", "java/net", "java/io", "java/nio", "java/swing"] //ignore java packages by default for method references
+    protected static final Map<String, String> declaredToResolvableConfigurations = new HashMap<String, String>() {
+        {
+            put('api', 'compileClasspath')
+            put('compile', 'compileClasspath')
+            put('compileOnly', 'compileClasspath')
+            put('implementation', 'compileClasspath')
+            put('runtime', 'runtimeClasspath')
+            put('runtimeOnly', 'runtimeClasspath')
+            put('testCompile', 'testCompileClasspath')
+            put('testCompileOnly', 'testCompileClasspath')
+            put('testImplementation', 'testCompileClasspath')
+            put('testRuntime', 'testRuntimeClasspath')
+            put('testCompileOnly', 'testRuntimeClasspath')
+        }
+    }
 
     static synchronized DependencyService forProject(Project project) {
         def extension = project.extensions.findByType(DependencyServiceExtension)
