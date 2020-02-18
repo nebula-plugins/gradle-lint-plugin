@@ -84,6 +84,48 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
     }
 
     @Unroll
+    def 'simple - no errors when all dependencies are declared for #configuration configuration'() {
+        given:
+        def repo = new File(projectDir, 'repo')
+        repo.mkdirs()
+
+        def samplePom = new Pom(sample.getGroup(), sample.getArtifact(), sample.getVersion())
+        samplePom.addDependency(commonsLogging.getGroup(), commonsLogging.getArtifact(), commonsLogging.getVersion())
+        ArtifactHelpers.setupSamplePomWith(repo, sample, samplePom.generate())
+        ArtifactHelpers.setupSampleJar(repo, sample)
+
+        setupBuildGradleSimpleSetup(repo, configuration == 'api')
+        buildFile << """\
+            configurations {
+                myConfiguration
+                compileClasspath.extendsFrom myConfiguration
+            }
+            dependencies {
+            ${deps.collect { "    $configuration '$it'" }.join('\n')}
+                testImplementation 'junit:junit:4.+'
+            }
+            """.stripIndent()
+
+        when:
+
+        createJavaSourceFile(main)
+        createJavaTestFile(projectDir)
+
+        then:
+        def result = runTasksSuccessfully('build', 'fixGradleLint')
+
+        result.output.contains('Corrected 0 lint problems')
+        result.output.contains('Passed lint check with 0 violations')
+
+        where:
+        deps                     | configuration
+        [sample, commonsLogging] | 'implementation'
+        [sample, commonsLogging] | 'compile'
+        [sample, commonsLogging] | 'api'
+        [sample, commonsLogging] | 'myConfiguration'
+    }
+
+    @Unroll
     def 'adds dependencies alphabetically for #configuration configuration'() {
         given:
         def repo = new File(projectDir, 'repo')
