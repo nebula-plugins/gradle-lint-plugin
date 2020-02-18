@@ -13,8 +13,7 @@ import org.gradle.api.plugins.JavaPluginConvention
 @CompileStatic
 class UndeclaredDependencyRule extends GradleLintRule implements GradleModelAware {
     private static final String DEPENDENCIES_BLOCK = 'rootDependenciesBlock'
-
-    String description = 'Ensure that directly used transitives are declared as first order dependencies, for Gradle versions 4.5 - 5'
+    String description = 'Ensure that directly used transitives are declared as first order dependencies'
     DependencyService dependencyService
 
     @Override
@@ -42,13 +41,13 @@ class UndeclaredDependencyRule extends GradleLintRule implements GradleModelAwar
             def sortedSourceSets = convention.sourceSets.sort(false, dependencyService.sourceSetComparator())
 
             sortedSourceSets.each { sourceSet ->
-                def confName = sourceSet.compileConfigurationName
+                def confName = sourceSet.compileClasspathConfigurationName
                 violations.put(confName, new HashMap())
 
                 def undeclaredDependencies = dependencyService.undeclaredDependencies(confName)
                 def filteredUndeclaredDependencies = filterUndeclaredDependencies(undeclaredDependencies, confName)
 
-                if (! filteredUndeclaredDependencies.isEmpty()) {
+                if (!filteredUndeclaredDependencies.isEmpty()) {
                     def dependencyBlock = bookmark(DEPENDENCIES_BLOCK)
                     if (dependencyBlock != null) {
                         filteredUndeclaredDependencies.each { undeclared ->
@@ -65,9 +64,9 @@ class UndeclaredDependencyRule extends GradleLintRule implements GradleModelAwar
                         addBuildLintViolation("one or more classes are required by your code directly, " +
                                 "and you require a dependencies block in your subproject $project")
                                 .insertAfter(project.buildFile, 0, """\
-                                        dependencies {
-                                        }
-                                        """.stripIndent())
+                                    dependencies {
+                                    }
+                                    """.stripIndent())
                     }
                 }
             }
@@ -95,8 +94,14 @@ class UndeclaredDependencyRule extends GradleLintRule implements GradleModelAwar
                 ASTNode dependencyBlock = dependencyAndBlock.getValue()
 
                 addBuildLintViolation("one or more classes in $undeclaredDependency are required by your code directly")
-                        .insertIntoClosureAtTheEnd(dependencyBlock, "$configurationName '$undeclaredDependency'")
+                        .insertIntoClosureAtTheEnd(dependencyBlock, "${declarationConfigurationName(configurationName)} '$undeclaredDependency'")
             }
         }
+    }
+
+    private static String declarationConfigurationName(String configName) {
+        return configName
+                .replace('compileClasspath', 'implementation')
+                .replace('CompileClasspath', 'Implementation')
     }
 }

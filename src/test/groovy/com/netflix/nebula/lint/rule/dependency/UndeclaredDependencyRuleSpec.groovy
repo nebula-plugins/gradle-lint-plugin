@@ -74,13 +74,13 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
         for (def expectedDependency : expected) {
             assert dependencies.contains(expectedDependency.toString())
         }
-        assert buildFile.text.contains("$configuration '${commonsLogging.toString()}'")
+        assert buildFile.text.contains("implementation '${commonsLogging.toString()}'")
 
         where:
         deps     | expected                 | configuration
-//        [sample] | [sample, commonsLogging] | 'implementation'
+        [sample] | [sample, commonsLogging] | 'implementation'
         [sample] | [sample, commonsLogging] | 'compile'
-//        [sample] | [sample, commonsLogging] | 'api'
+        [sample] | [sample, commonsLogging] | 'api'
     }
 
     @Unroll
@@ -165,9 +165,9 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
         def expectedOrderingForDependencies = """\
             dependencies {
                 $configuration '${sample.toString()}'
-                $configuration '${commonsLang.toString()}'
-                $configuration '${commonsLogging.toString()}'
-                test${configuration.capitalize()} '${junit.toString()}'
+                implementation '${commonsLang.toString()}'
+                implementation '${commonsLogging.toString()}'
+                testImplementation '${junit.toString()}'
             }
             """.stripIndent()
         buildFile.text.contains(expectedOrderingForDependencies)
@@ -175,7 +175,7 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
         where:
         deps     | expected                                     | configuration
         [sample] | [sample, commonsLogging, junit, commonsLang] | 'compile'
-//        [sample] | [sample, commonsLogging, junit, commonsLang] | 'implementation'
+        [sample] | [sample, commonsLogging, junit, commonsLang] | 'implementation'
     }
 
     @Unroll
@@ -208,11 +208,11 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
         for (def expectedDependency : expected) {
             assert dependencies.contains(expectedDependency.toString())
         }
-        assert buildFile.text.contains("$configuration '${commonsLogging.toString()}'")
+        assert buildFile.text.contains("implementation '${commonsLogging.toString()}'")
 
         where:
         deps     | expected                 | configuration
-//        [sample] | [sample, commonsLogging] | 'implementation'
+        [sample] | [sample, commonsLogging] | 'implementation'
         [sample] | [sample, commonsLogging] | 'compile'
     }
 
@@ -247,11 +247,11 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
             assert dependencies.contains(expectedDependency.toString())
         }
         assert buildFile.text.contains("$configuration '${sample.toString()}'")
-        assert buildFile.text.contains("$configuration '${commonsLogging.toString()}'")
+        assert buildFile.text.contains("implementation '${commonsLogging.toString()}'")
 
         where:
         deps     | expected                 | configuration
-//        [sample] | [sample, commonsLogging] | 'implementation'
+        [sample] | [sample, commonsLogging] | 'implementation'
         [sample] | [sample, commonsLogging] | 'compile'
     }
 
@@ -295,11 +295,11 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
             assert dependencies.contains(expectedDependency.toString())
         }
         assert buildFile.text.contains("$configuration '${sample.toString()}'")
-        assert buildFile.text.contains("$configuration '${junit.toString()}'")
+        assert buildFile.text.contains("testImplementation '${junit.toString()}'")
 
         where:
         deps     | expected        | configuration
-//        [sample] | [sample, junit] | 'testImplementation'
+        [sample] | [sample, junit] | 'testImplementation'
         [sample] | [sample, junit] | 'testCompile'
     }
 
@@ -339,8 +339,8 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
 
         where:
         deps     | expected                 | configuration
+        [sample] | [sample, commonsLogging] | 'implementation'
         [sample] | [sample, commonsLogging] | 'compile'
-//        [sample] | [sample, commonsLogging] | 'implementation'
     }
 
     @Unroll
@@ -384,11 +384,11 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
             assert dependencies.contains(expectedDependency.toString())
         }
         assert buildFile.text.contains("$configuration '${sample.toString()}'")
-        assert buildFile.text.contains("$configuration '${commonsLogging.toString()}'")
+        assert buildFile.text.contains("implementation '${commonsLogging.toString()}'")
 
         where:
         deps     | expected                 | configuration
-//        [sample] | [sample, commonsLogging] | 'implementation'
+        [sample] | [sample, commonsLogging] | 'implementation'
         [sample] | [sample, commonsLogging] | 'compile'
     }
 
@@ -428,7 +428,7 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
 
         where:
         deps     | expected                 | configuration
-//        [sample] | [sample, commonsLogging] | 'implementation'
+        [sample] | [sample, commonsLogging] | 'implementation'
         [sample] | [sample, commonsLogging] | 'compile'
     }
 
@@ -470,7 +470,7 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
 
         where:
         deps     | expected                 | configuration
-//        [sample] | [sample, commonsLogging] | 'implementation'
+        [sample] | [sample, commonsLogging] | 'implementation'
         [sample] | [sample, commonsLogging] | 'compile'
     }
 
@@ -522,7 +522,7 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
         }
         where:
         deps     | expected                 | configuration
-//        [sample] | [sample, commonsLogging] | 'implementation'
+        [sample] | [sample, commonsLogging] | 'implementation'
         [sample] | [sample, commonsLogging] | 'compile'
     }
 
@@ -541,7 +541,7 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
         buildFile << """\
             subprojects {
                 dependencies {
-                ${deps.collect { "    $configuration '$it'" }.join('\\n')}
+                ${deps.collect { "    implementation '$it'" }.join('\\n')}
                 }
             }
             """.stripIndent()
@@ -567,7 +567,7 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
 
         where:
         deps   | configuration
-//        sample | 'implementation'
+        sample | 'implementation'
         sample | 'compile'
     }
 

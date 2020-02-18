@@ -119,7 +119,7 @@ abstract class TestKitSpecification extends Specification {
         return subprojectDir
     }
 
-    def dependencies(File _buildFile, String... confs = ['compile', 'testCompile']) {
+    def dependencies(File _buildFile, String... confs = ['compile', 'testCompile', 'implementation', 'testImplementation', 'api']) {
         _buildFile.text.readLines()
                 .collect { it.trim() }
                 .findAll { line -> confs.any { c -> line.startsWith(c) } }
