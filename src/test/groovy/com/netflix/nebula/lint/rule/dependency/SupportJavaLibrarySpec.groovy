@@ -60,8 +60,7 @@ class SupportJavaLibrarySpec extends TestKitSpecification {
         sub1BuildFileText.contains(expectedDependencies)
 
         where:
-//        configuration << ['testImplementation', 'testCompile', 'implementation'] // coming up!
-        configuration << ['testCompile']
+        configuration << ['testImplementation', 'testCompile', 'implementation']
     }
 
     @Unroll
@@ -80,9 +79,9 @@ class SupportJavaLibrarySpec extends TestKitSpecification {
         def sub1BuildFileText = new File("$projectDir/sub1", 'build.gradle').text
         def expectedDependencies = """
             dependencies {
-                testCompile '$junit'
+                testImplementation '$junit'
             }
-            """.stripIndent() // TODO: fix to make this testImplementation!
+            """.stripIndent()
         sub1BuildFileText.contains(expectedDependencies)
 
         where:
