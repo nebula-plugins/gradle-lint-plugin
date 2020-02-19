@@ -1,9 +1,11 @@
 package com.netflix.nebula.lint.rule.dependency
 
-import com.netflix.nebula.lint.TestKitSpecification
+import nebula.test.IntegrationTestKitSpec
 import spock.lang.Ignore
+import spock.lang.Subject
 
-class MinimumDependencyVersionRuleSpec extends TestKitSpecification {
+@Subject(MinimumDependencyVersionRule)
+class MinimumDependencyVersionRuleSpec extends IntegrationTestKitSpec {
     def tasks = ['assemble', 'fixGradleLint', '-PgradleLint.minVersions=com.google.guava:guava:19.0']
 
     def setup() {
@@ -18,6 +20,8 @@ class MinimumDependencyVersionRuleSpec extends TestKitSpecification {
 
             repositories { mavenCentral() }
         """.stripIndent()
+
+        debug = true
     }
 
     def 'warn first order dependency versions not meeting the minimum - api configuration'() {
@@ -38,10 +42,10 @@ class MinimumDependencyVersionRuleSpec extends TestKitSpecification {
             }
         """.stripIndent()
 
-        createJavaSourceFile('public class Main {}')
+        writeHelloWorld()
 
         then:
-        def result = runTasksSuccessfully(*tasks)
+        def result = runTasks(*tasks)
         result.output.contains('needs fixing   minimum-dependency-version         com.google.guava:guava is below the minimum version of 19.0')
     }
 
@@ -54,10 +58,10 @@ class MinimumDependencyVersionRuleSpec extends TestKitSpecification {
             }
         """
 
-        createJavaSourceFile('public class Main {}')
+        writeHelloWorld()
 
         then:
-        def result = runTasksSuccessfully(*tasks)
+        def result = runTasks(*tasks)
         result.output.contains('needs fixing   minimum-dependency-version         com.google.guava:guava is below the minimum version of 19.0')
     }
 
@@ -70,10 +74,10 @@ class MinimumDependencyVersionRuleSpec extends TestKitSpecification {
             }
         """
 
-        createJavaSourceFile('public class Main {}')
+        writeHelloWorld()
 
         then:
-        def results = runTasksSuccessfully(*tasks)
+        def results = runTasks(*tasks)
         results.output.contains('needs fixing   minimum-dependency-version         com.google.guava:guava is below the minimum version of 19.0')
     }
 
@@ -99,10 +103,10 @@ class MinimumDependencyVersionRuleSpec extends TestKitSpecification {
             }
         """
 
-        createJavaSourceFile('public class Main {}')
+        writeHelloWorld()
 
         then:
-        runTasksSuccessfully(*tasks)
+        runTasks(*tasks)
         dependencies(buildFile, 'compile') == ['com.google.guava:guava:19.0']
     }
 
@@ -116,10 +120,10 @@ class MinimumDependencyVersionRuleSpec extends TestKitSpecification {
             }
         """
 
-        createJavaSourceFile('public class Main {}')
+        writeHelloWorld()
 
         then:
-        def result = runTasksSuccessfully(*tasks)
+        def result = runTasks(*tasks)
         result.output.contains('needs fixing   minimum-dependency-version         com.google.guava:guava is below the minimum version of 19.0')
     }
 
@@ -137,14 +141,37 @@ class MinimumDependencyVersionRuleSpec extends TestKitSpecification {
             }
         """
 
-        createJavaSourceFile('public class Main {}')
+        writeHelloWorld()
 
         then:
-        def result = runTasksSuccessfully(*tasks)
+        def result = runTasks(*tasks)
         result.output.contains("needs fixing   minimum-dependency-version         this dependency does not meet the minimum version of 19.0")
     }
 
-    def 'leave dependencies without a version alone'() {
+    def 'warn when resolution strategy preventing us from reaching the minimum version'() {
+        when:
+        buildFile << """
+            configurations.all {
+                resolutionStrategy {
+                    eachDependency { DependencyResolveDetails details ->
+                        details.useVersion '18.0'
+                    }
+                }
+            }
+
+            dependencies {
+                implementation 'com.google.guava:guava'
+            }
+        """
+
+        writeHelloWorld()
+
+        then:
+        def result = runTasks(*tasks)
+        result.output.contains("needs fixing   minimum-dependency-version         com.google.guava:guava is below the minimum version of 19.0")
+    }
+
+    def 'leave dependencies using resolution strategy with correct version alone'() {
         when:
         buildFile << """
             configurations.all {
@@ -160,10 +187,18 @@ class MinimumDependencyVersionRuleSpec extends TestKitSpecification {
             }
         """
 
-        createJavaSourceFile('public class Main {}')
+        writeHelloWorld()
 
         then:
-        runTasksSuccessfully(*tasks)
+        runTasks(*tasks)
         dependencies(buildFile, 'implementation') == ['com.google.guava:guava']
+    }
+
+    def dependencies(File _buildFile, String... confs = ['compile', 'testCompile', 'implementation', 'testImplementation', 'api']) {
+        _buildFile.text.readLines()
+                .collect { it.trim() }
+                .findAll { line -> confs.any { c -> line.startsWith(c) } }
+                .collect { it.split(/\s+/)[1].replaceAll(/['"]/, '') }
+                .sort()
     }
 }
