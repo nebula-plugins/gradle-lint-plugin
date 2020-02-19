@@ -15,14 +15,13 @@
  */
 package com.netflix.nebula.lint.plugin
 
-import com.netflix.nebula.lint.TestKitSpecification
+
+import nebula.test.IntegrationTestKitSpec
 import org.gradle.testkit.runner.TaskOutcome
 import spock.lang.Issue
 import spock.lang.Unroll
 
-class GradleLintPluginSpec extends TestKitSpecification {
-    private static final String V_4_POINT_10 = '4.10.2'
-
+class GradleLintPluginSpec extends IntegrationTestKitSpec {
     def setup() {
         debug = true
     }
@@ -38,15 +37,15 @@ class GradleLintPluginSpec extends TestKitSpecification {
             gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
 
             dependencies {
-                compile('com.google.guava:guava:18.0')
-                testCompile group: 'junit',
+                implementation('com.google.guava:guava:18.0')
+                testImplementation group: 'junit',
                     name: 'junit',
                     version: '4.11'
             }
         """
 
         then:
-        def results = runTasksSuccessfully('assemble')
+        def results = runTasks('assemble')
 
         when:
         def console = results.output.readLines()
@@ -68,7 +67,7 @@ class GradleLintPluginSpec extends TestKitSpecification {
             gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
             
             dependencies {
-                compile('commons-lang:commons-lang:2.6')
+                implementation('commons-lang:commons-lang:2.6')
             }
 
             apply from: 'dependencies.gradle'
@@ -76,15 +75,15 @@ class GradleLintPluginSpec extends TestKitSpecification {
         File dependenciesFile = new File(projectDir, 'dependencies.gradle')
         dependenciesFile.text = """
             dependencies {
-                compile('com.google.guava:guava:18.0')
-                testCompile group: 'junit',
+                implementation('com.google.guava:guava:18.0')
+                testImplementation group: 'junit',
                     name: 'junit',
                     version: '4.11'
             }
         """
 
         then:
-        def results = runTasksSuccessfully('assemble')
+        def results = runTasks('assemble')
 
         when:
         def console = results.output.readLines()
@@ -117,7 +116,7 @@ class GradleLintPluginSpec extends TestKitSpecification {
         addSubproject('sub')
 
         then:
-        runTasksSuccessfully('lintGradle')
+        runTasks('lintGradle')
     }
 
     def 'run rules on multi-module project where one of the subprojects does not apply gradle lint'() {
@@ -137,12 +136,12 @@ class GradleLintPluginSpec extends TestKitSpecification {
 
         addSubproject('sub', """
             dependencies {
-                compile('a:a:1')
+                implementation('a:a:1')
             }
         """)
 
         then:
-        runTasksSuccessfully('lintGradle')
+        runTasks('lintGradle')
     }
 
     def 'run rules on multi-module only once'() {
@@ -160,14 +159,14 @@ class GradleLintPluginSpec extends TestKitSpecification {
             subprojects {
                 apply plugin: 'java'
                 dependencies {
-                    compile('com.google.guava:guava:18.0')
+                    implementation('com.google.guava:guava:18.0')
                 }
             }
         """
 
         addSubproject('sub', """
             dependencies {
-                testCompile group: 'junit',
+                testImplementation group: 'junit',
                     name: 'junit',
                     version: '4.11'
             }
@@ -177,7 +176,7 @@ class GradleLintPluginSpec extends TestKitSpecification {
 
         addSubproject('sub2', """
             dependencies {
-                testCompile group: 'junit',
+                testImplementation group: 'junit',
                     name: 'junit',
                     version: '4.11'
             }
@@ -186,7 +185,7 @@ class GradleLintPluginSpec extends TestKitSpecification {
         """)
 
         when:
-        def result = runTasksSuccessfully("assemble")
+        def result = runTasks("assemble")
 
         then:
         result.output.readLines().findAll { it.contains('warning   dependency-tuple')}.size() == 2
@@ -208,14 +207,14 @@ class GradleLintPluginSpec extends TestKitSpecification {
             subprojects {
                 apply plugin: 'java'
                 dependencies {
-                    compile('com.google.guava:guava:18.0')
+                    implementation('com.google.guava:guava:18.0')
                 }
             }
         """
 
         addSubproject('sub', """
             dependencies {
-                testCompile group: 'junit',
+                testImplementation group: 'junit',
                     name: 'junit',
                     version: '4.11'
             }
@@ -229,7 +228,7 @@ class GradleLintPluginSpec extends TestKitSpecification {
 
         addSubproject('sub2', """
             dependencies {
-                testCompile group: 'junit',
+                testImplementation group: 'junit',
                     name: 'junit',
                     version: '4.11'
             }
@@ -242,7 +241,7 @@ class GradleLintPluginSpec extends TestKitSpecification {
         """)
 
         when:
-        def result = runTasksFail("hello")
+        def result = runTasksAndFail("hello")
 
         then:
         result.output.readLines().findAll { it.contains('warning   dependency-tuple')}.size() == 2
@@ -264,14 +263,14 @@ class GradleLintPluginSpec extends TestKitSpecification {
             subprojects {
                 apply plugin: 'java'
                 dependencies {
-                    compile('com.google.guava:guava:18.0')
+                    implementation('com.google.guava:guava:18.0')
                 }
             }
         """
 
         addSubproject('sub', """
             dependencies {
-                testCompile group: 'junit',
+                testImplementation group: 'junit',
                     name: 'junit',
                     version: '4.11'
             }
@@ -285,7 +284,7 @@ class GradleLintPluginSpec extends TestKitSpecification {
 
         addSubproject('sub2', """
             dependencies {
-                testCompile group: 'junit',
+                testImplementation group: 'junit',
                     name: 'junit',
                     version: '4.11'
             }
@@ -299,7 +298,7 @@ class GradleLintPluginSpec extends TestKitSpecification {
 
         addSubproject('sub3', """
             dependencies {
-                testCompile group: 'junit',
+                testImplementation group: 'junit',
                     name: 'junit',
                     version: '4.11'
             }
@@ -313,7 +312,7 @@ class GradleLintPluginSpec extends TestKitSpecification {
 
 
         when:
-        def result = runTasksFail("hello", "--parallel")
+        def result = runTasksAndFail("hello", "--parallel")
 
         then:
         result.output.readLines().findAll { it.contains('warning   dependency-tuple')}.size() == 3
@@ -336,14 +335,14 @@ class GradleLintPluginSpec extends TestKitSpecification {
             subprojects {
                 apply plugin: 'java'
                 dependencies {
-                    compile('com.google.guava:guava:18.0')
+                    implementation('com.google.guava:guava:18.0')
                 }
             }
         """
 
         addSubproject('sub', """
             dependencies {
-                testCompile group: 'junit',
+                testImplementation group: 'junit',
                     name: 'junit',
                     version: '4.11'
             }
@@ -353,7 +352,7 @@ class GradleLintPluginSpec extends TestKitSpecification {
 
         addSubproject('sub2', """
             dependencies {
-                testCompile group: 'junit',
+                testImplementation group: 'junit',
                     name: 'junit',
                     version: '4.11'
             }
@@ -363,7 +362,7 @@ class GradleLintPluginSpec extends TestKitSpecification {
 
         addSubproject('sub3', """
             dependencies {
-                testCompile group: 'junit',
+                testImplementation group: 'junit',
                     name: 'junit',
                     version: '4.11'
             }
@@ -372,7 +371,7 @@ class GradleLintPluginSpec extends TestKitSpecification {
         """)
 
         when:
-        def result = runTasksSuccessfully("assemble", "--parallel")
+        def result = runTasks("assemble", "--parallel")
 
         then:
         result.output.readLines().findAll { it.contains('warning   dependency-tuple')}.size() == 3
@@ -392,15 +391,15 @@ class GradleLintPluginSpec extends TestKitSpecification {
             gradleLint.criticalRules = ['dependency-tuple']
 
             dependencies {
-                compile('com.google.guava:guava:18.0')
-                testCompile group: 'junit',
+                implementation('com.google.guava:guava:18.0')
+                testImplementation group: 'junit',
                     name: 'junit',
                     version: '4.11'
             }
         """
 
         then:
-        def results = runTasksFail('criticalLintGradle')
+        def results = runTasksAndFail('criticalLintGradle')
 
         when:
         def console = results.output.readLines()
@@ -423,12 +422,12 @@ class GradleLintPluginSpec extends TestKitSpecification {
             gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
 
             dependencies {
-                compile('com.google.guava:guava:18.0')
+                implementation('com.google.guava:guava:18.0')
             }
         """
 
         then:
-        runTasksSuccessfully(taskName)
+        runTasks(taskName)
 
         buildFile.text == """
             plugins {
@@ -439,7 +438,7 @@ class GradleLintPluginSpec extends TestKitSpecification {
             gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
 
             dependencies {
-                compile 'com.google.guava:guava:18.0'
+                implementation 'com.google.guava:guava:18.0'
             }
         """.toString()
 
@@ -463,14 +462,14 @@ class GradleLintPluginSpec extends TestKitSpecification {
             subprojects {
                 apply plugin: 'java'
                 dependencies {
-                    compile('com.google.guava:guava:18.0')
+                    implementation('com.google.guava:guava:18.0')
                 }
             }
         """
 
         def subDir = addSubproject('sub', """
             dependencies {
-                testCompile group: 'junit',
+                testImplementation group: 'junit',
                     name: 'junit',
                     version: '4.11'
             }
@@ -479,11 +478,11 @@ class GradleLintPluginSpec extends TestKitSpecification {
         """)
 
         then:
-        runTasksSuccessfully(taskName)
+        runTasks(taskName)
 
-        buildFile.text.contains("compile 'com.google.guava:guava:18.0'")
+        buildFile.text.contains("implementation 'com.google.guava:guava:18.0'")
         String buildFileText = new File(subDir, 'build.gradle').text
-        buildFileText.contains("testCompile")
+        buildFileText.contains("testImplementation")
         buildFileText.contains("junit:junit:4.11")
 
         where:
@@ -505,12 +504,12 @@ class GradleLintPluginSpec extends TestKitSpecification {
             apply plugin: 'nebula.lint'
             
             dependencies {
-                compile('a:a:1')
+                implementation('a:a:1')
             }
         """)
 
         then:
-        runTasksSuccessfully(taskName)
+        runTasks(taskName)
 
         where:
         taskName << ['fixGradleLint', 'fixLintGradle']
@@ -532,14 +531,14 @@ class GradleLintPluginSpec extends TestKitSpecification {
                 apply plugin: 'java'
                 
                 dependencies {
-                    compile('com.google.guava:guava:18.0')
+                    implementation('com.google.guava:guava:18.0')
                 }
             }
         """
 
         addSubproject('sub', """
             dependencies {
-                testCompile group: 'junit',
+                testImplementation group: 'junit',
                     name: 'junit',
                     version: '4.11'
             }
@@ -548,7 +547,7 @@ class GradleLintPluginSpec extends TestKitSpecification {
         """)
 
         then:
-        def results = runTasksSuccessfully('taskA')
+        def results = runTasks('taskA')
 
         when:
         def console = results.output.readLines()
@@ -570,15 +569,15 @@ class GradleLintPluginSpec extends TestKitSpecification {
             gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
 
             dependencies {
-                compile('com.google.guava:guava:18.0')
-                testCompile group: 'junit',
+                implementation('com.google.guava:guava:18.0')
+                testImplementation group: 'junit',
                     name: 'junit',
                     version: '4.11'
             }
         """
 
         then:
-        def results = runTasksSuccessfully('generateGradleLintReport')
+        def results = runTasks('generateGradleLintReport')
 
         when:
         def console = results.output.readLines()
@@ -592,183 +591,152 @@ class GradleLintPluginSpec extends TestKitSpecification {
 
 
     def 'test wrapper rule on a single module project'() {
-        setup:
-        gradleVersion = V_4_POINT_10
-
         when:
         buildFile << """
             plugins {
                 id 'nebula.lint'
                 id 'java'
             }
-
-            gradleLint.rules = ['deprecated-task-operator']
-
-            task helloTask << {
-                println 'hello'
-            } 
+            gradleLint.rules = ['dependency-parentheses']
+            dependencies {
+                implementation('commons-logging:commons-logging:latest.release')
+            }
         """
 
         then:
-        def results = runTasksSuccessfully('autoLintGradle')
+        def results = runTasks('autoLintGradle')
 
         when:
         def console = results.output.readLines()
 
         then:
-        console.any { it.contains('deprecated-task-operator') }
+        console.any { it.contains('dependency-parentheses') }
     }
 
     def 'build fails for violations in manual lint'() {
         given:
-        gradleVersion = V_4_POINT_10
         buildFile << """
             plugins {
                 id 'nebula.lint'
                 id 'java'
             }
-
-            gradleLint.rules = ['deprecated-task-operator']
-
-            task helloTask << {
-                println 'hello'
-            } 
+            gradleLint.rules = ['dependency-parentheses']
+            dependencies {
+                implementation('commons-logging:commons-logging:latest.release')
+            }
         """
 
         when:
-        def results = runTasksFail('lintGradle')
+        def results = runTasksAndFail('lintGradle')
 
         then:
         def console = results.output.readLines()
-        console.any { it.contains('deprecated-task-operator') }
+        console.any { it.contains('dependency-parentheses') }
         console.any { it.contains('This build contains 1 lint violation') }
     }
 
     @Issue('#68')
     def 'lint task does not run when alwaysRun is off'() {
-        setup:
-        gradleVersion = V_4_POINT_10
-
         when:
         buildFile << """
             plugins {
                 id 'nebula.lint'
                 id 'java'
             }
-
-            gradleLint {
-                rules = ['deprecated-task-operator']
+            gradleLint { 
+                rules = ['dependency-parentheses']
                 alwaysRun = false
             }
-
-            task helloTask << {
-                println 'hello'
-            } 
+            dependencies {
+                implementation('commons-logging:commons-logging:latest.release')
+            }
         """
 
         then:
         // build would normally trigger lintGradle, but will not when alwaysRun = false
-        def results = runTasksSuccessfully('build')
+        def results = runTasks('build')
 
         when:
         def console = results.output.readLines()
 
         then:
-        !console.any { it.contains('deprecated-task-operator') }
+        !console.any { it.contains('dependency-parentheses') }
     }
 
     def 'lint task does not run when alwaysRun is off via cli'() {
-        setup:
-        gradleVersion = V_4_POINT_10
-
         when:
         buildFile << """
             plugins {
                 id 'nebula.lint'
                 id 'java'
             }
-
-            gradleLint {
-                rules = ['deprecated-task-operator']
+            gradleLint.rules = ['dependency-parentheses']
+            dependencies {
+                implementation('commons-logging:commons-logging:latest.release')
             }
-
-            task helloTask << {
-                println 'hello'
-            } 
         """
 
         then:
         // build would normally trigger lintGradle, but will not when alwaysRun = false
-        def results = runTasksSuccessfully('build', '-PgradleLint.alwaysRun=false')
+        def results = runTasks('build', '-PgradleLint.alwaysRun=false')
 
         when:
         def console = results.output.readLines()
 
         then:
-        !console.any { it.contains('deprecated-task-operator') }
+        !console.any { it.contains('dependency-parentheses') }
     }
 
     def 'lint task does not run when autoGradleLint is excluded via cli'() {
-        setup:
-        gradleVersion = V_4_POINT_10
-
         when:
         buildFile << """
             plugins {
                 id 'nebula.lint'
                 id 'java'
             }
-
-            gradleLint {
-                rules = ['deprecated-task-operator']
+            gradleLint.rules = ['dependency-parentheses']
+            dependencies {
+                implementation('commons-logging:commons-logging:latest.release')
             }
-
-            task helloTask << {
-                println 'hello'
-            } 
         """
 
         then:
         // build would normally trigger lintGradle, but will not when alwaysRun = false
-        def results = runTasksSuccessfully('build', '-x', 'autoLintGradle')
+        def results = runTasks('build', '-x', 'autoLintGradle')
 
         when:
         def console = results.output.readLines()
 
         then:
-        !console.any { it.contains('deprecated-task-operator') }
+        !console.any { it.contains('dependency-parentheses') }
     }
 
     @Unroll
     def 'lint task does not run for task #taskName'() {
-        setup:
-        gradleVersion = V_4_POINT_10
-
         when:
         buildFile << """
             plugins {
                 id 'nebula.lint'
                 id 'java'
             }
-
-            gradleLint {
-                rules = ['deprecated-task-operator']
+            gradleLint.rules = ['dependency-parentheses']
+            dependencies {
+                implementation('commons-logging:commons-logging:latest.release')
             }
-            
-            task helloTask << {
+            task helloTask {
                 println 'hello'
             } 
         """
 
         then:
         // build would normally trigger lintGradle, but will not when alwaysRun = false
-        def results = runTasksSuccessfully(taskName)
+        def results = runTasks(taskName)
 
         when:
         def console = results.output.readLines()
 
         then:
-        !console.any { it.contains('deprecated-task-operator') }
+        !console.any { it.contains('dependency-parentheses') }
 
         where:
         taskName << ['help', 'tasks', 'dependencies', 'components',
@@ -777,32 +745,27 @@ class GradleLintPluginSpec extends TestKitSpecification {
 
     def 'autoLintGradle is always run'() {
         setup:
-        gradleVersion = V_4_POINT_10
-
-        createJavaSourceFile('public class Main { }')
         buildFile << """\
             plugins {
-                id 'java'
                 id 'nebula.lint'
+                id 'java'
             }
-            
-            gradleLint.rules = ['deprecated-task-operator']
-            
-            task helloTask << {
-                println 'hello'
-            } 
-            
+            gradleLint.rules = ['dependency-parentheses']
+            dependencies {
+                implementation('commons-logging:commons-logging:latest.release')
+            }            
             """.stripIndent()
 
         when:
-        def results = runTasksSuccessfully('compileJava')
+        def results = runTasks('compileJava')
 
         then:
         results.output.contains('This project contains lint violations.')
+        results.output.contains('dependency-parentheses')
     }
 
     def 'override rule set with a gradle property'() {
-        createJavaSourceFile('public class Main { }')
+        writeHelloWorld()
         buildFile << """\
             plugins {
                 id 'java'
@@ -814,17 +777,17 @@ class GradleLintPluginSpec extends TestKitSpecification {
             }
             
             dependencies {
-                compile('com.google.guava:guava:21.0')
+                implementation('com.google.guava:guava:21.0')
             }
             """.stripIndent()
 
         when:
-        def results = runTasksSuccessfully('fixGradleLint',
+        def results = runTasks('fixGradleLint',
                 '-PgradleLint.rules=dependency-parentheses')
 
         then:
         results.task(':fixGradleLint').outcome == TaskOutcome.SUCCESS
-        buildFile.text.contains("compile 'com.google.guava:guava:21.0'")
+        buildFile.text.contains("implementation 'com.google.guava:guava:21.0'")
     }
 
     def 'exclude individual rules with a gradle property or gradleLint.excludedRules'() {
@@ -845,20 +808,18 @@ class GradleLintPluginSpec extends TestKitSpecification {
             }
             
             dependencies {
-                compile('com.google.guava:guava:21.0')
+                implementation('com.google.guava:guava:21.0')
             }
             """.stripIndent()
 
-        createJavaSourceFile('public class Main { }')
+        writeHelloWorld()
 
         then:
-        runTasksSuccessfully('lintGradle', '-PgradleLint.excludedRules=unused-dependency')
+        runTasks('lintGradle', '-PgradleLint.excludedRules=unused-dependency')
     }
 
     @Issue('#100')
     def 'empty build file lints successfully'() {
-        debug = true
-
         when:
         buildFile << """\
             plugins {
@@ -876,7 +837,7 @@ class GradleLintPluginSpec extends TestKitSpecification {
         new File(addSubproject('sub1'), 'build.gradle').createNewFile()
 
         then:
-        runTasksSuccessfully('fixGradleLint')
+        runTasks('fixGradleLint')
     }
 
     def 'lint plugin cannot be applied to kotlin script build files'() {
@@ -889,7 +850,7 @@ class GradleLintPluginSpec extends TestKitSpecification {
         """
 
         when:
-        def failure  = runTasksFail("clean")
+        def failure = runTasksAndFail("clean")
 
         then:
         failure.output.contains("Gradle Lint Plugin currently doesn't support kotlin build scripts." +
