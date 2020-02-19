@@ -18,14 +18,17 @@
 
 package com.netflix.nebula.lint.rule.dependency.provider
 
-import com.netflix.nebula.lint.TestKitSpecification
+
+import nebula.test.IntegrationTestKitSpec
 import org.gradle.api.artifacts.Dependency
 import org.gradle.testfixtures.ProjectBuilder
+import spock.lang.Subject
 import spock.lang.Unroll
 
 import javax.annotation.Nullable
 
-class ClasspathBasedRecommendationProviderTest extends TestKitSpecification {
+@Subject(ClasspathBasedRecommendationProvider)
+class ClasspathBasedRecommendationProviderTest extends IntegrationTestKitSpec {
     static def version = 1.0
 
     @Unroll
