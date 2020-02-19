@@ -429,8 +429,8 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             repositories { mavenCentral() }
 
             dependencies {
-                compile 'junit:junit:4.11'
-                testCompile 'junit:junit:4.11'
+                implementation 'junit:junit:4.11'
+                testImplementation 'junit:junit:4.11'
             }
         """
 
@@ -448,8 +448,8 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
         runTasksSuccessfully('fixGradleLint')
 
         then:
-        dependencies(buildFile, 'compile') == []
-        dependencies(buildFile, 'testCompile') == ['junit:junit:4.11']
+        dependencies(buildFile, 'implementation') == []
+        dependencies(buildFile, 'testImplementation') == ['junit:junit:4.11']
     }
 
     def 'service providers should be moved to the runtime configuration if their classes are unused at compile time'() {
