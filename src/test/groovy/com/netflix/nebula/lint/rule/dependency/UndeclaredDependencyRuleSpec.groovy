@@ -15,14 +15,14 @@
  */
 package com.netflix.nebula.lint.rule.dependency
 
-import com.netflix.nebula.lint.TestKitSpecification
+import nebula.test.IntegrationTestKitSpec
 import nebula.test.dependencies.Coordinate
 import nebula.test.dependencies.maven.Pom
 import spock.lang.Subject
 import spock.lang.Unroll
 
 @Subject(UndeclaredDependencyRule)
-class UndeclaredDependencyRuleSpec extends TestKitSpecification {
+class UndeclaredDependencyRuleSpec extends IntegrationTestKitSpec {
     private static final def sample = new Coordinate('sample', 'alpha', '1.0')
     private static final def commonsLogging = new Coordinate('commons-logging', 'commons-logging', '1.2')
     private static final def commonsLang = new Coordinate('commons-lang', 'commons-lang', '2.6')
@@ -63,11 +63,16 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
             """.stripIndent()
 
         when:
-
-        createJavaSourceFile(main)
+        writeJavaSourceFile(main)
 
         then:
-        def result = runTasksSuccessfully('fixGradleLint')
+        if (configuration == 'compile') {
+            System.setProperty("ignoreDeprecations", "true")
+        }
+        def result = runTasks('fixGradleLint')
+        if (configuration == 'compile') {
+            System.setProperty("ignoreDeprecations", "false")
+        }
 
         result.output.contains('fixed')
         def dependencies = dependencies(buildFile)
@@ -107,12 +112,17 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
             """.stripIndent()
 
         when:
-
-        createJavaSourceFile(main)
-        createJavaTestFile(projectDir)
+        writeJavaSourceFile(main)
+        writeUnitTest(projectDir)
 
         then:
-        def result = runTasksSuccessfully('build', 'fixGradleLint')
+        if (configuration == 'compile') {
+            System.setProperty("ignoreDeprecations", "true")
+        }
+        def result = runTasks('build', 'fixGradleLint')
+        if (configuration == 'compile') {
+            System.setProperty("ignoreDeprecations", "false")
+        }
 
         result.output.contains('Corrected 0 lint problems')
         result.output.contains('Passed lint check with 0 violations')
@@ -141,7 +151,7 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
 
         setupBuildGradleSimpleSetup(repo)
         buildFile << """\
-            
+
             buildscript {
               repositories {
                 maven {
@@ -152,7 +162,7 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
                 classpath "io.franzbecker:gradle-lombok:3.2.0"
               }
             }
-            
+
             apply plugin: "io.franzbecker.gradle-lombok"
 
             dependencies {
@@ -161,12 +171,11 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
             """.stripIndent()
 
         when:
-
-        createJavaSourceFile("""\
+        writeJavaSourceFile("""\
             import lombok.Value;
             import org.apache.commons.lang.StringUtils;
             import org.apache.commons.logging.Log;
-            import org.apache.commons.logging.LogFactory;            
+            import org.apache.commons.logging.LogFactory;
             public final class Main {
                 public static void main(String[] args) {
                     Log log = LogFactory.getLog(Main.class);
@@ -183,20 +192,16 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
             }
             """.stripIndent())
 
-        createJavaTestFile(projectDir, '''
-            import static org.junit.Assert.*;
-            import org.junit.Test;
-
-            public class MainTest {
-                @Test
-                public void performTest() {
-                    assertEquals(1, 1);
-                }
-            }
-        '''.stripIndent())
+        writeUnitTest(projectDir)
 
         then:
-        def result = runTasksSuccessfully('fixGradleLint')
+        if (configuration == 'compile') {
+            System.setProperty("ignoreDeprecations", "true")
+        }
+        def result = runTasks('fixGradleLint')
+        if (configuration == 'compile') {
+            System.setProperty("ignoreDeprecations", "false")
+        }
 
         result.output.contains('fixed')
         def dependencies = dependencies(buildFile)
@@ -239,11 +244,16 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
             """.stripIndent()
 
         when:
-
-        createJavaSourceFile(main)
+        writeJavaSourceFile(main)
 
         then:
-        def result = runTasksSuccessfully('fixGradleLint')
+        if (configuration == 'compile') {
+            System.setProperty("ignoreDeprecations", "true")
+        }
+        def result = runTasks('fixGradleLint')
+        if (configuration == 'compile') {
+            System.setProperty("ignoreDeprecations", "false")
+        }
 
         result.output.contains('fixed')
         def dependencies = dependencies(buildFile)
@@ -277,11 +287,16 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
             """.stripIndent()
 
         when:
-
-        createJavaSourceFile(main)
+        writeJavaSourceFile(main)
 
         then:
-        def result = runTasksSuccessfully('fixGradleLint')
+        if (configuration == 'compile') {
+            System.setProperty("ignoreDeprecations", "true")
+        }
+        def result = runTasks('fixGradleLint')
+        if (configuration == 'compile') {
+            System.setProperty("ignoreDeprecations", "false")
+        }
 
         result.output.contains('fixed')
         def dependencies = dependencies(buildFile)
@@ -316,20 +331,16 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
             """.stripIndent()
 
         when:
-        createJavaTestFile(projectDir, '''
-            import static org.junit.Assert.*;
-            import org.junit.Test;
-
-            public class MainTest {
-                @Test
-                public void performTest() {
-                    assertEquals(1, 1);
-                }
-            }
-        '''.stripIndent())
+        writeUnitTest(projectDir)
 
         then:
-        def result = runTasksSuccessfully('fixGradleLint')
+        if (configuration == 'compile') {
+            System.setProperty("ignoreDeprecations", "true")
+        }
+        def result = runTasks('fixGradleLint')
+        if (configuration == 'compile') {
+            System.setProperty("ignoreDeprecations", "false")
+        }
 
         result.output.contains('fixed')
         def dependencies = dependencies(buildFile)
@@ -363,7 +374,7 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
             """.stripIndent()
 
         when:
-        createJavaSourceFile('''
+        writeJavaSourceFile('''
             import org.apache.commons.logging.impl.NoOpLog;
 
             public abstract class Main extends NoOpLog {
@@ -371,7 +382,13 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
         '''.stripIndent())
 
         then:
-        def result = runTasksSuccessfully('fixGradleLint')
+        if (configuration == 'compile') {
+            System.setProperty("ignoreDeprecations", "true")
+        }
+        def result = runTasks('fixGradleLint')
+        if (configuration == 'compile') {
+            System.setProperty("ignoreDeprecations", "false")
+        }
 
         result.output.contains('fixed')
         def dependencies = dependencies(buildFile)
@@ -415,10 +432,16 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
             }
             """.stripIndent()
 
-        createJavaSourceFile(main)
+        writeJavaSourceFile(main)
 
         then:
-        def result = runTasksSuccessfully('fixGradleLint', '--warning-mode', 'none')
+        if (configuration == 'compile') {
+            System.setProperty("ignoreDeprecations", "true")
+        }
+        def result = runTasks('fixGradleLint')
+        if (configuration == 'compile') {
+            System.setProperty("ignoreDeprecations", "false")
+        }
 
         result.output.contains('fixed')
         def dependencies = dependencies(buildFile)
@@ -458,11 +481,16 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
             """.stripIndent())
 
         when:
-
-        createJavaSourceFile(new File(projectDir.toString() + File.separator + 'sub1'), main)
+        writeJavaSourceFile(main, new File(projectDir.toString() + File.separator + 'sub1'))
 
         then:
-        def result = runTasksSuccessfully('fixGradleLint')
+        if (configuration == 'compile') {
+            System.setProperty("ignoreDeprecations", "true")
+        }
+        def result = runTasks('fixGradleLint')
+        if (configuration == 'compile') {
+            System.setProperty("ignoreDeprecations", "false")
+        }
 
         result.output.contains('fixed')
         assert dependencies(buildFile).contains(sample.toString())
@@ -500,11 +528,16 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
             """.stripIndent())
 
         when:
-
-        createJavaSourceFile(new File(projectDir.toString() + File.separator + 'sub1'), main)
+        writeJavaSourceFile(main, new File(projectDir.toString() + File.separator + 'sub1'))
 
         then:
-        def result = runTasksSuccessfully('fixGradleLint')
+        if (configuration == 'compile') {
+            System.setProperty("ignoreDeprecations", "true")
+        }
+        def result = runTasks('fixGradleLint')
+        if (configuration == 'compile') {
+            System.setProperty("ignoreDeprecations", "false")
+        }
 
         result.output.contains('fixed')
         assert dependencies(buildFile).contains(sample.toString())
@@ -542,12 +575,17 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
             """.stripIndent())
 
         when:
-
-        createJavaSourceFile(new File(projectDir.toString() + File.separator + 'sub1'), main)
-        createJavaSourceFile(new File(projectDir.toString() + File.separator + 'sub2'), main)
+        writeJavaSourceFile(main, new File(projectDir.toString() + File.separator + 'sub1'))
+        writeJavaSourceFile(main, new File(projectDir.toString() + File.separator + 'sub2'))
 
         then:
-        def result = runTasksSuccessfully('fixGradleLint')
+        if (configuration == 'compile') {
+            System.setProperty("ignoreDeprecations", "true")
+        }
+        def result = runTasks('fixGradleLint')
+        if (configuration == 'compile') {
+            System.setProperty("ignoreDeprecations", "false")
+        }
 
         result.output.contains('fixed')
 
@@ -590,16 +628,21 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
         addSubproject('sub1', "")
 
         when:
-
-        createJavaSourceFile(new File(projectDir.toString() + File.separator + 'sub1'), main)
+        writeJavaSourceFile(main, new File(projectDir.toString() + File.separator + 'sub1'))
 
         then:
-        def firstResult = runTasksSuccessfully('fixGradleLint')
+        if (configuration == 'compile') {
+            System.setProperty("ignoreDeprecations", "true")
+        }
+        def firstResult = runTasks('fixGradleLint')
 
         firstResult.output.contains('you require a dependencies block')
 
         when:
-        def secondResult = runTasksSuccessfully('fixGradleLint')
+        def secondResult = runTasks('fixGradleLint')
+        if (configuration == 'compile') {
+            System.setProperty("ignoreDeprecations", "false")
+        }
 
         then:
         secondResult
@@ -636,17 +679,16 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
                 classpath "io.franzbecker:gradle-lombok:3.2.0"
               }
             }
-            
+
             apply plugin: "io.franzbecker.gradle-lombok"
-            
+
             dependencies {
             ${deps.collect { "    compileOnly '$it'" }.join('\n')}
             }
             """.stripIndent()
 
         when:
-
-        createJavaSourceFile("""\
+        writeJavaSourceFile("""\
             import lombok.Value;
             public final class Main {
                 public static void main(String[] args) {
@@ -662,7 +704,7 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
             """.stripIndent())
 
         then:
-        runTasksSuccessfully('fixGradleLint')
+        def result = runTasks('fixGradleLint')
 
         def dependencies = dependencies(buildFile)
         for (def expectedDependency : expected) {
@@ -705,4 +747,13 @@ class UndeclaredDependencyRuleSpec extends TestKitSpecification {
             }
             """.stripIndent()
     }
+
+    def dependencies(File _buildFile, String... confs = ['compile', 'testCompile', 'implementation', 'testImplementation', 'api']) {
+        _buildFile.text.readLines()
+                .collect { it.trim() }
+                .findAll { line -> confs.any { c -> line.startsWith(c) } }
+                .collect { it.split(/\s+/)[1].replaceAll(/['"]/, '') }
+                .sort()
+    }
+
 }

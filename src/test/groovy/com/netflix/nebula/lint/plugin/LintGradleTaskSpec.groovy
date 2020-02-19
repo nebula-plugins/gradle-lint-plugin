@@ -15,15 +15,16 @@
  */
 package com.netflix.nebula.lint.plugin
 
-import com.netflix.nebula.lint.TestKitSpecification
+
 import com.netflix.nebula.lint.rule.dependency.DependencyParenthesesRule
 import com.netflix.nebula.lint.rule.dependency.FirstOrderDuplicateDependencyClassRule
+import nebula.test.IntegrationTestKitSpec
 import org.gradle.testkit.runner.TaskOutcome
 import spock.lang.Subject
 import spock.lang.Unroll
 
 @Subject([FirstOrderDuplicateDependencyClassRule, DependencyParenthesesRule])
-class LintGradleTaskSpec extends TestKitSpecification {
+class LintGradleTaskSpec extends IntegrationTestKitSpec {
     def setup() {
         debug = true
     }
@@ -48,8 +49,15 @@ class LintGradleTaskSpec extends TestKitSpecification {
         """
 
         when:
-        createJavaSourceFile('public class Main {}')
-        def result = runTasksSuccessfully('compileJava')
+        writeHelloWorld()
+
+        if (configuration == 'compile') {
+            System.setProperty("ignoreDeprecations", "true")
+        }
+        def result = runTasks('compileJava')
+        if (configuration == 'compile') {
+            System.setProperty("ignoreDeprecations", "false")
+        }
 
         then:
         result.output.contains('(no auto-fix available)')
@@ -72,12 +80,12 @@ class LintGradleTaskSpec extends TestKitSpecification {
             repositories { mavenCentral() }
 
             dependencies {
-                compile('com.google.guava:guava:18.0')
+                implementation('com.google.guava:guava:18.0')
             }
         """
 
         then:
-        runTasksFail('lintGradle')
+        runTasksAndFail('lintGradle')
     }
 
     def 'expired fixmes cause build failure'() {
@@ -94,13 +102,13 @@ class LintGradleTaskSpec extends TestKitSpecification {
 
             dependencies {
                 gradleLint.fixme('2010-1-1') {
-                    compile('com.google.guava:guava:18.0')
+                    implementation('com.google.guava:guava:18.0')
                 }
             }
         """
 
         then:
-        runTasksFail('lintGradle')
+        runTasksAndFail('lintGradle')
     }
 
     def 'lintGradle always depends on compileJava'() {
@@ -115,7 +123,7 @@ class LintGradleTaskSpec extends TestKitSpecification {
             """.stripIndent()
 
         when:
-        def result = runTasksSuccessfully('lintGradle')
+        def result = runTasks('lintGradle')
 
         then:
         result.task(':compileJava').outcome == TaskOutcome.NO_SOURCE
@@ -134,14 +142,14 @@ class LintGradleTaskSpec extends TestKitSpecification {
             repositories { mavenCentral() }
 
             dependencies {
-                compile 'com.google.guava:guava:18.0'
-                compile 'com.google.collections:google-collections:1.0'
+                implementation 'com.google.guava:guava:18.0'
+                implementation 'com.google.collections:google-collections:1.0'
             }
         """
 
         when:
-        createJavaSourceFile('public class Main { uhoh! }')
-        def result = runTasksFail('compileJava')
+        writeJavaSourceFile('public class Main { uhoh! }')
+        def result = runTasksAndFail('compileJava')
 
         then:
         result.output.contains('This project contains lint violations.')
@@ -164,17 +172,17 @@ class LintGradleTaskSpec extends TestKitSpecification {
             repositories { mavenCentral() }
 
             dependencies {
-                compile 'com.google.guava:guava:18.0'
-                compile 'com.google.collections:google-collections:1.0'
+                implementation 'com.google.guava:guava:18.0'
+                implementation 'com.google.collections:google-collections:1.0'
             }
         """
 
         when:
-        createJavaSourceFile('public class Main { uhoh! }')
-        def result = runTasksFail('compileJava')
+        writeJavaSourceFile('public class Main { uhoh! }')
+        def result = runTasksAndFail('compileJava')
 
         then:
-        ! result.output.contains('This project contains lint violations.')
+        !result.output.contains('This project contains lint violations.')
     }
 
     def 'lint finds all violations in all applied files with bookmark rule'() {
@@ -194,7 +202,7 @@ class LintGradleTaskSpec extends TestKitSpecification {
             gradleLint.rules = ['dependency-parentheses']
             
             dependencies {
-                compile('commons-lang:commons-lang:2.5')
+                implementation('commons-lang:commons-lang:2.5')
             }
 
             allprojects {
@@ -207,7 +215,7 @@ class LintGradleTaskSpec extends TestKitSpecification {
             def someVariable = 2
 
             dependencies {
-                compile('com.google.guava:guava:18.0')
+                implementation('com.google.guava:guava:18.0')
             }
             
             apply from: 'another.gradle'
@@ -216,12 +224,12 @@ class LintGradleTaskSpec extends TestKitSpecification {
         File another = new File(projectDir, 'another.gradle')
         another.text = """
             dependencies {
-                compile('com.google.guava:guava:17.0')
+                implementation('com.google.guava:guava:17.0')
             }
         """
 
         when:
-        def results = runTasksFail('lintGradle')
+        def results = runTasksAndFail('lintGradle')
 
         then:
         results.output.count('warning   dependency-parentheses             parentheses are unnecessary for dependencies') == 3

@@ -15,11 +15,18 @@
  */
 package com.netflix.nebula.lint.plugin
 
-import com.netflix.nebula.lint.TestKitSpecification
+import com.netflix.nebula.lint.rule.dependency.DependencyParenthesesRule
+import com.netflix.nebula.lint.rule.dependency.UnusedDependencyRule
+import nebula.test.IntegrationTestKitSpec
 import spock.lang.IgnoreIf
 import spock.lang.Issue
+import spock.lang.Subject
 
-class FixGradleLintTaskSpec extends TestKitSpecification {
+@Subject([UnusedDependencyRule, DependencyParenthesesRule])
+class FixGradleLintTaskSpec extends IntegrationTestKitSpec {
+    def setup() {
+        debug = true
+    }
 
     def 'overlapping patches result in unfixed or semi-fixed results'() {
         when:
@@ -34,14 +41,14 @@ class FixGradleLintTaskSpec extends TestKitSpecification {
             repositories { mavenCentral() }
 
             dependencies {
-                compile('com.google.guava:guava:18.0')
+                implementation('com.google.guava:guava:18.0')
             }
         """
 
-        createJavaSourceFile('public class Main {}')
+        writeHelloWorld()
 
         then:
-        def results = runTasksFail('fixGradleLint')
+        def results = runTasksAndFail('fixGradleLint', '--warning-mode', 'all')
 
         results.output.count('fixed          unused-dependency') == 1
         results.output.count('unfixed        dependency-parentheses') == 1
@@ -62,7 +69,7 @@ class FixGradleLintTaskSpec extends TestKitSpecification {
             gradleLint.rules = ['dependency-parentheses']
             
             dependencies {
-                compile('commons-lang:commons-lang:2.6')
+                implementation('commons-lang:commons-lang:2.6')
             }
 
             apply from: 'dependencies.gradle'
@@ -70,17 +77,17 @@ class FixGradleLintTaskSpec extends TestKitSpecification {
         File dependenciesFile = new File(projectDir, 'dependencies.gradle')
         dependenciesFile.text = """
             dependencies {
-                compile('com.google.guava:guava:18.0')
+                implementation('com.google.guava:guava:18.0')
             }
         """
 
-        createJavaSourceFile('public class Main {}')
+        writeHelloWorld()
 
         then:
-        def results = runTasksSuccessfully('fixGradleLint')
+        def results = runTasks('fixGradleLint')
         results.output.count('fixed          dependency-parentheses') == 2
-        dependenciesFile.text.contains('compile \'com.google.guava:guava:18.0\'')
-        buildFile.text.contains('compile \'commons-lang:commons-lang:2.6\'')
+        dependenciesFile.text.contains('implementation \'com.google.guava:guava:18.0\'')
+        buildFile.text.contains('implementation \'commons-lang:commons-lang:2.6\'')
     }
 
     @Issue('#37')
@@ -97,12 +104,12 @@ gradleLint.rules = ['dependency-parentheses']\r
 repositories { mavenCentral() }\r
 \r
 dependencies {\r
-    compile('com.google.guava:guava:18.0')\r
+    implementation('com.google.guava:guava:18.0')\r
 }"""
 
         then:
-        runTasksSuccessfully('fixGradleLint')
-        buildFile.text.contains("compile 'com.google.guava:guava:18.0")
+        runTasks('fixGradleLint')
+        buildFile.text.contains("implementation 'com.google.guava:guava:18.0")
     }
 
     /**
@@ -122,7 +129,7 @@ dependencies {\r
         gradleVersion = '4.2' //we don't support older versions anymore
 
         when:
-        def results = runTasksSuccessfully('assemble', 'lintGradle')
+        def results = runTasks('assemble', 'lintGradle')
 
         then:
         println results?.output

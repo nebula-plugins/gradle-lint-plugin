@@ -1,6 +1,7 @@
 package com.netflix.nebula.lint.rule.dependency
 
-import com.netflix.nebula.lint.TestKitSpecification
+
+import nebula.test.IntegrationTestKitSpec
 import spock.lang.IgnoreIf
 import spock.lang.Subject
 import spock.lang.Unroll
@@ -8,14 +9,14 @@ import spock.lang.Unroll
 @Unroll
 @Subject(DeprecatedDependencyConfigurationRule)
 @IgnoreIf({ jvm.isJava9Compatible() })
-class OldGradleDeprecatedDependencyConfigurationRuleSpec extends TestKitSpecification {
+class OldGradleDeprecatedDependencyConfigurationRuleSpec extends IntegrationTestKitSpec {
 
-    //Should not replace with gradle < 4.7
+    //Should not replace configurations when running with gradle < 4.7
     def setup() {
         gradleVersion = "4.6"
     }
 
-    def 'Replaces deprecated configurations - #configuration for #replacementConfiguration'() {
+    def 'does not replace deprecated configurations - #configuration'() {
         buildFile << """
             plugins {
                 id 'nebula.lint'
@@ -34,7 +35,7 @@ class OldGradleDeprecatedDependencyConfigurationRuleSpec extends TestKitSpecific
         """
 
         when:
-        def result = runTasksSuccessfully('fixGradleLint', '--warning-mode=none')
+        def result = runTasks('fixGradleLint', '--warning-mode=none')
 
         then:
         def buildGradle = new File(projectDir, 'build.gradle')
@@ -60,7 +61,7 @@ class OldGradleDeprecatedDependencyConfigurationRuleSpec extends TestKitSpecific
 
     }
 
-    def 'Replaces deprecated configurations - multi project - project dependency - #configuration for #replacementConfiguration'() {
+    def 'does not replacer deprecated configurations - multi project - project dependency - #configuration'() {
         def sub1 = addSubproject('sub1', """
             repositories {
                 mavenCentral()
@@ -74,7 +75,7 @@ class OldGradleDeprecatedDependencyConfigurationRuleSpec extends TestKitSpecific
             def x = "test"
             """.stripIndent())
 
-        createJavaSourceFile(sub1, 'public class Sub1 {}')
+        writeHelloWorld(sub1)
 
         def sub2 = addSubproject('sub2', """            
             repositories {
@@ -86,7 +87,7 @@ class OldGradleDeprecatedDependencyConfigurationRuleSpec extends TestKitSpecific
             }
             """.stripIndent())
 
-        createJavaSourceFile(sub2, 'public class Sub2 {}')
+        writeHelloWorld(sub2)
 
         buildFile << """
             plugins {
@@ -105,7 +106,7 @@ class OldGradleDeprecatedDependencyConfigurationRuleSpec extends TestKitSpecific
         """
 
         when:
-        def result = runTasksSuccessfully('fixGradleLint', '--warning-mode=none')
+        def result = runTasks('fixGradleLint', '--warning-mode=none')
 
         then:
         def sub1BuildGradle = new File(projectDir, 'sub1/build.gradle')
@@ -115,22 +116,19 @@ repositories {
 }
 
 dependencies {
-    $replacementConfiguration 'com.google.guava:guava:19.0'
-    $replacementConfiguration project(':sub2')
+    $configuration 'com.google.guava:guava:19.0'
+    $configuration project(':sub2')
 }
 
 def x = "test"
         """.trim()
 
         where:
-        configuration | replacementConfiguration
-        "compile"     | "compile"
-        "testCompile" | "testCompile"
-        "runtime"     | "runtime"
+        configuration << ["compile", "testCompile", "runtime"]
     }
 
 
-    def 'Replaces deprecated configuration - latest release - #configuration for #replacementConfiguration'() {
+    def 'does not replace deprecated configuration - latest release - #configuration'() {
         buildFile << """
             plugins {
                 id 'nebula.lint'
@@ -149,7 +147,7 @@ def x = "test"
         """
 
         when:
-        def result = runTasksSuccessfully('fixGradleLint', '--warning-mode=none')
+        def result = runTasks('fixGradleLint', '--warning-mode=none')
 
         then:
         def buildGradle = new File(projectDir, 'build.gradle')
@@ -175,7 +173,7 @@ def x = "test"
 
     }
 
-    def 'Replaces deprecated configuration  - dynamic version  - #configuration for #replacementConfiguration'() {
+    def 'does not replace deprecated configuration  - dynamic version  - #configuration'() {
         buildFile << """
             plugins {
                 id 'nebula.lint'
@@ -194,7 +192,7 @@ def x = "test"
         """
 
         when:
-        def result = runTasksSuccessfully('fixGradleLint', '--warning-mode=none')
+        def result = runTasks('fixGradleLint', '--warning-mode=none')
 
         then:
         def buildGradle = new File(projectDir, 'build.gradle')
@@ -220,7 +218,7 @@ def x = "test"
 
     }
 
-    def 'Replaces deprecated configuration  - with excludes - #configuration for #replacementConfiguration'() {
+    def 'does not replace deprecated configuration  - with excludes - #configuration'() {
         buildFile << """
             plugins {
                 id 'nebula.lint'
@@ -241,7 +239,7 @@ def x = "test"
         """
 
         when:
-        def result = runTasksSuccessfully('fixGradleLint', '--warning-mode=none')
+        def result = runTasks('fixGradleLint', '--warning-mode=none')
 
         then:
         def buildGradle = new File(projectDir, 'build.gradle')

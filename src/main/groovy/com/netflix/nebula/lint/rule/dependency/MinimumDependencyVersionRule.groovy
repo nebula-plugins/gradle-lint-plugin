@@ -78,7 +78,7 @@ class MinimumDependencyVersionRule extends GradleLintRule implements GradleModel
             return
 
         if (VersionNumber.parse(resolved.moduleVersion.id.version).compareTo(VersionNumber.parse(minVersionConstraint.version)) < 0) {
-            addBuildLintViolation("this dependency does not meet the minimum version of $minVersionConstraint.version", decl)
+            addBuildLintViolation("${resolved.moduleVersion.id.module} does not meet the minimum version of $minVersionConstraint.version", decl)
             alreadyAdded += minVersionConstraint
         }
     }

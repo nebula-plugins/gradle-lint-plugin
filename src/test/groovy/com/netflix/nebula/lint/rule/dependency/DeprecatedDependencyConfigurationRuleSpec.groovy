@@ -1,12 +1,16 @@
 package com.netflix.nebula.lint.rule.dependency
 
-import com.netflix.nebula.lint.TestKitSpecification
+
+import nebula.test.IntegrationTestKitSpec
 import spock.lang.Subject
 import spock.lang.Unroll
 
 @Unroll
 @Subject(DeprecatedDependencyConfigurationRule)
-class DeprecatedDependencyConfigurationRuleSpec extends TestKitSpecification {
+class DeprecatedDependencyConfigurationRuleSpec extends IntegrationTestKitSpec {
+    def setup() {
+        debug = true
+    }
 
     def 'Replaces deprecated configurations - #configuration for #replacementConfiguration'() {
         buildFile << """
@@ -27,7 +31,7 @@ class DeprecatedDependencyConfigurationRuleSpec extends TestKitSpecification {
         """
 
         when:
-        def result = runTasksSuccessfully('autoLintGradle', '--warning-mode=none')
+        def result = runTasks('autoLintGradle', '--warning-mode=none')
 
         then:
         result.output.contains("warning   deprecated-dependency-configurationConfiguration $configuration has been deprecated and should be replaced with $replacementConfiguration (no auto-fix available)")
@@ -53,7 +57,7 @@ class DeprecatedDependencyConfigurationRuleSpec extends TestKitSpecification {
             def x = "test"
             """.stripIndent())
 
-        createJavaSourceFile(sub1, 'public class Sub1 {}')
+        writeJavaSourceFile('public class Sub1 {}', sub1)
 
         def sub2 = addSubproject('sub2', """            
             repositories {
@@ -65,7 +69,7 @@ class DeprecatedDependencyConfigurationRuleSpec extends TestKitSpecification {
             }
             """.stripIndent())
 
-        createJavaSourceFile(sub2, 'public class Sub2 {}')
+        writeJavaSourceFile('public class Sub2 {}', sub2)
 
         buildFile << """
             plugins {
@@ -84,7 +88,7 @@ class DeprecatedDependencyConfigurationRuleSpec extends TestKitSpecification {
         """
 
         when:
-        def result = runTasksSuccessfully('autoLintGradle', '--warning-mode=none')
+        def result = runTasks('autoLintGradle', '--warning-mode=none')
 
         then:
         result.output.contains("warning   deprecated-dependency-configurationConfiguration $configuration has been deprecated and should be replaced with $replacementConfiguration (no auto-fix available)")
@@ -116,7 +120,7 @@ class DeprecatedDependencyConfigurationRuleSpec extends TestKitSpecification {
         """
 
         when:
-        def result = runTasksSuccessfully('autoLintGradle', '--warning-mode=none')
+        def result = runTasks('autoLintGradle', '--warning-mode=none')
 
         then:
         result.output.contains("warning   deprecated-dependency-configurationConfiguration $configuration has been deprecated and should be replaced with $replacementConfiguration (no auto-fix available)")
@@ -147,7 +151,7 @@ class DeprecatedDependencyConfigurationRuleSpec extends TestKitSpecification {
         """
 
         when:
-        def result = runTasksSuccessfully('autoLintGradle', '--warning-mode=none')
+        def result = runTasks('autoLintGradle', '--warning-mode=none')
 
         then:
         result.output.contains("warning   deprecated-dependency-configurationConfiguration $configuration has been deprecated and should be replaced with $replacementConfiguration (no auto-fix available)")
@@ -159,7 +163,7 @@ class DeprecatedDependencyConfigurationRuleSpec extends TestKitSpecification {
         "runtime"     | "runtimeOnly"
     }
 
-    def 'Replaces deprecated dconfiguration - with excludes - #configuration for #replacementConfiguration'() {
+    def 'Replaces deprecated configuration - with excludes - #configuration for #replacementConfiguration'() {
         buildFile << """
             plugins {
                 id 'nebula.lint'
@@ -180,7 +184,7 @@ class DeprecatedDependencyConfigurationRuleSpec extends TestKitSpecification {
         """
 
         when:
-        def result = runTasksSuccessfully('autoLintGradle', '--warning-mode=none')
+        def result = runTasks('autoLintGradle', '--warning-mode=none')
 
         then:
         result.output.contains("warning   deprecated-dependency-configurationConfiguration $configuration has been deprecated and should be replaced with $replacementConfiguration (no auto-fix available)")

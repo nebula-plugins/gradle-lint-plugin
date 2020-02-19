@@ -16,18 +16,22 @@
 
 package com.netflix.nebula.lint.rule.dependency
 
-import com.netflix.nebula.lint.TestKitSpecification
+import nebula.test.IntegrationTestKitSpec
 import spock.lang.Issue
 import spock.lang.Subject
 import spock.lang.Unroll
 
 @Subject(FirstOrderDuplicateDependencyClassRule)
-class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
+class DuplicateDependencyClassRuleSpec extends IntegrationTestKitSpec {
     static def guava = 'com.google.guava:guava:18.0'
     static def collections = 'com.google.collections:google-collections:1.0'
     static def guava_transitive = 'com.netflix.nebula:gradle-metrics-plugin:4.1.6'
     static def asm = 'org.ow2.asm:asm:5.0.4'
     static def asm_asm = 'asm:asm:3.3.1'
+
+    def setup() {
+        debug = true
+    }
 
     @Unroll
     def 'dependencies with duplicate classes cause violations'(List<String> deps, String message) {
@@ -43,13 +47,13 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
             repositories { mavenCentral() }
 
             dependencies {
-                ${deps.collect { "implementation '$it'" }.join('\n') }
+                ${deps.collect { "implementation '$it'" }.join('\n')}
             }
         """
 
         when:
-        createJavaSourceFile('public class Main {}')
-        def result = runTasksSuccessfully('compileJava')
+        writeJavaSourceFile('public class Main {}')
+        def result = runTasks('compileJava')
 
         then:
         result.output.contains(message)
@@ -82,8 +86,8 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
         """
 
         when:
-        createJavaTestFile('public class Main {}')
-        def result = runTasksSuccessfully('compileTestJava')
+        writeHelloWorld()
+        def result = runTasks('compileTestJava')
 
         then:
         !result.output.contains("log4j:log4j:1.2.16 in configuration 'compile'")
@@ -112,11 +116,11 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
                 implementation deps.collections
             }
         """
-        
+
         when:
-        createJavaSourceFile('public class Main{}')
-        def result = runTasksSuccessfully('compileJava')
-        
+        writeJavaSourceFile('public class Main{}')
+        def result = runTasks('compileJava')
+
         then:
         result.output.contains("$collections in configuration ':implementation' has 309 classes duplicated by $guava")
     }
@@ -143,8 +147,8 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
         """
 
         when:
-        createJavaSourceFile('public class Main{}')
-        def result = runTasksSuccessfully('compileJava')
+        writeJavaSourceFile('public class Main{}')
+        def result = runTasks('compileJava')
 
         then:
         !result.output.contains("$collections in configuration ':implementation' has 309 classes duplicated by $guava")
@@ -180,10 +184,10 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
             }
         """
 
-        createJavaSourceFile('public class A { }')
+        writeJavaSourceFile('public class A { }')
         
         then:
-        def results = runTasksSuccessfully('compileJava')
+        def results = runTasks('compileJava')
         !results.output.contains('duplicate-dependency-class')
     }
 
@@ -211,8 +215,8 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
         """
 
         when:
-        createJavaSourceFile('public class Main{}')
-        def result = runTasksSuccessfully('compileJava')
+        writeJavaSourceFile('public class Main{}')
+        def result = runTasks('compileJava')
 
         then:
         !result.output.contains("$collections in configuration ':implementation' has 309 classes duplicated by $guava")
@@ -237,8 +241,8 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
         """
 
         when:
-        createJavaSourceFile('public class Main{}')
-        def result = runTasksSuccessfully('compileJava', 'lintGradle')
+        writeJavaSourceFile('public class Main{}')
+        def result = runTasks('compileJava', 'lintGradle')
 
         then:
         !result.output.contains("com.google.collections:google-collections:1.0 in configuration ':implementation' has 384 classes duplicated by com.google.guava:guava:10.0.1")
@@ -264,8 +268,8 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
         """
 
         expect:
-        createJavaSourceFile('public class Main{}')
-        def result = runTasksSuccessfully('compileJava', 'lintGradle')
+        writeJavaSourceFile('public class Main{}')
+        def result = runTasks('compileJava', 'lintGradle')
     }
 
     @Issue('#98')
@@ -288,8 +292,8 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
         """
 
         when:
-        createJavaSourceFile('public class Main{}')
-        def result = runTasksSuccessfully('compileJava', '--info')
+        writeJavaSourceFile('public class Main{}')
+        def result = runTasks('compileJava', '--info')
 
         then:
         result.output.contains("com.google.collections:google-collections:1.0 in configuration ':implementation' has 384 classes duplicated by com.google.guava:guava:10.0.1")
@@ -317,8 +321,8 @@ class DuplicateDependencyClassRuleSpec extends TestKitSpecification {
             """.stripIndent()
 
         when:
-        createJavaSourceFile('public class Main{}')
-        def result = runTasksSuccessfully('compileJava', 'lintGradle')
+        writeJavaSourceFile('public class Main{}')
+        def result = runTasks('compileJava', 'lintGradle')
 
         then:
         !result.output.contains("io.github.classgraph:classgraph:4.8.45 in configuration ':implementation' has 1 classes duplicated by org.apache.logging.log4j:log4j-api:2.12.0")
