@@ -1,6 +1,7 @@
 package com.netflix.nebula.lint.rule.dependency
 
-import com.netflix.nebula.lint.TestKitSpecification
+
+import nebula.test.IntegrationTestKitSpec
 import org.gradle.api.Project
 import org.gradle.api.internal.artifacts.DefaultResolvedDependency
 import org.gradle.testfixtures.ProjectBuilder
@@ -11,7 +12,7 @@ import spock.lang.Unroll
 import static com.netflix.nebula.lint.rule.dependency.DependencyClassVisitorSpec.gav
 
 @Subject(DependencyService)
-class DependencyServiceSpec extends TestKitSpecification {
+class DependencyServiceSpec extends IntegrationTestKitSpec {
     Project project
 
     def setup() {
@@ -95,24 +96,19 @@ class DependencyServiceSpec extends TestKitSpecification {
             }
             """.stripMargin()
 
-        createJavaSourceFile('''\
+        writeJavaSourceFile('''\
             import com.google.inject.servlet.*;
             public abstract class Main extends GuiceServletContextListener { }
         ''')
 
-        createJavaTestFile('''\
-            import org.junit.*;
-            public class MyTest {
-                @Test public void test() {}
-            }
-        ''')
+        writeUnitTest()
 
         then:
-        runTasksSuccessfully('implementationUnused')
+        runTasks('implementationUnused')
         new File(projectDir, 'implementationUnused.txt').readLines() == ['commons-lang:commons-lang']
 
         then:
-        runTasksSuccessfully('testImplementationUnused')
+        runTasks('testImplementationUnused')
         new File(projectDir, 'testImplementationUnused.txt').readLines() == ['commons-lang:commons-lang']
     }
 
@@ -144,13 +140,13 @@ class DependencyServiceSpec extends TestKitSpecification {
             }
             """.stripMargin()
 
-        createJavaSourceFile('''\
+        writeJavaSourceFile('''\
             import com.google.common.collect.*;
             public class Main { Multimap m = HashMultimap.create(); }
         ''')
 
         then:
-        runTasksSuccessfully('compileClasspathUndeclared')
+        runTasks('compileClasspathUndeclared')
         new File(projectDir, 'compileClasspathUndeclared.txt').readLines() == ['com.google.guava:guava:18.0']
     }
 
@@ -202,32 +198,32 @@ class DependencyServiceSpec extends TestKitSpecification {
 
             plugins {
                 id 'java'
-                id 'nebula.integtest' version '5.1.2'
+                id 'nebula.integtest' version '7.0.7'
                 id 'nebula.lint'
             }
             
-            task compileSourceSetOutput {
+            task compileClasspathSourceSetOutput {
                 doLast {
-                  println('@@' + DependencyService.forProject(project).sourceSetByConf('compile').java.outputDir)
+                  println('@@' + DependencyService.forProject(project).sourceSetByConf('compileClasspath').java.outputDir)
                 }
             }
             
-            task integTestSourceSetOutput  {
+            task integTestSourceSetOutput {
                 doLast {
-                   println('@@' + DependencyService.forProject(project).sourceSetByConf('integTestCompile').java.outputDir)
+                   println('@@' + DependencyService.forProject(project).sourceSetByConf('integTestCompileClasspath').java.outputDir)
                 }
             }
         """
 
         when:
-        def results = runTasksSuccessfully('compileSourceSetOutput')
+        def results = runTasks('compileClasspathSourceSetOutput')
         def dir = results.output.readLines().find { it.startsWith('@@')}.substring(2)
 
         then:
         dir.split('/')[-1] == 'main'
 
         when:
-        results = runTasksSuccessfully('integTestSourceSetOutput')
+        results = runTasks('integTestSourceSetOutput')
         dir = results.output.readLines().find { it.startsWith('@@')}.substring(2)
 
         then:
@@ -272,10 +268,10 @@ class DependencyServiceSpec extends TestKitSpecification {
             }
         """
 
-        createJavaSourceFile(core, 'public class A {}')
+        writeJavaSourceFile('public class A {}', core)
 
         when:
-        runTasksSuccessfully(*tasks)
+        runTasks(*tasks)
         def coreContents = new File(web, 'coreContents.txt')
 
         then:
@@ -328,8 +324,8 @@ class DependencyServiceSpec extends TestKitSpecification {
             }
             """.stripIndent()
 
-        createJavaSourceFile('public class Main {}')
-        createJavaTestFile('public class TestMain {}')
+        writeJavaSourceFile('public class Main {}')
+        writeUnitTest('public class TestMain {}')
 
         def dependencyService = DependencyService.forProject(project)
         dependencyService.resolvableConfigurations().each { resolvableConf ->
