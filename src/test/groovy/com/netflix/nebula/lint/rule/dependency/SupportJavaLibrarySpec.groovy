@@ -18,12 +18,13 @@
 
 package com.netflix.nebula.lint.rule.dependency
 
-import com.netflix.nebula.lint.TestKitSpecification
+
+import nebula.test.IntegrationTestKitSpec
 import nebula.test.dependencies.Coordinate
 import nebula.test.dependencies.maven.Pom
 import spock.lang.Unroll
 
-class SupportJavaLibrarySpec extends TestKitSpecification {
+class SupportJavaLibrarySpec extends IntegrationTestKitSpec {
     private static final def sample = new Coordinate('sample', 'alpha', '1.0')
     private static final def junit = new Coordinate('junit', 'junit', '4.11')
     def repo
@@ -38,6 +39,7 @@ class SupportJavaLibrarySpec extends TestKitSpecification {
         ArtifactHelpers.setupSampleJar(repo, sample)
 
         definePluginOutsideOfPluginBlock = true
+        debug = true
     }
 
     @Unroll
@@ -46,7 +48,13 @@ class SupportJavaLibrarySpec extends TestKitSpecification {
         setupWithJavaLibraryAndAllRules(configuration)
 
         when:
-        def result = runTasksSuccessfully('fixGradleLint')
+        if (configuration == 'testCompile') {
+            System.setProperty("ignoreDeprecations", "true")
+        }
+        def result = runTasks('fixGradleLint')
+        if (configuration == 'testCompile') {
+            System.setProperty("ignoreDeprecations", "false")
+        }
 
         then:
         result.output.contains('This project contains lint violations.')
@@ -69,7 +77,13 @@ class SupportJavaLibrarySpec extends TestKitSpecification {
         setupWithJavaLibraryAndAllRules(configuration, true)
 
         when:
-        def result = runTasksSuccessfully('fixGradleLint')
+        if (configuration == 'testCompile') {
+            System.setProperty("ignoreDeprecations", "true")
+        }
+        def result = runTasks('fixGradleLint')
+        if (configuration == 'testCompile') {
+            System.setProperty("ignoreDeprecations", "false")
+        }
 
         then:
         result.output.contains('This project contains lint violations.')
@@ -115,7 +129,7 @@ class SupportJavaLibrarySpec extends TestKitSpecification {
                 implementation 'com.squareup.okhttp3:okhttp:3.10.0'
             }
             """.stripIndent())
-        createJavaSourceFile(new File(projectDir.toString() + '/sub1'))
-        createJavaTestFile(new File(projectDir.toString() + '/sub1'))
+        writeHelloWorld(new File(projectDir.toString() + '/sub1'))
+        writeUnitTest(new File(projectDir.toString() + '/sub1'))
     }
 }
