@@ -145,7 +145,7 @@ class MinimumDependencyVersionRuleSpec extends IntegrationTestKitSpec {
 
         then:
         def result = runTasks(*tasks)
-        result.output.contains("needs fixing   minimum-dependency-version         this dependency does not meet the minimum version of 19.0")
+        result.output.contains("needs fixing   minimum-dependency-version         com.google.guava:guava does not meet the minimum version of 19.0")
     }
 
     def 'warn when resolution strategy preventing us from reaching the minimum version'() {
