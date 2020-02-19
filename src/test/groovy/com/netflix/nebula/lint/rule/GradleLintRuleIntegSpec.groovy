@@ -1,9 +1,14 @@
 package com.netflix.nebula.lint.rule
 
-import com.netflix.nebula.lint.TestKitSpecification
+
+import nebula.test.IntegrationTestKitSpec
 import spock.lang.Issue
 
-class GradleLintRuleIntegSpec extends TestKitSpecification {
+class GradleLintRuleIntegSpec extends IntegrationTestKitSpec {
+    def setup() {
+        debug = true
+    }
+
     @Issue('#67')
     def 'find dependencies that are provided by extension properties'() {
         setup:
@@ -20,15 +25,15 @@ class GradleLintRuleIntegSpec extends TestKitSpecification {
             ext.deps = [ guava: 'com.google.guava:guava:19.0' ]
 
             dependencies {
-                compile deps.guava
+                implementation deps.guava
             }
         """
 
         when:
-        createJavaSourceFile('public class Main{}')
+        writeHelloWorld()
 
         then:
-        def result = runTasksFail('compileJava', 'lintGradle')
+        def result = runTasksAndFail('compileJava', 'lintGradle')
         result.output.contains('this dependency is unused and can be removed')
     }
 
@@ -47,16 +52,16 @@ class GradleLintRuleIntegSpec extends TestKitSpecification {
 
             def v = 'latest.release'
             dependencies {
-                compile "com.google.guava:guava:\$v"
-                compile group: 'commons-lang', name: 'commons-lang', version: "\$v"
+                implementation "com.google.guava:guava:\$v"
+                implementation group: 'commons-lang', name: 'commons-lang', version: "\$v"
             }
         """
 
         when:
-        createJavaSourceFile('public class Main{}')
+        writeHelloWorld()
 
         then:
-        def result = runTasksFail('compileJava', 'lintGradle')
+        def result = runTasksAndFail('compileJava', 'lintGradle')
         result.output.contains('this dependency is unused and can be removed')
     }
 }
