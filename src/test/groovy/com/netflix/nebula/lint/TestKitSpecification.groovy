@@ -28,7 +28,9 @@ import spock.lang.Specification
 
 /**
  * Things that really belong in the unfinished Gradle Testkit
+ * Use `IntegrationTestKitSpec` from nebula-test instead
  */
+@Deprecated
 abstract class TestKitSpecification extends Specification {
     @Rule
     final TestName testName = new TestName()
