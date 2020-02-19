@@ -107,6 +107,7 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
                         // only add the dependency in the lowest configuration that requires it
                         if (insertedDependencies.add(undeclared)) {
                             addBuildLintViolation("one or more classes in $undeclared are required by your code directly")
+                            // TODO: insert the undeclared dependency for the correct project/configuration
                         }
                     }
                 }
