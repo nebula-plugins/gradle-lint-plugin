@@ -1,9 +1,12 @@
 package com.netflix.nebula.lint.plugin
 
-import com.netflix.nebula.lint.TestKitSpecification
+import nebula.test.IntegrationTestKitSpec
 import spock.lang.Issue
 
-class GradleLintReportTaskSpec extends TestKitSpecification {
+class GradleLintReportTaskSpec extends IntegrationTestKitSpec {
+    def setup() {
+        debug = true
+    }
 
     def 'generate a report'() {
         when:
@@ -21,12 +24,12 @@ class GradleLintReportTaskSpec extends TestKitSpecification {
             repositories { mavenCentral() }
 
             dependencies {
-                compile('com.google.guava:guava:18.0')
+                implementation('com.google.guava:guava:18.0')
             }
         """
 
         then:
-        runTasksSuccessfully('generateGradleLintReport')
+        runTasks('generateGradleLintReport')
 
         when:
         def report = new File(projectDir, 'build/reports/gradleLint').listFiles().find { it.name.endsWith('.txt') }
@@ -49,13 +52,14 @@ class GradleLintReportTaskSpec extends TestKitSpecification {
             repositories { mavenCentral() }
 
             dependencies {
-                compile('com.google.guava:guava:18.0')
+                implementation('com.google.guava:guava:18.0')
             }
         """
 
         then:
-        def results = runTasksFail('generateGradleLintReport')
-        println results.output
+        def results = runTasksAndFail('generateGradleLintReport')
+        results.output.contains('FAIL')
+        results.output.contains('Task failed with an exception')
     }
 
     def 'generate a report for a multi-module project'() {
@@ -80,12 +84,12 @@ class GradleLintReportTaskSpec extends TestKitSpecification {
             repositories { mavenCentral() }
 
             dependencies {
-                compile('com.google.guava:guava:18.0')
+                implementation('com.google.guava:guava:18.0')
             }
         """
 
         then:
-        runTasksSuccessfully('generateGradleLintReport')
+        runTasks('generateGradleLintReport')
 
         when:
         def report = new File(projectDir, 'build/reports/gradleLint').listFiles().find { it.name.endsWith('.txt') }
@@ -112,12 +116,17 @@ class GradleLintReportTaskSpec extends TestKitSpecification {
             repositories { mavenCentral() }
 
             dependencies {
-                compile 'com.google.guava:guava:18.0'
-                compile 'com.google.collections:google-collections:1.0'
+                implementation 'com.google.guava:guava:18.0'
+                implementation 'com.google.collections:google-collections:1.0'
             }
         """
 
         then:
-        runTasksSuccessfully('generateGradleLintReport')
+        runTasks('generateGradleLintReport')
+        def report = new File(projectDir, 'build/reports/gradleLint').listFiles().find { it.name.endsWith('.txt') }
+
+        then:
+        report.text.contains('Violation: Rule=duplicate-dependency-class')
+        report.text.contains('TotalFiles=1')
     }
 }
