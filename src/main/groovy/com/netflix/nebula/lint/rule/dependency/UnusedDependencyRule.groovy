@@ -67,7 +67,7 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
                         // never move compileOnly dependencies
                         addBuildLintViolation("this dependency should be moved to configuration $requiringSourceSet.name", call)
                     } else {
-                        unusedDependencies.add(new UnusedDependencyDeclaration(conf, mid, 'this dependency is unused and can be removed', call))
+                        unusedDependencies.add(new UnusedDependencyDeclaration(conf, mid, dep, 'this dependency is unused and can be removed', call))
                     }
                 }
             } else if (conf != 'compileOnly') {
@@ -119,8 +119,9 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
         filteredUsedElsewhere.each { declaration ->
             String dependencyDeclarationConfName = declarationConfigurationName(declaration.confNameRequiringDep)
 
+            String versionAddition = declaration.gradleDependency.version != null ? ":${declaration.gradleDependency.version}" : ''
             addBuildLintViolation("this dependency should be moved to configuration $dependencyDeclarationConfName", declaration.call)
-                    .replaceWith(declaration.call, "$dependencyDeclarationConfName '${declaration.moduleIdentifier}'")
+                    .replaceWith(declaration.call, "$dependencyDeclarationConfName '${declaration.moduleIdentifier}$versionAddition'")
         }
     }
 
@@ -135,7 +136,7 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
                     unused.moduleIdentifier == required.module
                 }
                 falseAlarmDepsForConf.each {
-                    usedElsewhere.add(new UsedElsewhereDependencyDeclaration(it.configurationName, it.moduleIdentifier, it.message, it.call, confName))
+                    usedElsewhere.add(new UsedElsewhereDependencyDeclaration(it.configurationName, it.moduleIdentifier, it.gradleDependency, it.message, it.call, confName))
 
                     falseAlarmUnusedDependencies.addAll(falseAlarmDepsForConf)
                 }
@@ -173,11 +174,13 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
         String configurationName
         ModuleIdentifier moduleIdentifier
         String message
+        GradleDependency gradleDependency
         MethodCallExpression call
 
-        UnusedDependencyDeclaration(String configurationName, ModuleIdentifier moduleIdentifier, String message, MethodCallExpression call) {
+        UnusedDependencyDeclaration(String configurationName, ModuleIdentifier moduleIdentifier, GradleDependency gradleDependency, String message, MethodCallExpression call) {
             this.configurationName = configurationName
             this.moduleIdentifier = moduleIdentifier
+            this.gradleDependency = gradleDependency
             this.message = message
             this.call = call
         }
@@ -186,8 +189,8 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
     class UsedElsewhereDependencyDeclaration extends UnusedDependencyDeclaration {
         String confNameRequiringDep
 
-        UsedElsewhereDependencyDeclaration(String originalConfName, ModuleIdentifier moduleIdentifier, String message, MethodCallExpression call, String confNameRequiringDep) {
-            super(originalConfName, moduleIdentifier, message, call)
+        UsedElsewhereDependencyDeclaration(String originalConfName, ModuleIdentifier moduleIdentifier, GradleDependency gradleDependency, String message, MethodCallExpression call, String confNameRequiringDep) {
+            super(originalConfName, moduleIdentifier, gradleDependency, message, call)
             this.confNameRequiringDep = confNameRequiringDep
         }
     }
