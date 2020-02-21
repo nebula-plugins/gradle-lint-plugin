@@ -21,6 +21,7 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
     DependencyService dependencyService
 
     Collection<UnusedDependencyDeclaration> unusedDependencies = new ArrayList<>()
+    Map<String, Collection<ModuleIdentifier>> declaredDependenciesByConf = new HashMap<>()
 
     @Override
     protected void beforeApplyTo() {
@@ -36,7 +37,12 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
         if(project.convention.findPlugin(JavaPluginConvention)) {
             def mid = dep.toModule()
 
-            if(conf == 'compileOnly') {
+            if (!declaredDependenciesByConf.containsKey(conf)) {
+                declaredDependenciesByConf.put(conf, new ArrayList<ModuleIdentifier>())
+            }
+            declaredDependenciesByConf.get(conf).add(mid)
+
+            if (conf == 'compileOnly') {
                 compileOnlyDependencies.add(mid)
             }
 
@@ -101,6 +107,7 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
                         // only add the dependency in the lowest configuration that requires it
                         if (insertedDependencies.add(undeclared)) {
                             addBuildLintViolation("one or more classes in $undeclared are required by your code directly")
+                            // TODO: insert the undeclared dependency for the correct project/configuration
                         }
                     }
                 }
@@ -119,9 +126,16 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
         filteredUsedElsewhere.each { declaration ->
             String dependencyDeclarationConfName = declarationConfigurationName(declaration.confNameRequiringDep)
 
-            String versionAddition = declaration.gradleDependency.version != null ? ":${declaration.gradleDependency.version}" : ''
-            addBuildLintViolation("this dependency should be moved to configuration $dependencyDeclarationConfName", declaration.call)
-                    .replaceWith(declaration.call, "$dependencyDeclarationConfName '${declaration.moduleIdentifier}$versionAddition'")
+            boolean dependencyAlreadyListed = declaredDependenciesByConf.get(dependencyDeclarationConfName)?.contains(declaration.moduleIdentifier)
+            if (dependencyAlreadyListed) {
+                addBuildLintViolation("this dependency should is already added to the needed configuration $dependencyDeclarationConfName and can be removed from ${declaration.configurationName}", declaration.call)
+                        .delete(declaration.call)
+            } else {
+                String versionAddition = declaration.gradleDependency.version != null ? ":${declaration.gradleDependency.version}" : ''
+                addBuildLintViolation("this dependency should be moved to configuration $dependencyDeclarationConfName", declaration.call)
+                        .replaceWith(declaration.call, "$dependencyDeclarationConfName '${declaration.moduleIdentifier}$versionAddition'")
+            }
+
         }
     }
 

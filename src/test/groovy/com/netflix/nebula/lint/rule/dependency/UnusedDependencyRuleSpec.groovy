@@ -15,11 +15,12 @@
  */
 package com.netflix.nebula.lint.rule.dependency
 
-import com.netflix.nebula.lint.TestKitSpecification
+
+import nebula.test.IntegrationTestKitSpec
 import spock.lang.Issue
 import spock.lang.Unroll
 
-class UnusedDependencyRuleSpec extends TestKitSpecification {
+class UnusedDependencyRuleSpec extends IntegrationTestKitSpec {
     static def guava = 'com.google.guava:guava:18.0'
     static def asm = 'org.ow2.asm:asm:5.0.4'
     // Dependency that provides guava:18.0 transitively
@@ -40,6 +41,10 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
 
     // TODO match indentation when adding dependencies
 
+    def setup() {
+        debug = true
+    }
+
     @Unroll
     def 'unused compile dependencies are marked for deletion'() {
         when:
@@ -58,10 +63,10 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             |}
             |""".stripMargin()
 
-        createJavaSourceFile(main)
+        writeJavaSourceFile(main)
 
         then:
-        def result = runTasksSuccessfully('compileJava', 'autoLintGradle')
+        def result = runTasks('compileJava', 'autoLintGradle', '--warning-mode', 'none')
 
         expectedWarnings.each {
             assert result.output.contains(it)
@@ -93,10 +98,10 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             |}
             |""".stripMargin()
 
-        createJavaSourceFile(main)
+        writeJavaSourceFile(main)
 
         then:
-        def result = runTasksSuccessfully('compileJava', 'autoLintGradle')
+        def result = runTasks('compileJava', 'autoLintGradle')
 
         expectedWarnings.each {
             assert result.output.contains(it)
@@ -127,10 +132,10 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             |}
             |""".stripMargin()
 
-        createJavaSourceFile(main)
+        writeJavaSourceFile(main)
 
         then:
-        def result = runTasksSuccessfully('compileJava', 'autoLintGradle')
+        def result = runTasks('compileJava', 'autoLintGradle')
 
         expectedWarnings.each {
             assert result.output.contains(it)
@@ -156,24 +161,14 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             repositories { mavenCentral() }
 
             dependencies {
-                testCompile 'junit:junit:4.+'
+                testImplementation 'junit:junit:4.+'
             }
         """
 
-        createJavaTestFile(projectDir, '''
-            import static org.junit.Assert.*;
-            import org.junit.Test;
-
-            public class MainTest {
-                @Test
-                public void performTest() {
-                    assertEquals(1, 1);
-                }
-            }
-        ''')
+        writeUnitTest()
 
         then:
-        runTasksSuccessfully('compileTestJava', 'fixGradleLint')
+        runTasks('compileTestJava', 'fixGradleLint')
         dependencies(buildFile) == ['junit:junit:4.+']
     }
 
@@ -198,22 +193,22 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             repositories { mavenCentral() }
 
             dependencies {
-                compile '$guava'
-                compile '$asm'
+                implementation '$guava'
+                implementation '$asm'
             }
         """
 
-        createJavaSourceFile(aDir, '''
+        writeJavaSourceFile('''
             import com.google.common.collect.*;
             public class Main {
                 public static void main(String[] args) {
                     Multimap m = HashMultimap.create();
                 }
             }
-        ''')
+        ''', aDir)
 
         then:
-        runTasksSuccessfully('a:compileJava', 'fixGradleLint')
+        runTasks('a:compileJava', 'fixGradleLint')
         dependencies(aBuildFile) == [guava]
     }
 
@@ -235,13 +230,15 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             }
         """
 
-        createJavaSourceFile(main)
+        writeJavaSourceFile(main)
 
         then:
-        def x = runTasksSuccessfully('assemble', 'fixGradleLint')
+        def results = runTasks('assemble', 'fixGradleLint', '--warning-mode', 'none') // TODO: remove deprecation warnings
 
         // also, provided dependencies are NOT moved to compile
         dependencies(buildFile, 'providedCompile') == [guava]
+
+//        !results.output.contains('has been deprecated')
     }
 
     def 'dependencies that are indirectly required through the type hierarchy are not removed'() {
@@ -257,19 +254,19 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             repositories { mavenCentral() }
 
             dependencies {
-                compile 'com.google.inject.extensions:guice-servlet:3.0'
-                compile 'javax.servlet:servlet-api:2.5'
+                implementation 'com.google.inject.extensions:guice-servlet:3.0'
+                implementation 'javax.servlet:servlet-api:2.5'
             }
         """
 
-        createJavaSourceFile('''
+        writeJavaSourceFile('''
             public abstract class Main extends com.google.inject.servlet.GuiceServletContextListener {
             }
         ''')
 
         then:
-        runTasksSuccessfully('compileJava', 'fixGradleLint')
-        dependencies(buildFile, 'compile') == ['com.google.inject.extensions:guice-servlet:3.0', 'javax.servlet:servlet-api:2.5']
+        runTasks('compileJava', 'fixGradleLint')
+        dependencies(buildFile, 'implementation') == ['com.google.inject.extensions:guice-servlet:3.0', 'javax.servlet:servlet-api:2.5']
     }
 
     def 'suggest that dependencies should be moved to a configuration that matches the source set(s) that refer to them'() {
@@ -289,18 +286,11 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             }
         """
 
-        createJavaSourceFile('public class Main {}')
-
-        createJavaTestFile(projectDir, '''
-            import org.junit.Test;
-            public class Test1 {
-                @Test
-                public void test() {}
-            }
-        ''')
+        writeHelloWorld()
+        writeUnitTest()
 
         then:
-        def result = runTasksSuccessfully('compileTestJava', 'fixGradleLint')
+        def result = runTasks('compileTestJava', 'fixGradleLint')
         result.output.contains('fixed          unused-dependency                  this dependency should be moved to configuration testImplementation')
         !result.output.contains('unfixed        unused-dependency')
         !result.output.contains('this dependency is unused and can be removed')
@@ -326,18 +316,18 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             }
         """
 
-        createJavaSourceFile('public class Main {}')
+        writeHelloWorld()
 
-        createJavaFile(projectDir, '''
+        writeUnitTest('''
             import org.junit.Test;
             public class Test1 {
                 @Test
                 public void test() {}
             }
-        ''', 'src/integTest/java')
+        ''', new File(projectDir, 'src/integTest/java'))
 
         when:
-        def result = runTasksSuccessfully('compileTestJava', 'fixGradleLint')
+        def result = runTasks('compileTestJava', 'fixGradleLint')
 
         then:
         result.output.contains('fixed          unused-dependency                  this dependency should be moved to configuration integTestImplementation')
@@ -365,26 +355,18 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             }
         """
 
-        createJavaSourceFile('public class Main {}')
-
-        createJavaTestFile(projectDir, '''
+        writeHelloWorld()
+        writeUnitTest() // for testImplementation scope
+        writeUnitTest('''
             import org.junit.Test;
             public class Test1 {
                 @Test
                 public void test() {}
             }
-        ''')
-
-        createJavaFile(projectDir, '''
-            import org.junit.Test;
-            public class Test1 {
-                @Test
-                public void test() {}
-            }
-        ''', 'src/integTest/java')
+        ''', new File(projectDir, 'src/integTest/java')) // for integTestImplementation scope
 
         when:
-        def result = runTasksSuccessfully('compileTestJava', 'fixGradleLint')
+        def result = runTasks('compileTestJava', 'fixGradleLint')
 
         then:
         result.output.contains('fixed          unused-dependency                  this dependency should be moved to configuration testImplementation')
@@ -409,10 +391,10 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             }
         """
 
-        createJavaSourceFile('public class Main {}')
+        writeHelloWorld()
 
         then:
-        def result = runTasksSuccessfully('assemble', 'autoLintGradle')
+        def result = runTasks('assemble', 'autoLintGradle')
         result.output.contains('warning   unused-dependency                  webjars should be in the runtimeOnly configuration (no auto-fix available)')
     }
 
@@ -429,27 +411,20 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             repositories { mavenCentral() }
 
             dependencies {
-                compile 'junit:junit:4.11'
-                testCompile 'junit:junit:4.11'
+                implementation 'junit:junit:4.11'
+                testImplementation 'junit:junit:4.11'
             }
         """
 
-        createJavaSourceFile('public class Main {}')
-
-        createJavaTestFile(projectDir, '''
-            import org.junit.Test;
-            public class Test1 {
-                @Test
-                public void test() {}
-            }
-        ''')
+        writeHelloWorld()
+        writeUnitTest()
 
         when:
-        runTasksSuccessfully('fixGradleLint')
+        runTasks('fixGradleLint')
 
         then:
-        dependencies(buildFile, 'compile') == []
-        dependencies(buildFile, 'testCompile') == ['junit:junit:4.11']
+        dependencies(buildFile, 'implementation') == []
+        dependencies(buildFile, 'testImplementation') == ['junit:junit:4.11']
     }
 
     def 'service providers should be moved to the runtime configuration if their classes are unused at compile time'() {
@@ -469,10 +444,10 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             }
         """
 
-        createJavaSourceFile('public class Main {}')
+        writeHelloWorld()
 
         then:
-        def result = runTasksSuccessfully('compileJava', 'autoLintGradle')
+        def result = runTasks('compileJava', 'autoLintGradle')
         result.output.contains('warning   unused-dependency                  this dependency is a service provider unused at compileClasspath time and can be moved to the runtimeOnly configuration (no auto-fix available)')
         result.output.contains('warning   unused-dependency                  this dependency is unused and can be removed')
     }
@@ -494,14 +469,14 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             }
         """
 
-        createJavaSourceFile('''\
+        writeJavaSourceFile('''\
             import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
             public class Main {
                 Object provider = new DefaultAWSCredentialsProviderChain();
             }''')
 
         then:
-        def result = runTasksSuccessfully('compileJava', 'autoLintGradle')
+        def result = runTasks('compileJava', 'autoLintGradle')
         result.output.contains('warning   unused-dependency                  one or more classes in com.amazonaws:aws-java-sdk-core:1.10.76 are required by your code directly (no auto-fix available)')
         result.output.contains('warning   unused-dependency                  this dependency should be removed since its artifact is empty (no auto-fix available)')
     }
@@ -522,17 +497,17 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
                 repositories { mavenCentral() }
 
                 dependencies {
-                    compile 'com.google.guava:guava:19.0'
+                    implementation 'com.google.guava:guava:19.0'
                 }
             }
         """
 
         def subproject = addSubproject('sub')
-        createJavaSourceFile(subproject, main)
+        writeJavaSourceFile(main, subproject)
 
         then:
-        runTasksSuccessfully('sub:compileJava', 'fixGradleLint')
-        dependencies(buildFile, 'compile') == ['com.google.guava:guava:19.0']
+        runTasks('sub:compileJava', 'fixGradleLint')
+        dependencies(buildFile, 'implementation') == ['com.google.guava:guava:19.0']
     }
 
     @Issue('46')
@@ -553,7 +528,7 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             }
         """
 
-        createJavaSourceFile('''
+        writeJavaSourceFile('''
             import com.google.common.collect.*;
             public class A {
                 Object m = HashMultimap.create();
@@ -561,8 +536,9 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
         ''')
 
         then:
-        def results = runTasksSuccessfully('compileJava', 'lintGradle')
+        def results = runTasks('compileJava', 'lintGradle')
         !results.output.contains('unused-dependency')
+        !results.output.contains('has been deprecated')
     }
 
     @Issue('53')
@@ -572,26 +548,26 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             plugins {
                 id 'nebula.lint'
                 id 'java'
-                id 'nebula.integtest' version '5.1.2'
+                id 'nebula.integtest' version '7.0.7'
             }
             
             repositories { mavenCentral() }
             
             dependencies {
-                testCompile 'junit:junit:4.11'
+                testImplementation 'junit:junit:4.11'
             }
             
             gradleLint.rules = ['all-dependency']
         '''
 
-        createJavaSourceFile('''
+        writeJavaSourceFile('''
             public class Calculator {
                 public int add(int x, int y) {
                     return x + y;
                 }
             }
         ''')
-        createJavaTestFile('''
+        writeUnitTest('''
             import org.junit.Test;
             
             import static org.hamcrest.core.Is.is;
@@ -607,7 +583,7 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
                 }
             }
         ''')
-        createJavaFile(projectDir, '''
+        writeUnitTest('''
             import org.junit.Test;
             import static org.hamcrest.core.Is.is;
             import static org.junit.Assert.assertThat;
@@ -620,14 +596,13 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
                     assertThat(actual, is(14));
                 }
             }
-        ''', 'src/integTest/java')
+        ''', new File(projectDir, 'src/integTest/java'))
 
         then:
-        def results = runTasksSuccessfully('classes', 'testClasses')
-        println(results.output)
+        def results = runTasks('classes', 'testClasses')
         results.output.readLines().count { it.contains('unused-dependency') } == 1
+        // TODO: insert the undeclared dependency for the correct project/configuration
     }
-
 
     @Issue("258")
     def 'does not fail with dependency constraints'() {
@@ -660,13 +635,21 @@ class UnusedDependencyRuleSpec extends TestKitSpecification {
             }
 }""".stripMargin()
 
-        createJavaSourceFile(main)
+        writeJavaSourceFile(main)
 
-        def result = runTasksSuccessfully('compileJava', 'autoLintGradle')
+        def result = runTasks('compileJava', 'autoLintGradle')
         then:
         expectedWarnings.each {
             assert result.output.contains(it)
         }
+    }
+
+    def dependencies(File _buildFile, String... confs = ['compile', 'testCompile', 'implementation', 'testImplementation', 'api']) {
+        _buildFile.text.readLines()
+                .collect { it.trim() }
+                .findAll { line -> confs.any { c -> line.startsWith(c) } }
+                .collect { it.split(/\s+/)[1].replaceAll(/['"]/, '') }
+                .sort()
     }
 
 }
