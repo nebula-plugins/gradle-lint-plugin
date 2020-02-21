@@ -72,17 +72,17 @@ dependencies {
 
     // these two dependencies exist so we can provide a test harness
     // to proprietary rule implementations packed in other jars, but are considered provided
-    plugin ('org.spockframework:spock-core:1.0-groovy-2.4') { transitive = false }
-    plugin ('junit:junit:4.12')
-    plugin ('com.netflix.nebula:nebula-test:latest.release') { transitive = false }
+    plugin('org.spockframework:spock-core:1.0-groovy-2.4') { transitive = false }
+    plugin('junit:junit:4.12')
+    plugin('com.netflix.nebula:nebula-test:latest.release') { transitive = false }
 
-    testCompile gradleTestKit()
-    testCompile ('org.spockframework:spock-core:1.0-groovy-2.4') {
+    testImplementation gradleTestKit()
+    testImplementation('org.spockframework:spock-core:1.0-groovy-2.4') {
         exclude module: 'groovy-all'
     }
-    testCompile 'org.ow2.asm:asm-util:5.2'
-    testCompile 'joda-time:joda-time:latest.release'
-    testCompile 'com.netflix.nebula:gradle-info-plugin:latest.release'
+    testImplementation 'org.ow2.asm:asm-util:5.2'
+    testImplementation 'joda-time:joda-time:latest.release'
+    testImplementation 'com.netflix.nebula:gradle-info-plugin:latest.release'
 }
 
 test {
