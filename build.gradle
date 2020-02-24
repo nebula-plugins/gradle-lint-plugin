@@ -15,14 +15,8 @@
  */
 import org.gradle.util.GradleVersion
 
-buildscript {
-    dependencies {
-        classpath 'com.netflix.nebula:nebula-publishing-plugin:16.0.0' // minimum version to use MavenShadowPublishPlugin & IvyShadowPublishPlugin
-    }
-}
-
 plugins {
-    id 'nebula.plugin-plugin' version '14.1.3'
+    id 'nebula.plugin-plugin' version '14.2.0'
     id 'nebula.kotlin' version '1.3.50'
     id 'com.github.johnrengelman.shadow' version '5.0.0'
     id 'java-gradle-plugin'
@@ -76,7 +70,7 @@ dependencies {
 
     plugin 'org.codehaus.gpars:gpars:1.2.1'
 
-    // these two dependencies exist so we can provide a test harness
+    // these dependencies exist so we can provide a test harness
     // to proprietary rule implementations packed in other jars, but are considered provided
     plugin('org.spockframework:spock-core:1.0-groovy-2.4') { transitive = false }
     plugin('junit:junit:4.12')
@@ -147,7 +141,11 @@ publishing {
                     .dependency
                     .findAll {
                         // JGit is shaded inside the distribution, and we want the others to act as 'provided'
-                        ['core', 'org.eclipse.jgit', 'spock-core', 'nebula-test', 'CodeNarc'].contains(it.artifactId.text())
+                        [
+                                'core', 'org.eclipse.jgit', 'CodeNarc', // shaded and relocated
+                                'asm', 'asm-commons', 'commons-lang', // shaded and relocated
+                                'spock-core', 'nebula-test', 'junit', // act as 'provided'
+                        ].contains(it.artifactId.text())
                     }
                     .each { it.parent().remove(it) }
             }
@@ -191,3 +189,11 @@ if (GradleVersion.version(project.gradle.gradleVersion) >= (GradleVersion.versio
 
 targetCompatibility = JavaVersion.VERSION_1_8
 sourceCompatibility = JavaVersion.VERSION_1_8
+
+['compileClasspath', 'runtimeClasspath', 'testCompileClasspath', 'testRuntimeClasspath'].each { confName ->
+    tasks.register("dependencyReport${confName.capitalize()}", DependencyReportTask) {
+        configurations = [project.configurations.getByName(confName)] as Set
+        outputFile = new File(project.projectDir, "build/reports/project/${confName}-dependencies.txt")
+    }
+    assemble.dependsOn("dependencyReport${confName.capitalize()}")
+}
