@@ -18,71 +18,36 @@
 
 package com.netflix.nebula.lint.self
 
-import nebula.test.IntegrationTestKitSpec
+
 import org.junit.Test
+import spock.lang.Specification
 
 import java.util.jar.JarEntry
 import java.util.jar.JarFile
 import java.util.stream.Collectors
 
-class ShadedArtifactsTest extends IntegrationTestKitSpec implements AbstractShadedDependencies {
+class ShadedArtifactsTest extends Specification implements AbstractShadedDependencies {
     private File pomFile
     private JarFile jarFile
-    private List<File> gradleModuleMetadataFiles
 
     def setup() {
-        debug = true
-        keepFiles = true
-
         given:
-        buildFile.text = new File('build.gradle').text
-        buildFile << """
-            publishing {
-                repositories {
-                    maven {
-                        name = 'testLocal'
-                        url = 'testrepo'
-                    }
-                }
-            }
-            tasks.named('gpgSignVersion').configure {
-                it.enabled = false
-            }
-            tasks.named('publishVersionToBintray').configure {
-                it.enabled = false
-            }
-            tasks.named('syncVersionToMavenCentral').configure {
-                it.enabled = false
-            }
-            """.stripIndent()
-        writeHelloWorld('com.netflix.nebula.lint')
+        File jarDir = new File("build/libs")
+        File pomDir = new File("build/publications/nebula")
 
-        when:
-        System.setProperty("ignoreDeprecations", "true")
-        runTasks('shadowJar', 'publishNebulaPublicationToTestLocalRepository')
-        System.setProperty("ignoreDeprecations", "false")
-
-        File groupDir = new File(projectDir, "testrepo/com/netflix/nebula")
-        File artifactDir = new File(groupDir, moduleName)
-
-        File dir = artifactDir.listFiles()
-                .findAll { it.isDirectory() }
-                ?.first()
         then:
-        dir.exists()
+        jarDir.exists()
+        pomDir.exists()
 
         when:
-        pomFile = dir.listFiles()
-                .findAll { it.getName().endsWith(".pom") }
-                ?.first()
-
-        File jar = dir.listFiles()
+        File jar = jarDir.listFiles()
                 .findAll { it -> it.getName().endsWith(".jar") }
-                .findAll { !it.getName().contains("sources") && !it.getName().contains("javadoc") }
+                .findAll { !it.getName().contains("sources") && !it.getName().contains("javadoc") && !it.getName().contains("groovydoc") }
                 ?.first()
 
-        gradleModuleMetadataFiles = dir.listFiles()
-                .findAll { it -> it.getName().endsWith(".module") }
+        pomFile = pomDir.listFiles()
+                .findAll { it.getName().endsWith(".xml") }
+                ?.first()
 
         then:
         pomFile.exists()
@@ -96,7 +61,6 @@ class ShadedArtifactsTest extends IntegrationTestKitSpec implements AbstractShad
     def 'metadata and jar files contain correct dependencies'() {
         expect:
         jarContainsProjectClasses()
-        doNotPublishGradleModuleMetadataWithShadedArtifacts()
         assert pomFile.text.contains('<url>ssh://git@github.com/nebula-plugins/gradle-lint-plugin.git</url>')
 
         shadedCoordinates.each { shadedCoordinate ->
@@ -115,7 +79,7 @@ class ShadedArtifactsTest extends IntegrationTestKitSpec implements AbstractShad
 
     private void jarContainsProjectClasses() {
         // This is more accurate when the test depends on the project actually publishing locally.
-        def matchingPath = "com/netflix/nebula/"
+        def matchingPath = "com/netflix/nebula/lint"
         def baselineEntries = findFilesInJarMatchingPath(matchingPath)
 
         // finding the HelloWorld file
@@ -138,10 +102,6 @@ class ShadedArtifactsTest extends IntegrationTestKitSpec implements AbstractShad
         def filteredEntries = findFilesInJarMatchingPath(matchingPath)
 
         assert filteredEntries.size() == 0, "Jar should not contain non relocated dependencies: $matchingPath"
-    }
-
-    private void doNotPublishGradleModuleMetadataWithShadedArtifacts() {
-        assert gradleModuleMetadataFiles.size() == 0, "Gradle module metadata does not allow for removing shaded dependencies"
     }
 
     private void pomFileDoesNotContainDependenciesThatActAsProvidedScope() {
