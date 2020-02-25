@@ -18,12 +18,13 @@
 
 package com.netflix.nebula.lint.rule.dependency
 
-import nebula.test.IntegrationSpec
+
+import nebula.test.IntegrationTestKitSpec
 import spock.lang.IgnoreIf
 import spock.lang.Unroll
 
 @IgnoreIf({ jvm.isJava9Compatible() })
-class RecommendedVersionsRuleSpec extends IntegrationSpec {
+class RecommendedVersionsRuleSpec extends IntegrationTestKitSpec {
     private static final String V_4_POINT_1 = '4.1'
     private static final String V_4_POINT_5 = '4.5'
     private static final String V_4_POINT_6 = '4.6'
@@ -38,6 +39,8 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         if (propertiesFile.exists()) {
             propertiesFile.delete()
         }
+        debug = true
+        definePluginOutsideOfPluginBlock = true
     }
 
     @Unroll
@@ -48,16 +51,10 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         setupSampleBomFile(repo, 'recommender')
 
         buildFile.text = """
-            buildscript {
-                repositories { jcenter() }
-                dependencies {
-                    classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
-                }
-            }
-            repositories { maven { url "${repo.toURI().toURL()}" } }
-
-            apply plugin: 'java'
             apply plugin: 'nebula.lint'
+            apply plugin: 'java'
+
+            repositories { maven { url "${repo.toURI().toURL()}" } }
 
             gradleLint.rules = ['recommended-versions']
 
@@ -76,16 +73,16 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         then:
         if (expectVersionsRemoved) {
             assertDependenciesHaveVersionsRemoved(buildFile, 'commons-logging:commons-logging')
-            result.standardOutput.contains('fixed          recommended-dependency')
+            result.output.contains('fixed          recommended-dependency')
         } else {
             assertDependenciesPreserveVersions(buildFile, 'commons-logging:commons-logging')
         }
 
         where:
         versionOfGradle | lowerVersionOfGradle | expectVersionsRemoved
-        V_4_POINT_1     | true                 | false
+        V_4_POINT_1 | true  | false
         V_4_POINT_5     | false                | true
-        V_4_POINT_6     | false                | true
+        V_4_POINT_6 | false | true
     }
 
     @Unroll
@@ -96,16 +93,10 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         setupSampleBomFile(repo, 'recommender')
 
         buildFile.text = """
-            buildscript {
-                repositories { jcenter() }
-                dependencies {
-                    classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
-                }
-            }
-            repositories { maven { url "${repo.toURI().toURL()}" } }
-
             apply plugin: 'java'
             apply plugin: 'nebula.lint'
+
+            repositories { maven { url "${repo.toURI().toURL()}" } }
 
             gradleLint.rules = ['recommended-versions']
 
@@ -122,7 +113,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         def result = runTasks('fixGradleLint')
 
         then:
-        def output = result.standardOutput
+        def output = result.output
         !output.contains('warning')
         !output.contains('problem (')
         !output.contains('problems (')
@@ -140,16 +131,10 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         setupSampleBomFile(repo, 'recommender')
 
         buildFile.text = """
-            buildscript {
-                repositories { jcenter() }
-                dependencies {
-                    classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
-                }
-            }
-            repositories { maven { url "${repo.toURI().toURL()}" } }
-
             apply plugin: 'java'
             apply plugin: 'nebula.lint'
+
+            repositories { maven { url "${repo.toURI().toURL()}" } }
 
             gradleLint.rules = ['recommended-versions']
 
@@ -182,16 +167,10 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         setupSampleBomFile(repo, 'recommender')
 
         buildFile.text = """
-            buildscript {
-                repositories { jcenter() }
-                dependencies {
-                    classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
-                }
-            }
-            repositories { maven { url "${repo.toURI().toURL()}" } }
-
             apply plugin: 'java'
             apply plugin: 'nebula.lint'
+
+            repositories { maven { url "${repo.toURI().toURL()}" } }
 
             gradleLint.rules = ['recommended-versions']
 
@@ -225,16 +204,10 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         setupSampleBomFile(repo, 'recommender')
 
         buildFile.text = """
-            buildscript {
-                repositories { jcenter() }
-                dependencies {
-                    classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
-                }
-            }
-            repositories { maven { url "${repo.toURI().toURL()}" } }
-
             apply plugin: 'java'
             apply plugin: 'nebula.lint'
+
+            repositories { maven { url "${repo.toURI().toURL()}" } }
 
             gradleLint.rules = ['recommended-versions']
             
@@ -258,7 +231,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         then:
         if (expectVersionsRemoved) {
             assertDependenciesHaveVersionsRemoved(buildFile, 'commons-lang:commons-lang', 'commons-logging:commons-logging')
-            result.standardOutput.contains('fixed          recommended-dependency')
+            result.output.contains('fixed          recommended-dependency')
         } else {
             assertDependenciesPreserveVersions(buildFile, 'commons-lang:commons-lang', 'commons-logging:commons-logging')
         }
@@ -276,15 +249,6 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         def repo = new File(projectDir, 'repo')
         repo.mkdirs()
         setupSampleBomFile(repo, 'recommender')
-
-        buildFile << '''
-            buildscript {
-                repositories { jcenter() }
-                dependencies {
-                    classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release\'
-                }
-            }
-            '''.stripIndent()
 
         if (subOrAllProjects == SUBPROJECTS) {
             buildFile << '''\
@@ -322,7 +286,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         def sub1Gradle = new File(projectDir, 'sub1/build.gradle')
         if (expectVersionsRemoved) {
             assertDependenciesHaveVersionsRemoved(sub1Gradle, 'commons-logging:commons-logging')
-            result.standardOutput.contains('fixed          recommended-dependency')
+            result.output.contains('fixed          recommended-dependency')
         } else {
             assertDependenciesPreserveVersions(sub1Gradle, 'commons-logging:commons-logging')
         }
@@ -345,12 +309,6 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         setupSampleBomFile(repo, 'recommender')
 
         buildFile << """
-            buildscript {
-                repositories { jcenter() }
-                dependencies {
-                    classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
-                }
-            }
             ext {
                 commonsVersion = '1.1.2'
             }
@@ -390,7 +348,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         def result = runTasks('fixGradleLint')
 
         then:
-        def output = result.standardOutput
+        def output = result.output
         !output.contains('warning')
         !output.contains('problem (')
         !output.contains('problems (')
@@ -415,12 +373,6 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         setupSampleBomFile(repo, 'recommender')
 
         buildFile << """
-            buildscript {
-                repositories { jcenter() }
-                dependencies {
-                    classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
-                }
-            }
             ext {
                 commonsVersion = '1.1.2'
             }
@@ -463,7 +415,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         def sub1Gradle = new File(projectDir, 'sub1/build.gradle')
         if (expectVersionsRemoved) {
             assertDependenciesHaveVersionsRemoved(sub1Gradle, 'commons-lang:commons-lang', 'commons-logging:commons-logging')
-            result.standardOutput.contains('fixed          recommended-dependency')
+            result.output.contains('fixed          recommended-dependency')
         } else {
             assertDependenciesPreserveVersions(sub1Gradle, 'commons-lang:commons-lang', 'commons-logging:commons-logging')
         }
@@ -486,12 +438,6 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         setupSampleBomFile(repo, 'recommender')
 
         buildFile << """
-            buildscript { 
-                repositories { jcenter() }
-                dependencies {
-                    classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
-                } 
-            }
             ext {
                 commonsVersion = '1.1.2'
             }
@@ -550,7 +496,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         then:
         if (expectVersionsRemovedFromSubproject) {
             assertDependenciesHaveVersionsRemoved(sub2BuildGradle, 'commons-logging:commons-logging')
-            result.standardOutput.contains('fixed          recommended-dependency')
+            result.output.contains('fixed          recommended-dependency')
         } else {
             assertDependenciesPreserveVersions(sub2BuildGradle, 'commons-logging:commons-logging')
         }
@@ -573,12 +519,6 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         setupSampleBomFile(repo, 'recommender')
 
         buildFile << """
-            buildscript {
-                repositories { jcenter() }
-                dependencies {
-                    classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
-                }
-            }
             ext {
                 commonsVersion = '1.1.2'
             }
@@ -631,7 +571,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         if (expectVersionsRemoved) {
             assertDependenciesHaveVersionsRemoved(sub1Gradle, 'commons-lang:commons-lang', 'commons-logging:commons-logging')
             assertDependenciesHaveVersionsRemoved(sub2Gradle, 'commons-lang:commons-lang', 'commons-logging:commons-logging')
-            result.standardOutput.contains('fixed          recommended-dependency')
+            result.output.contains('fixed          recommended-dependency')
         } else {
             assertDependenciesPreserveVersions(sub1Gradle, 'commons-lang:commons-lang', 'commons-logging:commons-logging')
             assertDependenciesPreserveVersions(sub2Gradle, 'commons-lang:commons-lang', 'commons-logging:commons-logging')
@@ -655,12 +595,6 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         setupSampleBomFile(repo, 'recommender')
 
         buildFile.text = """
-            buildscript {
-                repositories { jcenter() }
-                dependencies {
-                    classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
-                }
-            }
             ext {
                 commonsVersion = '1.1.2'
             }
@@ -707,7 +641,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
 
         if (expectRecommendedVersionsRemoved) {
             assertDependenciesHaveVersionsRemoved(sub1Gradle, 'commons-lang:commons-lang', 'commons-logging:commons-logging')
-            result.standardOutput.contains('fixed          recommended-dependency')
+            result.output.contains('fixed          recommended-dependency')
         } else {
             assertDependenciesPreserveVersions(sub1Gradle, 'commons-lang:commons-lang', 'commons-logging:commons-logging')
         }
@@ -730,12 +664,6 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         setupSampleBomFile(repo, 'recommender')
 
         buildFile << """
-            buildscript {
-                repositories { jcenter() }
-                dependencies {
-                    classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
-                }
-            }
             ext {
                 commonsVersion = '1.1.2'
             }
@@ -778,7 +706,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
                     'commons-lang:commons-lang',
                     'commons-logging:commons-logging',
                     'commons-configuration:commons-configuration')
-            result.standardOutput.contains('fixed          recommended-dependency')
+            result.output.contains('fixed          recommended-dependency')
         } else {
             assertDependenciesPreserveVersions(buildFile,
                     'commons-lang:commons-lang',
@@ -804,12 +732,6 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         setupSampleBomFile(repo, 'recommender')
 
         buildFile.text = """
-            buildscript {
-                repositories { jcenter() }
-                dependencies {
-                    classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
-                }
-            }
             repositories { maven { url "${repo.toURI().toURL()}" } }
 
             apply plugin: 'java'
@@ -836,7 +758,7 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
         then:
         if (shouldRemoveDependencyVersions) {
             assertDependenciesHaveVersionsRemoved(buildFile, 'commons-logging:commons-logging')
-            result.standardOutput.contains('fixed          recommended-dependency')
+            result.output.contains('fixed          recommended-dependency')
         } else {
             assertDependenciesPreserveVersions(buildFile, 'commons-logging:commons-logging')
         }
@@ -857,13 +779,6 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
     def 'v#versionOfGradle - there are no problems with a basic configuration, without settings or properties'() {
         given:
         buildFile.text = """
-            buildscript {
-                repositories { jcenter() }
-                dependencies {
-                    classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
-                }
-            }
-
             apply plugin: 'java'
             apply plugin: 'nebula.lint'
 
@@ -880,9 +795,9 @@ class RecommendedVersionsRuleSpec extends IntegrationSpec {
 
         then:
         assertDependenciesPreserveVersions(buildFile, 'commons-logging:commons-logging')
-        !result.standardOutput.contains('fixed          recommended-dependency')
-        !result.standardOutput.contains('Exception')
-        !result.standardOutput.contains('FileNotFoundException')
+        !result.output.contains('fixed          recommended-dependency')
+        !result.output.contains('Exception')
+        !result.output.contains('FileNotFoundException')
 
         def filesAsString = projectDir.listFiles().toString()
         filesAsString.contains(projectDir.toString() + File.separator + "build.gradle")
