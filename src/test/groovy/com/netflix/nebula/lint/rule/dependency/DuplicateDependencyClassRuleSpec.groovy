@@ -34,7 +34,7 @@ class DuplicateDependencyClassRuleSpec extends IntegrationTestKitSpec {
     }
 
     @Unroll
-    def 'dependencies with duplicate classes cause violations'(List<String> deps, String message) {
+    def 'dependencies with duplicate classes cause violations #configuration results in #message'() {
         given:
         buildFile.text = """
             plugins {
@@ -47,7 +47,7 @@ class DuplicateDependencyClassRuleSpec extends IntegrationTestKitSpec {
             repositories { mavenCentral() }
 
             dependencies {
-                ${deps.collect { "implementation '$it'" }.join('\n')}
+                ${deps.collect { "$configuration '$it'" }.join('\n')}
             }
         """
 
@@ -60,10 +60,13 @@ class DuplicateDependencyClassRuleSpec extends IntegrationTestKitSpec {
         result.output.contains("1 problem (0 errors, 1 warning)")
 
         where:
-        deps                            | message
-        [guava, collections]            | "$collections in configuration ':implementation' has 309 classes duplicated by $guava"
-        [guava_transitive, collections] | "$collections in configuration ':implementation' has 309 classes duplicated by $guava"
-        [asm, asm_asm]                  | "$asm_asm in configuration ':implementation' has 21 classes duplicated by $asm"
+        configuration | deps                            | message
+        'implementation' | [guava, collections]            | "$collections in configuration ':implementation' has 309 classes duplicated by $guava"
+        'implementation' |[guava_transitive, collections] | "$collections in configuration ':implementation' has 309 classes duplicated by $guava"
+        'implementation' | [asm, asm_asm]                  | "$asm_asm in configuration ':implementation' has 21 classes duplicated by $asm"
+        'runtimeOnly' | [guava, collections]            | "$collections in configuration ':runtimeOnly' has 309 classes duplicated by $guava"
+        'runtimeOnly' |[guava_transitive, collections] | "$collections in configuration ':runtimeOnly' has 309 classes duplicated by $guava"
+        'runtimeOnly' | [asm, asm_asm]                  | "$asm_asm in configuration ':runtimeOnly' has 21 classes duplicated by $asm"
     }
     
     @Issue('47')

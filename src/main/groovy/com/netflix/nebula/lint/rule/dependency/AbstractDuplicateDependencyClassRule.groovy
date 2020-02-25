@@ -55,21 +55,18 @@ abstract class AbstractDuplicateDependencyClassRule extends GradleLintRule imple
             if(!resolvableConfigurationName) {
                 continue
             }
-            Configuration resolvableConf = project.configurations.getByName(resolvableConfigurationName)
-            if (resolvableAndResolvedConfigurations.contains(resolvableConf) || dependencyService.hasResolvableParentConfiguration(conf.name)) {
-                Configuration toResolve = dependencyService.findResolvableConfiguration(conf.name)
-                if (!toResolve) {
-                    continue
-                }
-                def moduleIds = moduleIds(toResolve)
-                def duplicateDependencyService = Class.forName('com.netflix.nebula.lint.rule.dependency.DuplicateDependencyService').newInstance(project)
-                def checkForDuplicates = duplicateDependencyService.class.methods.find {
-                    it.name == 'violationsForModules'
-                }
-                def violations = checkForDuplicates.invoke(duplicateDependencyService, moduleIds, conf, ignoredDependencies) as List<String>
-                violations.each { message ->
-                    addBuildLintViolation(message)
-                }
+            Configuration toResolve = project.configurations.getByName(resolvableConfigurationName)
+            if (!toResolve) {
+                continue
+            }
+            def moduleIds = moduleIds(toResolve)
+            def duplicateDependencyService = Class.forName('com.netflix.nebula.lint.rule.dependency.DuplicateDependencyService').newInstance(project)
+            def checkForDuplicates = duplicateDependencyService.class.methods.find {
+                it.name == 'violationsForModules'
+            }
+            def violations = checkForDuplicates.invoke(duplicateDependencyService, moduleIds, conf, ignoredDependencies) as List<String>
+            violations.each { message ->
+                addBuildLintViolation(message)
             }
         }
     }
