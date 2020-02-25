@@ -51,7 +51,11 @@ abstract class AbstractDuplicateDependencyClassRule extends GradleLintRule imple
     @Override
     protected void visitClassComplete(ClassNode node) {
         for (Configuration conf : directlyUsedConfigurations) {
-            Configuration resolvableConf = project.configurations.getByName(DependencyService.declaredToResolvableConfigurations.get(conf.name))
+            String resolvableConfigurationName = DependencyService.declaredToResolvableConfigurations.get(conf.name)
+            if(!resolvableConfigurationName) {
+                continue
+            }
+            Configuration resolvableConf = project.configurations.getByName(resolvableConfigurationName)
             if (resolvableAndResolvedConfigurations.contains(resolvableConf) || dependencyService.hasResolvableParentConfiguration(conf.name)) {
                 Configuration toResolve = dependencyService.findResolvableConfiguration(conf.name)
                 if (!toResolve) {
