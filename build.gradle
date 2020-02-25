@@ -195,6 +195,7 @@ sourceCompatibility = JavaVersion.VERSION_1_8
         configurations = [project.configurations.getByName(confName)] as Set
         outputFile = new File(project.projectDir, "build/reports/project/${confName}-dependencies.txt")
     }
+    check.dependsOn("dependencyReport${confName.capitalize()}")
     assemble.dependsOn("dependencyReport${confName.capitalize()}")
 }
 test.dependsOn 'shadowJar', 'generatePomFileForNebulaPublication'
