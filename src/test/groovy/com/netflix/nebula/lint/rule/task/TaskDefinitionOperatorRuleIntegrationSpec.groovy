@@ -1,10 +1,11 @@
 package com.netflix.nebula.lint.rule.task
 
-import com.netflix.nebula.lint.TestKitSpecification
+
+import nebula.test.IntegrationTestKitSpec
 import spock.lang.Subject
 
 @Subject(TaskDefinitionOperatorRule)
-class TaskDefinitionOperatorRuleIntegrationSpec extends TestKitSpecification {
+class TaskDefinitionOperatorRuleIntegrationSpec extends IntegrationTestKitSpec {
 
     def setup() {
         gradleVersion = "4.10.2"
@@ -25,7 +26,7 @@ class TaskDefinitionOperatorRuleIntegrationSpec extends TestKitSpecification {
         """
 
         when:
-        def result = runTasksSuccessfully('fixGradleLint', '--warning-mode=none')
+        def result = runTasks('fixGradleLint', '--warning-mode=none')
 
         then:
         def buildGradle = new File(projectDir, 'build.gradle')
@@ -60,7 +61,7 @@ class TaskDefinitionOperatorRuleIntegrationSpec extends TestKitSpecification {
         """
 
         when:
-        def result = runTasksSuccessfully('fixGradleLint', '--warning-mode=none')
+        def result = runTasks('fixGradleLint', '--warning-mode=none')
 
         then:
         def buildGradle = new File(projectDir, 'build.gradle')
@@ -97,7 +98,7 @@ class TaskDefinitionOperatorRuleIntegrationSpec extends TestKitSpecification {
         """
 
         when:
-        def result = runTasksSuccessfully('fixGradleLint', '--warning-mode=none')
+        def result = runTasks('fixGradleLint', '--warning-mode=none')
 
         then:
         def buildGradle = new File(projectDir, 'build.gradle')
@@ -132,7 +133,7 @@ class TaskDefinitionOperatorRuleIntegrationSpec extends TestKitSpecification {
         """
 
         when:
-        def result = runTasksSuccessfully('fixGradleLint', '--warning-mode=none')
+        def result = runTasks('fixGradleLint', '--warning-mode=none')
 
         then:
         def buildGradle = new File(projectDir, 'build.gradle')
@@ -165,7 +166,7 @@ class TaskDefinitionOperatorRuleIntegrationSpec extends TestKitSpecification {
         """
 
         when:
-        def result = runTasksSuccessfully('fixGradleLint', '--warning-mode=none')
+        def result = runTasks('fixGradleLint', '--warning-mode=none')
 
         then:
         def buildGradle = new File(projectDir, 'build.gradle')
@@ -202,7 +203,7 @@ class TaskDefinitionOperatorRuleIntegrationSpec extends TestKitSpecification {
         """
 
         when:
-        def result = runTasksSuccessfully('fixGradleLint', '--warning-mode=none')
+        def result = runTasks('fixGradleLint', '--warning-mode=none')
 
         then:
         def buildGradle = new File(projectDir, 'build.gradle')
@@ -243,7 +244,7 @@ class TaskDefinitionOperatorRuleIntegrationSpec extends TestKitSpecification {
         """
 
         when:
-        def result = runTasksSuccessfully('fixGradleLint', '--warning-mode=none')
+        def result = runTasks('fixGradleLint', '--warning-mode=none')
 
         then:
         def buildGradle = new File(projectDir, 'build.gradle')
@@ -284,7 +285,7 @@ class TaskDefinitionOperatorRuleIntegrationSpec extends TestKitSpecification {
         """
 
         when:
-        def result = runTasksSuccessfully('fixGradleLint', '--warning-mode=none')
+        def result = runTasks('fixGradleLint', '--warning-mode=none')
 
         then:
         def buildGradle = new File(projectDir, 'build.gradle')
@@ -320,7 +321,7 @@ class TaskDefinitionOperatorRuleIntegrationSpec extends TestKitSpecification {
         """
 
         when:
-        def result = runTasksSuccessfully('fixGradleLint', '--warning-mode=none')
+        def result = runTasks('fixGradleLint', '--warning-mode=none')
 
         then:
         def buildGradle = new File(projectDir, 'build.gradle')
@@ -358,7 +359,7 @@ class TaskDefinitionOperatorRuleIntegrationSpec extends TestKitSpecification {
         """
 
         when:
-        def result = runTasksSuccessfully('fixGradleLint')
+        def result = runTasks('fixGradleLint', '--warning-mode', 'none')
 
         then:
         result.output.contains("needs fixing   deprecated-task-operator           The << operator was deprecated. Need to use doLast method")
