@@ -279,14 +279,7 @@ class TaskDefinitionOperatorRuleIntegrationSpec extends TestKitSpecification {
             gradleLint.rules = ['deprecated-task-operator']
 
             task runReport << {
-                def props = [user: 'vmsuser', password: 'vmspassword', allowMultiQueries: 'true'] as Properties
-                def url = 'jdbc:mysql://vmsperfdata.ceqg1dgfu0mp.us-east-1.rds.amazonaws.com:3306/vmsperfdata'
-                def driver = 'com.mysql.jdbc.Driver'
-                def sql = Sql.newInstance(url, props, driver)
-                
-                sql.eachRow("SELECT * FROM vmsperfdata.GcLowWaterMark") {
-                    println "Gromit likes \${it.Global}"
-                }
+                def props = [foo: 'bar'] as Properties
             }       
         """
 
@@ -305,13 +298,7 @@ class TaskDefinitionOperatorRuleIntegrationSpec extends TestKitSpecification {
 
             task runReport {
                 doLast {
-                    def props = [user: 'vmsuser', password: 'vmspassword', allowMultiQueries: 'true'] as Properties
-                    def url = 'jdbc:mysql://vmsperfdata.ceqg1dgfu0mp.us-east-1.rds.amazonaws.com:3306/vmsperfdata'
-                    def driver = 'com.mysql.jdbc.Driver'
-                    def sql = Sql.newInstance(url, props, driver)
-                    sql.eachRow("SELECT * FROM vmsperfdata.GcLowWaterMark") {
-                        println "Gromit likes \${it.Global}"
-                    }
+                    def props = [foo: 'bar'] as Properties
                 }
             }  
         """.trim()
@@ -353,36 +340,28 @@ class TaskDefinitionOperatorRuleIntegrationSpec extends TestKitSpecification {
         """.trim()
     }
 
-    def 'Build fail  with edge case scenarios'() {
+    def 'no autofix when task setup is more complex'() {
         buildFile << """
             plugins {
                 id 'nebula.lint'
                 id 'java'
+                id 'org.springframework.boot' version '2.2.4.RELEASE'
             }
 
             gradleLint.rules = ['deprecated-task-operator']
 
             task setDevProperties(dependsOn: bootRun) << {
                 doFirst {
-                    jvmArg '-DNETFLIX_STACK=testintg'
-                    jvmArg '-DBH_OVERRIDE_STACK=avasani'
-                    jvmArg '-Dnetflix.environment=test'
-                    jvmArg '-Dnetflix.appinfo.metadata.enableRoute53=false'
-                    jvmArg '-Dnetflix.appinfo.region=us-east-1'
-                    jvmArg '-Dnetflix.discovery.registration.enabled=true'
-                    jvmArg '-Dnetflix.appinfo.validateInstanceId=false'
-                    jvmArg '-Dnetflix.appinfo.doNotInitWithAmazonInfo=true'
-                    jvmArg '-Dcom.netflix.asterix.buzzerbee.disabled=true'
-                    jvmArg '-Dlog4j.logger.com.netflix.conductor.client.task.WorkflowTaskCoordinator=DEBUG'
+                    jvmArg '-Dlog4j.logger.level=DEBUG'
             }
         }  
         """
 
         when:
-        def result = runTasksFail('fixGradleLint', '--warning-mode=none')
+        def result = runTasksSuccessfully('fixGradleLint')
 
         then:
-        result.output.contains("warning   deprecated-task-operator           The << operator was deprecated. Need to use doLast method (no auto-fix available)")
+        result.output.contains("needs fixing   deprecated-task-operator           The << operator was deprecated. Need to use doLast method")
     }
 
 }
