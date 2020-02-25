@@ -21,6 +21,7 @@ package com.netflix.nebula.lint.self
 
 import org.junit.Test
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import java.util.jar.JarEntry
 import java.util.jar.JarFile
@@ -58,26 +59,13 @@ class ShadedArtifactsTest extends Specification implements AbstractShadedDepende
     }
 
     @Test
-    def 'metadata and jar files contain correct dependencies'() {
+    def 'inspecting the correct file'() {
         expect:
-        jarContainsProjectClasses()
         assert pomFile.text.contains('<?xml version="1.0" encoding="UTF-8"?>')
-
-        shadedCoordinates.each { shadedCoordinate ->
-            pomFileDoesNotContainShadedDependencies(shadedCoordinate)
-            jarContainsShadedAndRelocatedDirectDependency(shadedCoordinate)
-            jarDoesNotContainNonRelocatedDependencies(shadedCoordinate)
-        }
-
-        pomFileDoesNotContainDependenciesThatActAsProvidedScope()
     }
 
-    private void pomFileDoesNotContainShadedDependencies(ShadedCoordinate shadedCoordinate) {
-        assert !pomFile.text.contains("<groupId>${shadedCoordinate.artifactGroup}</groupId>"), "Metadata file should not contain shaded dependency ${shadedCoordinate.artifactGroup}:${shadedCoordinate.artifactName}"
-        assert !pomFile.text.contains("<artifactId>${shadedCoordinate.artifactName}</artifactId>"), "Metadata file should not contain shaded dependency ${shadedCoordinate.artifactGroup}:${shadedCoordinate.artifactName}"
-    }
-
-    private void jarContainsProjectClasses() {
+    @Test
+    def 'jar contains project classes'() {
         // This is more accurate when the test depends on the project actually publishing locally.
         def matchingPath = "com/netflix/nebula/lint"
         def baselineEntries = findFilesInJarMatchingPath(matchingPath)
@@ -87,24 +75,49 @@ class ShadedArtifactsTest extends Specification implements AbstractShadedDepende
                 .findAll { !it.name.matches(/com\/netflix\/nebula\/lint\/.*\/.*/) }
                 .findAll { it.name.endsWith('.class') }
 
+        expect:
         assert projectClassFiles.size() >= 1, "Jar should contain project classes in: $matchingPath"
     }
 
-    private void jarContainsShadedAndRelocatedDirectDependency(ShadedCoordinate shadedCoordinate) {
+    @Unroll
+    @Test
+    def 'pom file does not contain shaded dependencies'() {
+        expect:
+        assert !pomFile.text.contains("<groupId>${shadedCoordinate.artifactGroup}</groupId>"), "Metadata file should not contain shaded dependency ${shadedCoordinate.artifactGroup}:${shadedCoordinate.artifactName}"
+        assert !pomFile.text.contains("<artifactId>${shadedCoordinate.artifactName}</artifactId>"), "Metadata file should not contain shaded dependency ${shadedCoordinate.artifactGroup}:${shadedCoordinate.artifactName}"
+
+        where:
+        shadedCoordinate << shadedCoordinates
+    }
+
+    @Unroll
+    @Test
+    def 'jar contains shaded and relocated dependency'() {
         def matchingPath = shadedCoordinate.relocatedPackageGroup
         def filteredEntries = findFilesInJarMatchingPath(matchingPath)
 
+        expect:
         assert filteredEntries.size() >= 1, "Jar should contain shaded and relocated dependencies: $matchingPath"
+
+        where:
+        shadedCoordinate << shadedCoordinates
     }
 
-    private void jarDoesNotContainNonRelocatedDependencies(ShadedCoordinate shadedCoordinate) {
+    @Unroll
+    @Test
+    def 'jar does not contain non-relocated dependencies'() {
         def matchingPath = shadedCoordinate.originalPackageGroup
         def filteredEntries = findFilesInJarMatchingPath(matchingPath)
 
+        expect:
         assert filteredEntries.size() == 0, "Jar should not contain non relocated dependencies: $matchingPath"
+
+        where:
+        shadedCoordinate << shadedCoordinates
     }
 
-    private void pomFileDoesNotContainDependenciesThatActAsProvidedScope() {
+    @Test
+    def pomFileDoesNotContainDependenciesThatActAsProvidedScope() {
         assert !pomFile.text.contains('<artifactId>spock-core</artifactId>')
         assert !pomFile.text.contains('<artifactId>nebula-test</artifactId>')
         assert !pomFile.text.contains('<artifactId>junit</artifactId>')
