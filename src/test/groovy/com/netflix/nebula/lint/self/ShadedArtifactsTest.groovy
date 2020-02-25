@@ -61,7 +61,7 @@ class ShadedArtifactsTest extends Specification implements AbstractShadedDepende
     def 'metadata and jar files contain correct dependencies'() {
         expect:
         jarContainsProjectClasses()
-        assert pomFile.text.contains('<url>ssh://git@github.com/nebula-plugins/gradle-lint-plugin.git</url>')
+        assert pomFile.text.contains('<?xml version="1.0" encoding="UTF-8"?>')
 
         shadedCoordinates.each { shadedCoordinate ->
             pomFileDoesNotContainShadedDependencies(shadedCoordinate)
