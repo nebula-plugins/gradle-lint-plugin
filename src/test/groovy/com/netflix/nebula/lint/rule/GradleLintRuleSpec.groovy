@@ -223,6 +223,26 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         b
         b.syntax == GradleDependency.Syntax.StringNotation
     }
+
+    def 'visit dependencies in a project path project block'() {
+        when:
+        def subproject = addSubproject('test')
+        subproject.configurations.create('compile')
+        project.subprojects.add(subproject)
+        project.buildFile << """
+            project(':test') {
+                dependencies {
+                   compile 'b:b:1'
+                }
+            }
+        """
+
+        def b = new DependencyVisitingRule().run().allDependencies.find { it.name == 'b' }
+
+        then:
+        b
+        b.syntax == GradleDependency.Syntax.StringNotation
+    }
     
     def 'visit dependencies that are defined with map notation'() {
         when:
@@ -608,6 +628,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         List<GradleDependency> deps = []
         List<GradleDependency> allprojectDeps = []
         List<GradleDependency> subprojectDeps = []
+        List<GradleDependency> allDependencies = []
         List<GradleDependency> buildscriptDeps = []
 
         @Override
@@ -628,6 +649,11 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         @Override
         void visitAllprojectsGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
             allprojectDeps += dep
+        }
+
+        @Override
+        void visitAnyGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
+            allDependencies += dep
         }
 
         DependencyVisitingRule run() { runRulesAgainst(this); this }
