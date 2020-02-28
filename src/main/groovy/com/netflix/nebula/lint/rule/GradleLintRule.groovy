@@ -486,7 +486,7 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                     return Collections.emptySet()
                 }
                 def configurations
-                if (!dslStack().isEmpty() && (dslStack().first() == 'subprojects' || dslStack().first() == 'project')) {
+                if (!dslStack().isEmpty() && (dslStack().first() == 'subprojects' || callStack.peek().method == 'project')) {
                     def expr = callStack.first().arguments.expressions[0]
                     def subproject
                     if (expr instanceof ConstantExpression || expr instanceof GStringExpression) {
