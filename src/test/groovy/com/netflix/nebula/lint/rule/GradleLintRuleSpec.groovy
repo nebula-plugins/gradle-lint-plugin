@@ -243,6 +243,26 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         b
         b.syntax == GradleDependency.Syntax.StringNotation
     }
+
+    def 'visit dependencies is not broken when project attribute is accessed'() {
+        when:
+        project.buildFile << """
+            dependencies.ext.myTestDependencies = { String confName = 'compile' ->
+                project.apply(plugin: 'java')
+                project.dependencies {
+                   compile 'a:a:1.0'
+                }
+            }
+            dependencies {
+                myTestDependencies()
+            }
+        """
+
+        new DependencyVisitingRule().run()
+
+        then:
+        noExceptionThrown()
+    }
     
     def 'visit dependencies that are defined with map notation'() {
         when:
