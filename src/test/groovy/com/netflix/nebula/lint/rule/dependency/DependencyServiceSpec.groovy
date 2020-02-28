@@ -62,7 +62,7 @@ class DependencyServiceSpec extends IntegrationTestKitSpec {
         then:
         transitives == [b1] as Set
     }
-    
+
     @Unroll
     def 'find unused dependencies'() {
         when:
@@ -217,17 +217,17 @@ class DependencyServiceSpec extends IntegrationTestKitSpec {
 
         when:
         def results = runTasks('compileClasspathSourceSetOutput')
-        def dir = results.output.readLines().find { it.startsWith('@@')}.substring(2)
+        def dir = results.output.readLines().find { it.startsWith('@@') }.substring(2)
 
         then:
         dir.split('/')[-1] == 'main'
 
         when:
         results = runTasks('integTestSourceSetOutput')
-        dir = results.output.readLines().find { it.startsWith('@@')}.substring(2)
+        dir = results.output.readLines().find { it.startsWith('@@') }.substring(2)
 
         then:
-        dir.split('/')[-1] == 'integTest'        
+        dir.split('/')[-1] == 'integTest'
     }
 
     def 'identify parent source sets'() {
@@ -278,9 +278,9 @@ class DependencyServiceSpec extends IntegrationTestKitSpec {
         coreContents.readLines() == contents
 
         where:
-        tasks                                   | contents
-        ['web:coreContents']                    | []
-        ['web:assemble', 'web:coreContents']    | ['A']
+        tasks                                | contents
+        ['web:coreContents']                 | []
+        ['web:assemble', 'web:coreContents'] | ['A']
     }
 
     def 'resolved configurations returns lists of configurations that are resolvable and resolved'() {
@@ -366,5 +366,34 @@ class DependencyServiceSpec extends IntegrationTestKitSpec {
         !configurationNames.contains('testRuntimeOnly')
 
         // and more!
+    }
+
+    @Unroll
+    def '#confSuffix for custom sourceSets should translate to proper Classpath configuration'() {
+        project.sourceSets {
+            backend {
+                java {
+                    compileClasspath += main.output
+                    runtimeClasspath += main.output
+                }
+            }
+        }
+
+        when:
+        def result = DependencyService.forProject(project)
+                .findAndReplaceDeprecatedConfiguration(project.configurations."backend$confSuffix")
+
+        then:
+        result.name == "backend$expectedSuffix"
+
+        where:
+        confSuffix         | expectedSuffix
+        'CompileOnly'      | 'CompileClasspath'
+        'RuntimeOnly'      | 'RuntimeClasspath'
+        'Compile'          | 'CompileClasspath'
+        'CompileClasspath' | 'CompileClasspath'
+        'RuntimeClasspath' | 'RuntimeClasspath'
+        'Implementation'   | 'CompileClasspath'
+        'Runtime'          | 'RuntimeClasspath'
     }
 }

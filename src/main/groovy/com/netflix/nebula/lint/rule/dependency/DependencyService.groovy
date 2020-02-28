@@ -142,18 +142,25 @@ class DependencyService {
      * @param configuration
      * @return
      */
-    private Configuration findAndReplaceDeprecatedConfiguration(Configuration configuration) {
+    protected Configuration findAndReplaceDeprecatedConfiguration(Configuration configuration) {
+        Configuration replacementConfiguration = null
         if(configuration.name == 'compile') {
-            return project.configurations.findByName('compileClasspath')
-        } else if(configuration.name.endsWith('Compile') && configuration.name != 'providedCompile') {
-            Configuration modernConfiguration = project.configurations.findByName(configuration.name + 'Classpath')
-            if(!modernConfiguration) {
-                return configuration
-            }
-            return project.configurations.findByName(configuration.name + 'Classpath')
-        } else {
-            return configuration
+            replacementConfiguration = project.configurations.findByName('compileClasspath')
+        } else if(configuration.name.endsWith('CompileOnly') || configuration.name.endsWith('Compile') || configuration.name.endsWith('Implementation')) {
+            replacementConfiguration = project.configurations.findByName(
+                    configuration.name.replaceAll('CompileOnly', '')
+                            .replaceAll('Compile', '')
+                            .replaceAll('Implementation', '')  + 'CompileClasspath')
+        } else if(configuration.name.endsWith('RuntimeOnly') || configuration.name.endsWith('Runtime')) {
+            replacementConfiguration = project.configurations.findByName(
+                    configuration.name.replaceAll('RuntimeOnly', '')
+                            .replaceAll('Runtime', '') + 'RuntimeClasspath')
         }
+
+        if(!replacementConfiguration) {
+            replacementConfiguration = configuration
+        }
+        return replacementConfiguration
     }
 
     /**
