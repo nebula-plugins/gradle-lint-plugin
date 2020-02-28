@@ -227,12 +227,12 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
     def 'visit dependencies in a project path project block'() {
         when:
         def subproject = addSubproject('test')
-        subproject.configurations.create('compile')
+        subproject.configurations.create('customConfig')
         project.subprojects.add(subproject)
         project.buildFile << """
             project(':test') {
                 dependencies {
-                   compile 'b:b:1'
+                   customConfig 'b:b:1'
                 }
             }
         """
