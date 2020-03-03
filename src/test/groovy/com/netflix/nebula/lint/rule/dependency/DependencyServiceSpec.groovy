@@ -25,12 +25,10 @@ class DependencyServiceSpec extends IntegrationTestKitSpec {
 
     def 'check if configuration is resolved'() {
         setup:
-        project.with {
-            apply plugin: 'war'
-            dependencies {
-                implementation 'com.google.guava:guava:19.0'
-                providedCompile 'commons-lang:commons-lang:latest.release'
-            }
+        project.apply plugin: 'war'
+        project.dependencies {
+            implementation 'com.google.guava:guava:19.0'
+            providedCompile 'commons-lang:commons-lang:latest.release'
         }
 
         when:
@@ -152,11 +150,9 @@ class DependencyServiceSpec extends IntegrationTestKitSpec {
 
     def 'first level dependencies in conf'() {
         when:
-        project.with {
-            dependencies {
-                compile 'com.google.guava:guava:18.0'
-                testCompile 'junit:junit:latest.release'
-            }
+        project.dependencies {
+            compile 'com.google.guava:guava:18.0'
+            testCompile 'junit:junit:latest.release'
         }
 
         def deps = DependencyService.forProject(project).firstLevelDependenciesInConf(project.configurations.testCompile, 'testCompile')
