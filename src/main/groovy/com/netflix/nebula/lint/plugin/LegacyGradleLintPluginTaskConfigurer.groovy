@@ -88,12 +88,16 @@ class LegacyGradleLintPluginTaskConfigurer extends AbstractLintPluginTaskConfigu
         def task = project.tasks.create(GENERATE_GRADLE_LINT_REPORT, GradleLintReportTask)
         task.reports.all { report ->
             report.conventionMapping.with {
-                enabled = { report.name == extension.reportFormat }
+                enabled = { report.name == getReportFormat(project, extension) }
                 destination = {
                     def fileSuffix = report.name == 'text' ? 'txt' : report.name
                     new File(project.buildDir, "reports/gradleLint/${project.name}.$fileSuffix")
                 }
             }
         }
+    }
+
+    private static String getReportFormat(Project project, GradleLintExtension extension) {
+        return project.hasProperty('gradleLint.reportFormat') ? project.property('gradleLint.reportFormat') : extension.reportFormat
     }
 }

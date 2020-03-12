@@ -2,6 +2,7 @@ package com.netflix.nebula.lint.plugin
 
 import nebula.test.IntegrationTestKitSpec
 import spock.lang.Issue
+import spock.lang.Unroll
 
 class GradleLintReportTaskSpec extends IntegrationTestKitSpec {
     def setup() {
@@ -37,6 +38,42 @@ class GradleLintReportTaskSpec extends IntegrationTestKitSpec {
         then:
         report.text.contains('Violation: Rule=dependency-parentheses')
         report.text.contains('TotalFiles=1')
+    }
+
+    @Unroll
+    def 'generate a report with different type through parameter from cli with Gradle version: #version'() {
+        when:
+        buildFile.text = """
+            plugins {
+                id 'nebula.lint'
+                id 'java'
+            }
+
+            gradleLint {
+                rules = ['dependency-parentheses']
+            }
+
+            repositories { mavenCentral() }
+
+            dependencies {
+                implementation('com.google.guava:guava:18.0')
+            }
+        """
+
+        gradleVersion = version == "current" ? null : version
+
+        then:
+        runTasks('generateGradleLintReport', '-PgradleLint.reportFormat=text')
+
+        when:
+        def report = new File(projectDir, 'build/reports/gradleLint').listFiles().find { it.name.endsWith('.txt') }
+
+        then:
+        report.text.contains('Violation: Rule=dependency-parentheses')
+        report.text.contains('TotalFiles=1')
+
+        where:
+        version << ['4.10.3', "current"]
     }
 
     def 'critical rules fail task'() {
