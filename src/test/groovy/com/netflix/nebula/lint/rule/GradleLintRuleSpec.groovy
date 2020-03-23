@@ -83,6 +83,31 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         plugin << ['java', 'org.gradle.java']
     }
 
+    def 'skip nested `plugins`'() {
+        when:
+        project.buildFile << """
+            task test {
+              plugins {
+             
+              }
+            }
+        """
+
+        def pluginCount = 0
+
+        runRulesAgainst(new GradleLintRule() {
+            String description = 'test'
+
+            @Override
+            void visitPlugins(MethodCallExpression call) {
+                pluginCount++
+            }
+        })
+
+        then:
+        pluginCount == 0
+    }
+
     def 'visit `task`'() {
         when:
         project.buildFile << '''

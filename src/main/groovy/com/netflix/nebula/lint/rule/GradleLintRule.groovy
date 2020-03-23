@@ -253,7 +253,7 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                     GradleLintRule.this.visitBuildscript(call)
                 } else if (methodName == 'dependencies') {
                     GradleLintRule.this.visitDependencies(call)
-                } else if (methodName == 'plugins') {
+                } else if (methodName == 'plugins' && callStack.isEmpty()) {
                     GradleLintRule.this.visitPlugins(call)
                 } else if (methodName == 'apply') {
                     if (expressions.any { it instanceof MapExpression }) {
