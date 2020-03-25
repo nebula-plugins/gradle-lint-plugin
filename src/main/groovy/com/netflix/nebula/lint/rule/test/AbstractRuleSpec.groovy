@@ -30,6 +30,7 @@ import org.codenarc.results.Results
 import org.codenarc.ruleset.CompositeRuleSet
 import org.codenarc.ruleset.RuleSet
 import org.eclipse.jgit.api.ApplyCommand
+import org.gradle.api.Project
 
 @CompileStatic
 abstract class AbstractRuleSpec extends ProjectSpec {
@@ -41,7 +42,7 @@ abstract class AbstractRuleSpec extends ProjectSpec {
         project.configurations.create('compile')
     }
 
-    private RuleSet configureRuleSet(GradleLintRule... rules) {
+    protected RuleSet configureRuleSet(Project project, GradleLintRule... rules) {
         def ruleSet = new CompositeRuleSet()
         rules.each {
             ruleSet.addRule(it)
@@ -52,7 +53,7 @@ abstract class AbstractRuleSpec extends ProjectSpec {
         ruleSet
     }
 
-    private GradleLintRule[] configureBuildFile(GradleLintRule... rules) {
+    protected GradleLintRule[] configureBuildFile(Project project, GradleLintRule... rules) {
         rules.each {
             it.buildFiles = new BuildFiles([project.buildFile])
         }
@@ -60,15 +61,15 @@ abstract class AbstractRuleSpec extends ProjectSpec {
     }
 
     Results runRulesAgainst(GradleLintRule... rules) {
-        new StringSourceAnalyzer(project.buildFile.text).analyze(configureRuleSet(configureBuildFile(rules)))
+        new StringSourceAnalyzer(project.buildFile.text).analyze(configureRuleSet(project, configureBuildFile(project, rules)))
     }
 
     @CompileDynamic
     String correct(GradleLintRule... rules) {
         def analyzer = new StringSourceAnalyzer(project.buildFile.text)
-        def rulesWithBuildFile = configureBuildFile(rules)
+        def rulesWithBuildFile = configureBuildFile(project, rules)
         def violations = analyzer
-                .analyze(configureRuleSet(*rulesWithBuildFile.collect { it.buildFiles.original(null).file = project.buildFile; it }))
+                .analyze(configureRuleSet(project, *rulesWithBuildFile.collect { it.buildFiles.original(null).file = project.buildFile; it }))
                 .violations
 
         def patchFile = new File(projectDir, 'lint.patch')

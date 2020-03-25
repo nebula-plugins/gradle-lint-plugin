@@ -24,12 +24,15 @@ import org.codehaus.groovy.ast.expr.Expression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.codehaus.groovy.ast.expr.VariableExpression
 import org.codehaus.groovy.ast.stmt.ExpressionStatement
+import org.codenarc.analyzer.StringSourceAnalyzer
 import org.gradle.api.plugins.JavaPlugin
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Unroll
+
+import java.nio.file.Files
 
 class GradleLintRuleSpec extends AbstractRuleSpec {
     @Rule
@@ -247,6 +250,50 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         then:
         b
         b.syntax == GradleDependency.Syntax.StringNotation
+    }
+
+    def 'visit dependencies on submodule from sibling'() {
+        given:
+        def library = addSubproject('library')
+        def app = addSubproject('app')
+        library.configurations.create('compile')
+        app.configurations.create('compile')
+        project.subprojects.add(library)
+        project.subprojects.add(app)
+        new File(project.projectDir, "app").mkdirs()
+        app.buildFile << """
+            dependencies {
+               compile project(":library")
+            }
+        """
+        def rule = new DependencyVisitingRule()
+
+        when:
+        new StringSourceAnalyzer(app.buildFile.text).analyze(configureRuleSet(app, configureBuildFile(app, rule)))
+        def foundDependencies = rule.submoduleDependencies
+
+        then:
+        foundDependencies.size() == 1
+        foundDependencies[0] == ':library'
+    }
+
+    def 'visit dependencies on submodule from root'() {
+        given:
+        def library = addSubproject('library')
+        library.configurations.create('compile')
+        project.subprojects.add(library)
+        project.buildFile << """
+            dependencies {
+               compile project(":library")
+            }
+        """
+
+        when:
+        def foundDependencies = new DependencyVisitingRule().run().submoduleDependencies
+
+        then:
+        foundDependencies.size() == 1
+        foundDependencies[0] == ':library'
     }
 
     def 'visit dependencies in a project path project block'() {
@@ -675,6 +722,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         List<GradleDependency> subprojectDeps = []
         List<GradleDependency> allDependencies = []
         List<GradleDependency> buildscriptDeps = []
+        List<String> submoduleDependencies = []
 
         @Override
         void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
@@ -699,6 +747,11 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         @Override
         void visitAnyGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
             allDependencies += dep
+        }
+
+        @Override
+        void visitAnySubmoduleDependency(MethodCallExpression call, String conf, String dep) {
+            submoduleDependencies += dep
         }
 
         DependencyVisitingRule run() { runRulesAgainst(this); this }

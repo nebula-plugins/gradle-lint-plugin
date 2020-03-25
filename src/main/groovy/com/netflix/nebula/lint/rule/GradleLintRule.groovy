@@ -72,6 +72,8 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
 
     void visitAnyGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {}
 
+    void visitAnySubmoduleDependency(MethodCallExpression call, String conf, String projectName) {}
+
     void visitGradlePlugin(MethodCallExpression call, String conf, GradlePlugin plugin) {}
 
     void visitConfigurationExclude(MethodCallExpression call, String conf, GradleDependency exclude) {}
@@ -421,6 +423,13 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                             // if we cannot evaluate this expression, just give up
                             logger.debug("Unable to evaluate dependency expression ${sourceCode(call.arguments)}", t)
                         }
+                    } else if (call.arguments.expressions.any { it instanceof MethodCallExpression && it.methodAsString == 'project'}) {
+                        ConstantExpression projectName = (call.arguments.expressions
+                                .find { it instanceof MethodCallExpression && it.methodAsString == 'project'} as MethodCallExpression)
+                                .arguments.expressions.
+                                find { it instanceof ConstantExpression} as ConstantExpression
+                        if (projectName != null)
+                            visitAnySubmoduleDependency(call, methodName, projectName.value.toString())
                     }
 
                     if (dependency) {
