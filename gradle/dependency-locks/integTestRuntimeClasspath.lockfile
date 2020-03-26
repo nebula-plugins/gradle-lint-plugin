@@ -16,7 +16,7 @@ com.jcraft:jzlib:1.1.2
 com.netflix.nebula:gradle-contacts-plugin:5.1.0
 com.netflix.nebula:gradle-info-plugin:7.1.3
 com.netflix.nebula:nebula-gradle-interop:1.0.11
-com.netflix.nebula:nebula-test:7.8.5
+com.netflix.nebula:nebula-test:7.8.6
 com.perforce:p4java:2015.2.1365273
 com.trilead:trilead-ssh2:1.0.0-build220
 commons-codec:commons-codec:1.9
