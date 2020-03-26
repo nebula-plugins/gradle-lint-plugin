@@ -21,7 +21,7 @@ import spock.lang.Issue
 import spock.lang.Subject
 import spock.lang.Unroll
 
-@Subject(FirstOrderDuplicateDependencyClassRule)
+@Subject([FirstOrderDuplicateDependencyClassRule, TransitiveDuplicateDepenencyClassRule])
 class DuplicateDependencyClassRuleSpec extends IntegrationTestKitSpec {
     static def guava = 'com.google.guava:guava:18.0'
     static def collections = 'com.google.collections:google-collections:1.0'
@@ -301,7 +301,7 @@ class DuplicateDependencyClassRuleSpec extends IntegrationTestKitSpec {
 
             dependencies {
                 implementation 'org.slf4j:slf4j-api:1.8.0-alpha2'
-                testRuntime 'org.slf4j:slf4j-simple:1.8.0-alpha2'
+                testRuntimeOnly 'org.slf4j:slf4j-simple:1.8.0-alpha2'
             }
         """
 
