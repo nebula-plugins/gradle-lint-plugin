@@ -238,7 +238,6 @@ class RecommendedVersionsRuleSpec extends IntegrationTestKitSpec {
 
         where:
         versionOfGradle | lowerVersionOfGradle | expectVersionsRemoved
-        V_4_POINT_1     | true                 | false
         V_4_POINT_5     | false                | true
         V_4_POINT_6     | false                | true
     }
