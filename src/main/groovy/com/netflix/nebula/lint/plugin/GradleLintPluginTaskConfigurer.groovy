@@ -94,7 +94,7 @@ class GradleLintPluginTaskConfigurer extends AbstractLintPluginTaskConfigurer {
         if (!hasValidTaskConfiguration(project, lintExt) || hasExplicitLintTask) {
             return
         }
-        finalizeAllTasksWithAutoLint(project, lintTasksToVerify, autoLintTask)
+        finalizeAllTasksWithAutoLint(project, lintTasksToVerify, autoLintTask, lintExt)
 
     }
 
@@ -140,14 +140,20 @@ class GradleLintPluginTaskConfigurer extends AbstractLintPluginTaskConfigurer {
      * @param lintTasks
      * @param autoLintTask
      */
-    private void finalizeAllTasksWithAutoLint(Project project, List<TaskProvider> lintTasks, Task autoLintTask) {
+    private void finalizeAllTasksWithAutoLint(Project project, List<TaskProvider> lintTasks, Task autoLintTask, GradleLintExtension lintExt) {
+        boolean skipForSpecificTask = project.gradle.startParameter.taskNames.any { lintExt.skipForTasks.contains(it) }
+
+        if(skipForSpecificTask) {
+            return
+        }
+
         project.tasks.configureEach { task ->
-            if (!lintTasks.contains(task) && !task.name.contains(AUTO_LINT_GRADLE) && !task.name.contains(CLEAN_TASK_NAME) && !task.name.contains(DEPENDENCY_INSIGHT_TASK_NAME)) {
+            if (!lintTasks.contains(task) && !task.name.contains(AUTO_LINT_GRADLE) && !task.name.contains(CLEAN_TASK_NAME)) {
                 task.finalizedBy autoLintTask
             }
         }
         project.childProjects.values().each { subProject ->
-            finalizeAllTasksWithAutoLint(subProject, lintTasks, autoLintTask)
+            finalizeAllTasksWithAutoLint(subProject, lintTasks, autoLintTask, lintExt)
         }
     }
 
