@@ -142,7 +142,7 @@ class GradleLintPluginTaskConfigurer extends AbstractLintPluginTaskConfigurer {
      */
     private void finalizeAllTasksWithAutoLint(Project project, List<TaskProvider> lintTasks, Task autoLintTask) {
         project.tasks.configureEach { task ->
-            if (!lintTasks.contains(task) && !task.name.contains(AUTO_LINT_GRADLE)) {
+            if (!lintTasks.contains(task) && !task.name.contains(AUTO_LINT_GRADLE) && !task.name.contains(CLEAN_TASK_NAME) && !task.name.contains(DEPENDENCY_INSIGHT_TASK_NAME)) {
                 task.finalizedBy autoLintTask
             }
         }

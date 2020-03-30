@@ -856,4 +856,67 @@ class GradleLintPluginSpec extends IntegrationTestKitSpec {
         failure.output.contains("Gradle Lint Plugin currently doesn't support kotlin build scripts." +
               " Please, switch to groovy build script if you want to use linting.")
     }
+
+    def 'do not run lint with clean task'() {
+        buildFile << """
+            plugins {
+                id 'nebula.lint'
+                id 'java'
+            }
+
+            gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
+
+            dependencies {
+                implementation('com.google.guava:guava:18.0')
+                testImplementation group: 'junit',
+                    name: 'junit',
+                    version: '4.11'
+            }
+        """
+
+        when:
+        def results = runTasks('clean')
+
+        then:
+        def console = results.output.readLines()
+
+        then:
+        !results.tasks.any { it.path.contains('autoLintGradle')}
+        !console.any { it.contains('dependency-parentheses') }
+        !console.any { it.contains('dependency-tuple') }
+    }
+
+    @Unroll
+    def 'do not run lint with dependency insight - #task'() {
+        buildFile << """
+            plugins {
+                id 'nebula.lint'
+                id 'java'
+            }
+
+            gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
+
+            dependencies {
+                implementation('com.google.guava:guava:18.0')
+                testImplementation group: 'junit',
+                    name: 'junit',
+                    version: '4.11'
+            }
+        """
+
+        when:
+        def results = runTasks(task, '--dependency', 'guava')
+
+        then:
+        def console = results.output.readLines()
+
+        then:
+        !results.tasks.any { it.path.contains('autoLintGradle')}
+        !console.any { it.contains('dependency-parentheses') }
+        !console.any { it.contains('dependency-tuple') }
+
+        where:
+        task << ['dependencyInsight', 'dI']
+    }
+
 }
