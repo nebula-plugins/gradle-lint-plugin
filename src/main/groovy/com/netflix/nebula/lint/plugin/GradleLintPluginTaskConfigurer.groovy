@@ -141,7 +141,9 @@ class GradleLintPluginTaskConfigurer extends AbstractLintPluginTaskConfigurer {
      * @param autoLintTask
      */
     private void finalizeAllTasksWithAutoLint(Project project, List<TaskProvider> lintTasks, Task autoLintTask, GradleLintExtension lintExt) {
-        boolean skipForSpecificTask = project.gradle.startParameter.taskNames.any { lintExt.skipForTasks.contains(it) }
+        boolean skipForSpecificTask = project.tasks.any { Task task ->
+            lintExt.skipForTasks.any { taskToSkip -> task.name.endsWith(taskToSkip) }
+        }
 
         if(skipForSpecificTask) {
             return

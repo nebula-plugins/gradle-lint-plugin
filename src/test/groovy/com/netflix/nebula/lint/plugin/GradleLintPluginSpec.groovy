@@ -916,7 +916,7 @@ class GradleLintPluginSpec extends IntegrationTestKitSpec {
         !console.any { it.contains('dependency-tuple') }
 
         where:
-        task << ['dependencyInsight', 'dI']
+        task << ['dependencyInsight', 'dI', 'depIn']
     }
 
 }

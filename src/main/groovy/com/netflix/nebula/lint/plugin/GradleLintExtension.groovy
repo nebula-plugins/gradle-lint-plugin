@@ -37,7 +37,7 @@ class GradleLintExtension {
     boolean alwaysRun = true
     boolean autoLintAfterFailure = true
 
-    List<String> skipForTasks = ['help', 'tasks', 'dependencies', 'dependencyInsight', 'dI', 'components', 'model', 'projects', 'properties', 'wrapper']
+    List<String> skipForTasks = ['help', 'tasks', 'dependencies', 'dependencyInsight', 'components', 'model', 'projects', 'properties', 'wrapper']
 
     @Incubating
     List<GradleLintViolationAction> listeners = []
