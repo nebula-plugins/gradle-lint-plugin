@@ -7,6 +7,8 @@ import org.gradle.api.Task
 abstract class AbstractLintPluginTaskConfigurer {
     public static final String LINT_GROUP = 'lint'
     public static final String AUTO_LINT_GRADLE = 'autoLintGradle'
+    public static final String CLEAN_TASK_NAME = 'clean'
+    public static final String DEPENDENCY_INSIGHT_TASK_NAME = 'dependencyInsight'
     public static final String LINT_GRADLE = 'lintGradle'
     public static final String CRITICAL_LINT_GRADLE = 'criticalLintGradle'
     public static final String FIX_GRADLE_LINT = 'fixGradleLint'
