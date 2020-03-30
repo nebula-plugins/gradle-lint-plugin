@@ -25,7 +25,6 @@ import spock.lang.Unroll
 
 @IgnoreIf({ jvm.isJava9Compatible() })
 class RecommendedVersionsRuleSpec extends IntegrationTestKitSpec {
-    private static final String V_4_POINT_1 = '4.1'
     private static final String V_4_POINT_5 = '4.5'
     private static final String V_4_POINT_6 = '4.6'
     private static final String SUBPROJECTS = 'subprojects'
@@ -80,7 +79,6 @@ class RecommendedVersionsRuleSpec extends IntegrationTestKitSpec {
 
         where:
         versionOfGradle | lowerVersionOfGradle | expectVersionsRemoved
-        V_4_POINT_1 | true  | false
         V_4_POINT_5     | false                | true
         V_4_POINT_6 | false | true
     }
@@ -120,7 +118,7 @@ class RecommendedVersionsRuleSpec extends IntegrationTestKitSpec {
         !output.contains('commons-logging:commons-logging:')
 
         where:
-        versionOfGradle << [V_4_POINT_1, V_4_POINT_5, V_4_POINT_6]
+        versionOfGradle << [V_4_POINT_5, V_4_POINT_6]
     }
 
     @Unroll
@@ -156,7 +154,7 @@ class RecommendedVersionsRuleSpec extends IntegrationTestKitSpec {
         assertDependenciesPreserveVersions(buildFile, 'commons-logging:commons-logging')
 
         where:
-        versionOfGradle << [V_4_POINT_1, V_4_POINT_5, V_4_POINT_6]
+        versionOfGradle << [V_4_POINT_5, V_4_POINT_6]
     }
 
     @Unroll
@@ -191,7 +189,6 @@ class RecommendedVersionsRuleSpec extends IntegrationTestKitSpec {
 
         where:
         versionOfGradle | lowerVersionOfGradle
-        V_4_POINT_1     | true
         V_4_POINT_5     | false
         V_4_POINT_6     | false
     }
@@ -292,8 +289,6 @@ class RecommendedVersionsRuleSpec extends IntegrationTestKitSpec {
 
         where:
         versionOfGradle | lowerVersionOfGradle | expectVersionsRemoved | subOrAllProjects
-        V_4_POINT_1     | true                 | false                 | SUBPROJECTS
-        V_4_POINT_1     | true                 | false                 | ALLPROJECTS
         V_4_POINT_5     | false                | true                  | SUBPROJECTS
         V_4_POINT_5     | false                | true                  | ALLPROJECTS
         V_4_POINT_6     | false                | true                  | SUBPROJECTS
@@ -356,8 +351,6 @@ class RecommendedVersionsRuleSpec extends IntegrationTestKitSpec {
 
         where:
         versionOfGradle | subOrAllProjects
-        V_4_POINT_1     | SUBPROJECTS
-        V_4_POINT_1     | ALLPROJECTS
         V_4_POINT_5     | SUBPROJECTS
         V_4_POINT_5     | ALLPROJECTS
         V_4_POINT_6     | SUBPROJECTS
@@ -421,8 +414,6 @@ class RecommendedVersionsRuleSpec extends IntegrationTestKitSpec {
 
         where:
         versionOfGradle | lowerVersionOfGradle | expectVersionsRemoved | subOrAllProjects
-        V_4_POINT_1     | true                 | false                 | SUBPROJECTS
-        V_4_POINT_1     | true                 | false                 | ALLPROJECTS
         V_4_POINT_5     | false                | true                  | SUBPROJECTS
         V_4_POINT_5     | false                | true                  | ALLPROJECTS
         V_4_POINT_6     | false                | true                  | SUBPROJECTS
@@ -505,7 +496,6 @@ class RecommendedVersionsRuleSpec extends IntegrationTestKitSpec {
 
         where:
         versionOfGradle | expectVersionsRemovedFromSubproject
-        V_4_POINT_1     | false
         V_4_POINT_5     | true
         V_4_POINT_6     | true
     }
@@ -578,8 +568,6 @@ class RecommendedVersionsRuleSpec extends IntegrationTestKitSpec {
 
         where:
         versionOfGradle | lowerVersionOfGradle | expectVersionsRemoved | subOrAllProjects
-        V_4_POINT_1     | true                 | false                 | SUBPROJECTS
-        V_4_POINT_1     | true                 | false                 | ALLPROJECTS
         V_4_POINT_5     | false                | true                  | SUBPROJECTS
         V_4_POINT_5     | false                | true                  | ALLPROJECTS
         V_4_POINT_6     | false                | true                  | SUBPROJECTS
@@ -647,8 +635,6 @@ class RecommendedVersionsRuleSpec extends IntegrationTestKitSpec {
 
         where:
         versionOfGradle | lowerVersionOfGradle | expectRecommendedVersionsRemoved | subOrAllProjects
-        V_4_POINT_1     | true                 | false                            | SUBPROJECTS
-        V_4_POINT_1     | true                 | false                            | ALLPROJECTS
         V_4_POINT_5     | false                | true                             | SUBPROJECTS
         V_4_POINT_5     | false                | true                             | ALLPROJECTS
         V_4_POINT_6     | false                | true                             | SUBPROJECTS
@@ -715,8 +701,6 @@ class RecommendedVersionsRuleSpec extends IntegrationTestKitSpec {
 
         where:
         versionOfGradle | lowerVersionOfGradle | expectVersionsRemoved | subOrAllProjects
-        V_4_POINT_1     | true                 | false                 | SUBPROJECTS
-        V_4_POINT_1     | true                 | false                 | ALLPROJECTS
         V_4_POINT_5     | false                | true                  | SUBPROJECTS
         V_4_POINT_5     | false                | true                  | ALLPROJECTS
         V_4_POINT_6     | false                | true                  | SUBPROJECTS
@@ -765,7 +749,6 @@ class RecommendedVersionsRuleSpec extends IntegrationTestKitSpec {
         where:
         versionOfGradle | addedProperties | addedSettings | shouldRemoveDependencyVersions
         V_4_POINT_5     | true            | true          | true
-        V_4_POINT_1     | true            | true          | false
         V_4_POINT_5     | false           | true          | false
         V_4_POINT_5     | true            | false         | false
 
@@ -804,7 +787,7 @@ class RecommendedVersionsRuleSpec extends IntegrationTestKitSpec {
         !filesAsString.contains(projectDir.toString() + File.separator + "settings.gradle")
 
         where:
-        versionOfGradle << [V_4_POINT_1, V_4_POINT_5, V_4_POINT_6]
+        versionOfGradle << [V_4_POINT_5, V_4_POINT_6]
     }
 
     private static void setupSampleBomFile(File repo, String artifactName) {
