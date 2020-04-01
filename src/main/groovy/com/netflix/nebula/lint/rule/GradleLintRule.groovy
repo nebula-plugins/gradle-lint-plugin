@@ -72,6 +72,8 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
 
     void visitAnyGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {}
 
+    void visitAnyObjectDependency(MethodCallExpression call, String conf, Object dep) {}
+
     void visitAnySubmoduleDependency(MethodCallExpression call, String conf, String projectName) {}
 
     void visitGradlePlugin(MethodCallExpression call, String conf, GradlePlugin plugin) {}
@@ -413,15 +415,21 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                         }
                         dependency = GradleDependency.fromConstant(expr)
                     } else if (call.arguments.expressions.any { it instanceof PropertyExpression } && project != null) {
+                        Object dep
                         def shell = new GroovyShell()
                         shell.setVariable('project', project as Project)
                         try {
-                            Object dep = shell.evaluate('project.' + sourceCode(call.arguments))
+                            dep = shell.evaluate('project.' + sourceCode(call.arguments))
                             dependency = GradleDependency.fromConstant(dep)
-                            dependency.syntax = GradleDependency.Syntax.EvaluatedArbitraryCode
+                            if (dependency != null) {
+                                dependency.syntax = GradleDependency.Syntax.EvaluatedArbitraryCode
+                            }
                         } catch (Throwable t) {
                             // if we cannot evaluate this expression, just give up
                             logger.debug("Unable to evaluate dependency expression ${sourceCode(call.arguments)}", t)
+                        }
+                        if (dependency == null && dep != null) {
+                            visitAnyObjectDependency(call, methodName, dep)
                         }
                     } else if (call.arguments.expressions.any { it instanceof MethodCallExpression && it.methodAsString == 'project'}) {
                         ConstantExpression projectName = (call.arguments.expressions
