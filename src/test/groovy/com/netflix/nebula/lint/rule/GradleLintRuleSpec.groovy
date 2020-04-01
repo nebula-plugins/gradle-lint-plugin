@@ -32,8 +32,6 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Unroll
 
-import java.nio.file.Files
-
 class GradleLintRuleSpec extends AbstractRuleSpec {
     @Rule
     TemporaryFolder temp
@@ -296,6 +294,25 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         foundDependencies[0] == ':library'
     }
 
+    def 'visit adding file collections and other configurations into a configuration'() {
+        given:
+        project.configurations.create('customConfig')
+        project.plugins.apply(JavaPlugin)
+        project.buildFile << """
+            dependencies {
+               customConfig sourceSets.main.output
+               customConfig configurations.compile
+            }
+        """
+
+        when:
+        def rule = new DependencyVisitingRule().run()
+
+        then:
+        rule.allGradleDependencies.size() == 1
+        rule.objectDependencies.size() == 1
+    }
+
     def 'visit dependencies in a project path project block'() {
         when:
         def subproject = addSubproject('test')
@@ -309,7 +326,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
             }
         """
 
-        def b = new DependencyVisitingRule().run().allDependencies.find { it.name == 'b' }
+        def b = new DependencyVisitingRule().run().allGradleDependencies.find { it.name == 'b' }
 
         then:
         b
@@ -720,9 +737,10 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         List<GradleDependency> deps = []
         List<GradleDependency> allprojectDeps = []
         List<GradleDependency> subprojectDeps = []
-        List<GradleDependency> allDependencies = []
+        List<GradleDependency> allGradleDependencies = []
         List<GradleDependency> buildscriptDeps = []
         List<String> submoduleDependencies = []
+        List<Object> objectDependencies = []
 
         @Override
         void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
@@ -746,12 +764,17 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
 
         @Override
         void visitAnyGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
-            allDependencies += dep
+            allGradleDependencies += dep
         }
 
         @Override
         void visitAnySubmoduleDependency(MethodCallExpression call, String conf, String dep) {
             submoduleDependencies += dep
+        }
+
+        @Override
+        void visitAnyObjectDependency(MethodCallExpression call, String conf, Object dep) {
+            objectDependencies.add(dep)
         }
 
         DependencyVisitingRule run() { runRulesAgainst(this); this }
