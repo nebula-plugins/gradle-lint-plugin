@@ -7,8 +7,10 @@ import groovy.transform.CompileStatic
 import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.ast.expr.BinaryExpression
 import org.codehaus.groovy.ast.expr.ClosureExpression
+import org.codehaus.groovy.ast.expr.ConstantExpression
 import org.codehaus.groovy.ast.expr.Expression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
+import org.codehaus.groovy.ast.stmt.BlockStatement
 import org.gradle.api.artifacts.Configuration
 
 class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
@@ -30,23 +32,49 @@ class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
 
     @Override
     void visitAnyGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
-        if(!call.arguments.metaClass.getMetaMethod('getExpressions')) {
+        if (!call.arguments.metaClass.getMetaMethod('getExpressions')) {
             return // short-circuit if there are no expressions
         }
 
-        if(!call.arguments.expressions
-            .findAll {it instanceof  ClosureExpression}
-            .any { closureContainsForce(it as ClosureExpression) }){
-            return // short-circuit if there are no forces
+        if (call.arguments.expressions
+                .findAll { it instanceof ClosureExpression }
+                .any { closureContainsForce(it as ClosureExpression) }) {
+            forcedDependencies.add(new ForcedDependency(dep, call, conf))
         }
 
-        forcedDependencies.add(new ForcedDependency(dep, call, conf))
+        if (call.arguments.expressions
+                .findAll { it instanceof ClosureExpression }
+                .any { closureContainsVersionConstraintWithStrictVersion(it as ClosureExpression) }) {
+            forcedDependencies.add(new ForcedDependency(dep, call, conf))
+        }
+
     }
 
     private static Boolean closureContainsForce(ClosureExpression expr) {
-        return expr.code.statements.any { (it.expression instanceof BinaryExpression) &&
-                ((BinaryExpression)it.expression).leftExpression?.variable == 'force' &&
-                ((BinaryExpression)it.expression).rightExpression?.value == true }
+        return expr.code.statements.any {
+            (it.expression instanceof BinaryExpression) &&
+                    ((BinaryExpression) it.expression).leftExpression?.variable == 'force' &&
+                    ((BinaryExpression) it.expression).rightExpression?.value == true
+        }
+    }
+
+    private static Boolean closureContainsVersionConstraintWithStrictVersion(ClosureExpression expr) {
+        return expr.code.statements.any { st ->
+            (st.expression instanceof MethodCallExpression) &&
+                    ((MethodCallExpression) st.expression).arguments?.any { arg ->
+                        arg instanceof ClosureExpression &&
+                                arg?.code instanceof BlockStatement &&
+                                arg?.code?.statements?.any { stmt ->
+                                    stmt?.expression instanceof MethodCallExpression &&
+                                            stmt?.expression?.method instanceof ConstantExpression &&
+                                            ((ConstantExpression) stmt?.expression?.method)?.value == 'strictly' &&
+                                            stmt?.expression?.arguments?.expressions?.any { expre ->
+                                                expre instanceof ConstantExpression &&
+                                                        !expre?.value?.equals(null)
+                                            }
+                                }
+                    }
+        }
     }
 
     @CompileStatic

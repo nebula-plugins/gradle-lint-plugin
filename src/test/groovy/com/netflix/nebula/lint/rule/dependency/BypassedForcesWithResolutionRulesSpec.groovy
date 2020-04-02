@@ -30,7 +30,6 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
     def setup() {
         setupProjectAndDependencies()
         debug = true
-        forwardOutput = true
     }
 
     @Unroll
@@ -168,6 +167,71 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
 
         where:
         coreAlignment << [true]
+    }
+
+    @Unroll
+    def 'dependency with strict version declaration honored | core alignment #coreAlignment'() {
+        buildFile << """\
+            dependencies {
+                implementation('test.nebula:a:1.1.0') {
+                    version { strictly '1.1.0' }
+                }
+                implementation 'test.nebula:b:1.0.0' // added for alignment
+                implementation 'test.nebula:c:1.0.0' // added for alignment
+                implementation 'test.other:z:1.0.0' // brings in bad version
+            }
+        """.stripIndent()
+
+        when:
+        def tasks = ['dependencyInsight', '--dependency', 'test.nebula', "-Dnebula.features.coreAlignmentSupport=$coreAlignment"]
+        tasks += 'fixGradleLint'
+        def results = runTasks(*tasks)
+
+        then:
+        // strictly rich version constraint to an okay version is the primary contributor
+        results.output.contains('test.nebula:a:{strictly 1.1.0} -> 1.1.0\n')
+        results.output.contains('test.nebula:a:1.2.0 -> 1.1.0\n')
+        results.output.contains('test.nebula:b:1.0.0 -> 1.1.0\n')
+        results.output.contains('test.nebula:c:1.0.0 -> 1.1.0\n')
+
+        results.output.contains('- Forced')
+        results.output.contains 'aligned'
+
+        results.output.contains('0 violations')
+
+        where:
+        coreAlignment << [true]
+    }
+
+    @Unroll
+    def 'dependency with strict version declaration not honored | core alignment #coreAlignment'() {
+        buildFile << """\
+            dependencies {
+                implementation('test.nebula:a') {
+                    version { strictly '1.2.0' } // strict to bad version
+                }
+                implementation 'test.nebula:b:1.0.0' // added for alignment
+                implementation 'test.nebula:c:1.0.0' // added for alignment
+            }
+        """.stripIndent()
+
+        when:
+        def tasks = ['dependencyInsight', '--dependency', 'test.nebula', "-Dnebula.features.coreAlignmentSupport=$coreAlignment"]
+        tasks += 'fixGradleLint'
+        def results = runTasks(*tasks)
+
+        then:
+        // substitution rule to a known-good-version is the primary contributor; rich version strictly constraint to a bad version is the secondary contributor
+        results.output.contains 'test.nebula:a:{strictly 1.2.0} -> 1.3.0'
+        results.output.contains 'test.nebula:b:1.0.0 -> 1.3.0'
+        results.output.contains 'test.nebula:c:1.0.0 -> 1.3.0'
+
+        results.output.contains 'aligned'
+
+        results.output.contains('This project contains lint violations.')
+
+        where:
+        coreAlignment << [false, true]
     }
 
     void setupProjectAndDependencies() {
