@@ -90,7 +90,7 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
 
         assert results.output.contains('This project contains lint violations.')
         assert results.output.contains('bypassed-forces')
-        assert results.output.contains('The force specified for dependency \'test.nebula:a\' has been bypassed')
+        assert results.output.contains('The dependency force has been bypassed')
 
         results.output.contains 'aligned'
         results.output.contains('- Forced')
@@ -160,7 +160,7 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
 
         assert results.output.contains('This project contains lint violations.')
         assert results.output.contains('bypassed-forces')
-        assert results.output.contains('The force specified for dependency \'test.nebula:a\' has been bypassed')
+        assert results.output.contains('The dependency force has been bypassed')
 
         results.output.contains 'aligned'
         results.output.contains('- Forced')
@@ -229,6 +229,94 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
         results.output.contains 'aligned'
 
         results.output.contains('This project contains lint violations.')
+        results.output.contains('The dependency strict version constraint has been bypassed')
+
+        where:
+        coreAlignment << [false, true]
+    }
+
+    @Unroll
+    def 'dependency constraint with strict version declaration honored | core alignment #coreAlignment'() {
+        buildFile << """\
+            dependencies {
+                constraints {
+                    implementation('test.nebula:a') {
+                        version { strictly("1.1.0") }
+                        because '☘︎ custom constraint: test.nebula:a should be 1.1.0'
+                    }
+                }
+                implementation 'test.other:z:1.0.0' // brings in bad version
+                implementation 'test.brings-b:b:1.0.0' // added for alignment
+                implementation 'test.brings-c:c:1.0.0' // added for alignment
+            }
+        """.stripIndent()
+
+        def graph = new DependencyGraphBuilder()
+                .addModule(new ModuleBuilder('test.brings-b:b:1.0.0').addDependency('test.nebula:b:1.0.0').build())
+                .addModule(new ModuleBuilder('test.brings-a:a:1.0.0').addDependency('test.nebula:a:1.0.0').build())
+                .addModule(new ModuleBuilder('test.brings-c:c:1.0.0').addDependency('test.nebula:c:1.0.0').build())
+                .build()
+        new GradleDependencyGenerator(graph, "${projectDir}/testrepogen").generateTestMavenRepo()
+
+        when:
+        def tasks = ['dependencyInsight', '--dependency', 'test.nebula', "-Dnebula.features.coreAlignmentSupport=$coreAlignment"]
+        tasks += 'fixGradleLint'
+        def results = runTasks(*tasks)
+
+        then:
+        // strictly rich version constraint to an okay version is the primary contributor
+        results.output.contains('test.nebula:a:{strictly 1.1.0} -> 1.1.0\n')
+        results.output.contains('test.nebula:a:1.2.0 -> 1.1.0\n')
+        results.output.contains('test.nebula:b:1.0.0 -> 1.1.0\n')
+        results.output.contains('test.nebula:c:1.0.0 -> 1.1.0\n')
+
+        results.output.contains 'aligned'
+
+        results.output.contains('0 violations')
+
+        where:
+        coreAlignment << [false, true]
+    }
+
+    @Unroll
+    def 'dependency constraint with strict version declaration not honored | core alignment #coreAlignment'() {
+        buildFile << """\
+            dependencies {
+                constraints {
+                    implementation('test.nebula:a') {
+                        version { strictly("1.2.0") }
+                        because '☘︎ custom constraint: test.nebula:a should be 1.2.0'
+                    }
+                }
+                implementation 'test.brings-a:a:1.0.0' // added for alignment
+                implementation 'test.brings-b:b:1.0.0' // added for alignment
+                implementation 'test.brings-c:c:1.0.0' // added for alignment
+            }
+        """.stripIndent()
+
+        def graph = new DependencyGraphBuilder()
+                .addModule(new ModuleBuilder('test.brings-b:b:1.0.0').addDependency('test.nebula:b:1.0.0').build())
+                .addModule(new ModuleBuilder('test.brings-a:a:1.0.0').addDependency('test.nebula:a:1.0.0').build())
+                .addModule(new ModuleBuilder('test.brings-c:c:1.0.0').addDependency('test.nebula:c:1.0.0').build())
+                .build()
+        new GradleDependencyGenerator(graph, "${projectDir}/testrepogen").generateTestMavenRepo()
+
+        when:
+        def tasks = ['dependencyInsight', '--dependency', 'test.nebula', "-Dnebula.features.coreAlignmentSupport=$coreAlignment"]
+        tasks += 'fixGradleLint'
+        def results = runTasks(*tasks)
+
+        then:
+        // substitution rule to a known-good-version is the primary contributor; rich version strictly constraint to a bad version is the secondary contributor
+        results.output.contains 'test.nebula:a:{strictly 1.2.0} -> 1.3.0'
+        results.output.contains 'test.nebula:b:1.0.0 -> 1.3.0'
+        results.output.contains 'test.nebula:c:1.0.0 -> 1.3.0'
+
+        results.output.contains 'aligned'
+
+        assert results.output.contains('This project contains lint violations.')
+        assert results.output.contains('bypassed-forces')
+        assert results.output.contains('The dependency strict version constraint has been bypassed')
 
         where:
         coreAlignment << [false, true]

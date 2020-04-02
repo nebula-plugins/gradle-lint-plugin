@@ -77,26 +77,30 @@ class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
     Collection<ForcedDependency> collectDependenciesWithUnusedForces(Configuration configuration, Collection<ForcedDependency> forcedDeps) {
         Collection<ForcedDependency> dependenciesWithUnusedForces = new ArrayList<ForcedDependency>()
 
-        configuration.resolvedConfiguration.firstLevelModuleDependencies.each { resolvedDep ->
-            forcedDeps.each { forcedDependency ->
-                if (forcedDependency.dep.group == resolvedDep.moduleGroup && forcedDependency.dep.name == resolvedDep.moduleName) {
-                    if (forcedDependency.dep.version != null) {
-                        if (resolvedDep.moduleVersion != forcedDependency.dep.version) {
-                            forcedDependency.message = "The force specified for dependency '${resolvedDep.moduleGroup}:${resolvedDep.moduleName}' has been bypassed"
-                            forcedDependency.resolvedConfigurations.add(configuration)
-                            dependenciesWithUnusedForces.add(forcedDependency)
-                        }
-                    }
-                    if (!forcedDependency.strictVersion.isEmpty()) {
-                        if (resolvedDep.moduleVersion != forcedDependency.strictVersion) {
-                            forcedDependency.message = "The strict version constraint specified for dependency '${resolvedDep.moduleGroup}:${resolvedDep.moduleName}' has been bypassed"
-                            forcedDependency.resolvedConfigurations.add(configuration)
-                            dependenciesWithUnusedForces.add(forcedDependency)
+        // inspect direct and transitive dependencies
+        configuration.resolvedConfiguration.resolvedArtifacts
+                .collect { it.moduleVersion.id }
+                .unique { it.module.toString() }
+                .each { resolvedDep ->
+                    forcedDeps.each { forcedDependency ->
+                        if (forcedDependency.dep.group == resolvedDep.module.group && forcedDependency.dep.name == resolvedDep.name) {
+                            if (forcedDependency.dep.version != null) {
+                                if (resolvedDep.version != forcedDependency.dep.version) {
+                                    forcedDependency.message = "The dependency force has been bypassed. Remove or update this value"
+                                    forcedDependency.resolvedConfigurations.add(configuration)
+                                    dependenciesWithUnusedForces.add(forcedDependency)
+                                }
+                            }
+                            if (!forcedDependency.strictVersion.isEmpty()) {
+                                if (resolvedDep.version != forcedDependency.strictVersion) {
+                                    forcedDependency.message = "The dependency strict version constraint has been bypassed. Remove or update this value"
+                                    forcedDependency.resolvedConfigurations.add(configuration)
+                                    dependenciesWithUnusedForces.add(forcedDependency)
+                                }
+                            }
                         }
                     }
                 }
-            }
-        }
 
         return dependenciesWithUnusedForces
     }
