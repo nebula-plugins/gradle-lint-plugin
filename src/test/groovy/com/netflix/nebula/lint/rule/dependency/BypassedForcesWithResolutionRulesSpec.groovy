@@ -173,7 +173,7 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
     def 'dependency with strict version declaration honored | core alignment #coreAlignment'() {
         buildFile << """\
             dependencies {
-                implementation('test.nebula:a:1.1.0') {
+                implementation('test.nebula:a') {
                     version { strictly '1.1.0' }
                 }
                 implementation 'test.nebula:b:1.0.0' // added for alignment

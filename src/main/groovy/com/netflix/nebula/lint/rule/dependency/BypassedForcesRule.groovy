@@ -5,12 +5,8 @@ import com.netflix.nebula.lint.rule.GradleLintRule
 import com.netflix.nebula.lint.rule.GradleModelAware
 import groovy.transform.CompileStatic
 import org.codehaus.groovy.ast.ClassNode
-import org.codehaus.groovy.ast.expr.BinaryExpression
-import org.codehaus.groovy.ast.expr.ClosureExpression
-import org.codehaus.groovy.ast.expr.ConstantExpression
 import org.codehaus.groovy.ast.expr.Expression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
-import org.codehaus.groovy.ast.stmt.BlockStatement
 import org.gradle.api.artifacts.Configuration
 
 class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
@@ -31,49 +27,17 @@ class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
     }
 
     @Override
-    void visitAnyGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
-        if (!call.arguments.metaClass.getMetaMethod('getExpressions')) {
-            return // short-circuit if there are no expressions
-        }
-
-        if (call.arguments.expressions
-                .findAll { it instanceof ClosureExpression }
-                .any { closureContainsForce(it as ClosureExpression) }) {
-            forcedDependencies.add(new ForcedDependency(dep, call, conf))
-        }
-
-        if (call.arguments.expressions
-                .findAll { it instanceof ClosureExpression }
-                .any { closureContainsVersionConstraintWithStrictVersion(it as ClosureExpression) }) {
-            forcedDependencies.add(new ForcedDependency(dep, call, conf))
-        }
-
+    void visitAnyGradleDependencyWithAForceClosure(MethodCallExpression call, String conf, GradleDependency dep) {
+        forcedDependencies.add(new ForcedDependency(dep, call, conf))
     }
 
-    private static Boolean closureContainsForce(ClosureExpression expr) {
-        return expr.code.statements.any {
-            (it.expression instanceof BinaryExpression) &&
-                    ((BinaryExpression) it.expression).leftExpression?.variable == 'force' &&
-                    ((BinaryExpression) it.expression).rightExpression?.value == true
-        }
-    }
-
-    private static Boolean closureContainsVersionConstraintWithStrictVersion(ClosureExpression expr) {
-        return expr.code.statements.any { st ->
-            (st.expression instanceof MethodCallExpression) &&
-                    ((MethodCallExpression) st.expression).arguments?.any { arg ->
-                        arg instanceof ClosureExpression &&
-                                arg?.code instanceof BlockStatement &&
-                                arg?.code?.statements?.any { stmt ->
-                                    stmt?.expression instanceof MethodCallExpression &&
-                                            stmt?.expression?.method instanceof ConstantExpression &&
-                                            ((ConstantExpression) stmt?.expression?.method)?.value == 'strictly' &&
-                                            stmt?.expression?.arguments?.expressions?.any { expre ->
-                                                expre instanceof ConstantExpression &&
-                                                        !expre?.value?.equals(null)
-                                            }
-                                }
-                    }
+    @Override
+    void visitAnyGradleDependencyWithVersionConstraint(MethodCallExpression call, String conf, GradleDependency dep, Map<String, List<String>> versionConstraints) {
+        if (versionConstraints.containsKey('strictly')) {
+            def strictlyValue = versionConstraints.get('strictly')
+            def forcedDependency = new ForcedDependency(dep, call, conf)
+            forcedDependency.setStrictVersion(strictlyValue.first())
+            forcedDependencies.add(forcedDependency)
         }
     }
 
@@ -116,10 +80,19 @@ class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
         configuration.resolvedConfiguration.firstLevelModuleDependencies.each { resolvedDep ->
             forcedDeps.each { forcedDependency ->
                 if (forcedDependency.dep.group == resolvedDep.moduleGroup && forcedDependency.dep.name == resolvedDep.moduleName) {
-                    if (resolvedDep.moduleVersion != forcedDependency.dep.version) {
-                        forcedDependency.message = "The force specified for dependency '${resolvedDep.moduleGroup}:${resolvedDep.moduleName}' has been bypassed"
-                        forcedDependency.resolvedConfigurations.add(configuration)
-                        dependenciesWithUnusedForces.add(forcedDependency)
+                    if (forcedDependency.dep.version != null) {
+                        if (resolvedDep.moduleVersion != forcedDependency.dep.version) {
+                            forcedDependency.message = "The force specified for dependency '${resolvedDep.moduleGroup}:${resolvedDep.moduleName}' has been bypassed"
+                            forcedDependency.resolvedConfigurations.add(configuration)
+                            dependenciesWithUnusedForces.add(forcedDependency)
+                        }
+                    }
+                    if (!forcedDependency.strictVersion.isEmpty()) {
+                        if (resolvedDep.moduleVersion != forcedDependency.strictVersion) {
+                            forcedDependency.message = "The strict version constraint specified for dependency '${resolvedDep.moduleGroup}:${resolvedDep.moduleName}' has been bypassed"
+                            forcedDependency.resolvedConfigurations.add(configuration)
+                            dependenciesWithUnusedForces.add(forcedDependency)
+                        }
                     }
                 }
             }
@@ -134,7 +107,8 @@ class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
         Expression forceExpression
         String declaredConfigurationName
         Collection<Configuration> resolvedConfigurations = new ArrayList<>()
-        String message
+        String message = ''
+        String strictVersion = ''
 
         ForcedDependency(GradleDependency dep, Expression forceExpression, String declaredConfigurationName) {
             this.dep = dep
@@ -144,6 +118,10 @@ class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
 
         void setMessage(String message) {
             this.message = message
+        }
+
+        void setStrictVersion(String strictVersion) {
+            this.strictVersion = strictVersion
         }
     }
 }
