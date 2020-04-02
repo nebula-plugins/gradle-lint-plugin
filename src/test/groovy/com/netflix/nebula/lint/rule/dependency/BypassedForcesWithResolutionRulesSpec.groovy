@@ -100,6 +100,76 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
         coreAlignment << [true]
     }
 
+    @Unroll
+    def 'resolution strategy force is honored - force to good version while substitution is triggered by a transitive dependency | core alignment #coreAlignment'() {
+        buildFile << """\
+            configurations.all {
+                resolutionStrategy {
+                    force 'test.nebula:a:1.1.0'
+                }
+            }
+            dependencies {
+                implementation 'test.nebula:a:1.1.0'
+                implementation 'test.nebula:b:1.0.0' // added for alignment
+                implementation 'test.nebula:c:1.0.0' // added for alignment
+                implementation 'test.other:z:1.0.0' // brings in bad version
+            }
+        """.stripIndent()
+
+        when:
+        def tasks = ['dependencyInsight', '--dependency', 'test.nebula', '--warning-mode', 'none', "-Dnebula.features.coreAlignmentSupport=$coreAlignment"]
+        tasks += 'fixGradleLint'
+        def results = runTasks(*tasks)
+
+        then:
+        // force to an okay version is the primary contributor; the substitution rule was a secondary contributor
+        results.output.contains 'test.nebula:a:1.2.0 -> 1.1.0\n'
+        results.output.contains 'test.nebula:b:1.0.0 -> 1.1.0\n'
+        results.output.contains 'test.nebula:c:1.0.0 -> 1.1.0\n'
+
+        results.output.contains('0 violations')
+
+        where:
+        coreAlignment << [false]
+    }
+
+    @Unroll
+    def 'resolution strategy force not honored - force to bad version triggers a substitution | core alignment #coreAlignment'() {
+        buildFile << """\
+            configurations.all {
+                resolutionStrategy {
+                    force 'test.nebula:a:1.2.0' // force to bad version triggers a substitution
+                }
+            }
+            dependencies {
+                implementation 'test.nebula:a:1.2.0' // bad version
+                implementation 'test.nebula:b:1.0.0' // added for alignment
+                implementation 'test.nebula:c:1.0.0' // added for alignment
+            }
+        """.stripIndent()
+
+        when:
+        def tasks = ['dependencyInsight', '--dependency', 'test.nebula', '--warning-mode', 'none', "-Dnebula.features.coreAlignmentSupport=$coreAlignment"]
+        tasks += 'fixGradleLint'
+        def results = runTasks(*tasks)
+
+        then:
+        // substitution rule to a known-good-version was the primary contributor; force to a bad version was a secondary contributor
+        assert results.output.contains('test.nebula:a:1.2.0 -> 1.3.0\n')
+        assert results.output.contains('test.nebula:b:1.0.0 -> 1.3.0\n')
+        assert results.output.contains('test.nebula:c:1.0.0 -> 1.3.0\n')
+
+        assert results.output.contains('This project contains lint violations.')
+        assert results.output.contains('bypassed-forces')
+        assert results.output.contains('The force specified for dependency \'test.nebula:a\' has been bypassed')
+
+        results.output.contains 'aligned'
+        results.output.contains('- Forced')
+
+        where:
+        coreAlignment << [true]
+    }
+
     void setupProjectAndDependencies() {
         def graph = new DependencyGraphBuilder()
                 .addModule('test.nebula:a:1.0.0')

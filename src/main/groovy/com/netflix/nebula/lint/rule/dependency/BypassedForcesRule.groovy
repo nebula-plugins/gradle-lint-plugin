@@ -9,6 +9,7 @@ import org.codehaus.groovy.ast.expr.BinaryExpression
 import org.codehaus.groovy.ast.expr.ClosureExpression
 import org.codehaus.groovy.ast.expr.Expression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
+import org.gradle.api.artifacts.Configuration
 
 class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
     String description = 'remove unused forces from dependency resolution bypassing them'
@@ -51,31 +52,52 @@ class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
     @CompileStatic
     @Override
     protected void visitClassComplete(ClassNode node) {
-        dependencyService.resolvableAndResolvedConfigurations().each { configuration ->
-            configuration.resolvedConfiguration.firstLevelModuleDependencies.each { resolvedDep ->
-                forcedDependencies
-                        .findAll { configuration == dependencyService.findResolvableConfiguration(it.declaredConfigurationName) }
-                        .each { forcedDependency ->
-                            if (forcedDependency.dep.group == resolvedDep.moduleGroup && forcedDependency.dep.name == resolvedDep.moduleName) {
-                                if (resolvedDep.moduleVersion != forcedDependency.dep.version) {
-                                    addBuildLintViolation("The force specified for dependency '${resolvedDep.moduleGroup}:${resolvedDep.moduleName}' has been bypassed", forcedDependency.forceExpression)
-                                }
-                            }
-                        }
-            }
+        def groupedForcedDependencies = forcedDependencies
+                .groupBy { it.declaredConfigurationName }
+        def resolvableAndResolvedConfigurations = dependencyService.resolvableAndResolvedConfigurations()
+        Collection<ForcedDependency> dependenciesWithUnusedForces = new ArrayList<ForcedDependency>()
 
-            configuration.resolvedConfiguration.resolvedArtifacts.each { resolvedArtifact ->
-                forcedDependencies
-                        .findAll { configuration == dependencyService.findResolvableConfiguration(it.declaredConfigurationName) }
-                        .each { forcedDependency ->
-                            if (forcedDependency.dep.group == resolvedArtifact.moduleVersion.id.group && forcedDependency.dep.name == resolvedArtifact.moduleVersion.id.name) {
-                                if (resolvedArtifact.moduleVersion.id.version != forcedDependency.dep.version) {
-                                    addBuildLintViolation("The force specified for artifact '${resolvedArtifact.moduleVersion.id.group}:${resolvedArtifact.moduleVersion.id.name}' has been bypassed", forcedDependency.forceExpression)
-                                }
-                            }
-                        }
+        groupedForcedDependencies.each { declaredConfigurationName, forcedDeps ->
+            if (declaredConfigurationName == 'all') {
+                resolvableAndResolvedConfigurations.each { configuration ->
+                    dependenciesWithUnusedForces.addAll(collectDependenciesWithUnusedForces(configuration, forcedDeps))
+                }
+            } else {
+                Configuration groupedResolvableConfiguration = dependencyService.findResolvableConfiguration(declaredConfigurationName)
+                if (resolvableAndResolvedConfigurations.contains(groupedResolvableConfiguration)) {
+                    dependenciesWithUnusedForces.addAll(collectDependenciesWithUnusedForces(groupedResolvableConfiguration, forcedDeps))
+                }
             }
         }
+        
+        dependenciesWithUnusedForces.groupBy { it.dep }.each { _dep, forcedDependenciesByDep ->
+            forcedDependenciesByDep.groupBy { it.forceExpression }.each { _forceExpression, forcedDependenciesByDepAndForceExpression ->
+                if (forcedDependenciesByDepAndForceExpression.size() > 0) {
+                    ForcedDependency exemplarForcedDep = forcedDependenciesByDepAndForceExpression.first()
+                    addBuildLintViolation(exemplarForcedDep.message, exemplarForcedDep.forceExpression)
+                }
+            }
+        }
+
+    }
+
+    @CompileStatic
+    Collection<ForcedDependency> collectDependenciesWithUnusedForces(Configuration configuration, Collection<ForcedDependency> forcedDeps) {
+        Collection<ForcedDependency> dependenciesWithUnusedForces = new ArrayList<ForcedDependency>()
+
+        configuration.resolvedConfiguration.firstLevelModuleDependencies.each { resolvedDep ->
+            forcedDeps.each { forcedDependency ->
+                if (forcedDependency.dep.group == resolvedDep.moduleGroup && forcedDependency.dep.name == resolvedDep.moduleName) {
+                    if (resolvedDep.moduleVersion != forcedDependency.dep.version) {
+                        forcedDependency.message = "The force specified for dependency '${resolvedDep.moduleGroup}:${resolvedDep.moduleName}' has been bypassed"
+                        forcedDependency.resolvedConfigurations.add(configuration)
+                        dependenciesWithUnusedForces.add(forcedDependency)
+                    }
+                }
+            }
+        }
+
+        return dependenciesWithUnusedForces
     }
 
     @CompileStatic
@@ -83,11 +105,17 @@ class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
         GradleDependency dep
         Expression forceExpression
         String declaredConfigurationName
+        Collection<Configuration> resolvedConfigurations = new ArrayList<>()
+        String message
 
         ForcedDependency(GradleDependency dep, Expression forceExpression, String declaredConfigurationName) {
             this.dep = dep
             this.forceExpression = forceExpression
             this.declaredConfigurationName = declaredConfigurationName
+        }
+
+        void setMessage(String message) {
+            this.message = message
         }
     }
 }
