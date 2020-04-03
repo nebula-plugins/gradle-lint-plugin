@@ -30,6 +30,7 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
     def setup() {
         setupProjectAndDependencies()
         debug = true
+        forwardOutput = true
     }
 
     @Unroll
@@ -291,7 +292,7 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
         results.output.contains 'aligned'
 
         results.output.contains('This project contains lint violations.')
-        results.output.contains('The dependency strict version constraint has been bypassed')
+        results.output.contains('The strict version constraint has been bypassed')
 
         where:
         coreAlignment << [false, true]
@@ -407,7 +408,7 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
 
         assert results.output.contains('This project contains lint violations.')
         assert results.output.contains('bypassed-forces')
-        assert results.output.contains('The dependency strict version constraint has been bypassed')
+        assert results.output.contains('The strict version constraint has been bypassed')
 
         where:
         coreAlignment << [false, true]

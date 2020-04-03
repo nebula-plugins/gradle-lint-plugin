@@ -31,7 +31,7 @@ class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
     @Override
     void visitGradleResolutionStrategyForce(MethodCallExpression call, String conf, Map<GradleDependency, Expression> forces) {
         forces.each { dep, force ->
-            forcedDependencies.add(new ForcedDependency(dep, force, conf))
+            forcedDependencies.add(new ForcedDependency(dep, force, conf, 'dependency force'))
         }
     }
 
@@ -54,7 +54,7 @@ class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
         if (call.arguments.expressions
                 .findAll { it instanceof ClosureExpression }
                 .any { closureContainsForce(it as ClosureExpression) }) {
-            forcedDependencies.add(new ForcedDependency(dep, call, conf))
+            forcedDependencies.add(new ForcedDependency(dep, call, conf, 'dependency force'))
         }
     }
 
@@ -66,7 +66,7 @@ class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
             versionConstraintsForAllExpressions.each { versionConstraints ->
                 if (versionConstraints.containsKey('strictly')) {
                     def strictlyValue = versionConstraints.get('strictly')
-                    def forcedDependency = new ForcedDependency(dep, call, conf)
+                    def forcedDependency = new ForcedDependency(dep, call, conf, 'strict version constraint')
                     forcedDependency.setStrictVersion(strictlyValue.first())
                     forcedDependencies.add(forcedDependency)
                 }
@@ -118,14 +118,11 @@ class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
                     forcedDeps.each { forcedDependency ->
                         if (forcedDependency.dep.group == resolvedDep.module.group && forcedDependency.dep.name == resolvedDep.name) {
                             def expectedVersion = ''
-                            def providedMessage = ''
                             if (forcedDependency.dep.version != null) {
                                 expectedVersion = forcedDependency.dep.version
-                                providedMessage = "The dependency force has been bypassed. Remove or update this value"
                             }
                             if (!forcedDependency.strictVersion.isEmpty()) {
                                 expectedVersion = forcedDependency.strictVersion
-                                providedMessage = "The dependency strict version constraint has been bypassed. Remove or update this value"
                             }
 
                             VersionSelector versionSelector = VERSION_SCHEME.parseSelector(expectedVersion)
@@ -134,7 +131,7 @@ class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
                                     && !expectedVersion.toString().contains("latest")) {
 
                                 forcedDependency.resolvedConfigurations.add(configuration)
-                                forcedDependency.message = providedMessage
+                                forcedDependency.message = "The ${forcedDependency.forceType} has been bypassed. Remove or update this value"
                                 dependenciesWithUnusedForces.add(forcedDependency)
                             }
                         }
@@ -187,11 +184,13 @@ class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
         Collection<Configuration> resolvedConfigurations = new ArrayList<>()
         String message = ''
         String strictVersion = ''
+        String forceType
 
-        ForcedDependency(GradleDependency dep, Expression forceExpression, String declaredConfigurationName) {
+        ForcedDependency(GradleDependency dep, Expression forceExpression, String declaredConfigurationName, String forceType) {
             this.dep = dep
             this.forceExpression = forceExpression
             this.declaredConfigurationName = declaredConfigurationName
+            this.forceType = forceType
         }
 
         void setMessage(String message) {
