@@ -100,6 +100,36 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
     }
 
     @Unroll
+    def 'direct dependency force with dynamic dependencies as #type show 0 violations | core alignment #coreAlignment'() {
+        // note: substitution rules do not match on dynamic versions
+
+        buildFile << """\
+            dependencies {
+                implementation('test.nebula:a:$definition') {
+                    force = true
+                }
+                implementation 'test.nebula:a:1.0.0' // added for alignment
+                implementation 'test.nebula:b:1.0.0' // added for alignment
+                implementation 'test.nebula:c:1.0.0' // added for alignment
+            }
+        """.stripIndent()
+
+        when:
+        def tasks = ['dependencyInsight', '--dependency', 'test.nebula', '--warning-mode', 'none', "-Dnebula.features.coreAlignmentSupport=$coreAlignment"]
+        tasks += 'fixGradleLint'
+        def results = runTasks(*tasks)
+
+        then:
+        results.output.contains('0 violations')
+
+        where:
+        type             | definition       | coreAlignment
+        'major.+'        | '1.+'            | true
+        'latest.release' | 'latest.release' | true
+        'range'          | '[1.0.0,1.2.0]'  | true
+    }
+
+    @Unroll
     def 'resolution strategy force is honored - force to good version while substitution is triggered by a transitive dependency | core alignment #coreAlignment'() {
         buildFile << """\
             configurations.all {
@@ -170,6 +200,38 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
     }
 
     @Unroll
+    def 'resolution strategy force with dynamic dependencies as #type show 0 violations | core alignment #coreAlignment'() {
+        // note: substitution rules do not match on dynamic versions
+
+        buildFile << """\
+            configurations.all {
+                resolutionStrategy {
+                    force 'test.nebula:a:$definition'
+                }
+            }
+            dependencies {
+                implementation 'test.nebula:a:1.0.0' // added for alignment
+                implementation 'test.nebula:b:1.0.0' // added for alignment
+                implementation 'test.nebula:c:1.0.0' // added for alignment
+            }
+        """.stripIndent()
+
+        when:
+        def tasks = ['dependencyInsight', '--dependency', 'test.nebula', "-Dnebula.features.coreAlignmentSupport=$coreAlignment"]
+        tasks += 'fixGradleLint'
+        def results = runTasks(*tasks)
+
+        then:
+        results.output.contains('0 violations')
+
+        where:
+        type             | definition       | coreAlignment
+        'major.+'        | '1.+'            | true
+        'latest.release' | 'latest.release' | true
+        'range'          | '[1.0.0,1.2.0]'  | true
+    }
+
+    @Unroll
     def 'dependency with strict version declaration honored | core alignment #coreAlignment'() {
         buildFile << """\
             dependencies {
@@ -222,9 +284,9 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
 
         then:
         // substitution rule to a known-good-version is the primary contributor; rich version strictly constraint to a bad version is the secondary contributor
-        results.output.contains 'test.nebula:a:{strictly 1.2.0} -> 1.3.0'
-        results.output.contains 'test.nebula:b:1.0.0 -> 1.3.0'
-        results.output.contains 'test.nebula:c:1.0.0 -> 1.3.0'
+        results.output.contains 'test.nebula:a:{strictly 1.2.0} -> 1.3.0\n'
+        results.output.contains 'test.nebula:b:1.0.0 -> 1.3.0\n'
+        results.output.contains 'test.nebula:c:1.0.0 -> 1.3.0\n'
 
         results.output.contains 'aligned'
 
@@ -233,6 +295,35 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
 
         where:
         coreAlignment << [false, true]
+    }
+
+    @Unroll
+    def 'dependency with strict version declaration with dynamic dependencies as #type show 0 violations | core alignment #coreAlignment'() {
+        // note: substitution rules do not match on dynamic versions
+
+        buildFile << """\
+            dependencies {
+                implementation('test.nebula:a') {
+                    version { strictly '$definition' }
+                }
+                implementation 'test.nebula:b:1.0.0' // added for alignment
+                implementation 'test.nebula:c:1.0.0' // added for alignment
+            }
+        """.stripIndent()
+
+        when:
+        def tasks = ['dependencyInsight', '--dependency', 'test.nebula', "-Dnebula.features.coreAlignmentSupport=$coreAlignment"]
+        tasks += 'fixGradleLint'
+        def results = runTasks(*tasks)
+
+        then:
+        results.output.contains('0 violations')
+
+        where:
+        type             | definition       | coreAlignment
+        'major.+'        | '1.+'            | true
+        'latest.release' | 'latest.release' | true
+        'range'          | '[1.0.0,1.2.0]'  | true
     }
 
     @Unroll
@@ -308,9 +399,9 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
 
         then:
         // substitution rule to a known-good-version is the primary contributor; rich version strictly constraint to a bad version is the secondary contributor
-        results.output.contains 'test.nebula:a:{strictly 1.2.0} -> 1.3.0'
-        results.output.contains 'test.nebula:b:1.0.0 -> 1.3.0'
-        results.output.contains 'test.nebula:c:1.0.0 -> 1.3.0'
+        results.output.contains 'test.nebula:a:{strictly 1.2.0} -> 1.3.0\n'
+        results.output.contains 'test.nebula:b:1.0.0 -> 1.3.0\n'
+        results.output.contains 'test.nebula:c:1.0.0 -> 1.3.0\n'
 
         results.output.contains 'aligned'
 
@@ -320,6 +411,46 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
 
         where:
         coreAlignment << [false, true]
+    }
+
+    @Unroll
+    def 'dependency constraint with strict version declaration with dynamic dependencies as #type show 0 violations | core alignment #coreAlignment'() {
+        // note: substitution rules do not match on dynamic versions
+
+        buildFile << """\
+            dependencies {
+                constraints {
+                    implementation('test.nebula:a') {
+                        version { strictly("$definition") }
+                        because '☘︎ custom constraint: test.nebula:a should be $definition'
+                    }
+                }
+                implementation 'test.brings-a:a:1.0.0' // added for alignment
+                implementation 'test.brings-b:b:1.0.0' // added for alignment
+                implementation 'test.brings-c:c:1.0.0' // added for alignment
+            }
+        """.stripIndent()
+
+        def graph = new DependencyGraphBuilder()
+                .addModule(new ModuleBuilder('test.brings-b:b:1.0.0').addDependency('test.nebula:b:1.0.0').build())
+                .addModule(new ModuleBuilder('test.brings-a:a:1.0.0').addDependency('test.nebula:a:1.0.0').build())
+                .addModule(new ModuleBuilder('test.brings-c:c:1.0.0').addDependency('test.nebula:c:1.0.0').build())
+                .build()
+        new GradleDependencyGenerator(graph, "${projectDir}/testrepogen").generateTestMavenRepo()
+
+        when:
+        def tasks = ['dependencyInsight', '--dependency', 'test.nebula', "-Dnebula.features.coreAlignmentSupport=$coreAlignment"]
+        tasks += 'fixGradleLint'
+        def results = runTasks(*tasks)
+
+        then:
+        results.output.contains('0 violations')
+
+        where:
+        type             | definition       | coreAlignment
+        'major.+'        | '1.+'            | true
+        'latest.release' | 'latest.release' | true
+        'range'          | '[1.0.0,1.2.0]'  | true
     }
 
     void setupProjectAndDependencies() {

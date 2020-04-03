@@ -8,11 +8,16 @@ import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.ast.expr.Expression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.gradle.api.artifacts.Configuration
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.DefaultVersionComparator
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.DefaultVersionSelectorScheme
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.VersionSelector
 
 class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
     String description = 'remove unused forces from dependency resolution bypassing them'
     DependencyService dependencyService
     Collection<ForcedDependency> forcedDependencies = new ArrayList<ForcedDependency>()
+    DefaultVersionComparator VERSIONED_COMPARATOR = new DefaultVersionComparator()
+    DefaultVersionSelectorScheme VERSION_SCHEME = new DefaultVersionSelectorScheme(VERSIONED_COMPARATOR)
 
     @Override
     protected void beforeApplyTo() {
@@ -84,19 +89,25 @@ class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
                 .each { resolvedDep ->
                     forcedDeps.each { forcedDependency ->
                         if (forcedDependency.dep.group == resolvedDep.module.group && forcedDependency.dep.name == resolvedDep.name) {
+                            def expectedVersion = ''
+                            def providedMessage = ''
                             if (forcedDependency.dep.version != null) {
-                                if (resolvedDep.version != forcedDependency.dep.version) {
-                                    forcedDependency.message = "The dependency force has been bypassed. Remove or update this value"
-                                    forcedDependency.resolvedConfigurations.add(configuration)
-                                    dependenciesWithUnusedForces.add(forcedDependency)
-                                }
+                                expectedVersion = forcedDependency.dep.version
+                                providedMessage = "The dependency force has been bypassed. Remove or update this value"
                             }
                             if (!forcedDependency.strictVersion.isEmpty()) {
-                                if (resolvedDep.version != forcedDependency.strictVersion) {
-                                    forcedDependency.message = "The dependency strict version constraint has been bypassed. Remove or update this value"
-                                    forcedDependency.resolvedConfigurations.add(configuration)
-                                    dependenciesWithUnusedForces.add(forcedDependency)
-                                }
+                                expectedVersion = forcedDependency.strictVersion
+                                providedMessage = "The dependency strict version constraint has been bypassed. Remove or update this value"
+                            }
+
+                            VersionSelector versionSelector = VERSION_SCHEME.parseSelector(expectedVersion)
+                            if (!versionSelector.accept(resolvedDep.version)
+                                    && !expectedVersion.toString().contains(".+")
+                                    && !expectedVersion.toString().contains("latest")) {
+
+                                forcedDependency.resolvedConfigurations.add(configuration)
+                                forcedDependency.message = providedMessage
+                                dependenciesWithUnusedForces.add(forcedDependency)
                             }
                         }
                     }
