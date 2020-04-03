@@ -7,7 +7,6 @@ import nebula.test.IntegrationSpec
 import nebula.test.dependencies.DependencyGraphBuilder
 import nebula.test.dependencies.GradleDependencyGenerator
 import org.codehaus.groovy.ast.expr.MethodCallExpression
-import spock.lang.IgnoreIf
 import spock.lang.Unroll
 
 class DependencyHelperSpec extends IntegrationSpec {
@@ -107,7 +106,7 @@ class DependencyHelperSpec extends IntegrationSpec {
         writeHelloWorld('test.nebula')
 
         expect:
-        def results = runTasks( 'fixGradleLint')
+        def results = runTasks('fixGradleLint', '--warning-mode', 'none')
         buildFile.text.contains(depResult)
         if (dep != depResult) {
             !buildFile.text.contains(dep)
@@ -160,7 +159,7 @@ class DependencyHelperSpec extends IntegrationSpec {
         writeHelloWorld('test.nebula')
 
         expect:
-        def results = runTasks('fixGradleLint')
+        def results = runTasks('fixGradleLint', '--warning-mode', 'none')
         buildFile.text.contains(depResult)
         if (dep != depResult) {
             !buildFile.text.contains(dep)
