@@ -5,8 +5,12 @@ import com.netflix.nebula.lint.rule.GradleLintRule
 import com.netflix.nebula.lint.rule.GradleModelAware
 import groovy.transform.CompileStatic
 import org.codehaus.groovy.ast.ClassNode
+import org.codehaus.groovy.ast.expr.BinaryExpression
+import org.codehaus.groovy.ast.expr.ClosureExpression
+import org.codehaus.groovy.ast.expr.ConstantExpression
 import org.codehaus.groovy.ast.expr.Expression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
+import org.codehaus.groovy.ast.stmt.BlockStatement
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.DefaultVersionComparator
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.DefaultVersionSelectorScheme
@@ -32,17 +36,36 @@ class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
     }
 
     @Override
-    void visitAnyGradleDependencyWithAForceClosure(MethodCallExpression call, String conf, GradleDependency dep) {
-        forcedDependencies.add(new ForcedDependency(dep, call, conf))
+    void visitAnyGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
+        if (!call.arguments.metaClass.getMetaMethod('getExpressions')) {
+            return // short-circuit if there are no expressions
+        }
+
+        handleForceInAClosure(call, conf, dep)
+        handleVersionConstraintWithStrictVersion(call, conf, dep)
     }
 
-    @Override
-    void visitAnyGradleDependencyWithVersionConstraint(MethodCallExpression call, String conf, GradleDependency dep, Map<String, List<String>> versionConstraints) {
-        if (versionConstraints.containsKey('strictly')) {
-            def strictlyValue = versionConstraints.get('strictly')
-            def forcedDependency = new ForcedDependency(dep, call, conf)
-            forcedDependency.setStrictVersion(strictlyValue.first())
-            forcedDependencies.add(forcedDependency)
+    private void handleForceInAClosure(MethodCallExpression call, String conf, GradleDependency dep) {
+        if (call.arguments.expressions
+                .findAll { it instanceof ClosureExpression }
+                .any { closureContainsForce(it as ClosureExpression) }) {
+            forcedDependencies.add(new ForcedDependency(dep, call, conf))
+        }
+    }
+
+    private void handleVersionConstraintWithStrictVersion(MethodCallExpression call, String conf, GradleDependency dep) {
+        List<Map<String, List<String>>> versionConstraintsForAllExpressions = call.arguments.expressions
+                .findAll { it instanceof ClosureExpression }
+                .collect { gatherVersionConstraints(it as ClosureExpression) }
+        if (versionConstraintsForAllExpressions.size() > 0) {
+            versionConstraintsForAllExpressions.each { versionConstraints ->
+                if (versionConstraints.containsKey('strictly')) {
+                    def strictlyValue = versionConstraints.get('strictly')
+                    def forcedDependency = new ForcedDependency(dep, call, conf)
+                    forcedDependency.setStrictVersion(strictlyValue.first())
+                    forcedDependencies.add(forcedDependency)
+                }
+            }
         }
     }
 
@@ -114,6 +137,41 @@ class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
                 }
 
         return dependenciesWithUnusedForces
+    }
+
+    private static Boolean closureContainsForce(ClosureExpression expr) {
+        return expr.code.statements.any {
+            (it.expression instanceof BinaryExpression) &&
+                    ((BinaryExpression) it.expression).leftExpression?.variable == 'force' &&
+                    ((BinaryExpression) it.expression).rightExpression?.value == true
+        }
+    }
+
+    private static Map<String, List<String>> gatherVersionConstraints(ClosureExpression expr) {
+        def results = new HashMap<String, List<String>>()
+        expr.code.statements.findAll { st ->
+            (st.expression instanceof MethodCallExpression) &&
+                    ((MethodCallExpression) st.expression)?.methodAsString == 'version' &&
+                    ((MethodCallExpression) st.expression)?.arguments?.findAll { arg ->
+                        arg instanceof ClosureExpression &&
+                                arg?.code instanceof BlockStatement &&
+                                arg?.code?.statements?.findAll { stmt ->
+                                    stmt?.expression instanceof MethodCallExpression &&
+                                            stmt?.expression?.method instanceof ConstantExpression &&
+                                            stmt?.expression?.arguments?.expressions?.findAll { expre ->
+                                                expre instanceof ConstantExpression &&
+                                                        !expre?.value?.equals(null)
+                                            }
+                                                    ?.each {
+                                                        String method = stmt?.expression?.methodAsString
+                                                        List values = stmt?.expression?.arguments?.expressions?.collect { it.value as String }
+
+                                                        results.put(method, values)
+                                                    }
+                                }
+                    }
+        }
+        return results
     }
 
     @CompileStatic
