@@ -41,6 +41,11 @@ class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
             return // short-circuit if there are no expressions
         }
 
+        def top = dslStack().isEmpty() ? "" : dslStack().first()
+        if (top == 'buildscript') {
+            return // do not pay attention to buildscript dependencies at this time
+        }
+
         handleForceInAClosure(call, conf, dep)
         handleVersionConstraintWithStrictVersion(call, conf, dep)
     }

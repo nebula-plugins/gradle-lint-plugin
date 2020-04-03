@@ -453,6 +453,42 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
         'range'          | '[1.0.0,1.2.0]'  | true
     }
 
+    @Unroll
+    def 'ignores buildscript dependencies for #type'() {
+        buildFile.delete()
+        buildFile.createNewFile()
+        buildFile << """\
+            buildscript {
+                repositories {
+                    maven { url "https://plugins.gradle.org/m2/" }
+                }
+                dependencies {
+                    classpath("com.netflix.nebula:nebula-dependency-recommender:9.0.2") {
+                        force = true
+                    }
+                }
+            }
+            plugins {
+                id 'java'
+                id 'nebula.lint'
+            }
+            apply plugin: "nebula.dependency-recommender"
+            gradleLint.rules = ['bypassed-forces']
+        """.stripIndent()
+
+        when:
+        def tasks = ['buildEnvironment', 'dependencies', '--warning-mode', 'none']
+        tasks += 'fixGradleLint'
+        def results = runTasks(*tasks)
+
+        then:
+        results.output.contains('0 violations')
+
+        where:
+        type                      | _
+        'direct dependency force' | _
+    }
+
     void setupProjectAndDependencies() {
         def graph = new DependencyGraphBuilder()
                 .addModule('test.nebula:a:1.0.0')
