@@ -126,9 +126,10 @@ class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
                             }
 
                             VersionSelector versionSelector = VERSION_SCHEME.parseSelector(expectedVersion)
-                            if (!versionSelector.accept(resolvedDep.version)
+                            if (!expectedVersion.startsWith('$')
                                     && !expectedVersion.toString().contains(".+")
-                                    && !expectedVersion.toString().contains("latest")) {
+                                    && !expectedVersion.toString().contains("latest")
+                                    && !versionSelector.accept(resolvedDep.version)) {
 
                                 forcedDependency.resolvedConfigurations.add(configuration)
                                 forcedDependency.message = "The ${forcedDependency.forceType} has been bypassed. Remove or update this value"

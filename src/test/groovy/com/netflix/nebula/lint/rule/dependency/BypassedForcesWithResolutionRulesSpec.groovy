@@ -30,7 +30,6 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
     def setup() {
         setupProjectAndDependencies()
         debug = true
-        forwardOutput = true
     }
 
     @Unroll
@@ -101,12 +100,17 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
     }
 
     @Unroll
-    def 'direct dependency force with dynamic dependencies as #type show 0 violations | core alignment #coreAlignment'() {
-        // note: substitution rules do not match on dynamic versions
+    def 'direct dependency force with dependencies as #type show 0 violations | core alignment #coreAlignment'() {
+        // note: 'accept' for substitution rules does not match on dynamic versions
+
+        forwardOutput = true
 
         buildFile << """\
+            ext {
+                testNebulaVersion = '1.2.0'
+            } 
             dependencies {
-                implementation('test.nebula:a:$definition') {
+                implementation("test.nebula:a:$definition") {
                     force = true
                 }
                 implementation 'test.nebula:a:1.0.0' // added for alignment
@@ -124,10 +128,11 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
         results.output.contains('0 violations')
 
         where:
-        type             | definition       | coreAlignment
-        'major.+'        | '1.+'            | true
-        'latest.release' | 'latest.release' | true
-        'range'          | '[1.0.0,1.2.0]'  | true
+        type             | definition              | coreAlignment
+        'major.+'        | '1.+'                   | true
+        'latest.release' | 'latest.release'        | true
+        'range'          | '[1.0.0,1.2.0]'         | true
+        'variable'       | '\${testNebulaVersion}' | true
     }
 
     @Unroll
@@ -199,15 +204,18 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
         where:
         coreAlignment << [true]
     }
-
+    
     @Unroll
-    def 'resolution strategy force with dynamic dependencies as #type show 0 violations | core alignment #coreAlignment'() {
-        // note: substitution rules do not match on dynamic versions
+    def 'resolution strategy force with dependencies as #type show 0 violations | core alignment #coreAlignment'() {
+        // note: 'accept' for substitution rules does not match on dynamic versions
 
         buildFile << """\
+            ext {
+                testNebulaVersion = '1.+'
+            }
             configurations.all {
                 resolutionStrategy {
-                    force 'test.nebula:a:$definition'
+                    force "test.nebula:a:$definition"
                 }
             }
             dependencies {
@@ -226,10 +234,11 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
         results.output.contains('0 violations')
 
         where:
-        type             | definition       | coreAlignment
-        'major.+'        | '1.+'            | true
-        'latest.release' | 'latest.release' | true
-        'range'          | '[1.0.0,1.2.0]'  | true
+        type             | definition              | coreAlignment
+        'major.+'        | '1.+'                   | true
+        'latest.release' | 'latest.release'        | true
+        'range'          | '[1.0.0,1.2.0]'         | true
+        'variable'       | '\${testNebulaVersion}' | true
     }
 
     @Unroll
@@ -299,13 +308,16 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
     }
 
     @Unroll
-    def 'dependency with strict version declaration with dynamic dependencies as #type show 0 violations | core alignment #coreAlignment'() {
-        // note: substitution rules do not match on dynamic versions
+    def 'dependency with strict version declaration with dependencies as #type show 0 violations | core alignment #coreAlignment'() {
+        // note: 'accept' for substitution rules does not match on dynamic versions
 
         buildFile << """\
+            ext {
+                testNebulaVersion = '1.+'
+            } 
             dependencies {
                 implementation('test.nebula:a') {
-                    version { strictly '$definition' }
+                    version { strictly "$definition" }
                 }
                 implementation 'test.nebula:b:1.0.0' // added for alignment
                 implementation 'test.nebula:c:1.0.0' // added for alignment
@@ -321,10 +333,11 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
         results.output.contains('0 violations')
 
         where:
-        type             | definition       | coreAlignment
-        'major.+'        | '1.+'            | true
-        'latest.release' | 'latest.release' | true
-        'range'          | '[1.0.0,1.2.0]'  | true
+        type             | definition              | coreAlignment
+        'major.+'        | '1.+'                   | true
+        'latest.release' | 'latest.release'        | true
+        'range'          | '[1.0.0,1.2.0]'         | true
+        'variable'       | '\${testNebulaVersion}' | true
     }
 
     @Unroll
@@ -415,15 +428,18 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
     }
 
     @Unroll
-    def 'dependency constraint with strict version declaration with dynamic dependencies as #type show 0 violations | core alignment #coreAlignment'() {
-        // note: substitution rules do not match on dynamic versions
+    def 'dependency constraint with strict version declaration with dependencies as #type show 0 violations | core alignment #coreAlignment'() {
+        // note: 'accept' for substitution rules does not match on dynamic versions
 
         buildFile << """\
+            ext {
+                testNebulaVersion = '1.+'
+            } 
             dependencies {
                 constraints {
                     implementation('test.nebula:a') {
                         version { strictly("$definition") }
-                        because '☘︎ custom constraint: test.nebula:a should be $definition'
+                        because "☘︎ custom constraint: test.nebula:a should be $definition"
                     }
                 }
                 implementation 'test.brings-a:a:1.0.0' // added for alignment
@@ -448,10 +464,11 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
         results.output.contains('0 violations')
 
         where:
-        type             | definition       | coreAlignment
-        'major.+'        | '1.+'            | true
-        'latest.release' | 'latest.release' | true
-        'range'          | '[1.0.0,1.2.0]'  | true
+        type             | definition              | coreAlignment
+        'major.+'        | '1.+'                   | true
+        'latest.release' | 'latest.release'        | true
+        'range'          | '[1.0.0,1.2.0]'         | true
+        'variable'       | '\${testNebulaVersion}' | true
     }
 
     @Unroll
