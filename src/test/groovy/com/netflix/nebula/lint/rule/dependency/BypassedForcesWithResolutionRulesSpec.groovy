@@ -204,7 +204,59 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
         where:
         coreAlignment << [true]
     }
-    
+
+    @Unroll
+    def 'handles multiple forces in one statement | core alignment #coreAlignment'() {
+        buildFile << """\
+            configurations.all {
+                resolutionStrategy {
+                    force 'test.foo:bar:1.2.0', 
+                        'test.nebula:a:1.2.0' 
+                        
+                }
+            }
+            dependencies {
+                implementation 'test.nebula:a:1.2.0' // bad version
+                implementation 'test.nebula:b:1.0.0' // added for alignment
+                implementation 'test.nebula:c:1.0.0' // added for alignment
+                implementation 'test.foo:bar:1.0.0'
+            }
+        """.stripIndent()
+
+        def graph = new DependencyGraphBuilder()
+                .addModule('test.foo:bar:1.0.0')
+                .addModule('test.foo:bar:1.2.0')
+                .build()
+        new GradleDependencyGenerator(graph, "${projectDir}/testrepogen").generateTestMavenRepo()
+
+        when:
+        def tasks = ['dependencyInsight', '--dependency', 'test', '--warning-mode', 'none', "-Dnebula.features.coreAlignmentSupport=$coreAlignment"]
+        tasks += 'fixGradleLint'
+        def results = runTasks(*tasks)
+
+        then:
+        // substitution rule to a known-good-version was the primary contributor; force to a bad version was a secondary contributor
+        assert results.output.contains('test.nebula:a:1.2.0 -> 1.3.0\n')
+        assert results.output.contains('test.nebula:b:1.0.0 -> 1.3.0\n')
+        assert results.output.contains('test.nebula:c:1.0.0 -> 1.3.0\n')
+        assert results.output.contains('test.foo:bar:1.0.0 -> 1.2.0\n')
+
+        assert results.output.contains('This project contains lint violations.')
+        assert results.output.contains('bypassed-forces')
+        assert results.output.contains('The dependency force has been bypassed')
+
+        // the force in a multiple force declaration statement
+        assert results.output.contains("""Remove or update this value
+build.gradle:17
+'test.nebula:a:1.2.0'""")
+
+        results.output.contains 'aligned'
+        results.output.contains('- Forced')
+
+        where:
+        coreAlignment << [true]
+    }
+
     @Unroll
     def 'resolution strategy force with dependencies as #type show 0 violations | core alignment #coreAlignment'() {
         // note: 'accept' for substitution rules does not match on dynamic versions
