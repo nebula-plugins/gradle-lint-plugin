@@ -333,6 +333,27 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         b.syntax == GradleDependency.Syntax.StringNotation
     }
 
+    def 'visit dependencies in a dynamic project path project block'() {
+        when:
+        def subproject = addSubproject('test')
+        subproject.configurations.create('customConfig')
+        project.subprojects.add(subproject)
+        project.buildFile << """
+            def projectName = ':test'
+            project("\$projectName") {
+                dependencies {
+                   customConfig 'b:b:1'
+                }
+            }
+        """
+
+        def b = new DependencyVisitingRule().run().allGradleDependencies.find { it.name == 'b' }
+
+        then:
+        b
+        b.syntax == GradleDependency.Syntax.StringNotation
+    }
+
     def 'visit dependencies is not broken when project attribute is accessed'() {
         when:
         project.buildFile << """

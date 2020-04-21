@@ -518,7 +518,10 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                     if (expr instanceof ConstantExpression || expr instanceof GStringExpression) {
                         def path = expr instanceof ConstantExpression ? expr.value : expr.text
                         subproject = project.childProjects.values().find { it.path == path }
-                    } else {
+                    }
+                    //in cases of dynamically declared names we won't be able to find project in previous step
+                    //fall back to a first project from children list
+                    if (subproject == null) {
                         subproject = project.childProjects.values().first()
                     }
                     configurations = subproject.configurations
