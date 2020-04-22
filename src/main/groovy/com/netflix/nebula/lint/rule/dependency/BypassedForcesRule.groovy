@@ -5,6 +5,7 @@ import com.netflix.nebula.lint.rule.GradleLintRule
 import com.netflix.nebula.lint.rule.GradleModelAware
 import groovy.transform.CompileStatic
 import org.codehaus.groovy.ast.ClassNode
+import org.codehaus.groovy.ast.expr.ArgumentListExpression
 import org.codehaus.groovy.ast.expr.BinaryExpression
 import org.codehaus.groovy.ast.expr.ClosureExpression
 import org.codehaus.groovy.ast.expr.ConstantExpression
@@ -216,6 +217,7 @@ class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
         return results
     }
 
+    @CompileStatic
     private Collection<Project> determineAffectedProjects(MethodCallExpression call, String top) {
         if (top == 'allprojects') {
             return project.rootProject.allprojects
@@ -224,10 +226,18 @@ class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
         } else if (top == 'buildscript') {
             // do not pay attention to buildscript dependencies at this time
         } else if (top == 'project') {
-            def projectName = callStack.first()?.arguments?.expressions?.find { it instanceof ConstantExpression }?.value as String
+            def projectName = ((((callStack
+                    .find { it instanceof MethodCallExpression && it.methodAsString == "project" } as MethodCallExpression)
+                    .arguments as ArgumentListExpression)
+                    ?.expressions as List<Expression>)
+                    ?.find { it instanceof ConstantExpression } as ConstantExpression)
+                    ?.value as String
+
             if (projectName != null) {
-                Project affectedProject = project.rootProject.subprojects.find { it.name == projectName.replace(':', '') }
-                return [affectedProject]
+                Project affectedProject = project.findProject(projectName)
+                if (affectedProject != null) {
+                    return [affectedProject]
+                }
             }
             log.warn("Ignoring call ${call.methodAsString} with top $top for now")
         } else {
