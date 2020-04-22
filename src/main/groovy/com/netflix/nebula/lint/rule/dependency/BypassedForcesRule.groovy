@@ -11,27 +11,37 @@ import org.codehaus.groovy.ast.expr.ConstantExpression
 import org.codehaus.groovy.ast.expr.Expression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.codehaus.groovy.ast.stmt.BlockStatement
+import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.DefaultVersionComparator
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.DefaultVersionSelectorScheme
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.VersionSelector
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
-    String description = 'remove unused forces from dependency resolution bypassing them'
-    DependencyService dependencyService
-    Collection<ForcedDependency> forcedDependencies = new ArrayList<ForcedDependency>()
-    DefaultVersionComparator VERSIONED_COMPARATOR = new DefaultVersionComparator()
-    DefaultVersionSelectorScheme VERSION_SCHEME = new DefaultVersionSelectorScheme(VERSIONED_COMPARATOR)
+    String description = 'remove bypassed forces and strict constraints. Works for static and ranged declarations'
+    Map<String, Collection<ForcedDependency>> forcedDependenciesPerProject = new HashMap<String, Collection<ForcedDependency>>()
+    private final DefaultVersionComparator VERSIONED_COMPARATOR = new DefaultVersionComparator()
+    private final DefaultVersionSelectorScheme VERSION_SCHEME = new DefaultVersionSelectorScheme(VERSIONED_COMPARATOR)
+    private final Logger log = LoggerFactory.getLogger(BypassedForcesRule.class);
 
     @Override
     protected void beforeApplyTo() {
-        dependencyService = DependencyService.forProject(project)
+        project.rootProject.allprojects { proj ->
+            forcedDependenciesPerProject.put(proj.name, new HashSet<ForcedDependency>())
+        }
     }
 
     @Override
     void visitGradleResolutionStrategyForce(MethodCallExpression call, String conf, Map<GradleDependency, Expression> forces) {
         forces.each { dep, force ->
-            forcedDependencies.add(new ForcedDependency(dep, force, conf, 'dependency force'))
+            def top = dslStack().isEmpty() ? "" : dslStack().first()
+            def affectedProjects = determineAffectedProjects(call, top)
+
+            affectedProjects.each { affectedProject ->
+                forcedDependenciesPerProject.get(affectedProject.name).add(new ForcedDependency(dep, force, conf, 'dependency force'))
+            }
         }
     }
 
@@ -42,23 +52,23 @@ class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
         }
 
         def top = dslStack().isEmpty() ? "" : dslStack().first()
-        if (top == 'buildscript') {
-            return // do not pay attention to buildscript dependencies at this time
-        }
+        def affectedProjects = determineAffectedProjects(call, top)
 
-        handleForceInAClosure(call, conf, dep)
-        handleVersionConstraintWithStrictVersion(call, conf, dep)
+        affectedProjects.each { affectedProject ->
+            handleForceInAClosure(call, conf, dep, affectedProject)
+            handleVersionConstraintWithStrictVersion(call, conf, dep, affectedProject)
+        }
     }
 
-    private void handleForceInAClosure(MethodCallExpression call, String conf, GradleDependency dep) {
+    private void handleForceInAClosure(MethodCallExpression call, String conf, GradleDependency dep, Project affectedProject) {
         if (call.arguments.expressions
                 .findAll { it instanceof ClosureExpression }
                 .any { closureContainsForce(it as ClosureExpression) }) {
-            forcedDependencies.add(new ForcedDependency(dep, call, conf, 'dependency force'))
+            forcedDependenciesPerProject.get(affectedProject.name).add(new ForcedDependency(dep, call, conf, 'dependency force'))
         }
     }
 
-    private void handleVersionConstraintWithStrictVersion(MethodCallExpression call, String conf, GradleDependency dep) {
+    private void handleVersionConstraintWithStrictVersion(MethodCallExpression call, String conf, GradleDependency dep, Project affectedProject) {
         List<Map<String, List<String>>> versionConstraintsForAllExpressions = call.arguments.expressions
                 .findAll { it instanceof ClosureExpression }
                 .collect { gatherVersionConstraints(it as ClosureExpression) }
@@ -68,7 +78,7 @@ class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
                     def strictlyValue = versionConstraints.get('strictly')
                     def forcedDependency = new ForcedDependency(dep, call, conf, 'strict version constraint')
                     forcedDependency.setStrictVersion(strictlyValue.first())
-                    forcedDependencies.add(forcedDependency)
+                    forcedDependenciesPerProject.get(affectedProject.name).add(forcedDependency)
                 }
             }
         }
@@ -77,37 +87,66 @@ class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
     @CompileStatic
     @Override
     protected void visitClassComplete(ClassNode node) {
+        Collection<BypassedForce> bypassedForces = new ArrayList<BypassedForce>()
+
+        forcedDependenciesPerProject.each { affectedProjectName, forcedDependencies ->
+            Project affectedProject = project.rootProject.allprojects.find { it.name == affectedProjectName }
+            if (forcedDependencies.size() > 0) {
+                findAllBypassedForcesFor(forcedDependencies, affectedProject).each { forcedDep ->
+                    bypassedForces.add(new BypassedForce(forcedDep.dep, forcedDep, affectedProjectName))
+                }
+            }
+        }
+
+        bypassedForces
+                .groupBy { it.dep }
+                .each { dep, bypassedForcesByDep ->
+                    Collection<String> projectNames = bypassedForcesByDep.collect { it.projectName }
+                    BypassedForce exemplarBypassedForce = bypassedForcesByDep.first()
+                    def updatedMessage = exemplarBypassedForce.forcedDependency.message + " for the affected project(s): ${projectNames.sort().join(', ')}"
+                    addBuildLintViolation(updatedMessage, exemplarBypassedForce.forcedDependency.forceExpression)
+                }
+    }
+
+    private Collection<ForcedDependency> findAllBypassedForcesFor(Collection<ForcedDependency> forcedDependencies, Project affectedProject) {
+        Collection<ForcedDependency> uniqueBypassedForcedDependencies = new ArrayList<ForcedDependency>()
+
+        if (affectedProject.configurations.size() == 0) {
+            return uniqueBypassedForcedDependencies // short-circuit on any project with 0 configurations
+        }
+        DependencyService dependencyService = DependencyService.forProject(affectedProject)
+
         def groupedForcedDependencies = forcedDependencies
                 .groupBy { it.declaredConfigurationName }
         def resolvableAndResolvedConfigurations = dependencyService.resolvableAndResolvedConfigurations()
-        Collection<ForcedDependency> dependenciesWithUnusedForces = new ArrayList<ForcedDependency>()
+        Collection<ForcedDependency> bypassedForcedDependencies = new ArrayList<ForcedDependency>()
 
         groupedForcedDependencies.each { declaredConfigurationName, forcedDeps ->
             if (declaredConfigurationName == 'all') {
                 resolvableAndResolvedConfigurations.each { configuration ->
-                    dependenciesWithUnusedForces.addAll(collectDependenciesWithUnusedForces(configuration, forcedDeps))
+                    bypassedForcedDependencies.addAll(collectDependenciesWithUnusedForces(configuration, forcedDeps))
                 }
             } else {
                 Configuration groupedResolvableConfiguration = dependencyService.findResolvableConfiguration(declaredConfigurationName)
                 if (resolvableAndResolvedConfigurations.contains(groupedResolvableConfiguration)) {
-                    dependenciesWithUnusedForces.addAll(collectDependenciesWithUnusedForces(groupedResolvableConfiguration, forcedDeps))
+                    bypassedForcedDependencies.addAll(collectDependenciesWithUnusedForces(groupedResolvableConfiguration, forcedDeps))
                 }
             }
         }
-        
-        dependenciesWithUnusedForces.groupBy { it.dep }.each { _dep, forcedDependenciesByDep ->
+
+        bypassedForcedDependencies.groupBy { it.dep }.each { _dep, forcedDependenciesByDep ->
             forcedDependenciesByDep.groupBy { it.forceExpression }.each { _forceExpression, forcedDependenciesByDepAndForceExpression ->
                 if (forcedDependenciesByDepAndForceExpression.size() > 0) {
                     ForcedDependency exemplarForcedDep = forcedDependenciesByDepAndForceExpression.first()
-                    addBuildLintViolation(exemplarForcedDep.message, exemplarForcedDep.forceExpression)
+                    uniqueBypassedForcedDependencies.add(exemplarForcedDep)
                 }
             }
         }
-
+        return uniqueBypassedForcedDependencies
     }
 
     @CompileStatic
-    Collection<ForcedDependency> collectDependenciesWithUnusedForces(Configuration configuration, Collection<ForcedDependency> forcedDeps) {
+    private Collection<ForcedDependency> collectDependenciesWithUnusedForces(Configuration configuration, Collection<ForcedDependency> forcedDeps) {
         Collection<ForcedDependency> dependenciesWithUnusedForces = new ArrayList<ForcedDependency>()
 
         // inspect direct and transitive dependencies
@@ -132,7 +171,7 @@ class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
                                     && !versionSelector.accept(resolvedDep.version)) {
 
                                 forcedDependency.resolvedConfigurations.add(configuration)
-                                forcedDependency.message = "The ${forcedDependency.forceType} has been bypassed. Remove or update this value"
+                                forcedDependency.message = "The ${forcedDependency.forceType} has been bypassed.\nRemove or update this value"
                                 dependenciesWithUnusedForces.add(forcedDependency)
                             }
                         }
@@ -175,6 +214,46 @@ class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
                     }
         }
         return results
+    }
+
+    private Collection<Project> determineAffectedProjects(MethodCallExpression call, String top) {
+        if (top == 'allprojects') {
+            return project.rootProject.allprojects
+        } else if (top == 'subprojects') {
+            return project.rootProject.subprojects
+        } else if (top == 'buildscript') {
+            // do not pay attention to buildscript dependencies at this time
+        } else if (top == 'project') {
+            def projectName = callStack.first()?.arguments?.expressions?.find { it instanceof ConstantExpression }?.value as String
+            if (projectName != null) {
+                Project affectedProject = project.rootProject.subprojects.find { it.name == projectName.replace(':', '') }
+                return [affectedProject]
+            }
+            log.warn("Ignoring call ${call.methodAsString} with top $top for now")
+        } else {
+            // at this point, there should not be any project-grouping dsl
+            if (top == 'dependencies') {
+                return [project]
+            } else if (top == 'configurations') {
+                return [project]
+            } else {
+                log.warn("Ignoring call ${call.methodAsString} with top $top for now")
+            }
+        }
+        return []
+    }
+
+    @CompileStatic
+    class BypassedForce {
+        GradleDependency dep
+        ForcedDependency forcedDependency
+        String projectName
+
+        BypassedForce(GradleDependency dep, ForcedDependency forcedDependency, String projectName) {
+            this.dep = dep
+            this.forcedDependency = forcedDependency
+            this.projectName = projectName
+        }
     }
 
     @CompileStatic
