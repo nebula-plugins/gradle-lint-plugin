@@ -34,6 +34,7 @@ class GradleLintExtension {
     List<String> criticalRules = []
 
     String reportFormat = 'html'
+    boolean reportOnlyFixableViolations = false
     boolean alwaysRun = true
     boolean autoLintAfterFailure = true
 

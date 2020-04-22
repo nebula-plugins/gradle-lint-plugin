@@ -40,6 +40,46 @@ class GradleLintReportTaskSpec extends IntegrationTestKitSpec {
         report.text.contains('TotalFiles=1')
     }
 
+    def 'generate a report with only applied fixes'() {
+        given:
+        buildFile.text = """
+            plugins {
+                id 'java'
+                id 'nebula.lint'
+            }
+
+            gradleLint {
+                rules = ['dependency-tuple', 'dependency-parentheses']
+                reportFormat = 'text'
+                reportOnlyFixableViolations = true
+            }
+
+            repositories { mavenCentral() }
+
+            dependencies {
+                implementation(group: 'com.google.guava', name: 'guava', version: '18.0')
+            }
+        """
+
+        when:
+        def result = runTasks('autoLintGradle')
+
+        then:
+        result.output.contains("dependency-tuple")
+        result.output.contains("dependency-parentheses")
+
+        then:
+        runTasks('generateGradleLintReport')
+
+        when:
+        def report = new File(projectDir, 'build/reports/gradleLint').listFiles().find { it.name.endsWith('.txt') }
+
+        then:
+        report.text.contains('Violation: Rule=dependency-tuple')
+        ! report.text.contains('Violation: Rule=dependency-parentheses')
+        report.text.contains('TotalFiles=1')
+    }
+
     @Unroll
     def 'generate a report with different type through parameter from cli with Gradle version: #version'() {
         when:
@@ -74,6 +114,66 @@ class GradleLintReportTaskSpec extends IntegrationTestKitSpec {
 
         where:
         version << ['4.10.3', "current"]
+    }
+
+    def 'generate a report with only applied fixes using cli param to enable it'() {
+        given:
+        buildFile.text = """
+            plugins {
+                id 'java'
+                id 'nebula.lint'
+            }
+
+            gradleLint {
+                rules = ['dependency-tuple', 'dependency-parentheses']
+                reportFormat = 'text'
+            }
+
+            repositories { mavenCentral() }
+
+            dependencies {
+                implementation(group: 'com.google.guava', name: 'guava', version: '18.0')
+            }
+        """
+
+        when:
+        runTasks('generateGradleLintReport', '-PgradleLint.reportOnlyFixableViolations=true')
+
+        then:
+        def report = new File(projectDir, 'build/reports/gradleLint').listFiles().find { it.name.endsWith('.txt') }
+        report.text.contains('Violation: Rule=dependency-tuple')
+        ! report.text.contains('Violation: Rule=dependency-parentheses')
+        report.text.contains('TotalFiles=1')
+    }
+
+    def 'warning without autofixes are not reported if flag is enabled'() {
+        given:
+        buildFile.text = """
+            plugins {
+                id 'nebula.lint'
+                id 'java'
+            }
+
+            gradleLint {
+                rules = ['duplicate-dependency-class']
+                reportFormat = 'text'
+                reportOnlyFixableViolations = true
+            }
+
+            repositories { mavenCentral() }
+
+            dependencies {
+                implementation 'com.google.guava:guava:18.0'
+                implementation 'com.google.collections:google-collections:1.0'
+            }
+        """
+
+        when:
+        runTasks('generateGradleLintReport')
+
+        then:
+        def report = new File(projectDir, 'build/reports/gradleLint').listFiles().find { it.name.endsWith('.txt') }
+        ! report.text.contains('Violation: Rule=duplicate-dependency-class')
     }
 
     def 'critical rules fail task'() {

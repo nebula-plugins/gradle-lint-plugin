@@ -155,23 +155,6 @@ class GradleLintPluginTaskConfigurer extends AbstractLintPluginTaskConfigurer {
 
     private void configureReportTask(Project project, GradleLintExtension extension) {
         TaskProvider<GradleLintReportTask> reportTask = project.tasks.register(GENERATE_GRADLE_LINT_REPORT, GradleLintReportTask)
-        reportTask.configure(new Action<GradleLintReportTask>() {
-            @Override
-            void execute(GradleLintReportTask gradleLintReportTask) {
-                gradleLintReportTask.reports.all { report ->
-                    report.conventionMapping.with {
-                        enabled = { report.name == getReportFormat(project, extension) }
-                        destination = {
-                            def fileSuffix = report.name == 'text' ? 'txt' : report.name
-                            new File(project.buildDir, "reports/gradleLint/${project.name}.$fileSuffix")
-                        }
-                    }
-                }
-            }
-        })
-    }
-
-    private static String getReportFormat(Project project, GradleLintExtension extension) {
-        return project.hasProperty('gradleLint.reportFormat') ? project.property('gradleLint.reportFormat') : extension.reportFormat
+        reportTask.configure(configureReportAction(project, extension))
     }
 }
