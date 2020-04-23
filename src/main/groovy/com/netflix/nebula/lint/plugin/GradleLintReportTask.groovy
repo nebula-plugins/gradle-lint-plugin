@@ -15,12 +15,14 @@
  */
 package com.netflix.nebula.lint.plugin
 
+import com.netflix.nebula.lint.GradleLintPatchAction
 import com.netflix.nebula.lint.StyledTextService
 import org.codenarc.AnalysisContext
 import org.codenarc.report.HtmlReportWriter
 import org.codenarc.report.ReportWriter
 import org.codenarc.report.TextReportWriter
 import org.codenarc.report.XmlReportWriter
+import org.codenarc.results.Results
 import org.codenarc.rule.Violation
 import org.gradle.api.Action
 import org.gradle.api.DefaultTask
@@ -29,6 +31,7 @@ import org.gradle.api.plugins.quality.CodeNarcReports
 import org.gradle.api.plugins.quality.internal.CodeNarcReportsImpl
 import org.gradle.api.reporting.Report
 import org.gradle.api.reporting.Reporting
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.VerificationTask
@@ -44,6 +47,8 @@ class GradleLintReportTask extends DefaultTask implements VerificationTask, Repo
 
     @Nested
     private final CodeNarcReportsImpl reports
+    @Input
+    boolean reportOnlyFixableViolations
 
     /**
      * Whether or not the build should break when the verifications performed by this task fail.
@@ -70,6 +75,7 @@ class GradleLintReportTask extends DefaultTask implements VerificationTask, Repo
         if (reports.enabled) {
             def lintService = new LintService()
             def results = lintService.lint(project, false)
+            filterOnlyFixableViolations(results)
             def violationCount = results.violations.size()
             def textOutput = new StyledTextService(getServices())
 
@@ -120,5 +126,17 @@ class GradleLintReportTask extends DefaultTask implements VerificationTask, Repo
 
     CodeNarcReports reports(Action<? super CodeNarcReports> action) {
         return action.execute(reports)
+    }
+
+    void filterOnlyFixableViolations(Results results) {
+        if (reportOnlyFixableViolations) {
+            new GradleLintPatchAction(project).lintFinished(results.violations)
+            List<Violation> toRemove = results.violations.findAll {
+                it.fixes.size == 0 || it.fixes.any { it.reasonForNotFixing != null }
+            }
+            toRemove.each {
+                results.removeViolation(it)
+            }
+        }
     }
 }
