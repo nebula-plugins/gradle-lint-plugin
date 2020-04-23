@@ -146,6 +146,37 @@ class GradleLintReportTaskSpec extends IntegrationTestKitSpec {
         report.text.contains('TotalFiles=1')
     }
 
+    def 'generate a report with all rules using cli param to disable it to override extension'() {
+        given:
+        buildFile.text = """
+            plugins {
+                id 'java'
+                id 'nebula.lint'
+            }
+
+            gradleLint {
+                rules = ['dependency-tuple', 'dependency-parentheses']
+                reportFormat = 'text'
+                reportOnlyFixableViolations = true
+            }
+
+            repositories { mavenCentral() }
+
+            dependencies {
+                implementation(group: 'com.google.guava', name: 'guava', version: '18.0')
+            }
+        """
+
+        when:
+        runTasks('generateGradleLintReport', '-PgradleLint.reportOnlyFixableViolations=false')
+
+        then:
+        def report = new File(projectDir, 'build/reports/gradleLint').listFiles().find { it.name.endsWith('.txt') }
+        report.text.contains('Violation: Rule=dependency-tuple')
+        report.text.contains('Violation: Rule=dependency-parentheses')
+        report.text.contains('TotalFiles=1')
+    }
+
     def 'warning without autofixes are not reported if flag is enabled'() {
         given:
         buildFile.text = """
