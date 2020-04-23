@@ -66,6 +66,6 @@ abstract class AbstractLintPluginTaskConfigurer {
     }
 
     private static boolean getReportOnlyFixableViolations(Project project, GradleLintExtension extension) {
-        return project.hasProperty('gradleLint.reportOnlyFixableViolations') ? project.property('gradleLint.reportOnlyFixableViolations') : extension.reportOnlyFixableViolations
+        return project.hasProperty('gradleLint.reportOnlyFixableViolations') ? Boolean.valueOf(project.property('gradleLint.reportOnlyFixableViolations').toString()) : extension.reportOnlyFixableViolations
     }
 }
