@@ -14,11 +14,14 @@ import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.codehaus.groovy.ast.stmt.BlockStatement
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
+import org.gradle.api.artifacts.ModuleVersionIdentifier
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.DefaultVersionComparator
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.DefaultVersionSelectorScheme
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.VersionSelector
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+
+import java.util.stream.Collectors
 
 class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
     String description = 'remove bypassed forces and strict constraints. Works for static and ranged declarations'
@@ -102,7 +105,7 @@ class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
         bypassedForces
                 .groupBy { it.dep }
                 .each { dep, bypassedForcesByDep ->
-                    Collection<String> projectNames = bypassedForcesByDep.collect { it.projectName }
+                    Collection<String> projectNames = bypassedForcesByDep.stream().map { bypassedForce -> bypassedForce.projectName }.collect(Collectors.toList())
                     BypassedForce exemplarBypassedForce = bypassedForcesByDep.first()
                     def updatedMessage = exemplarBypassedForce.forcedDependency.message + " for the affected project(s): ${projectNames.sort().join(', ')}"
                     addBuildLintViolation(updatedMessage, exemplarBypassedForce.forcedDependency.forceExpression)
@@ -151,34 +154,45 @@ class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
         Collection<ForcedDependency> dependenciesWithUnusedForces = new ArrayList<ForcedDependency>()
 
         // inspect direct and transitive dependencies
-        configuration.resolvedConfiguration.resolvedArtifacts
-                .collect { it.moduleVersion.id }
-                .unique { it.module.toString() }
+        Collection<ModuleVersionIdentifier> uniqueModuleIdentifiers = configuration.resolvedConfiguration.resolvedArtifacts
+                .stream()
+                .map {artifact -> artifact.moduleVersion }
+                .map { resolvedModuleVersion -> resolvedModuleVersion.id }
+                .collect(Collectors.toList())
+                .unique()
+
+        uniqueModuleIdentifiers
                 .each { resolvedDep ->
                     forcedDeps.each { forcedDependency ->
-                        if (forcedDependency.dep.group == resolvedDep.module.group && forcedDependency.dep.name == resolvedDep.name) {
-                            def expectedVersion = ''
-                            if (forcedDependency.dep.version != null) {
-                                expectedVersion = forcedDependency.dep.version
-                            }
-                            if (!forcedDependency.strictVersion.isEmpty()) {
-                                expectedVersion = forcedDependency.strictVersion
-                            }
-
-                            VersionSelector versionSelector = VERSION_SCHEME.parseSelector(expectedVersion)
-                            if (!expectedVersion.startsWith('$')
-                                    && !expectedVersion.toString().contains(".+")
-                                    && !expectedVersion.toString().contains("latest")
-                                    && !versionSelector.accept(resolvedDep.version)) {
-
-                                forcedDependency.resolvedConfigurations.add(configuration)
-                                forcedDependency.message = "The ${forcedDependency.forceType} has been bypassed.\nRemove or update this value"
-                                dependenciesWithUnusedForces.add(forcedDependency)
-                            }
-                        }
+                        dependenciesWithUnusedForces.addAll(handleEachResolvedDependencyForcedDependency(forcedDependency, resolvedDep, configuration))
                     }
                 }
 
+        return dependenciesWithUnusedForces
+    }
+
+    private Collection<ForcedDependency> handleEachResolvedDependencyForcedDependency(ForcedDependency forcedDependency, ModuleVersionIdentifier resolvedDep, Configuration configuration) {
+        Collection<ForcedDependency> dependenciesWithUnusedForces = new ArrayList<ForcedDependency>()
+        if (forcedDependency.dep.group == resolvedDep.module.group && forcedDependency.dep.name == resolvedDep.name) {
+            def expectedVersion = ''
+            if (forcedDependency.dep.version != null) {
+                expectedVersion = forcedDependency.dep.version
+            }
+            if (!forcedDependency.strictVersion.isEmpty()) {
+                expectedVersion = forcedDependency.strictVersion
+            }
+
+            VersionSelector versionSelector = VERSION_SCHEME.parseSelector(expectedVersion)
+            if (!expectedVersion.startsWith('$')
+                    && !expectedVersion.toString().contains(".+")
+                    && !expectedVersion.toString().contains("latest")
+                    && !versionSelector.accept(resolvedDep.version)) {
+
+                forcedDependency.resolvedConfigurations.add(configuration)
+                forcedDependency.message = "The ${forcedDependency.forceType} has been bypassed.\nRemove or update this value"
+                dependenciesWithUnusedForces.add(forcedDependency)
+            }
+        }
         return dependenciesWithUnusedForces
     }
 
