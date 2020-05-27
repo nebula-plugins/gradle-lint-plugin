@@ -31,21 +31,6 @@ import java.util.zip.ZipException
 class DependencyService {
     private static final String EXTENSION_NAME = "gradleLintDependencyService"
     private static final Collection<String> DEFAULT_METHOD_REFERENCE_IGNORED_PACKAGES = ["java/lang", "java/util", "java/net", "java/io", "java/nio", "java/swing"] //ignore java packages by default for method references
-    protected static final Map<String, String> declaredToResolvableConfigurations = new HashMap<String, String>() {
-        {
-            put('api', 'compileClasspath')
-            put('compile', 'compileClasspath')
-            put('compileOnly', 'compileClasspath')
-            put('implementation', 'compileClasspath')
-            put('runtime', 'runtimeClasspath')
-            put('runtimeOnly', 'runtimeClasspath')
-            put('testCompile', 'testCompileClasspath')
-            put('testCompileOnly', 'testCompileClasspath')
-            put('testImplementation', 'testCompileClasspath')
-            put('testRuntime', 'testRuntimeClasspath')
-            put('testCompileOnly', 'testRuntimeClasspath')
-        }
-    }
 
     static synchronized DependencyService forProject(Project project) {
         def extension = project.extensions.findByType(DependencyServiceExtension)
@@ -160,6 +145,27 @@ class DependencyService {
         if(!replacementConfiguration) {
             replacementConfiguration = configuration
         }
+        return replacementConfiguration
+    }
+
+    /**
+     * Where possible, replaces common non-resolvable configurations with resolvable configurations
+     * @param configuration
+     * @return
+     */
+    protected Configuration findAndReplaceNonResolvableConfiguration(Configuration configuration) {
+        Configuration replacementConfiguration = findAndReplaceDeprecatedConfiguration(configuration)
+
+        if(replacementConfiguration.name == 'api' || replacementConfiguration.name == 'implementation' || replacementConfiguration.name == 'compileOnly') {
+            replacementConfiguration = project.configurations.findByName('compileClasspath')
+        } else if(replacementConfiguration.name == 'runtime' || replacementConfiguration.name == 'runtimeOnly') {
+            replacementConfiguration = project.configurations.findByName('runtimeClasspath')
+        }
+
+        if(!isResolvable(replacementConfiguration)) {
+            project.logger.debug("Configuration ${replacementConfiguration.name} is non-resolvable but will be used for lack of an alternative")
+        }
+
         return replacementConfiguration
     }
 
@@ -282,7 +288,7 @@ class DependencyService {
     @Memoized
     private DependencyReferences classReferences(String confName) {
         def conf = project.configurations.getByName(confName)
-        def classpath = sourceSetClasspath(confName)
+        def classpath = sourceSetClasspath(conf)
         def references = new DependencyReferences()
 
         sourceSetOutput(confName).files.findAll { it.exists() }.each { output ->
@@ -601,8 +607,8 @@ class DependencyService {
 
     }
 
-    private Iterable<File> sourceSetClasspath(String conf) {
-        def sourceSet = sourceSetByConf(resolvableConf(conf))
+    private Iterable<File> sourceSetClasspath(Configuration conf) {
+        def sourceSet = sourceSetByConf(resolvableConf(conf).name)
         if (sourceSet) return sourceSet.compileClasspath
 
         // android
@@ -611,12 +617,13 @@ class DependencyService {
         return project.tasks.findByName('compileReleaseJavaWithJavac')?.classpath
     }
 
-    private static String resolvableConf(String conf) {
-        declaredToResolvableConfigurations.containsKey(conf) ? declaredToResolvableConfigurations.get(conf) : conf
+    private Configuration resolvableConf(Configuration conf) {
+        findAndReplaceNonResolvableConfiguration(conf)
     }
 
-    private FileCollection sourceSetOutput(String conf) {
-        def sourceSet = sourceSetByConf(resolvableConf(conf))
+    private FileCollection sourceSetOutput(String confName) {
+        def conf = project.configurations.getByName(confName)
+        def sourceSet = sourceSetByConf(resolvableConf(conf).name)
         if (sourceSet) {
             if (GradleKt.versionLessThan(project.gradle, "4.0")) {
                 return project.files(sourceSet.output.classesDir)

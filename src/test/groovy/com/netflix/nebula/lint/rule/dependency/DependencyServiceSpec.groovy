@@ -3,6 +3,7 @@ package com.netflix.nebula.lint.rule.dependency
 
 import nebula.test.IntegrationTestKitSpec
 import org.gradle.api.Project
+import org.gradle.api.artifacts.Configuration
 import org.gradle.api.internal.artifacts.DefaultResolvedDependency
 import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.Issue
@@ -391,5 +392,106 @@ class DependencyServiceSpec extends IntegrationTestKitSpec {
         'RuntimeClasspath' | 'RuntimeClasspath'
         'Implementation'   | 'CompileClasspath'
         'Runtime'          | 'RuntimeClasspath'
+    }
+
+    @Unroll
+    def 'findAndReplaceNonResolvableConfiguration works for #configName'() {
+        given:
+        project.with {
+            apply plugin: 'java-library'
+        }
+        writeJavaSourceFile('public class Main {}')
+
+        def dependencyService = DependencyService.forProject(project)
+
+        when:
+        def resolvableConfig = dependencyService.findAndReplaceNonResolvableConfiguration(project.configurations."$configName")
+
+        then:
+        resolvableConfig.name == resolvableConfigName
+
+        where:
+        configName              | resolvableConfigName
+        'api'                   | 'compileClasspath'
+        'compile'               | 'compileClasspath'
+        'compileOnly'           | 'compileClasspath'
+        'implementation'        | 'compileClasspath'
+        'runtime'               | 'runtimeClasspath'
+        'runtimeOnly'           | 'runtimeClasspath'
+
+        'testCompile'           | 'testCompileClasspath'
+        'testCompileOnly'       | 'testCompileClasspath'
+        'testImplementation'    | 'testCompileClasspath'
+        'testRuntime'           | 'testRuntimeClasspath'
+        'testRuntimeOnly'       | 'testRuntimeClasspath'
+    }
+
+    @Unroll
+    def 'findAndReplaceNonResolvableConfiguration works for custom source sets #configName'() {
+        given:
+        project.with {
+            apply plugin: 'java-library'
+        }
+        writeJavaSourceFile('public class Main {}')
+
+        // to verify with custom sourcesets
+        project.sourceSets {
+            special {
+                java {
+                    compileClasspath += main.output
+                    runtimeClasspath += main.output
+                }
+            }
+        }
+
+        def dependencyService = DependencyService.forProject(project)
+
+        when:
+        def resolvableConfig = dependencyService.findAndReplaceNonResolvableConfiguration(project.configurations."$configName")
+
+        then:
+        resolvableConfig.name == resolvableConfigName
+
+        where:
+        configName              | resolvableConfigName
+        'specialCompile'        | 'specialCompileClasspath'
+        'specialCompileOnly'    | 'specialCompileClasspath'
+        'specialImplementation' | 'specialCompileClasspath'
+        'specialRuntime'        | 'specialRuntimeClasspath'
+        'specialRuntimeOnly'    | 'specialRuntimeClasspath'
+    }
+
+    @Unroll
+    def 'findAndReplaceNonResolvableConfiguration works for custom configurations #configName'() {
+        given:
+        project.with {
+            apply plugin: 'java-library'
+
+            // to verify with custom configurations
+            configurations {
+                myNonResolvableConfig {
+                    canBeResolved = false
+                    canBeConsumed = true
+                }
+                myResolvableConfig {
+                    canBeResolved = true
+                    canBeConsumed = true
+                }
+            }
+        }
+        writeJavaSourceFile('public class Main {}')
+
+        def dependencyService = DependencyService.forProject(project)
+
+        when:
+        def resolvableConfig = dependencyService.findAndReplaceNonResolvableConfiguration(project.configurations."$configName")
+
+        then:
+        resolvableConfig.name == resolvableConfigName
+
+        where:
+        configName              | resolvableConfigName
+        'myResolvableConfig'    | 'myResolvableConfig'
+        'myNonResolvableConfig' | 'myNonResolvableConfig' // returns the original config when the resolution alternative is unclear
     }
 }
