@@ -40,22 +40,29 @@ class LintService {
      * the affected files according to which files the violation fixes touch
      */
     class ReportableAnalyzer extends AbstractSourceAnalyzer {
-        DirectoryResults results
+        DirectoryResults resultsForRootProject
 
         ReportableAnalyzer(Project project) {
-            results = new DirectoryResults(project.projectDir.absolutePath)
+            resultsForRootProject = new DirectoryResults(project.projectDir.absolutePath)
         }
 
-        Results analyze(String source, RuleSet ruleSet) {
+        Results analyze(Project analyzedProject, String source, RuleSet ruleSet) {
+            DirectoryResults results
+            if (resultsForRootProject.path != analyzedProject.projectDir.absolutePath) {
+                results = new DirectoryResults(analyzedProject.projectDir.absolutePath)
+                resultsForRootProject.addChild(results)
+            } else {
+                results = resultsForRootProject
+            }
+
             def violations = (collectViolations(new SourceString(source), ruleSet) as List<GradleViolation>)
 
-            violations.groupBy { it.file }
-                    .each { file, fileViolations ->
+            violations.groupBy { it.file }.each { file, fileViolations ->
                 results.addChild(new FileResults(file.absolutePath, fileViolations))
                 results.numberOfFilesInThisDirectory++
             }
 
-            results
+            resultsForRootProject
         }
 
         @Override
@@ -119,12 +126,12 @@ class LintService {
                         rule.buildFiles = buildFiles
                 }
 
-                analyzer.analyze(buildFiles.text, ruleSet)
+                analyzer.analyze(p, buildFiles.text, ruleSet)
 
                 DependencyService.removeForProject(p)
             }
         }
 
-        return analyzer.results
+        return analyzer.resultsForRootProject
     }
 }
