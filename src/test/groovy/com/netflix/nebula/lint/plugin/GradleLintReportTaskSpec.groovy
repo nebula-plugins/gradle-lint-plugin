@@ -297,4 +297,52 @@ class GradleLintReportTaskSpec extends IntegrationTestKitSpec {
         report.text.contains('Violation: Rule=duplicate-dependency-class')
         report.text.contains('TotalFiles=1')
     }
+
+    def 'generate a xml report for a multi-module project'() {
+        when:
+        buildFile.text = """
+            plugins {
+                id 'java'
+                id 'nebula.lint'
+            }
+            
+            allprojects {
+                gradleLint {
+                    rules = ['dependency-parentheses']
+                    reportFormat = 'xml'
+                }
+                
+                repositories { mavenCentral() }
+            }
+            
+            dependencies {
+                implementation('com.google.guava:guava:19.0')
+            }
+        """
+
+        def sub = addSubproject('sub')
+        new File(sub, 'build.gradle').text = """
+            plugins {
+                id 'java'
+            }
+
+            dependencies {
+                implementation('com.google.guava:guava:18.0')
+            }
+        """
+
+        then:
+        runTasks('generateGradleLintReport')
+
+        when:
+        def report = new File(projectDir, 'build/reports/gradleLint').listFiles().find { it.name.endsWith('.xml') }
+
+        then:
+        def reportXml = report.text
+        reportXml.count('Violation ruleName=\'dependency-parentheses\'') == 2
+        reportXml.contains('implementation(\'com.google.guava:guava:19.0\')')
+        reportXml.contains('implementation(\'com.google.guava:guava:18.0\')')
+        reportXml.contains("<Package path='$projectDir.absolutePath'")
+        reportXml.contains("<Package path='$projectDir.absolutePath/sub'")
+    }
 }
