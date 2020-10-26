@@ -67,6 +67,7 @@ abstract class AbstractDuplicateDependencyClassRule extends GradleLintRule imple
             def violations = checkForDuplicates.invoke(duplicateDependencyService, moduleIds, conf, ignoredDependencies) as List<String>
             violations.each { message ->
                 addBuildLintViolation(message)
+                    .documentationUri("https://github.com/nebula-plugins/gradle-lint-plugin/wiki/Duplicate-Classes-Rule")
             }
         }
     }

@@ -79,6 +79,7 @@ class MinimumDependencyVersionRule extends GradleLintRule implements GradleModel
 
         if (VersionNumber.parse(resolved.moduleVersion.id.version).compareTo(VersionNumber.parse(minVersionConstraint.version)) < 0) {
             addBuildLintViolation("${resolved.moduleVersion.id.module} does not meet the minimum version of $minVersionConstraint.version", decl)
+                .documentationUri("https://github.com/nebula-plugins/gradle-lint-plugin/wiki/Minimum-Dependency-Version-Rule")
             alreadyAdded += minVersionConstraint
         }
     }
@@ -119,8 +120,10 @@ class MinimumDependencyVersionRule extends GradleLintRule implements GradleModel
             def dependenciesBlock = bookmark('dependencies')
             if (dependenciesBlock) {
                 addBuildLintViolation("$constraint.group:$constraint.name is below the minimum version of $constraint.version")
+                        .documentationUri("https://github.com/nebula-plugins/gradle-lint-plugin/wiki/Minimum-Dependency-Version-Rule")
             } else {
                 addBuildLintViolation("$constraint.group:$constraint.name is below the minimum version of $constraint.version")
+                        .documentationUri("https://github.com/nebula-plugins/gradle-lint-plugin/wiki/Minimum-Dependency-Version-Rule")
                 // FIXME insert new dependencies block with this dependency
             }
             return true

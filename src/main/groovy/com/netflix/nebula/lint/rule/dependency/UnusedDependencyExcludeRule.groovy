@@ -44,6 +44,7 @@ class UnusedDependencyExcludeRule extends GradleLintRule implements GradleModelA
                 def entries = GradleAstUtil.collectEntryExpressions(call)
                 if (isExcludeUnnecessary(entries.group, entries.module)) {
                     addBuildLintViolation("the excluded dependency is not a transitive of $dependency.group:$dependency.name:$dependency.version, so has no effect", call)
+                            .documentationUri("https://github.com/nebula-plugins/gradle-lint-plugin/wiki/Unused-Exclude-Rule")
                             .delete(call)
                 }
             }
