@@ -32,6 +32,7 @@ class GradleViolation extends Violation {
     BuildFiles files
     List<GradleLintFix> fixes = []
     int id
+    String documentationUri = "https://github.com/nebula-plugins/gradle-lint-plugin/wiki"
 
     static AtomicInteger nextId = new AtomicInteger(0)
 
@@ -151,6 +152,11 @@ class GradleViolation extends Violation {
 
     GradleViolation createFile(File file, String changes, FileMode fileMode = FileMode.Regular) {
         fixes += new GradleLintCreateFile(this, file, changes, fileMode)
+        this
+    }
+
+    GradleViolation documentationUri(String documentationUri) {
+        this.documentationUri = documentationUri
         this
     }
 }
