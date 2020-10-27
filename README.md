@@ -72,10 +72,10 @@ If [gradle/gradle#11106](https://github.com/gradle/gradle/issues/11106) lands so
 While it is great to have automatic fix, not having it is worse. So for now warning about this with the same detail as before is much better than a broken experience with new gradle configurations
 
 ## Warning
+
 Gradle Lint Plugin currently doesn't support:
 
 * kotlin build scripts. Please, switch to groovy build script if you want to use linting. [#166](https://github.com/nebula-plugins/gradle-lint-plugin/issues/166)
-
 
 ## License
 
