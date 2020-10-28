@@ -85,10 +85,6 @@ dependencies {
     testImplementation 'com.netflix.nebula:gradle-info-plugin:latest.release'
 }
 
-test {
-    maxParallelForks = 3
-}
-
 pluginBundle {
     website = 'https://github.com/nebula-plugins/gradle-lint-plugin'
     vcsUrl = 'https://github.com/nebula-plugins/gradle-lint-plugin.git'
