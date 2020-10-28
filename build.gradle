@@ -150,6 +150,8 @@ publishing {
 }
 
 tasks.withType(Test) {
+    maxHeapSize = '512m'
+    maxParallelForks = 4
     testLogging {
         events "PASSED", "FAILED", "SKIPPED"
         afterSuite { desc, result ->
