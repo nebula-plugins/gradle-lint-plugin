@@ -1,4 +1,4 @@
-package com.netflix.nebula.lint
+package com.netflix.nebula.lint.plugin
 
 import com.netflix.nebula.lint.plugin.LintGradleTask
 import org.gradle.api.GradleException
