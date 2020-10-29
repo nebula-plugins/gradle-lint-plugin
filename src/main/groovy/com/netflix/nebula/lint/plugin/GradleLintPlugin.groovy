@@ -37,12 +37,6 @@ class GradleLintPlugin implements Plugin<Project> {
         } else {
             new LegacyGradleLintPluginTaskConfigurer().configure(project)
         }
-        if (GradleKt.versionCompareTo(project.gradle, '6.6') >= 0) {
-            if (project == project.rootProject) {
-                def emitterPlugin = Class.forName('com.netflix.nebula.lint.GradleLintDeprecationEmitterPlugin')
-                project.plugins.apply(emitterPlugin)
-            }
-        }
     }
 
     protected static abstract class LintListener extends BuildAdapter implements TaskExecutionGraphListener {}
