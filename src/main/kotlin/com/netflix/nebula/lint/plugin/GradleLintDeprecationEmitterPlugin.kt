@@ -8,6 +8,7 @@ import org.gradle.api.Project
 import org.gradle.internal.deprecation.DeprecatedFeatureUsage
 import org.gradle.internal.featurelifecycle.DeprecatedUsageProgressDetails
 import org.gradle.internal.operations.BuildOperationProgressEventEmitter
+import java.io.Serializable
 import java.util.function.Consumer
 import javax.inject.Inject
 
@@ -29,7 +30,7 @@ class GradleLintDeprecationEmitterPlugin @Inject constructor(private val emitter
                 })
     }
 
-    private class DeprecationGradleLintInfoBrokerAction(private val emitter: BuildOperationProgressEventEmitter) : GradleLintViolationAction() {
+    private class DeprecationGradleLintInfoBrokerAction(private val emitter: BuildOperationProgressEventEmitter) : GradleLintViolationAction(), Serializable {
         override fun lintFinished(violations: Collection<GradleViolation>) {
             violations.forEach(Consumer { violation: GradleViolation ->
                 val details: DeprecatedUsageProgressDetails = ViolationDeprecatedUsageProgressDetails(violation)
