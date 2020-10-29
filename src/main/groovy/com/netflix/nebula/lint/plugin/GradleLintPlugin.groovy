@@ -22,11 +22,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.execution.TaskExecutionGraphListener
 
-
 class GradleLintPlugin implements Plugin<Project> {
-
-    private static final String GRADLE_FIVE_ZERO = '5.0'
-
     @Override
     void apply(Project project) {
         if (project.buildFile.name.toLowerCase().endsWith('.kts')) {
@@ -36,10 +32,16 @@ class GradleLintPlugin implements Plugin<Project> {
 
         LintRuleRegistry.classLoader = getClass().classLoader
 
-        if (project.gradle.gradleVersion == GRADLE_FIVE_ZERO || GradleKt.versionGreaterThan(project.gradle, GRADLE_FIVE_ZERO)) {
+        if (GradleKt.versionCompareTo(project.gradle, '5.0') >= 0) {
             new GradleLintPluginTaskConfigurer().configure(project)
         } else {
             new LegacyGradleLintPluginTaskConfigurer().configure(project)
+        }
+        if (GradleKt.versionCompareTo(project.gradle, '6.6') >= 0) {
+            if (project == project.rootProject) {
+                def emitterPlugin = Class.forName('com.netflix.nebula.lint.GradleLintDeprecationEmitterPlugin')
+                project.plugins.apply(emitterPlugin)
+            }
         }
     }
 
