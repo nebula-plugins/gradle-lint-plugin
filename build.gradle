@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import org.gradle.util.GradleVersion
 
 plugins {
     id 'nebula.plugin-plugin' version '14.5.0'
@@ -167,23 +166,11 @@ tasks.withType(Test) {
 
 // Kotlin compiles first, stubbing Java dependencies, however it can't stub Groovy and we need to call Groovy code from Kotlin. For details see:
 // https://discuss.gradle.org/t/kotlin-groovy-and-java-compilation/14903/10
-if (GradleVersion.version(project.gradle.gradleVersion) >= (GradleVersion.version('6.1'))) {
-    tasks.named('compileGroovy') {
-        // Groovy only needs the declared dependencies
-        // and not the output of compileJava
-        classpath = sourceSets.main.compileClasspath
-    }
-    tasks.named('compileKotlin') {
-        // Kotlin also depends on the result of Groovy compilation
-        // which automatically makes it depend of compileGroovy
-        classpath += files(sourceSets.main.groovy.classesDirectory)
-    }
-
-} else {
-    compileGroovy.dependsOn = compileGroovy.taskDependencies.mutableValues - 'compileJava'
-    compileKotlin.dependsOn compileGroovy
-    compileKotlin.classpath += files(compileGroovy.destinationDir)
-    classes.dependsOn compileKotlin
+tasks.named('compileGroovy') {
+    classpath = sourceSets.main.compileClasspath
+}
+tasks.named('compileKotlin') {
+    classpath += files(sourceSets.main.groovy.classesDirectory)
 }
 
 targetCompatibility = JavaVersion.VERSION_1_8

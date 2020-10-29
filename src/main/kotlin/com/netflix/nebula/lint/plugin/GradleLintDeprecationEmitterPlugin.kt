@@ -1,6 +1,7 @@
 package com.netflix.nebula.lint.plugin
 
-import com.netflix.nebula.lint.plugin.LintGradleTask
+import com.netflix.nebula.lint.GradleLintViolationAction
+import com.netflix.nebula.lint.GradleViolation
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
