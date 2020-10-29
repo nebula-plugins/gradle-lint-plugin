@@ -31,9 +31,6 @@ class RecommendedVersionsRuleSpec extends IntegrationTestKitSpec {
     private static final String ALLPROJECTS = 'allprojects'
 
     def setup() {
-        if (settingsFile.exists()) {
-            settingsFile.delete()
-        }
         def propertiesFile = new File(projectDir, "gradle.properties")
         if (propertiesFile.exists()) {
             propertiesFile.delete()
@@ -784,7 +781,6 @@ class RecommendedVersionsRuleSpec extends IntegrationTestKitSpec {
         def filesAsString = projectDir.listFiles().toString()
         filesAsString.contains(projectDir.toString() + File.separator + "build.gradle")
         !filesAsString.contains(projectDir.toString() + File.separator + "gradle.properties")
-        !filesAsString.contains(projectDir.toString() + File.separator + "settings.gradle")
 
         where:
         versionOfGradle << [V_4_POINT_5, V_4_POINT_6]
