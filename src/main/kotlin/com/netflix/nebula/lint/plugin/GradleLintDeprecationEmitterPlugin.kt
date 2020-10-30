@@ -31,7 +31,7 @@ class GradleLintDeprecationEmitterPlugin @Inject constructor(private val emitter
     }
 }
 
-class DeprecationGradleLintInfoBrokerAction(private val emitter: BuildOperationProgressEventEmitter) : GradleLintViolationAction(), Serializable {
+class DeprecationGradleLintInfoBrokerAction(@Transient private val emitter: BuildOperationProgressEventEmitter) : GradleLintViolationAction(), Serializable {
     override fun lintFinished(violations: Collection<GradleViolation>) {
         violations.forEach(Consumer { violation: GradleViolation ->
             val details: DeprecatedUsageProgressDetails = ViolationDeprecatedUsageProgressDetails(violation)
