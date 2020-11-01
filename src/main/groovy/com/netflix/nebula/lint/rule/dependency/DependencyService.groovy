@@ -178,8 +178,9 @@ class DependencyService {
         def configurations = resolvableConfigurations()
         for (Configuration conf in configurations) {
             def artifact = conf.resolvedConfiguration.resolvedArtifacts.find { it.moduleVersion.id.module == id }
-            if (artifact)
+            if (artifact && !isTestFixturesDirectory(id, artifact.file)) {
                 return jarContents(artifact.file)
+            }
         }
         return null
     }
@@ -646,6 +647,10 @@ class DependencyService {
 
         def androidReleaseOutput = project.tasks.findByName('compileReleaseJavaWithJavac')?.destinationDir
         return androidReleaseOutput
+    }
+
+    private static boolean isTestFixturesDirectory(ModuleIdentifier id, File file) {
+        return id.name.endsWith("test-fixtures") && file.isDirectory()
     }
 
     Comparator<? super SourceSet> sourceSetComparator() {
