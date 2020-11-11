@@ -91,36 +91,32 @@ class FixGradleLintTask extends DefaultTask implements VerificationTask {
                 int completelyFixed = 0
                 int unfixedCriticalViolations = 0
 
-                int padding = 15
-                int longestRuleName = violations.collect{ it.rule.name.size() }.max()
-                int ruleNamePadding = longestRuleName < 35 ? 35 : longestRuleName + 2
-
                 violations.groupBy { it.file }.each { buildFile, projectViolations ->
 
                     projectViolations.each { v ->
                         String buildFilePath = project.rootDir.toURI().relativize(v.file.toURI()).toString()
                         def unfixed = v.fixes.findAll { it.reasonForNotFixing != null }
                         if (v.fixes.empty) {
-                            textOutput.withStyle(Yellow).text('needs fixing'.padRight(padding))
+                            textOutput.withStyle(Yellow).text('needs fixing'.padRight(15))
                             if (v.rule.priority == 1) {
                                 unfixedCriticalViolations++
                             }
                         } else if (unfixed.empty) {
-                            textOutput.withStyle(Green).text('fixed'.padRight(padding))
+                            textOutput.withStyle(Green).text('fixed'.padRight(15))
                             completelyFixed++
                         } else if (unfixed.size() == v.fixes.size()) {
-                            textOutput.withStyle(Yellow).text('unfixed'.padRight(padding))
+                            textOutput.withStyle(Yellow).text('unfixed'.padRight(15))
                             if (v.rule.priority == 1) {
                                 unfixedCriticalViolations++
                             }
                         } else {
-                            textOutput.withStyle(Yellow).text('semi-fixed'.padRight(padding))
+                            textOutput.withStyle(Yellow).text('semi-fixed'.padRight(15))
                             if (v.rule.priority == 1) {
                                 unfixedCriticalViolations++
                             }
                         }
 
-                        textOutput.text(v.rule.name.padRight(ruleNamePadding))
+                        textOutput.text(v.rule.name.padRight(35))
                         textOutput.withStyle(Yellow).println(v.message)
 
                         if (v.lineNumber) {

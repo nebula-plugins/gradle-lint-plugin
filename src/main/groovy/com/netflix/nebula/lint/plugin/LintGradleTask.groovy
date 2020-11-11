@@ -73,21 +73,17 @@ class LintGradleTask extends DefaultTask {
                 }
             }
 
-            int padding = 10
-            int longestRuleName = violations.collect{ it.rule.name.size() }.max()
-            int ruleNamePadding = longestRuleName < 35 ? 35 : longestRuleName + 1
-
             violations.groupBy { it.file }.each { buildFile, violationsByFile ->
 
                 violationsByFile.each { v ->
                     String buildFilePath = project.rootDir.toURI().relativize(v.file.toURI()).toString()
                     if (v.rule.priority == 1) {
-                        textOutput.withStyle(Red).text('error'.padRight(padding))
+                        textOutput.withStyle(Red).text('error'.padRight(10))
                     } else {
-                        textOutput.withStyle(Red).text('warning'.padRight(padding))
+                        textOutput.withStyle(Red).text('warning'.padRight(10))
                     }
 
-                    textOutput.text(v.rule.name.padRight(ruleNamePadding))
+                    textOutput.text(v.rule.name.padRight(35))
 
                     textOutput.withStyle(Yellow).text(v.message)
                     if (v.fixes.empty) {
