@@ -34,7 +34,7 @@ class DeprecatedDependencyConfigurationRuleSpec extends IntegrationTestKitSpec {
         def result = runTasks('autoLintGradle', '--warning-mode=none')
 
         then:
-        result.output.contains("warning   deprecated-dependency-configurationConfiguration $configuration has been deprecated and should be replaced with $replacementConfiguration (no auto-fix available)")
+        result.output.contains("warning   deprecated-dependency-configuration Configuration $configuration has been deprecated and should be replaced with $replacementConfiguration (no auto-fix available)")
 
         where:
         configuration | replacementConfiguration
@@ -91,7 +91,7 @@ class DeprecatedDependencyConfigurationRuleSpec extends IntegrationTestKitSpec {
         def result = runTasks('autoLintGradle', '--warning-mode=none')
 
         then:
-        result.output.contains("warning   deprecated-dependency-configurationConfiguration $configuration has been deprecated and should be replaced with $replacementConfiguration (no auto-fix available)")
+        result.output.contains("warning   deprecated-dependency-configuration Configuration $configuration has been deprecated and should be replaced with $replacementConfiguration (no auto-fix available)")
 
         where:
         configuration | replacementConfiguration
@@ -123,7 +123,7 @@ class DeprecatedDependencyConfigurationRuleSpec extends IntegrationTestKitSpec {
         def result = runTasks('autoLintGradle', '--warning-mode=none')
 
         then:
-        result.output.contains("warning   deprecated-dependency-configurationConfiguration $configuration has been deprecated and should be replaced with $replacementConfiguration (no auto-fix available)")
+        result.output.contains("warning   deprecated-dependency-configuration Configuration $configuration has been deprecated and should be replaced with $replacementConfiguration (no auto-fix available)")
 
         where:
         configuration | replacementConfiguration
@@ -154,7 +154,7 @@ class DeprecatedDependencyConfigurationRuleSpec extends IntegrationTestKitSpec {
         def result = runTasks('autoLintGradle', '--warning-mode=none')
 
         then:
-        result.output.contains("warning   deprecated-dependency-configurationConfiguration $configuration has been deprecated and should be replaced with $replacementConfiguration (no auto-fix available)")
+        result.output.contains("warning   deprecated-dependency-configuration Configuration $configuration has been deprecated and should be replaced with $replacementConfiguration (no auto-fix available)")
 
         where:
         configuration | replacementConfiguration
@@ -187,7 +187,7 @@ class DeprecatedDependencyConfigurationRuleSpec extends IntegrationTestKitSpec {
         def result = runTasks('autoLintGradle', '--warning-mode=none')
 
         then:
-        result.output.contains("warning   deprecated-dependency-configurationConfiguration $configuration has been deprecated and should be replaced with $replacementConfiguration (no auto-fix available)")
+        result.output.contains("warning   deprecated-dependency-configuration Configuration $configuration has been deprecated and should be replaced with $replacementConfiguration (no auto-fix available)")
 
         where:
         configuration | replacementConfiguration
