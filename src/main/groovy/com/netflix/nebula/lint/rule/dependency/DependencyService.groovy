@@ -155,11 +155,15 @@ class DependencyService {
      */
     protected Configuration findAndReplaceNonResolvableConfiguration(Configuration configuration) {
         Configuration replacementConfiguration = findAndReplaceDeprecatedConfiguration(configuration)
+        Configuration replacementClasspathConfiguration = replacementConfiguration
 
         if(replacementConfiguration.name == 'api' || replacementConfiguration.name == 'implementation' || replacementConfiguration.name == 'compileOnly') {
-            replacementConfiguration = project.configurations.findByName('compileClasspath')
+            replacementClasspathConfiguration = project.configurations.findByName('compileClasspath')
         } else if(replacementConfiguration.name == 'runtime' || replacementConfiguration.name == 'runtimeOnly') {
-            replacementConfiguration = project.configurations.findByName('runtimeClasspath')
+            replacementClasspathConfiguration = project.configurations.findByName('runtimeClasspath')
+        }
+        if (replacementClasspathConfiguration != null) {
+            replacementConfiguration = replacementClasspathConfiguration
         }
 
         if(!isResolvable(replacementConfiguration)) {
