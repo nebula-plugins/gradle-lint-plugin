@@ -50,7 +50,6 @@ class LintGradleTask extends DefaultTask {
         (getListeners() + new GradleLintPatchAction(project) + new GradleLintInfoBrokerAction(project) + consoleOutputAction).each {
             it.lintFinished(violations)
         }
-
     }
 
     @Internal
@@ -89,6 +88,9 @@ class LintGradleTask extends DefaultTask {
                     textOutput.withStyle(Yellow).text(v.message)
                     if (v.fixes.empty) {
                         textOutput.withStyle(Yellow).text(' (no auto-fix available)')
+                    }
+                    if (v.documentationUri != GradleViolation.DEFAULT_DOCUMENTATION_URI) {
+                        textOutput.text(". See $v.documentationUri for more details")
                     }
                     textOutput.println()
 

@@ -29,10 +29,12 @@ import java.util.concurrent.atomic.AtomicInteger
 
 @EqualsAndHashCode(includes = 'id')
 class GradleViolation extends Violation {
+    public static String DEFAULT_DOCUMENTATION_URI = "https://github.com/nebula-plugins/gradle-lint-plugin/wiki"
+
     BuildFiles files
     List<GradleLintFix> fixes = []
     int id
-    String documentationUri = "https://github.com/nebula-plugins/gradle-lint-plugin/wiki"
+    String documentationUri = DEFAULT_DOCUMENTATION_URI
 
     static AtomicInteger nextId = new AtomicInteger(0)
 
