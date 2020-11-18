@@ -29,7 +29,6 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.VerificationTask
-import org.gradle.util.DeprecationLogger
 
 import static com.netflix.nebula.lint.StyledTextService.Styling.*
 

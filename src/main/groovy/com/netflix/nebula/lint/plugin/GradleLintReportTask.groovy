@@ -17,6 +17,7 @@ package com.netflix.nebula.lint.plugin
 
 import com.netflix.nebula.lint.GradleLintPatchAction
 import com.netflix.nebula.lint.StyledTextService
+import com.netflix.nebula.lint.utils.DeprecationLoggerUtils
 import org.codenarc.AnalysisContext
 import org.codenarc.report.HtmlReportWriter
 import org.codenarc.report.ReportWriter
@@ -35,13 +36,12 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.VerificationTask
-import org.gradle.util.DeprecationLogger
 import org.gradle.internal.reflect.Instantiator
 import org.gradle.util.GradleVersion
 
 import javax.inject.Inject
 
-import static com.netflix.nebula.lint.StyledTextService.Styling.*
+import static com.netflix.nebula.lint.StyledTextService.Styling.Bold
 
 class GradleLintReportTask extends DefaultTask implements VerificationTask, Reporting<CodeNarcReports> {
 
@@ -57,11 +57,11 @@ class GradleLintReportTask extends DefaultTask implements VerificationTask, Repo
 
     GradleLintReportTask() {
         CodeNarcReportsImpl codeNarcReports
-        if(GradleVersion.version(project.gradle.gradleVersion).compareTo(GradleVersion.version('4.4.1')) > 0) {
+        if (GradleVersion.version(project.gradle.gradleVersion).compareTo(GradleVersion.version('4.4.1')) > 0) {
             codeNarcReports = project.objects.newInstance(CodeNarcReportsImpl.class, this)
         } else {
             //TODO: remove this once we don't have customers in Gradle 4.1
-            DeprecationLogger.whileDisabled() {
+            DeprecationLoggerUtils.whileDisabled() {
                 codeNarcReports = instantiator.newInstance(CodeNarcReportsImpl, this)
             }
         }
