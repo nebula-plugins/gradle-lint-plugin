@@ -403,7 +403,7 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                     def dependency = null
 
                     if (call.arguments.expressions.any { it instanceof MapExpression }) {
-                        def entries = GradleAstUtil.collectEntryExpressions(call)
+                        def entries = GradleAstUtil.collectEntryExpressions(call, sourceCode)
                         dependency = new GradleDependency(
                                 entries.group,
                                 entries.name,
@@ -419,7 +419,10 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                             if (it instanceof ConstantExpression)
                                 return it.value
                             if (it instanceof GStringExpression)
-                                return it.text
+                                if (it.lineNumber == it.lastLineNumber)
+                                    return sourceCode.lines.get(it.lineNumber - 1).substring(it.columnNumber, it.lastColumnNumber - 2)
+                                else
+                                    return it.text
                             return null
                         }
                         dependency = GradleDependency.fromConstant(expr)

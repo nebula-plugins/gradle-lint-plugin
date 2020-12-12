@@ -16,15 +16,26 @@
 
 package com.netflix.nebula.lint.rule
 
+import org.codehaus.groovy.ast.expr.MapEntryExpression
 import org.codehaus.groovy.ast.expr.MapExpression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
+import org.codenarc.source.SourceCode
 
 class GradleAstUtil {
-    static Map<String, String> collectEntryExpressions(MethodCallExpression call) {
+    static Map<String, String> collectEntryExpressions(MethodCallExpression call, SourceCode originalSource = null) {
         call.arguments.expressions
                 .findAll { it instanceof MapExpression }
                 .collect { it.mapEntryExpressions }
                 .flatten()
-                .collectEntries { [it.keyExpression.text, it.valueExpression.text] } as Map<String, String>
+                .collectEntries { MapEntryExpression entry -> [entry.keyExpression.text, extractValue(entry, originalSource)] } as Map<String, String>
+    }
+
+    private static String extractValue(MapEntryExpression entry, SourceCode originalSource) {
+        def value = entry.valueExpression
+        //for one line declaration we try to be more precise and extract original source code since `.text` can be lossy for GString expressions
+        if (originalSource != null && value.lineNumber == value.lastLineNumber)
+            originalSource.lines.get(value.lineNumber - 1).substring(value.columnNumber, value.lastColumnNumber - 2)
+        else
+            entry.valueExpression.text
     }
 }
