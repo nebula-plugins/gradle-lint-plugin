@@ -391,6 +391,25 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         a.syntax == GradleDependency.Syntax.MapNotation
     }
 
+    def 'visit dependencies that are defined with GString and braces are preserved'() {
+        given:
+        project.buildFile << """
+            def v = 1
+            dependencies {
+                compile group: 'a', name: 'a', version: "\${v}"
+                compile "b:b:\${v}"
+            }
+        """
+
+        when:
+        def a = new DependencyVisitingRule().run().deps.find { it.name == 'a' }
+        def b = new DependencyVisitingRule().run().deps.find { it.name == 'b' }
+
+        then:
+        a.version == '${v}'
+        b.version == '${v}'
+    }
+
     def 'visit dependency with no version'() {
         when:
         project.buildFile << """
