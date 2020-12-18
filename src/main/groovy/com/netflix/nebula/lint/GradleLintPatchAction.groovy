@@ -99,6 +99,7 @@ class GradleLintPatchAction extends GradleLintViolationAction {
                                 next.from() <= fix.from() && next.to() >= fix.to()) &&
                                 !involvesAnInsertion) {
                             next.markAsUnfixed(UnfixedViolationReason.OverlappingPatch)
+                            markFixesFromTheSameViolation(patchSet, next)
                         }
                     }
                 }
@@ -242,6 +243,16 @@ class GradleLintPatchAction extends GradleLintViolationAction {
         }
 
         combinedPatch + '\n'
+    }
+
+    //we want to ensure that the all fixes from violation are applied if one of them is marked as overlapped we mark
+    //the rest as overlapped too to avoid partial rule application
+    private List<GradleLintFix> markFixesFromTheSameViolation(List<GradleLintFix> patchSet, next) {
+        patchSet.each {
+            if (it.violation == next.violation) {
+                it.markAsUnfixed(UnfixedViolationReason.OverlappingPatch)
+            }
+        }
     }
 }
 

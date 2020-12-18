@@ -26,13 +26,14 @@ import java.nio.file.Files
 
 class GradleLintPatchActionSpec extends Specification {
     GradleViolation violation
+    def buildFile
 
     @Rule
     TemporaryFolder temp
     Project project
 
     def setup() {
-        def buildFile = temp.newFile('build.gradle')
+        buildFile = temp.newFile('build.gradle')
         project = [getRootDir: { temp.root }] as Project
         violation = new GradleViolation(
                 new BuildFiles([buildFile]), // does not matter
@@ -554,6 +555,42 @@ class GradleLintPatchActionSpec extends Specification {
             '''.substring(1).stripIndent()
     }
 
+    def 'overlapping changes remove rest of the fixes from the violation which had skipped fix'() {
+        setup:
+        def f = temp.newFile('my.txt')
+
+        f.text = '''\
+        a
+        b
+        c
+        '''.stripIndent()
+
+        def secondViolation = new GradleViolation(
+                new BuildFiles([buildFile]), // does not matter
+                null, // does not matter
+                2, // does not matter
+                'doesnotmatter 2',
+                'doesnotmatter 2')
+
+        when:
+        def fix1 = new GradleLintReplaceWith(violation, f, 3..3, 1, 2, '1')
+        def fix2 = new GradleLintReplaceWith(secondViolation, f, 1..1, 1, 2, '*')
+        def fix3 = new GradleLintReplaceWith(secondViolation, f, 3..3, 1, 2, '3')
+        def patch = new GradleLintPatchAction(project).patch([fix1, fix2, fix3])
+
+        then:
+        patch == '''
+            diff --git a/my.txt b/my.txt
+            --- a/my.txt
+            +++ b/my.txt
+            @@ -1,3 +1,3 @@
+             a
+             b
+            -c
+            +1
+            '''.substring(1).stripIndent()
+    }
+
     def 'lines that contain only whitespace are never included as the the trailing element of after context'() {
         setup:
         def f = temp.newFile('my.txt')
@@ -737,9 +774,16 @@ class GradleLintPatchActionSpec extends Specification {
         c
         '''.stripIndent()
 
+        def secondViolation = new GradleViolation(
+                new BuildFiles([buildFile]), // does not matter
+                null, // does not matter
+                2, // does not matter
+                'doesnotmatter 2',
+                'doesnotmatter 2')
+
         when:
         def fix1 = new GradleLintReplaceWith(violation, f, 1..2, 1, 2, 'e')
-        def fix2 = new GradleLintReplaceWith(violation, f, 1..1, 2, 3, 'f')
+        def fix2 = new GradleLintReplaceWith(secondViolation, f, 1..1, 2, 3, 'f')
         def patch = new GradleLintPatchAction(project).patch([fix1, fix2])
 
         then: 'the second fix is ignored, and would be best applied on a second pass'
