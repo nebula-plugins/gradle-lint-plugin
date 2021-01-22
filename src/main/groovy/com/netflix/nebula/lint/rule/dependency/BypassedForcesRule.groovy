@@ -17,6 +17,7 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ModuleVersionIdentifier
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.DefaultVersionComparator
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.DefaultVersionSelectorScheme
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.VersionParser
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.VersionSelector
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -27,7 +28,8 @@ class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
     String description = 'remove bypassed forces and strict constraints. Works for static and ranged declarations'
     Map<String, Collection<ForcedDependency>> forcedDependenciesPerProject = new HashMap<String, Collection<ForcedDependency>>()
     private final DefaultVersionComparator VERSIONED_COMPARATOR = new DefaultVersionComparator()
-    private final DefaultVersionSelectorScheme VERSION_SCHEME = new DefaultVersionSelectorScheme(VERSIONED_COMPARATOR)
+    private final VersionParser versionParser = new VersionParser()
+    private final DefaultVersionSelectorScheme VERSION_SCHEME = new DefaultVersionSelectorScheme(VERSIONED_COMPARATOR, versionParser)
     private final Logger log = LoggerFactory.getLogger(BypassedForcesRule.class);
 
     @Override
@@ -131,9 +133,12 @@ class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
                     bypassedForcedDependencies.addAll(collectDependenciesWithUnusedForces(configuration, forcedDeps))
                 }
             } else {
-                Configuration groupedResolvableConfiguration = dependencyService.findResolvableConfiguration(declaredConfigurationName)
-                if (resolvableAndResolvedConfigurations.contains(groupedResolvableConfiguration)) {
-                    bypassedForcedDependencies.addAll(collectDependenciesWithUnusedForces(groupedResolvableConfiguration, forcedDeps))
+                Configuration declaredConfiguration = affectedProject.configurations.findByName(declaredConfigurationName)
+                if (declaredConfiguration != null) {
+                    Configuration groupedResolvableConfiguration = dependencyService.findAndReplaceNonResolvableConfiguration(declaredConfiguration)
+                    if (dependencyService.isResolvable(groupedResolvableConfiguration) && resolvableAndResolvedConfigurations.contains(groupedResolvableConfiguration)) {
+                        bypassedForcedDependencies.addAll(collectDependenciesWithUnusedForces(groupedResolvableConfiguration, forcedDeps))
+                    }
                 }
             }
         }

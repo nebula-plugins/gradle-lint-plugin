@@ -29,20 +29,18 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
     }
 
     @Override
-    void visitGradleDependency(MethodCallExpression call, String conf, GradleDependency dep) {
-        if (!dependencyService.isResolved(conf)) {
-            return // we won't slow down the build by resolving the configuration if it hasn't been already
-        }
+    void visitGradleDependency(MethodCallExpression call, String declaredConf, GradleDependency dep) {
+        String conf = dependencyService.findAndReplaceNonResolvableConfiguration(project.configurations.getByName(declaredConf)).name
 
         if(project.convention.findPlugin(JavaPluginConvention)) {
             def mid = dep.toModule()
 
-            if (!declaredDependenciesByConf.containsKey(conf)) {
-                declaredDependenciesByConf.put(conf, new ArrayList<ModuleIdentifier>())
+            if (!declaredDependenciesByConf.containsKey(declaredConf)) {
+                declaredDependenciesByConf.put(declaredConf, new ArrayList<ModuleIdentifier>())
             }
-            declaredDependenciesByConf.get(conf).add(mid)
+            declaredDependenciesByConf.get(declaredConf).add(mid)
 
-            if (conf == 'compileOnly') {
+            if (declaredConf == 'compileOnly') {
                 compileOnlyDependencies.add(mid)
             }
 
@@ -60,7 +58,7 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
                     addBuildLintViolation("this dependency should be moved to the runtimeOnly configuration since it has no classes", call)
                 } else if (shouldBeRuntime.contains(dep.name)) {
                     addBuildLintViolation("this dependency should be moved to the runtimeOnly configuration", call)
-                } else if (dependencyService.unusedDependencies(conf).contains(mid)) {
+                } else if (dependencyService.unusedDependencies(conf, declaredConf).contains(mid)) {
                     def requiringSourceSet = dependencyService.parentSourceSetConfigurations(conf)
                             .find { parent -> dependencyService.usedDependencies(parent.name).contains(mid) }
 

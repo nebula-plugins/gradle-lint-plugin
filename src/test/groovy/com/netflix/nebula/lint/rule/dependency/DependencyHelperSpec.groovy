@@ -52,19 +52,19 @@ class DependencyHelperSpec extends IntegrationSpec {
         }
 
         where:
-        dep | depResult
-        'implementation \'test.nebula:foo:1.0.0\'' | 'implementation \'test.nebula:foo\''
-        'testImplementation \'test.nebula:foo:1.0.0\'' | 'testImplementation \'test.nebula:foo\''
-        'implementation "test.nebula:foo:${myVersion}"' | 'implementation "test.nebula:foo"'
-        'runtimeOnly group: \'test.nebula\', name: \'foo\', version: \'1.0.0\'' | 'runtimeOnly group: \'test.nebula\', name: \'foo\''
-        'runtimeOnly group: \'test.nebula\', name: \'foo\', version: myVersion' | 'runtimeOnly group: \'test.nebula\', name: \'foo\''
-        'implementation \'test.nebula:foo:1.0.0\',\n' + (' ' * 20)  + '\'a:b:1.0.0\'' | 'implementation \'test.nebula:foo:1.0.0\',\n' + (' ' * 8) + '\'a:b:1.0.0\'' // opt to ignore lists of strings for now
-        'implementation(\'test.nebula:foo:1.0.0\') { transitive = false }' | 'implementation(\'test.nebula:foo\') { transitive = false }'
-        'implementation(\'test.nebula:foo:1.0.0\') { }' | 'implementation(\'test.nebula:foo\') { }'
-        'implementation("test.nebula:foo:${myVersion}") { transitive = false }' | 'implementation("test.nebula:foo") { transitive = false }'
+        dep                                                                                                | depResult
+        'implementation \'test.nebula:foo:1.0.0\''                                                         | 'implementation \'test.nebula:foo\''
+        'testImplementation \'test.nebula:foo:1.0.0\''                                                     | 'testImplementation \'test.nebula:foo\''
+        'implementation "test.nebula:foo:${myVersion}"'                                                    | 'implementation "test.nebula:foo"'
+        'runtimeOnly group: \'test.nebula\', name: \'foo\', version: \'1.0.0\''                            | 'runtimeOnly group: \'test.nebula\', name: \'foo\''
+        'runtimeOnly group: \'test.nebula\', name: \'foo\', version: myVersion'                            | 'runtimeOnly group: \'test.nebula\', name: \'foo\''
+        'implementation \'test.nebula:foo:1.0.0\',\n' + (' ' * 20) + '\'a:b:1.0.0\''                       | 'implementation \'test.nebula:foo:1.0.0\',\n' + (' ' * 8) + '\'a:b:1.0.0\'' // opt to ignore lists of strings for now
+        'implementation(\'test.nebula:foo:1.0.0\') { transitive = false }'                                 | 'implementation(\'test.nebula:foo\') { transitive = false }'
+        'implementation(\'test.nebula:foo:1.0.0\') { }'                                                    | 'implementation(\'test.nebula:foo\') { }'
+        'implementation("test.nebula:foo:${myVersion}") { transitive = false }'                            | 'implementation("test.nebula:foo") { transitive = false }'
         'implementation(group: \'test.nebula\', name: \'foo\', version: \'1.0.0\') { transitive = false }' | 'implementation(group: \'test.nebula\', name: \'foo\') { transitive = false }'
-        'implementation(\'test.nebula:foo:1.0.0\') { force = true }' | 'implementation(\'test.nebula:foo:1.0.0\') { force = true }'
-        'implementation(group: \'test.nebula\', name: \'foo\', version: \'1.0.0\') { force = true }' | 'implementation(group: \'test.nebula\', name: \'foo\', version: \'1.0.0\') { force = true }'
+        'implementation(\'test.nebula:foo:1.0.0\') { force = true }'                                       | 'implementation(\'test.nebula:foo:1.0.0\') { force = true }'
+        'implementation(group: \'test.nebula\', name: \'foo\', version: \'1.0.0\') { force = true }'       | 'implementation(group: \'test.nebula\', name: \'foo\', version: \'1.0.0\') { force = true }'
     }
 
     @Unroll('should transform(replace) #dep -> #depResult')
@@ -113,16 +113,16 @@ class DependencyHelperSpec extends IntegrationSpec {
         }
 
         where:
-        dep | depResult
-        'compile \'test.nebula:foo:1.0.0\'' | 'compile \'test.nebula:foo:1.1.0\''
-        'testCompile \'test.nebula:foo:1.0.0\'' | 'testCompile \'test.nebula:foo:1.1.0\''
-        'compile "test.nebula:foo:${myVersion}"' | 'compile "test.nebula:foo:${myVersion}"'
-        'runtime group: \'test.nebula\', name: \'foo\', version: \'1.0.0\'' | 'runtime group: \'test.nebula\', name: \'foo\', version: \'1.1.0\''
-        'runtime group: \'test.nebula\', name: \'foo\', version: myVersion' | 'runtime group: \'test.nebula\', name: \'foo\', version: myVersion'
-        'compile \'test.nebula:foo:1.0.0\',\n' + (' ' * 20)  + '\'a:b:1.0.0\'' | 'compile \'test.nebula:foo:1.0.0\',\n' + (' ' * 8) + '\'a:b:1.0.0\'' // opt to ignore lists of strings for now
-        'compile(\'test.nebula:foo:1.0.0\') { transitive = false }' | 'compile(\'test.nebula:foo:1.1.0\') { transitive = false }'
-        'compile("test.nebula:foo:${myVersion}") { transitive = false }' | 'compile("test.nebula:foo:${myVersion}") { transitive = false }'
-        'compile(group: \'test.nebula\', name: \'foo\', version: \'1.0.0\') { transitive = false }' | 'compile(group: \'test.nebula\', name: \'foo\', version: \'1.1.0\') { transitive = false }'
+        dep                                                                                                | depResult
+        'implementation \'test.nebula:foo:1.0.0\''                                                         | 'implementation \'test.nebula:foo:1.1.0\''
+        'testImplementation \'test.nebula:foo:1.0.0\''                                                     | 'testImplementation \'test.nebula:foo:1.1.0\''
+        'implementation "test.nebula:foo:${myVersion}"'                                                    | 'implementation "test.nebula:foo:${myVersion}"'
+        'runtimeOnly group: \'test.nebula\', name: \'foo\', version: \'1.0.0\''                            | 'runtimeOnly group: \'test.nebula\', name: \'foo\', version: \'1.1.0\''
+        'runtimeOnly group: \'test.nebula\', name: \'foo\', version: myVersion'                            | 'runtimeOnly group: \'test.nebula\', name: \'foo\', version: myVersion'
+        'implementation \'test.nebula:foo:1.0.0\',\n' + (' ' * 20) + '\'a:b:1.0.0\''                       | 'implementation \'test.nebula:foo:1.0.0\',\n' + (' ' * 8) + '\'a:b:1.0.0\'' // opt to ignore lists of strings for now
+        'implementation(\'test.nebula:foo:1.0.0\') { transitive = false }'                                 | 'implementation(\'test.nebula:foo:1.1.0\') { transitive = false }'
+        'implementation("test.nebula:foo:${myVersion}") { transitive = false }'                            | 'implementation("test.nebula:foo:${myVersion}") { transitive = false }'
+        'implementation(group: \'test.nebula\', name: \'foo\', version: \'1.0.0\') { transitive = false }' | 'implementation(group: \'test.nebula\', name: \'foo\', version: \'1.1.0\') { transitive = false }'
     }
 
     @Unroll('should replace #dep -> #depResult')
@@ -166,15 +166,15 @@ class DependencyHelperSpec extends IntegrationSpec {
         }
 
         where:
-        dep | depResult
-        'compile \'test.nebula:foo:1.0.0\'' | 'compile \'bar:baz:2.0.0\''
-        'testCompile \'test.nebula:foo:1.0.0\'' | 'testCompile \'bar:baz:2.0.0\''
-        'compile "test.nebula:foo:${myVersion}"' | 'compile "test.nebula:foo:${myVersion}"'
-        'runtime group: \'test.nebula\', name: \'foo\', version: \'1.0.0\'' | 'runtime group: \'bar\', name: \'baz\', version: \'2.0.0\''
-        'runtime group: \'test.nebula\', name: \'foo\', version: myVersion' | 'runtime group: \'bar\', name: \'baz\', version: \'2.0.0\''
-        'compile(\'test.nebula:foo:1.0.0\') { transitive = false }' | 'compile(\'bar:baz:2.0.0\') { transitive = false }'
-        'compile("test.nebula:foo:${myVersion}") { transitive = false }' | 'compile("test.nebula:foo:${myVersion}") { transitive = false }'
-        'compile(group: \'test.nebula\', name: \'foo\', version: \'1.0.0\') { transitive = false }' | 'compile(group: \'bar\', name: \'baz\', version: \'2.0.0\') { transitive = false }'
+        dep                                                                                                | depResult
+        'implementation \'test.nebula:foo:1.0.0\''                                                         | 'implementation \'bar:baz:2.0.0\''
+        'testImplementation \'test.nebula:foo:1.0.0\''                                                     | 'testImplementation \'bar:baz:2.0.0\''
+        'implementation "test.nebula:foo:${myVersion}"'                                                    | 'implementation "test.nebula:foo:${myVersion}"'
+        'runtimeOnly group: \'test.nebula\', name: \'foo\', version: \'1.0.0\''                            | 'runtimeOnly group: \'bar\', name: \'baz\', version: \'2.0.0\''
+        'runtimeOnly group: \'test.nebula\', name: \'foo\', version: myVersion'                            | 'runtimeOnly group: \'bar\', name: \'baz\', version: \'2.0.0\''
+        'implementation(\'test.nebula:foo:1.0.0\') { transitive = false }'                                 | 'implementation(\'bar:baz:2.0.0\') { transitive = false }'
+        'implementation("test.nebula:foo:${myVersion}") { transitive = false }'                            | 'implementation("test.nebula:foo:${myVersion}") { transitive = false }'
+        'implementation(group: \'test.nebula\', name: \'foo\', version: \'1.0.0\') { transitive = false }' | 'implementation(group: \'bar\', name: \'baz\', version: \'2.0.0\') { transitive = false }'
     }
 }
 

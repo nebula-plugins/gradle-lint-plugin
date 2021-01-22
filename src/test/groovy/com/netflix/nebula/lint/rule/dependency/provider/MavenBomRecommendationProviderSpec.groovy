@@ -75,7 +75,7 @@ class MavenBomRecommendationProviderSpec extends Specification {
         project.getExtensions().add("commonsVersion", "1.1.2")
 
         project.dependencies {
-            compile module
+            implementation module
         }
 
         when:
@@ -147,7 +147,7 @@ class MavenBomRecommendationProviderSpec extends Specification {
         }
 
         project.dependencies {
-            compile 'sample:recommender:1.1.1@pom'
+            implementation 'sample:recommender:1.1.1@pom'
         }
 
         when:
@@ -207,7 +207,7 @@ class MavenBomRecommendationProviderSpec extends Specification {
         project.getExtensions().add("commonsVersion", "1.1.2")
 
         project.dependencies {
-            compile module
+            implementation module
         }
 
         when:
@@ -255,9 +255,9 @@ class MavenBomRecommendationProviderSpec extends Specification {
         }
 
         project.dependencies {
-            compile bomFirst
-            compile bomLast
-            compile 'example:foo'
+            implementation bomFirst
+            implementation bomLast
+            implementation 'example:foo'
         }
 
         def recommendations = new MavenBomRecommendationProvider(project)

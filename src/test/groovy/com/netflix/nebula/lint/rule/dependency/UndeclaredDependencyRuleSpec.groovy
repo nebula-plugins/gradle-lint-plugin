@@ -84,7 +84,6 @@ class UndeclaredDependencyRuleSpec extends IntegrationTestKitSpec {
         where:
         deps     | expected                 | configuration
         [sample] | [sample, commonsLogging] | 'implementation'
-        [sample] | [sample, commonsLogging] | 'compile'
         [sample] | [sample, commonsLogging] | 'api'
     }
 
@@ -130,7 +129,6 @@ class UndeclaredDependencyRuleSpec extends IntegrationTestKitSpec {
         where:
         deps                     | configuration
         [sample, commonsLogging] | 'implementation'
-        [sample, commonsLogging] | 'compile'
         [sample, commonsLogging] | 'api'
         [sample, commonsLogging] | 'myConfiguration'
     }
@@ -221,7 +219,6 @@ class UndeclaredDependencyRuleSpec extends IntegrationTestKitSpec {
 
         where:
         deps     | expected                                     | configuration
-        [sample] | [sample, commonsLogging, junit, commonsLang] | 'compile'
         [sample] | [sample, commonsLogging, junit, commonsLang] | 'implementation'
     }
 
@@ -265,7 +262,6 @@ class UndeclaredDependencyRuleSpec extends IntegrationTestKitSpec {
         where:
         deps     | expected                 | configuration
         [sample] | [sample, commonsLogging] | 'implementation'
-        [sample] | [sample, commonsLogging] | 'compile'
     }
 
     @Unroll
@@ -309,7 +305,6 @@ class UndeclaredDependencyRuleSpec extends IntegrationTestKitSpec {
         where:
         deps     | expected                 | configuration
         [sample] | [sample, commonsLogging] | 'implementation'
-        [sample] | [sample, commonsLogging] | 'compile'
     }
 
     @Unroll
@@ -353,7 +348,6 @@ class UndeclaredDependencyRuleSpec extends IntegrationTestKitSpec {
         where:
         deps     | expected        | configuration
         [sample] | [sample, junit] | 'testImplementation'
-        [sample] | [sample, junit] | 'testCompile'
     }
 
     @Unroll
@@ -399,7 +393,6 @@ class UndeclaredDependencyRuleSpec extends IntegrationTestKitSpec {
         where:
         deps     | expected                 | configuration
         [sample] | [sample, commonsLogging] | 'implementation'
-        [sample] | [sample, commonsLogging] | 'compile'
     }
 
     @Unroll
@@ -454,7 +447,6 @@ class UndeclaredDependencyRuleSpec extends IntegrationTestKitSpec {
         where:
         deps     | expected                 | configuration
         [sample] | [sample, commonsLogging] | 'implementation'
-        [sample] | [sample, commonsLogging] | 'compile'
     }
 
     @Unroll
@@ -499,7 +491,6 @@ class UndeclaredDependencyRuleSpec extends IntegrationTestKitSpec {
         where:
         deps     | expected                 | configuration
         [sample] | [sample, commonsLogging] | 'implementation'
-        [sample] | [sample, commonsLogging] | 'compile'
     }
 
     @Unroll
@@ -546,7 +537,6 @@ class UndeclaredDependencyRuleSpec extends IntegrationTestKitSpec {
         where:
         deps     | expected                 | configuration
         [sample] | [sample, commonsLogging] | 'implementation'
-        [sample] | [sample, commonsLogging] | 'compile'
     }
 
     @Unroll
@@ -603,7 +593,6 @@ class UndeclaredDependencyRuleSpec extends IntegrationTestKitSpec {
         where:
         deps     | expected                 | configuration
         [sample] | [sample, commonsLogging] | 'implementation'
-        [sample] | [sample, commonsLogging] | 'compile'
     }
 
     @Unroll

@@ -20,6 +20,8 @@ import nebula.test.IntegrationTestKitSpec
 import nebula.test.dependencies.DependencyGraphBuilder
 import nebula.test.dependencies.GradleDependencyGenerator
 import nebula.test.dependencies.ModuleBuilder
+import org.gradle.util.GradleVersion
+import spock.lang.IgnoreIf
 import spock.lang.Subject
 import spock.lang.Unroll
 
@@ -33,6 +35,7 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
         debug = true
     }
 
+    @IgnoreIf({ GradleVersion.current().baseVersion >= GradleVersion.version("7.0")})
     @Unroll
     def 'direct dependency force is honored - force to good version while substitution is triggered by a transitive dependency | core alignment #coreAlignment'() {
         setupSingleProjectBuildFile()
@@ -67,6 +70,7 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
         coreAlignment << [false, true]
     }
 
+    @IgnoreIf({ GradleVersion.current().baseVersion >= GradleVersion.version("7.0")})
     @Unroll
     def 'direct dependency force not honored - force to bad version triggers a substitution | core alignment #coreAlignment'() {
         setupSingleProjectBuildFile()
@@ -85,6 +89,7 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
         coreAlignment << [true]
     }
 
+    @IgnoreIf({ GradleVersion.current().baseVersion >= GradleVersion.version("7.0")})
     def 'direct dependency force not honored - multiproject with definitions in parent file in allprojects block'() {
         def coreAlignment = true
 
@@ -109,6 +114,7 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
         assert results.output.contains("Remove or update this value for the affected project(s): $moduleName, sub1\n")
     }
 
+    @IgnoreIf({ GradleVersion.current().baseVersion >= GradleVersion.version("7.0")})
     def 'direct dependency force not honored - multiproject with definitions in parent file in subprojects block'() {
         def coreAlignment = true
 
@@ -133,6 +139,7 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
         assert results.output.contains("Remove or update this value for the affected project(s): sub1\n")
     }
 
+    @IgnoreIf({ GradleVersion.current().baseVersion >= GradleVersion.version("7.0")})
     def 'direct dependency force not honored - multiproject with definitions in parent file in subproject definition block'() {
         def coreAlignment = true
 
@@ -158,6 +165,7 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
         assert results.output.contains("Remove or update this value for the affected project(s): sub1\n")
     }
 
+    @IgnoreIf({ GradleVersion.current().baseVersion >= GradleVersion.version("7.0")})
     def 'direct dependency force not honored - multiproject with definitions in subproject file'() {
         def coreAlignment = true
 
@@ -180,6 +188,7 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
         assert results.output.contains("Remove or update this value for the affected project(s): sub1\n")
     }
 
+    @IgnoreIf({ GradleVersion.current().baseVersion >= GradleVersion.version("7.0")})
     @Unroll
     def 'direct dependency force with dependencies as #type show 0 violations | core alignment #coreAlignment'() {
         // note: 'accept' for substitution rules does not match on dynamic versions
@@ -215,6 +224,7 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
         'variable'       | '\${testNebulaVersion}' | true
     }
 
+    @IgnoreIf({ GradleVersion.current().baseVersion >= GradleVersion.version("7.0")})
     def 'works with Groovy 2.4.x - direct dependency force not honored'() {
         def coreAlignment = true
         setupSingleProjectBuildFileForGradle4_10_2()
