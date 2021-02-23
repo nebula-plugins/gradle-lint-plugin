@@ -19,7 +19,7 @@ Read the [full documentation](https://github.com/nebula-plugins/gradle-lint-plug
 To apply this plugin, please get the latest version from the [Gradle plugin portal](https://plugins.gradle.org/plugin/nebula.lint) and add the following to `build.gradle`:
 
 ```groovy
-buildscript { repositories { jcenter() } }
+buildscript { repositories { mavenCentral() } }
 plugins {
   id 'nebula.lint' version '<latest version from the Gradle plugin portal>'
 }
@@ -31,7 +31,7 @@ Alternatively:
 
 ```groovy
 buildscript {
-  repositories { jcenter() }
+  repositories { mavenCentral() }
   dependencies {
     classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
   }

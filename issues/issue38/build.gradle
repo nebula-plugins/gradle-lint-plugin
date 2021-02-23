@@ -1,7 +1,7 @@
 buildscript {
     repositories {
         mavenCentral()
-        jcenter()
+        mavenCentral()
     }
     dependencies {
         classpath("org.springframework.boot:spring-boot-gradle-plugin:1.3.5.RELEASE")
@@ -29,7 +29,7 @@ jar {
 
 repositories {
     mavenCentral()
-    jcenter()
+    mavenCentral()
 }
 
 sourceCompatibility = 1.7

@@ -288,7 +288,7 @@ class DependencyServiceSpec extends IntegrationTestKitSpec {
         buildFile << """
             apply plugin: 'java-library'
 
-            repositories { jcenter() }
+            repositories { mavenCentral() }
 
             dependencies {
                 compile '${dependency}'
