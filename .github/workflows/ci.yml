@@ -2,7 +2,7 @@ name: ci
 on:
   push:
     branches:
-      - master
+      - '*'
     tags-ignore:
       - '*'
   pull_request:
@@ -17,6 +17,10 @@ jobs:
     name: CI with Java ${{ matrix.java }}
     steps:
       - uses: actions/checkout@v1
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
       - name: Setup jdk
         uses: actions/setup-java@v1
         with:
