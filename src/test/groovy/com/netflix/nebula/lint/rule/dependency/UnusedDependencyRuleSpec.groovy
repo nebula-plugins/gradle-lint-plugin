@@ -43,7 +43,7 @@ class UnusedDependencyRuleSpec extends IntegrationTestKitSpec {
 
     // TODO match indentation when adding dependencies
 
-    @IgnoreIf({ GradleVersion.current().baseVersion >= GradleVersion.version("7.0")})
+    @IgnoreIf({ GradleVersion.current().baseVersion >= GradleVersion.version("7.0") })
     @Unroll
     def 'unused compile dependencies are marked for deletion'() {
         when:

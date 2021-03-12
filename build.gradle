@@ -1,3 +1,5 @@
+import org.gradle.util.GradleVersion
+
 /*
  * Copyright 2014-2019 Netflix, Inc.
  *
@@ -53,7 +55,7 @@ dependencies {
             because 'avoid getting prerelease versions'
         }
     }
-    plugin('org.codenarc:CodeNarc:0.25.2') {
+    plugin('org.codenarc:CodeNarc:2.0.0') {
         transitive = false
     }
     plugin 'commons-lang:commons-lang:2.6'
@@ -67,14 +69,13 @@ dependencies {
 
     // these dependencies exist so we can provide a test harness
     // to proprietary rule implementations packed in other jars, but are considered provided
-    plugin('org.spockframework:spock-core:1.0-groovy-2.4') { transitive = false }
-    plugin('junit:junit:4.12')
-    plugin('com.netflix.nebula:nebula-test:latest.release') { transitive = false }
+    if (GradleVersion.current().baseVersion >= GradleVersion.version("7.0")) {
+        compileOnly "com.netflix.nebula:nebula-test:9.+"
+    } else {
+        compileOnly 'com.netflix.nebula:nebula-test:7.+'
+    }
 
     testImplementation gradleTestKit()
-    testImplementation('org.spockframework:spock-core:1.0-groovy-2.4') {
-        exclude module: 'groovy-all'
-    }
     testImplementation 'org.ow2.asm:asm-util:5.2'
     testImplementation 'joda-time:joda-time:latest.release'
     testImplementation 'com.netflix.nebula:gradle-info-plugin:latest.release'
