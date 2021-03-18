@@ -88,7 +88,7 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
     }
 
     @Override
-    protected void visitClassComplete(ClassNode node) {
+    void visitClassComplete(ClassNode node) {
         Set<ModuleVersionIdentifier> insertedDependencies = [] as Set
 
         def convention = project.convention.findPlugin(JavaPluginConvention)

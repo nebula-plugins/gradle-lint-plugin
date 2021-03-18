@@ -81,7 +81,7 @@ class UnusedDependencyRuleSpec extends IntegrationTestKitSpec {
 
 
     @Unroll
-    def 'unused api dependencies are marked for deletion'() {
+    def 'unused api dependencies (#libraryName) are marked for deletion'() {
         when:
         buildFile.text = """\
             |plugins {
@@ -108,14 +108,14 @@ class UnusedDependencyRuleSpec extends IntegrationTestKitSpec {
         }
 
         where:
-        deps               | expectedWarnings
-        [guava, asm]       | ['warning   unused-dependency                  this dependency is unused and can be removed']
-        [springfox]        | ['warning   unused-dependency                  one or more classes in com.google.guava:guava:18.0 are required by your code directly', 'warning   unused-dependency                  this dependency is unused and can be removed']
-        [guava, springfox] | ['warning   unused-dependency                  this dependency is unused and can be removed']
+        libraryName           | deps               | expectedWarnings
+        'guava and asm'       | [guava, asm]       | ['warning   unused-dependency                  this dependency is unused and can be removed']
+        'springfox'           | [springfox]        | ['warning   unused-dependency                  one or more classes in com.google.guava:guava:18.0 are required by your code directly', 'warning   unused-dependency                  this dependency is unused and can be removed']
+        'guava and springfox' | [guava, springfox] | ['warning   unused-dependency                  this dependency is unused and can be removed']
     }
 
     @Unroll
-    def 'unused implementation dependencies are marked for deletion'() {
+    def 'unused implementation (#libraryName) dependencies are marked for deletion'() {
         when:
         buildFile.text = """\
             |plugins {
@@ -142,10 +142,10 @@ class UnusedDependencyRuleSpec extends IntegrationTestKitSpec {
         }
 
         where:
-        deps               | expectedWarnings
-        [guava, asm]       | ['warning   unused-dependency                  this dependency is unused and can be removed']
-        [springfox]        | ['warning   unused-dependency                  one or more classes in com.google.guava:guava:18.0 are required by your code directly', 'warning   unused-dependency                  this dependency is unused and can be removed']
-        [guava, springfox] | ['warning   unused-dependency                  this dependency is unused and can be removed']
+        libraryName           | deps               | expectedWarnings
+        'guava and asm'       | [guava, asm]       | ['warning   unused-dependency                  this dependency is unused and can be removed']
+        'springfox'           | [springfox]        | ['warning   unused-dependency                  one or more classes in com.google.guava:guava:18.0 are required by your code directly', 'warning   unused-dependency                  this dependency is unused and can be removed']
+        'guava and springfox' | [guava, springfox] | ['warning   unused-dependency                  this dependency is unused and can be removed']
     }
 
     def 'find dependency references in test code'() {

@@ -87,7 +87,7 @@ class ShadedArtifactsTest extends Specification implements AbstractShadedDepende
         assert !pomFile.text.contains("<artifactId>${shadedCoordinate.artifactName}</artifactId>"), "Metadata file should not contain shaded dependency ${shadedCoordinate.artifactGroup}:${shadedCoordinate.artifactName}"
 
         where:
-        shadedCoordinate << shadedCoordinates
+        shadedCoordinate << SHARED_COORDINATES
     }
 
     @Unroll
@@ -100,7 +100,7 @@ class ShadedArtifactsTest extends Specification implements AbstractShadedDepende
         assert filteredEntries.size() >= 1, "Jar should contain shaded and relocated dependencies: $matchingPath"
 
         where:
-        shadedCoordinate << shadedCoordinates
+        shadedCoordinate << SHARED_COORDINATES
     }
 
     @Unroll
@@ -113,7 +113,7 @@ class ShadedArtifactsTest extends Specification implements AbstractShadedDepende
         assert filteredEntries.size() == 0, "Jar should not contain non relocated dependencies: $matchingPath"
 
         where:
-        shadedCoordinate << shadedCoordinates
+        shadedCoordinate << SHARED_COORDINATES
     }
 
     @Test

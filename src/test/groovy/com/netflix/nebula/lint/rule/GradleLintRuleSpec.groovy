@@ -72,7 +72,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
             String description = 'test'
 
             @Override
-            void visitGradlePlugin(MethodCallExpression call, String conf, GradlePlugin plugin) {
+            void visitGradlePlugin(MethodCallExpression call, String conf, GradlePlugin gradlePluginGradleLintRuleSpec) {
                 pluginCount++
             }
         })

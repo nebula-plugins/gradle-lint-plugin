@@ -5,6 +5,7 @@ import org.codehaus.groovy.ast.ClassCodeVisitorSupport
 import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.ast.ConstructorNode
 import org.codehaus.groovy.ast.FieldNode
+import org.codehaus.groovy.ast.GroovyCodeVisitor
 import org.codehaus.groovy.ast.MethodNode
 import org.codehaus.groovy.ast.ModuleNode
 import org.codehaus.groovy.ast.PackageNode
@@ -274,7 +275,7 @@ class CompositeGroovyAstVisitor extends ClassCodeVisitorSupport implements AstVi
     }
 
     @Override
-    protected void visitEmptyStatement(EmptyStatement statement) {
+    void visitEmptyStatement(EmptyStatement statement) {
         visitors.each { it.visitEmptyStatement(statement) }
         super.visitEmptyStatement(statement)
     }
@@ -468,9 +469,16 @@ class CompositeGroovyAstVisitor extends ClassCodeVisitorSupport implements AstVi
     }
 
     @Override
-    protected void visitListOfExpressions(List<? extends Expression> list) {
+    void visitListOfExpressions(List<? extends Expression> list) {
         visitors.each { it.visitListOfExpressions(list) }
-        super.visitListOfExpressions(list)
+        //Groovy has a issue when calling java default methods In Groovy 3 `super.visitListOfExpressions(list)`
+        //is implemented as default methods. The code is extracted and directly placed here to avoid the issue
+        //https://stackoverflow.com/questions/54822838/explicitly-calling-a-default-method-in-groovy
+        if (list != null) {
+            list.each {
+                it.visit(this)
+            }
+        }
     }
 
     @Override

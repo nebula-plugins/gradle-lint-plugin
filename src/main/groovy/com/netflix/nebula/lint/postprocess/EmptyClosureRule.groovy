@@ -57,7 +57,7 @@ class EmptyClosureRule extends GradleLintRule {
     }
 
     @Override
-    protected void visitClassComplete(ClassNode node) {
+    void visitClassComplete(ClassNode node) {
         (emptyClosureCalls - taskNames).unique().each {
             addBuildLintViolation('this is an empty configuration closure that can be removed', it)
                 .delete(it)

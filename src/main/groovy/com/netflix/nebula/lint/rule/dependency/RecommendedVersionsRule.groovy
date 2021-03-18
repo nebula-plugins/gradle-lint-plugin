@@ -63,7 +63,7 @@ class RecommendedVersionsRule extends GradleLintRule implements GradleModelAware
     }
 
     @Override
-    protected void visitClassComplete(ClassNode node) {
+    void visitClassComplete(ClassNode node) {
         if (!recommenderIsEnabled) {
             return
         }

@@ -31,7 +31,7 @@ class UndeclaredDependencyRule extends GradleLintRule implements GradleModelAwar
     }
 
     @Override
-    protected void visitClassComplete(ClassNode node) {
+    void visitClassComplete(ClassNode node) {
         Set<ModuleVersionIdentifier> insertedDependencies = [] as Set
         Map<String, HashMap<String, ASTNode>> violations = new HashMap()
 
