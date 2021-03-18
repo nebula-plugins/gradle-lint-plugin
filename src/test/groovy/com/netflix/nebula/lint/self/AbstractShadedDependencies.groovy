@@ -19,7 +19,7 @@
 package com.netflix.nebula.lint.self
 
 abstract trait AbstractShadedDependencies {
-    Collection<ShadedCoordinate> shadedCoordinates = [
+    static Collection<ShadedCoordinate> SHARED_COORDINATES = [
             new ShadedCoordinate('org.eclipse.jdt', 'com.netflix.nebula.lint.jdt', 'org.eclipse.jdt', 'core'),
             new ShadedCoordinate('org.eclipse.jgit', 'com.netflix.nebula.lint.jgit', 'org.eclipse.jgit', 'org.eclipse.jgit'),
             new ShadedCoordinate('org.apache.commons.lang', 'com.netflix.nebula.lint.commons.lang', 'commons-lang', 'commons-lang'),

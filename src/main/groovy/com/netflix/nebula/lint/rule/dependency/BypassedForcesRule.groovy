@@ -90,7 +90,7 @@ class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
 
     @CompileStatic
     @Override
-    protected void visitClassComplete(ClassNode node) {
+    void visitClassComplete(ClassNode node) {
         Collection<BypassedForce> bypassedForces = new ArrayList<BypassedForce>()
 
         forcedDependenciesPerProject.each { affectedProjectName, forcedDependencies ->

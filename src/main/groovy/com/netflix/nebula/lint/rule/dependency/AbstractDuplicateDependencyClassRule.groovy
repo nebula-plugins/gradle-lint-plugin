@@ -49,7 +49,7 @@ abstract class AbstractDuplicateDependencyClassRule extends GradleLintRule imple
     }
 
     @Override
-    protected void visitClassComplete(ClassNode node) {
+    void visitClassComplete(ClassNode node) {
         for (Configuration conf : directlyUsedConfigurations) {
             String resolvableConfigurationName = dependencyService.findAndReplaceNonResolvableConfiguration(conf).name
             if(!resolvableConfigurationName) {

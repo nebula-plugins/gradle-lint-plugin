@@ -70,7 +70,7 @@ class DuplicateDependencyClassRuleSpec extends IntegrationTestKitSpec {
     }
 
     @Unroll
-    def 'dependencies with duplicate classes cause violations #configuration results in #message - custom configuration'() {
+    def 'dependencies with duplicate classes cause violations results in #message - custom configuration'() {
         given:
         buildFile.text = """
             plugins {

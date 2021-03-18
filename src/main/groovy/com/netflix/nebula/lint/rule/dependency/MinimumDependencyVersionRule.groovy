@@ -90,7 +90,7 @@ class MinimumDependencyVersionRule extends GradleLintRule implements GradleModel
     }
 
     @Override
-    protected void visitClassComplete(ClassNode node) {
+    void visitClassComplete(ClassNode node) {
         project.configurations.each { conf ->
             if (resolvableAndResolvedConfigurations.contains(conf)) {
                 minimumVersions.each { constraint ->

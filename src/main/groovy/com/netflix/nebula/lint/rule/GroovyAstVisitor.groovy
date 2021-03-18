@@ -71,15 +71,15 @@ import org.codehaus.groovy.classgen.BytecodeExpression
  * CodeNarc's AbstractAstVisitor, and ClassCodeVisitorSupport.
  */
 abstract class GroovyAstVisitor implements GroovyClassVisitor, GroovyCodeVisitor {
-    protected void visitClassComplete(ClassNode node) {}
-    protected void visitAnnotations(AnnotatedNode node) {}
-    protected void visitPackage(PackageNode node) {}
-    protected void visitImports(ModuleNode node) {}
-    protected void visitClassCodeContainer(Statement node) {}
-    protected void visitStatement(Statement statement) {}
-    protected void visitListOfExpressions(List<? extends Expression> list) {}
-    protected void visitObjectInitializerStatements(ClassNode node) {}
-    protected void visitEmptyStatement(EmptyStatement statement) {}
+    void visitClassComplete(ClassNode node) {}
+    void visitAnnotations(AnnotatedNode node) {}
+    void visitPackage(PackageNode node) {}
+    void visitImports(ModuleNode node) {}
+    void visitClassCodeContainer(Statement node) {}
+    void visitStatement(Statement statement) {}
+    void visitListOfExpressions(List<? extends Expression> list) {}
+    void visitObjectInitializerStatements(ClassNode node) {}
+    void visitEmptyStatement(EmptyStatement statement) {}
 
     @Override void visitClass(ClassNode classNode) {}
     @Override void visitConstructor(ConstructorNode constructorNode) {}

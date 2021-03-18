@@ -32,7 +32,7 @@ class ShadedDependenciesTest extends Specification implements AbstractShadedDepe
         report.exists()
 
         then:
-        shadedCoordinates.each { shadedCoordinate ->
+        SHARED_COORDINATES.each { shadedCoordinate ->
             String artifactGroupAndName = "${shadedCoordinate.artifactGroup}:${shadedCoordinate.artifactName}"
             report.text.contains(artifactGroupAndName)
         }
@@ -46,7 +46,7 @@ class ShadedDependenciesTest extends Specification implements AbstractShadedDepe
         report.exists()
 
         then:
-        shadedCoordinates.each { shadedCoordinate ->
+        SHARED_COORDINATES.each { shadedCoordinate ->
             String artifactGroupAndName = "${shadedCoordinate.artifactGroup}:${shadedCoordinate.artifactName}"
             report.text.contains(artifactGroupAndName)
         }
@@ -60,7 +60,7 @@ class ShadedDependenciesTest extends Specification implements AbstractShadedDepe
         report.exists()
 
         then:
-        shadedCoordinates.each { shadedCoordinate ->
+        SHARED_COORDINATES.each { shadedCoordinate ->
             String artifactGroupAndName = "${shadedCoordinate.artifactGroup}:${shadedCoordinate.artifactName}"
             report.text.contains(artifactGroupAndName)
         }
@@ -74,7 +74,7 @@ class ShadedDependenciesTest extends Specification implements AbstractShadedDepe
         report.exists()
 
         then:
-        shadedCoordinates.each { shadedCoordinate ->
+        SHARED_COORDINATES.each { shadedCoordinate ->
             String artifactGroupAndName = "${shadedCoordinate.artifactGroup}:${shadedCoordinate.artifactName}"
             report.text.contains(artifactGroupAndName)
         }
