@@ -301,6 +301,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         project.buildFile << """
             dependencies {
                customConfig sourceSets.main.output
+               customConfig fileTree('dir')
                customConfig configurations.compile
             }
         """
@@ -310,7 +311,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
 
         then:
         rule.allGradleDependencies.size() == 1
-        rule.objectDependencies.size() == 1
+        rule.objectDependencies.size() == 2
     }
 
     def 'visit dependencies in a project path project block'() {
