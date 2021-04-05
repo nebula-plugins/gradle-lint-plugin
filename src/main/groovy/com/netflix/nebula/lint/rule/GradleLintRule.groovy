@@ -426,7 +426,8 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                             return null
                         }
                         dependency = GradleDependency.fromConstant(expr)
-                    } else if (call.arguments.expressions.any { it instanceof PropertyExpression } && project != null) {
+                    } else if ((configurationWithArbitraryProperty(call) || configurationWithArbitraryMethodCall(call) )
+                            && project != null) {
                         Object dep
                         def shell = new GroovyShell()
                         shell.setVariable('project', project as Project)
@@ -466,6 +467,16 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                         visitAnyGradleDependency(call, methodName, dependency)
                     }
                 }
+            }
+
+            //e.g. implementation sourceSets.main.output
+            private boolean configurationWithArbitraryProperty(MethodCallExpression call) {
+                call.arguments.expressions.any { it instanceof PropertyExpression }
+            }
+
+            //e.g. implementation fileTree(..)
+            private boolean configurationWithArbitraryMethodCall(MethodCallExpression call) {
+                call.arguments.expressions.any { it instanceof MethodCallExpression && it.methodAsString != 'project'}
             }
 
             private void visitMethodCallInPlugins(MethodCallExpression call) {
