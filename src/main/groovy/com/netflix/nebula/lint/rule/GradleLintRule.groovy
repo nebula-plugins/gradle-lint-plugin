@@ -440,8 +440,9 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                         } catch (Throwable t) {
                             // if we cannot evaluate this expression, just give up
                             logger.debug("Unable to evaluate dependency expression ${sourceCode(call.arguments)}", t)
+                            dep = new NotEvaluatedObject(call.arguments)
                         }
-                        if (dependency == null && dep != null) {
+                        if (dependency == null) {
                             visitAnyObjectDependency(call, methodName, dep)
                         }
                     } else if (call.arguments.expressions.any { it instanceof MethodCallExpression && it.methodAsString == 'project'}) {
@@ -591,6 +592,14 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
         @Override
         void setPriority(int priority) {
             // unused
+        }
+    }
+
+    static class NotEvaluatedObject {
+        ASTNode objectAst
+
+        NotEvaluatedObject(ASTNode objectAst) {
+            this.objectAst = objectAst
         }
     }
 }
