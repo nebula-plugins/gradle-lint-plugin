@@ -26,6 +26,7 @@ import org.codehaus.groovy.ast.expr.VariableExpression
 import org.codehaus.groovy.ast.stmt.ExpressionStatement
 import org.codenarc.analyzer.StringSourceAnalyzer
 import org.gradle.api.plugins.JavaPlugin
+import org.gradle.plugin.devel.plugins.JavaGradlePluginPlugin
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.junit.Rule
@@ -298,11 +299,13 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         given:
         project.configurations.create('customConfig')
         project.plugins.apply(JavaPlugin)
+        project.plugins.apply(JavaGradlePluginPlugin)
         project.buildFile << """
             dependencies {
-               customConfig sourceSets.main.output
-               customConfig fileTree('dir')
-               customConfig configurations.compile
+                customConfig gradleApi()
+                customConfig sourceSets.main.output
+                customConfig fileTree('dir')
+                customConfig configurations.compile
             }
         """
 
@@ -311,7 +314,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
 
         then:
         rule.allGradleDependencies.size() == 1
-        rule.objectDependencies.size() == 2
+        rule.objectDependencies.size() == 3
     }
 
     def 'visit dependencies in a project path project block'() {
