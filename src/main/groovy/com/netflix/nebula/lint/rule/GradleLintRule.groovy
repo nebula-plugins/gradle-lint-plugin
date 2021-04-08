@@ -458,6 +458,8 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                             def path = entries.get("path")
                             if (path != null)
                                 visitAnySubmoduleDependency(call, methodName, path)
+                        } else {
+                            visitAnySubmoduleDependency(call, methodName, null)
                         }
                     }
 
