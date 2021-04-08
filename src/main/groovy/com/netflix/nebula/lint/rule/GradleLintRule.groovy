@@ -446,12 +446,19 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                             visitAnyObjectDependency(call, methodName, dep)
                         }
                     } else if (call.arguments.expressions.any { it instanceof MethodCallExpression && it.methodAsString == 'project'}) {
-                        ConstantExpression projectName = (call.arguments.expressions
-                                .find { it instanceof MethodCallExpression && it.methodAsString == 'project'} as MethodCallExpression)
-                                .arguments.expressions.
+                        MethodCallExpression projectMethodCall = call.arguments.expressions
+                                .find { it instanceof MethodCallExpression && it.methodAsString == 'project'} as MethodCallExpression
+                        ConstantExpression projectName =
+                                projectMethodCall.arguments.expressions.
                                 find { it instanceof ConstantExpression} as ConstantExpression
                         if (projectName != null)
                             visitAnySubmoduleDependency(call, methodName, projectName.value.toString())
+                        else if (projectMethodCall.arguments.expressions.any { it instanceof MapExpression }) {
+                            def entries = GradleAstUtil.collectEntryExpressions(projectMethodCall, sourceCode)
+                            def path = entries.get("path")
+                            if (path != null)
+                                visitAnySubmoduleDependency(call, methodName, path)
+                        }
                     }
 
                     if (dependency) {

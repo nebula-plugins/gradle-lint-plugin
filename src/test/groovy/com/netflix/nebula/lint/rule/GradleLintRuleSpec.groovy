@@ -279,11 +279,14 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
     def 'visit dependencies on submodule from root'() {
         given:
         def library = addSubproject('library')
+        def library2 = addSubproject('library2')
         library.configurations.create('compile')
         project.subprojects.add(library)
+        project.subprojects.add(library2)
         project.buildFile << """
             dependencies {
                compile project(":library")
+               compile project(path: ":library2")
             }
         """
 
@@ -291,8 +294,9 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         def foundDependencies = new DependencyVisitingRule().run().submoduleDependencies
 
         then:
-        foundDependencies.size() == 1
+        foundDependencies.size() == 2
         foundDependencies[0] == ':library'
+        foundDependencies[1] == ':library2'
     }
 
     def 'visit adding file collections and other configurations into a configuration'() {
