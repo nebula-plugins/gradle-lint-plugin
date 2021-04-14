@@ -311,11 +311,16 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         project.plugins.apply(JavaPlugin)
         project.plugins.apply(JavaGradlePluginPlugin)
         project.buildFile << """
+            def aVariable = fileTree('dir2') {
+                include '*.jar'
+            }
+
             dependencies {
                 customConfig gradleApi()
                 customConfig sourceSets.main.output
                 customConfig fileTree('dir')
                 customConfig configurations.compile
+                customConfig aVariable
             }
         """
 
@@ -324,7 +329,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
 
         then:
         rule.allGradleDependencies.size() == 1
-        rule.objectDependencies.size() == 3
+        rule.objectDependencies.size() == 4
     }
 
     def 'visit dependencies in a project path project block'() {
