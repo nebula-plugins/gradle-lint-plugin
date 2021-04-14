@@ -426,8 +426,23 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                             return null
                         }
                         dependency = GradleDependency.fromConstant(expr)
-                    } else if ((configurationWithArbitraryProperty(call) || configurationWithArbitraryMethodCall(call) )
-                            && project != null) {
+                    } else if (call.arguments.expressions.any { it instanceof MethodCallExpression && it.methodAsString == 'project'}) {
+                        MethodCallExpression projectMethodCall = call.arguments.expressions
+                                .find { it instanceof MethodCallExpression && it.methodAsString == 'project'} as MethodCallExpression
+                        ConstantExpression projectName =
+                                projectMethodCall.arguments.expressions.
+                                find { it instanceof ConstantExpression} as ConstantExpression
+                        if (projectName != null)
+                            visitAnySubmoduleDependency(call, methodName, projectName.value.toString())
+                        else if (projectMethodCall.arguments.expressions.any { it instanceof MapExpression }) {
+                            def entries = GradleAstUtil.collectEntryExpressions(projectMethodCall, sourceCode)
+                            def path = entries.get("path")
+                            if (path != null)
+                                visitAnySubmoduleDependency(call, methodName, path)
+                        } else {
+                            visitAnySubmoduleDependency(call, methodName, null)
+                        }
+                    } else if (project != null) {
                         Object dep
                         def shell = new GroovyShell()
                         shell.setVariable('project', project as Project)
@@ -445,22 +460,6 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                         if (dependency == null) {
                             visitAnyObjectDependency(call, methodName, dep)
                         }
-                    } else if (call.arguments.expressions.any { it instanceof MethodCallExpression && it.methodAsString == 'project'}) {
-                        MethodCallExpression projectMethodCall = call.arguments.expressions
-                                .find { it instanceof MethodCallExpression && it.methodAsString == 'project'} as MethodCallExpression
-                        ConstantExpression projectName =
-                                projectMethodCall.arguments.expressions.
-                                find { it instanceof ConstantExpression} as ConstantExpression
-                        if (projectName != null)
-                            visitAnySubmoduleDependency(call, methodName, projectName.value.toString())
-                        else if (projectMethodCall.arguments.expressions.any { it instanceof MapExpression }) {
-                            def entries = GradleAstUtil.collectEntryExpressions(projectMethodCall, sourceCode)
-                            def path = entries.get("path")
-                            if (path != null)
-                                visitAnySubmoduleDependency(call, methodName, path)
-                        } else {
-                            visitAnySubmoduleDependency(call, methodName, null)
-                        }
                     }
 
                     if (dependency) {
@@ -477,16 +476,6 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                         visitAnyGradleDependency(call, methodName, dependency)
                     }
                 }
-            }
-
-            //e.g. implementation sourceSets.main.output
-            private boolean configurationWithArbitraryProperty(MethodCallExpression call) {
-                call.arguments.expressions.any { it instanceof PropertyExpression }
-            }
-
-            //e.g. implementation fileTree(..)
-            private boolean configurationWithArbitraryMethodCall(MethodCallExpression call) {
-                call.arguments.expressions.any { it instanceof MethodCallExpression && it.methodAsString != 'project'}
             }
 
             private void visitMethodCallInPlugins(MethodCallExpression call) {
