@@ -4,7 +4,6 @@ package com.netflix.nebula.lint.rule.task
 import nebula.test.IntegrationTestKitSpec
 import spock.lang.Subject
 
-@Subject(TaskDefinitionOperatorRule)
 class TaskDefinitionOperatorRuleIntegrationSpec extends IntegrationTestKitSpec {
 
     def setup() {
