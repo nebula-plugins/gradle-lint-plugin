@@ -163,7 +163,7 @@ nebulaRelease {
     releaseBranchPatterns.add("beta")
 }
 
-//gradle metadata can be allowed in this project since we manually currante content of api/runtime Elements
+//gradle metadata can be allowed in this project since we manually curate content of api/runtime Elements
 project.tasks.withType(GenerateModuleMetadata) { task ->
     task.enabled = true
 }

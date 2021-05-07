@@ -111,28 +111,4 @@ dependencies {\r
         runTasks('fixGradleLint')
         buildFile.text.contains("implementation 'com.google.guava:guava:18.0")
     }
-
-    /**
-     * Because Gradle changed the internal APIs we are using to performed stylized text logging...
-     * This verifies that our reflection hack continues to be backwards compatible
-     */
-    @IgnoreIf({ jvm.isJava9Compatible() })
-    def 'Make sure logging works on older gradle version'() {
-        buildFile << """\
-            plugins {
-                id 'nebula.lint'
-                id 'java'
-            }
-
-            gradleLint.rules = ['all-dependencies']
-            """.stripIndent()
-        gradleVersion = '4.2' //we don't support older versions anymore
-
-        when:
-        def results = runTasks('assemble', 'lintGradle')
-
-        then:
-        println results?.output
-        noExceptionThrown()
-    }
 }
