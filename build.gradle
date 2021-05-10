@@ -258,7 +258,7 @@ gradle6Test {
 task gradle6ShadowJar(type: ShadowJar) {
     from sourceSets.gradle6.output
     configurations = [project.configurations.plugin]
-    classifier = 'gradle6'
+    archiveClassifier = 'gradle6'
     dependencies {
         include(dependency('org.eclipse.jdt:core'))
         include(dependency('org.eclipse.jgit:org.eclipse.jgit'))
@@ -288,4 +288,13 @@ artifacts {
 
 components.java.withVariantsFromConfiguration(configurations.shadowRuntimeElements) {
     skip()
+}
+
+//TODO I think this should not be necessary since jar is registered in outgoing configs
+publishing {
+    publications {
+        nebula(MavenPublication) {
+            artifact(gradle6ShadowJar)
+        }
+    }
 }
