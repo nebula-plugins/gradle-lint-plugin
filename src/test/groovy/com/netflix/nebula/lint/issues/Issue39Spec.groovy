@@ -34,7 +34,7 @@ class Issue39Spec extends IntegrationTestKitSpec {
         ''', new File(projectDir, 'src/integTest/java'))
 
         then:
-        runTasks('compileIntegTestJava', 'fixGradleLint')
+        runTasks('fixGradleLint')
 
         buildFile.text.contains("integTestImplementation 'com.google.guava:guava:26.0-jre'")
     }

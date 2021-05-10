@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 plugins {
-    id 'nebula.plugin-plugin' version '15.2.1'
+    id 'nebula.plugin-plugin' version '15.4.0'
     id 'nebula.kotlin' version '1.3.70'
-    id 'com.github.johnrengelman.shadow' version '5.0.0'
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
     id 'java-gradle-plugin'
+    id 'java-library'
 }
 
 description 'Pluggable and configurable linter tool for identifying and reporting on patterns of misuse or deprecations in Gradle scripts'
@@ -32,14 +35,18 @@ contacts {
 
 configurations {
     plugin.description = 'The compile dependencies for the plugin, excluding the local dependencies to avoid problems with Shadow'
-    compile.extendsFrom plugin
+    compileClasspath.extendsFrom plugin
+    runtimeClasspath.extendsFrom plugin
+    testCompileClasspath.extendsFrom plugin
+    testRuntimeClasspath.extendsFrom plugin
 }
 
 dependencies {
     compileOnly 'com.netflix.nebula:gradle-info-plugin:latest.release'
-    compile 'com.netflix.nebula:nebula-gradle-interop:latest.release'
-    compile 'org.apache.maven:maven-model-builder:3.+'
-    plugin  'com.google.guava:guava:19.0'
+    api 'com.netflix.nebula:nebula-gradle-interop:latest.release'
+    api 'org.apache.maven:maven-model-builder:3.+'
+    api  'com.google.guava:guava:19.0'
+    api 'org.codehaus.gpars:gpars:1.2.1'
 
     plugin('org.ow2.asm:asm:7.+') {
         version {
@@ -53,7 +60,7 @@ dependencies {
             because 'avoid getting prerelease versions'
         }
     }
-    plugin('org.codenarc:CodeNarc:0.25.2') {
+    plugin('org.codenarc:CodeNarc:2.0.0') {
         transitive = false
     }
     plugin 'commons-lang:commons-lang:2.6'
@@ -63,18 +70,9 @@ dependencies {
     }
     plugin 'org.eclipse.jdt:core:3.1.1'
 
-    plugin 'org.codehaus.gpars:gpars:1.2.1'
-
-    // these dependencies exist so we can provide a test harness
-    // to proprietary rule implementations packed in other jars, but are considered provided
-    plugin('org.spockframework:spock-core:1.0-groovy-2.4') { transitive = false }
-    plugin('junit:junit:4.12')
-    plugin('com.netflix.nebula:nebula-test:latest.release') { transitive = false }
+    compileOnly "com.netflix.nebula:nebula-test:9.+"
 
     testImplementation gradleTestKit()
-    testImplementation('org.spockframework:spock-core:1.0-groovy-2.4') {
-        exclude module: 'groovy-all'
-    }
     testImplementation 'org.ow2.asm:asm-util:5.2'
     testImplementation 'joda-time:joda-time:latest.release'
     testImplementation 'com.netflix.nebula:gradle-info-plugin:latest.release'
@@ -86,7 +84,7 @@ pluginBundle {
     description = 'Pluggable and configurable linter tool for identifying and reporting on patterns of misuse or deprecations in Gradle scripts'
 
     plugins {
-        dependencyLock {
+        gradeLint {
             id = 'nebula.lint'
             displayName = 'Nebula Lint plugin'
             description = 'Pluggable and configurable linter tool for identifying and reporting on patterns of misuse or deprecations in Gradle scripts'
@@ -122,27 +120,6 @@ shadowJar {
 
 jar.enabled = false
 jar.dependsOn shadowJar
-
-publishing {
-    publications {
-        withType(MavenPublication) {
-            pom.withXml {
-                asNode()
-                    .dependencies
-                    .dependency
-                    .findAll {
-                        // JGit is shaded inside the distribution, and we want the others to act as 'provided'
-                        [
-                                'core', 'org.eclipse.jgit', 'CodeNarc', // shaded and relocated
-                                'asm', 'asm-commons', 'commons-lang', // shaded and relocated
-                                'spock-core', 'nebula-test', 'junit', // act as 'provided'
-                        ].contains(it.artifactId.text())
-                    }
-                    .each { it.parent().remove(it) }
-            }
-        }
-    }
-}
 
 tasks.withType(Test) {
     maxHeapSize = '512m'
@@ -185,3 +162,121 @@ test.dependsOn 'shadowJar', 'generatePomFileForNebulaPublication'
 nebulaRelease {
     releaseBranchPatterns.add("beta")
 }
+
+//gradle metadata can be allowed in this project since we manually curate content of api/runtime Elements
+project.tasks.withType(GenerateModuleMetadata) { task ->
+    task.enabled = true
+}
+
+sourceSets {
+    main {
+        groovy {
+            srcDirs("src/gradle7Only/groovy")
+        }
+    }
+    gradle6 {
+        groovy {
+            srcDirs("src/main/groovy")
+            srcDirs("src/gradle6Only/groovy")
+        }
+        kotlin {
+            srcDirs("src/main/kotlin")
+        }
+        resources {
+            srcDirs("src/main/resources")
+        }
+    }
+}
+
+facets {
+    gradle6Test {
+        parentSourceSet = 'gradle6'
+    }
+}
+
+tasks.named('compileGradle6Groovy') {
+    classpath = sourceSets.gradle6.compileClasspath
+}
+tasks.named('compileGradle6Kotlin') {
+    classpath += files(sourceSets.gradle6.groovy.classesDirectory)
+}
+
+
+java {
+    registerFeature('gradle6') {
+        usingSourceSet(sourceSets.gradle6)
+        capability(project.group.toString(), project.name, project.version.toString())
+    }
+}
+
+['apiElements', 'runtimeElements'].each { configuration ->
+    configurations[configuration].attributes {
+        attribute(GradlePluginApiVersion.GRADLE_PLUGIN_API_VERSION_ATTRIBUTE,
+                objects.named(GradlePluginApiVersion, '7.0'))
+    }
+}
+
+tasks.named(sourceSets.gradle6.processResourcesTaskName) {
+    def copyPluginDescriptors = rootSpec.addChild()
+    copyPluginDescriptors.into('META-INF/gradle-plugins')
+    copyPluginDescriptors.from(tasks.pluginDescriptors)
+}
+
+dependencies {
+    gradle6CompileOnly 'com.netflix.nebula:gradle-info-plugin:latest.release'
+    gradle6CompileOnly 'dev.gradleplugins:gradle-api:6.8.3'
+    gradle6Api 'com.netflix.nebula:nebula-gradle-interop:latest.release'
+    gradle6Api 'org.apache.maven:maven-model-builder:3.+'
+    gradle6Api  'com.google.guava:guava:19.0'
+    gradle6Api 'org.codehaus.gpars:gpars:1.2.1'
+
+    gradle6CompileOnly "com.netflix.nebula:nebula-test:8.+"
+
+    gradle6TestImplementation "com.netflix.nebula:nebula-test:8.+"
+    gradle6TestImplementation "dev.gradleplugins:gradle-test-kit:6.8.3"
+}
+
+configurations {
+    gradle6CompileClasspath.extendsFrom plugin
+    gradle6RuntimeClasspath.extendsFrom plugin
+}
+
+task gradle6PluginUnderTestMetadata(type: PluginUnderTestMetadata) {
+    outputDirectory = file("$buildDir/gradle6PluginUnderTestMetadata")
+    pluginClasspath.from(sourceSets.gradle6.runtimeClasspath)
+}
+
+dependencies {
+    gradle6TestRuntimeOnly project.getLayout().files(gradle6PluginUnderTestMetadata)
+}
+
+gradle6Test {
+    dependsOn gradle6PluginUnderTestMetadata
+    useJUnit()
+}
+
+task gradle6ShadowJar(type: ShadowJar) {
+    from sourceSets.gradle6.output
+    configurations = [project.configurations.plugin]
+    classifier = 'gradle6'
+    dependencies {
+        include(dependency('org.eclipse.jdt:core'))
+        include(dependency('org.eclipse.jgit:org.eclipse.jgit'))
+        include(dependency('commons-lang:commons-lang'))
+        include(dependency('org.codenarc:CodeNarc'))
+        include(dependency('org.ow2.asm:asm'))
+        include(dependency('org.ow2.asm:asm-commons'))
+    }
+    relocate 'org.eclipse.jdt', 'com.netflix.nebula.lint.jdt'
+    relocate 'org.eclipse.jgit', 'com.netflix.nebula.lint.jgit'
+    relocate 'org.apache.commons.lang', 'com.netflix.nebula.lint.commons.lang'
+    relocate 'org.codenarc', 'com.netflix.nebula.lint.org.codenarc'
+    relocate 'org.objectweb.asm', 'com.netflix.nebula.lint.org.objectweb.asm'
+    relocate 'org.objectweb.asm.commons', 'com.netflix.nebula.lint.org.objectweb.asm.commons'
+
+    // powerassert is packed inside codenarc without relocation for some reason
+    relocate 'org.codehaus.groovy.transform.powerassert', 'com.netflix.nebula.lint.org.codehaus.groovy.transform.powerassert'
+}
+
+gradle6Jar.enabled = false
+gradle6Jar.dependsOn gradle6ShadowJar

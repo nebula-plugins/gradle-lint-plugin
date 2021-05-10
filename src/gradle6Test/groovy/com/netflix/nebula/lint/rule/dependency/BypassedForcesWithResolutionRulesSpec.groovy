@@ -20,19 +20,218 @@ import nebula.test.IntegrationTestKitSpec
 import nebula.test.dependencies.DependencyGraphBuilder
 import nebula.test.dependencies.GradleDependencyGenerator
 import nebula.test.dependencies.ModuleBuilder
-import org.gradle.util.GradleVersion
-import spock.lang.IgnoreIf
 import spock.lang.Subject
 import spock.lang.Unroll
 
-@Subject(BypassedForcesRule)
 class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
+
+    private static final String GRADLE_VERSION = "6.8.3"
+
     File rulesJsonFile
     File mavenrepo
 
     def setup() {
+        gradleVersion =
+
+                GRADLE_VERSION
         setupDependenciesAndRules()
-        debug = true
+    }
+
+    @Unroll
+    def 'direct dependency force is honored - force to good version while substitution is triggered by a transitive dependency | core alignment #coreAlignment'() {
+        setupSingleProjectBuildFile()
+        buildFile << """\
+            dependencies {
+                implementation('test.nebula:a:1.1.0') {
+                    force = true
+                }
+                implementation 'test.nebula:b:1.0.0' // added for alignment
+                implementation 'test.nebula:c:1.0.0' // added for alignment
+                implementation 'test.other:z:1.0.0' // brings in bad version
+            }
+        """.stripIndent()
+
+        when:
+        def tasks = ['dependencyInsight', '--dependency', 'test.nebula', '--warning-mode', 'none', "-Dnebula.features.coreAlignmentSupport=$coreAlignment"]
+        tasks += 'fixGradleLint'
+        def results = runTasks(*tasks)
+
+        then:
+        // force to an okay version is the primary contributor; the substitution rule was a secondary contributor
+        results.output.contains 'test.nebula:a:1.2.0 -> 1.1.0\n'
+        results.output.contains 'test.nebula:b:1.0.0 -> 1.1.0\n'
+        results.output.contains 'test.nebula:c:1.0.0 -> 1.1.0\n'
+
+        results.output.contains 'aligned'
+        results.output.contains '- Forced'
+
+        results.output.contains('0 violations')
+
+        where:
+        coreAlignment << [false, true]
+    }
+
+    @Unroll
+    def 'direct dependency force not honored - force to bad version triggers a substitution | core alignment #coreAlignment'() {
+        setupSingleProjectBuildFile()
+        buildFile << directDependencyForceNotHonoredDependenciesBlock()
+
+        when:
+        def tasks = ['dependencyInsight', '--dependency', 'test.nebula', '--warning-mode', 'none', "-Dnebula.features.coreAlignmentSupport=$coreAlignment"]
+        tasks += 'fixGradleLint'
+        def results = runTasks(*tasks)
+
+        then:
+        // substitution rule to a known-good-version was the primary contributor; force to a bad version was a secondary contributor
+        assertDirectDependencyAndResolutionStrategyForceNotHonored(results.output)
+
+        where:
+        coreAlignment << [true]
+    }
+
+    def 'direct dependency force not honored - multiproject with definitions in parent file in allprojects block'() {
+        def coreAlignment = true
+
+        setupMultiProjectBuildFile()
+        buildFile << """\
+            allprojects {
+                apply plugin: 'java'
+                ${directDependencyForceNotHonoredDependenciesBlock()}
+            }
+            project(':sub1') {}
+            """.stripIndent()
+        addSubproject('sub1')
+
+        when:
+        def tasks = [':sub1:dependencyInsight', '--dependency', 'test.nebula', '--warning-mode', 'none', "-Dnebula.features.coreAlignmentSupport=$coreAlignment"]
+        tasks += 'fixGradleLint'
+        def results = runTasks(*tasks)
+
+        then:
+        // substitution rule to a known-good-version was the primary contributor; force to a bad version was a secondary contributor
+        assertDirectDependencyAndResolutionStrategyForceNotHonored(results.output)
+        assert results.output.contains("Remove or update this value for the affected project(s): $moduleName, sub1\n")
+    }
+
+    def 'direct dependency force not honored - multiproject with definitions in parent file in subprojects block'() {
+        def coreAlignment = true
+
+        setupMultiProjectBuildFile()
+        buildFile << """\
+            subprojects {
+                apply plugin: 'java'
+                ${directDependencyForceNotHonoredDependenciesBlock()}
+            }
+            project(':sub1') {}
+            """.stripIndent()
+        addSubproject('sub1')
+
+        when:
+        def tasks = [':sub1:dependencyInsight', '--dependency', 'test.nebula', '--warning-mode', 'none', "-Dnebula.features.coreAlignmentSupport=$coreAlignment"]
+        tasks += 'fixGradleLint'
+        def results = runTasks(*tasks)
+
+        then:
+        // substitution rule to a known-good-version was the primary contributor; force to a bad version was a secondary contributor
+        assertDirectDependencyAndResolutionStrategyForceNotHonored(results.output)
+        assert results.output.contains("Remove or update this value for the affected project(s): sub1\n")
+    }
+
+    def 'direct dependency force not honored - multiproject with definitions in parent file in subproject definition block'() {
+        def coreAlignment = true
+
+        setupMultiProjectBuildFile()
+        buildFile << """\
+            subprojects {
+                apply plugin: 'java'
+            }
+            project(':sub1') {
+                ${directDependencyForceNotHonoredDependenciesBlock()}
+            }
+            """.stripIndent()
+        addSubproject('sub1')
+
+        when:
+        def tasks = [':sub1:dependencyInsight', '--dependency', 'test.nebula', '--warning-mode', 'none', "-Dnebula.features.coreAlignmentSupport=$coreAlignment"]
+        tasks += 'fixGradleLint'
+        def results = runTasks(*tasks)
+
+        then:
+        // substitution rule to a known-good-version was the primary contributor; force to a bad version was a secondary contributor
+        assertDirectDependencyAndResolutionStrategyForceNotHonored(results.output)
+        assert results.output.contains("Remove or update this value for the affected project(s): sub1\n")
+    }
+
+    def 'direct dependency force not honored - multiproject with definitions in subproject file'() {
+        def coreAlignment = true
+
+        setupMultiProjectBuildFile()
+        buildFile << """\
+            subprojects {
+                apply plugin: 'java'
+            }
+            """.stripIndent()
+        addSubproject('sub1', directDependencyForceNotHonoredDependenciesBlock())
+
+        when:
+        def tasks = [':sub1:dependencyInsight', '--dependency', 'test.nebula', '--warning-mode', 'none', "-Dnebula.features.coreAlignmentSupport=$coreAlignment"]
+        tasks += 'fixGradleLint'
+        def results = runTasks(*tasks)
+
+        then:
+        // substitution rule to a known-good-version was the primary contributor; force to a bad version was a secondary contributor
+        assertDirectDependencyAndResolutionStrategyForceNotHonored(results.output)
+        assert results.output.contains("Remove or update this value for the affected project(s): sub1\n")
+    }
+
+    @Unroll
+    def 'direct dependency force with dependencies as #type show 0 violations | core alignment #coreAlignment'() {
+        // note: 'accept' for substitution rules does not match on dynamic versions
+
+        setupSingleProjectBuildFile()
+        buildFile << """\
+            ext {
+                testNebulaVersion = '1.2.0'
+            } 
+            dependencies {
+                implementation("test.nebula:a:$definition") {
+                    force = true
+                }
+                implementation 'test.nebula:a:1.0.0' // added for alignment
+                implementation 'test.nebula:b:1.0.0' // added for alignment
+                implementation 'test.nebula:c:1.0.0' // added for alignment
+            }
+        """.stripIndent()
+
+        when:
+        def tasks = ['dependencyInsight', '--dependency', 'test.nebula', '--warning-mode', 'none', "-Dnebula.features.coreAlignmentSupport=$coreAlignment"]
+        tasks += 'fixGradleLint'
+        def results = runTasks(*tasks)
+
+        then:
+        results.output.contains('0 violations')
+
+        where:
+        type             | definition              | coreAlignment
+        'major.+'        | '1.+'                   | true
+        'latest.release' | 'latest.release'        | true
+        'range'          | '[1.0.0,1.2.0]'         | true
+        'variable'       | '\${testNebulaVersion}' | true
+    }
+
+    def 'works with Groovy 2.4.x - direct dependency force not honored'() {
+        def coreAlignment = true
+        setupSingleProjectBuildFileForGradle4_10_2()
+        buildFile << directDependencyForceNotHonoredDependenciesBlock()
+
+        when:
+        def tasks = ['dependencyInsight', '--dependency', 'test.nebula', '--warning-mode', 'none', "-Dnebula.features.coreAlignmentSupport=$coreAlignment"]
+        tasks += 'fixGradleLint'
+        def results = runTasks(*tasks)
+
+        then:
+        // substitution rule to a known-good-version was the primary contributor; force to a bad version was a secondary contributor
+        assertDirectDependencyAndResolutionStrategyForceNotHonored(results.output)
     }
 
     @Unroll
@@ -244,6 +443,28 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
 test.nebula:a:1.2.0\n""")
     }
 
+    def 'works with Groovy 2.4.x - resolution strategy force not honored'() {
+        def coreAlignment = true
+        setupSingleProjectBuildFileForGradle4_10_2()
+        buildFile << """\
+            ${resolutionStrategyForceNotHonoredConfigurationsBlock()}
+            dependencies {
+                implementation 'test.nebula:a:1.2.0' // bad version
+                implementation 'test.nebula:b:1.0.0' // added for alignment
+                implementation 'test.nebula:c:1.0.0' // added for alignment
+            }
+        """.stripIndent()
+
+        when:
+        def tasks = ['dependencyInsight', '--dependency', 'test.nebula', '--warning-mode', 'none', "-Dnebula.features.coreAlignmentSupport=$coreAlignment"]
+        tasks += 'fixGradleLint'
+        def results = runTasks(*tasks)
+
+        then:
+        // substitution rule to a known-good-version was the primary contributor; force to a bad version was a secondary contributor
+        assertDirectDependencyAndResolutionStrategyForceNotHonored(results.output)
+    }
+
     @Unroll
     def 'handles multiple forces in one statement | core alignment #coreAlignment'() {
         setupSingleProjectBuildFile()
@@ -267,7 +488,7 @@ test.nebula:a:1.2.0\n""")
                 .addModule('test.foo:bar:1.0.0')
                 .addModule('test.foo:bar:1.2.0')
                 .build()
-        new GradleDependencyGenerator(graph, "${projectDir}/testrepogen").generateTestMavenRepo()
+        new GradleDependencyGenerator(GRADLE_VERSION, graph, "${projectDir}/testrepogen").generateTestMavenRepo()
 
         when:
         def tasks = ['dependencyInsight', '--dependency', 'test', '--warning-mode', 'none', "-Dnebula.features.coreAlignmentSupport=$coreAlignment"]
@@ -310,7 +531,7 @@ test.nebula:a:1.2.0\n""")
                 .addModule('test.nebula:e:1.2.0')
                 .addModule('test.nebula:e:1.3.0')
                 .build()
-        new GradleDependencyGenerator(graph, "${projectDir}/testrepogen").generateTestMavenRepo()
+        new GradleDependencyGenerator(GRADLE_VERSION, graph, "${projectDir}/testrepogen").generateTestMavenRepo()
 
         buildFile << """\
             allprojects {
@@ -588,6 +809,20 @@ test.nebula:a:1.2.0\n""")
         'variable'       | '\${testNebulaVersion}' | true
     }
 
+    def 'works with Groovy 2.4.x - dependency with strict version declaration not honored'() {
+        def coreAlignment = true
+        setupSingleProjectBuildFileForGradle4_10_2()
+        buildFile << strictVersionsDeclarationNotHonoredDependenciesBlock()
+
+        when:
+        def tasks = ['dependencyInsight', '--dependency', 'test.nebula', "-Dnebula.features.coreAlignmentSupport=$coreAlignment"]
+        tasks += 'fixGradleLint'
+        def results = runTasks(*tasks)
+
+        then:
+        results.output.contains('BUILD SUCCESSFUL')
+    }
+
     @Unroll
     def 'dependency constraint with strict version declaration honored | core alignment #coreAlignment'() {
         setupSingleProjectBuildFile()
@@ -610,7 +845,7 @@ test.nebula:a:1.2.0\n""")
                 .addModule(new ModuleBuilder('test.brings-a:a:1.0.0').addDependency('test.nebula:a:1.0.0').build())
                 .addModule(new ModuleBuilder('test.brings-c:c:1.0.0').addDependency('test.nebula:c:1.0.0').build())
                 .build()
-        new GradleDependencyGenerator(graph, "${projectDir}/testrepogen").generateTestMavenRepo()
+        new GradleDependencyGenerator(GRADLE_VERSION, graph, "${projectDir}/testrepogen").generateTestMavenRepo()
 
         when:
         def tasks = ['dependencyInsight', '--dependency', 'test.nebula', "-Dnebula.features.coreAlignmentSupport=$coreAlignment"]
@@ -649,7 +884,7 @@ test.nebula:a:1.2.0\n""")
                 .addModule(new ModuleBuilder('test.brings-a:a:1.0.0').addDependency('test.nebula:a:1.0.0').build())
                 .addModule(new ModuleBuilder('test.brings-c:c:1.0.0').addDependency('test.nebula:c:1.0.0').build())
                 .build()
-        new GradleDependencyGenerator(graph, "${projectDir}/testrepogen").generateTestMavenRepo()
+        new GradleDependencyGenerator(GRADLE_VERSION, graph, "${projectDir}/testrepogen").generateTestMavenRepo()
 
         when:
         def tasks = ['dependencyInsight', '--dependency', 'test.nebula', "-Dnebula.features.coreAlignmentSupport=$coreAlignment"]
@@ -686,7 +921,7 @@ test.nebula:a:1.2.0\n""")
                 .addModule(new ModuleBuilder('test.brings-a:a:1.0.0').addDependency('test.nebula:a:1.0.0').build())
                 .addModule(new ModuleBuilder('test.brings-c:c:1.0.0').addDependency('test.nebula:c:1.0.0').build())
                 .build()
-        new GradleDependencyGenerator(graph, "${projectDir}/testrepogen").generateTestMavenRepo()
+        new GradleDependencyGenerator(GRADLE_VERSION, graph, "${projectDir}/testrepogen").generateTestMavenRepo()
 
         when:
         def tasks = [':sub1:dependencyInsight', '--dependency', 'test.nebula', "-Dnebula.features.coreAlignmentSupport=$coreAlignment"]
@@ -721,7 +956,7 @@ test.nebula:a:1.2.0\n""")
                 .addModule(new ModuleBuilder('test.brings-a:a:1.0.0').addDependency('test.nebula:a:1.0.0').build())
                 .addModule(new ModuleBuilder('test.brings-c:c:1.0.0').addDependency('test.nebula:c:1.0.0').build())
                 .build()
-        new GradleDependencyGenerator(graph, "${projectDir}/testrepogen").generateTestMavenRepo()
+        new GradleDependencyGenerator(GRADLE_VERSION, graph, "${projectDir}/testrepogen").generateTestMavenRepo()
 
         when:
         def tasks = [':sub1:dependencyInsight', '--dependency', 'test.nebula', "-Dnebula.features.coreAlignmentSupport=$coreAlignment"]
@@ -758,7 +993,7 @@ test.nebula:a:1.2.0\n""")
                 .addModule(new ModuleBuilder('test.brings-a:a:1.0.0').addDependency('test.nebula:a:1.0.0').build())
                 .addModule(new ModuleBuilder('test.brings-c:c:1.0.0').addDependency('test.nebula:c:1.0.0').build())
                 .build()
-        new GradleDependencyGenerator(graph, "${projectDir}/testrepogen").generateTestMavenRepo()
+        new GradleDependencyGenerator(GRADLE_VERSION, graph, "${projectDir}/testrepogen").generateTestMavenRepo()
 
         when:
         def tasks = [':sub1:dependencyInsight', '--dependency', 'test.nebula', "-Dnebula.features.coreAlignmentSupport=$coreAlignment"]
@@ -793,7 +1028,7 @@ test.nebula:a:1.2.0\n""")
                 .addModule(new ModuleBuilder('test.brings-a:a:1.0.0').addDependency('test.nebula:a:1.0.0').build())
                 .addModule(new ModuleBuilder('test.brings-c:c:1.0.0').addDependency('test.nebula:c:1.0.0').build())
                 .build()
-        new GradleDependencyGenerator(graph, "${projectDir}/testrepogen").generateTestMavenRepo()
+        new GradleDependencyGenerator(GRADLE_VERSION, graph, "${projectDir}/testrepogen").generateTestMavenRepo()
 
         when:
         def tasks = [':sub1:dependencyInsight', '--dependency', 'test.nebula', "-Dnebula.features.coreAlignmentSupport=$coreAlignment"]
@@ -835,7 +1070,7 @@ test.nebula:a:1.2.0\n""")
                 .addModule(new ModuleBuilder('test.brings-a:a:1.0.0').addDependency('test.nebula:a:1.0.0').build())
                 .addModule(new ModuleBuilder('test.brings-c:c:1.0.0').addDependency('test.nebula:c:1.0.0').build())
                 .build()
-        new GradleDependencyGenerator(graph, "${projectDir}/testrepogen").generateTestMavenRepo()
+        new GradleDependencyGenerator(GRADLE_VERSION, graph, "${projectDir}/testrepogen").generateTestMavenRepo()
 
         when:
         def tasks = ['dependencyInsightForAll', '--dependency', 'test.nebula', '--configuration', 'compileClasspath', "-Dnebula.features.coreAlignmentSupport=$coreAlignment"]
@@ -878,7 +1113,7 @@ test.nebula:a:1.3.0\n""")
                 .addModule(new ModuleBuilder('test.brings-a:a:1.0.0').addDependency('test.nebula:a:1.0.0').build())
                 .addModule(new ModuleBuilder('test.brings-c:c:1.0.0').addDependency('test.nebula:c:1.0.0').build())
                 .build()
-        new GradleDependencyGenerator(graph, "${projectDir}/testrepogen").generateTestMavenRepo()
+        new GradleDependencyGenerator(GRADLE_VERSION, graph, "${projectDir}/testrepogen").generateTestMavenRepo()
 
         when:
         def tasks = ['dependencyInsight', '--dependency', 'test.nebula', "-Dnebula.features.coreAlignmentSupport=$coreAlignment"]
@@ -894,6 +1129,34 @@ test.nebula:a:1.3.0\n""")
         'latest.release' | 'latest.release'        | true
         'range'          | '[1.0.0,1.2.0]'         | true
         'variable'       | '\${testNebulaVersion}' | true
+    }
+
+    def 'works with Groovy 2.4.x - dependency constraint with strict version declaration not honored'() {
+        def coreAlignment = true
+        setupSingleProjectBuildFileForGradle4_10_2()
+        buildFile << """\
+            dependencies {
+                ${dependencyConstraintWithStrictVersionDeclarationNotHonoredDependenciesBlock()}                
+                implementation 'test.brings-a:a:1.0.0' // added for alignment
+                implementation 'test.brings-b:b:1.0.0' // added for alignment
+                implementation 'test.brings-c:c:1.0.0' // added for alignment
+            }
+        """.stripIndent()
+
+        def graph = new DependencyGraphBuilder()
+                .addModule(new ModuleBuilder('test.brings-b:b:1.0.0').addDependency('test.nebula:b:1.0.0').build())
+                .addModule(new ModuleBuilder('test.brings-a:a:1.0.0').addDependency('test.nebula:a:1.0.0').build())
+                .addModule(new ModuleBuilder('test.brings-c:c:1.0.0').addDependency('test.nebula:c:1.0.0').build())
+                .build()
+        new GradleDependencyGenerator(GRADLE_VERSION, graph, "${projectDir}/testrepogen").generateTestMavenRepo()
+
+        when:
+        def tasks = ['dependencyInsight', '--dependency', 'test.nebula', "-Dnebula.features.coreAlignmentSupport=$coreAlignment"]
+        tasks += 'fixGradleLint'
+        def results = runTasks(*tasks)
+
+        then:
+        results.output.contains('BUILD SUCCESSFUL')
     }
 
     @Unroll
@@ -950,7 +1213,7 @@ test.nebula:a:1.3.0\n""")
                 .addModule(new ModuleBuilder('test.other:z:1.0.0').addDependency('test.nebula:a:1.2.0').build())
 
                 .build()
-        mavenrepo = new GradleDependencyGenerator(graph, "${projectDir}/testrepogen").generateTestMavenRepo()
+        mavenrepo = new GradleDependencyGenerator(GRADLE_VERSION, graph, "${projectDir}/testrepogen").generateTestMavenRepo()
 
         rulesJsonFile = new File(projectDir, "${moduleName}.json")
         String reason = "★ custom substitution reason"
@@ -1009,15 +1272,31 @@ test.nebula:a:1.3.0\n""")
             """.stripIndent()
     }
 
-    private void setupMultiProjectBuildFile() {
-        definePluginOutsideOfPluginBlock = true
+    private void setupSingleProjectBuildFileForGradle4_10_2() {
+        gradleVersion = '4.10.2' // with groovy 2.4.15
 
+        buildFile << """
+            plugins {
+                id 'java'
+                id "nebula.resolution-rules" version "6.0.5" 
+                id 'nebula.lint'
+            }
+
+            dependencies {
+                resolutionRules files('$rulesJsonFile')
+            }
+            repositories {
+                maven { url '${mavenrepo.absolutePath}' }
+            }
+            gradleLint.rules = ['bypassed-forces']
+            """
+    }
+
+    private void setupMultiProjectBuildFile() {
         buildFile << """\
-            buildscript {
-                repositories { maven { url "https://plugins.gradle.org/m2/" } }
-                dependencies {
-                    classpath "com.netflix.nebula:gradle-resolution-rules-plugin:7.5.0"
-                }
+            plugins {
+                id "nebula.resolution-rules" version "7.5.0" apply false
+                id 'nebula.lint' apply false
             }
             allprojects {
                 apply plugin: 'nebula.lint'
@@ -1031,6 +1310,18 @@ test.nebula:a:1.3.0\n""")
                 resolutionRules files('$rulesJsonFile')
             }
             """.stripIndent()
+    }
+
+    private static String directDependencyForceNotHonoredDependenciesBlock() {
+        """
+        dependencies {
+            implementation('test.nebula:a:1.2.0') {
+                force = true // force to bad version triggers a substitution
+            }
+            implementation 'test.nebula:b:1.0.0' // added for alignment
+            implementation 'test.nebula:c:1.0.0' // added for alignment
+        }
+        """.stripIndent()
     }
 
     private static String resolutionStrategyForceNotHonoredConfigurationsBlock() {

@@ -68,7 +68,7 @@ class SupportJavaLibrarySpec extends IntegrationTestKitSpec {
         sub1BuildFileText.contains(expectedDependencies)
 
         where:
-        configuration << ['testImplementation', 'testCompile', 'implementation']
+        configuration << ['testImplementation', 'implementation']
     }
 
     @Unroll
@@ -99,7 +99,7 @@ class SupportJavaLibrarySpec extends IntegrationTestKitSpec {
         sub1BuildFileText.contains(expectedDependencies)
 
         where:
-        configuration << ['testImplementation', 'testCompile', 'implementation']
+        configuration << ['testImplementation', 'implementation']
     }
 
     private def setupWithJavaLibraryAndAllRules(String configuration, boolean undeclaredDependency = false) {

@@ -17,6 +17,8 @@ package com.netflix.nebula.lint.rule.dependency
 
 
 import nebula.test.IntegrationTestKitSpec
+import org.gradle.util.GradleVersion
+import spock.lang.IgnoreIf
 import spock.lang.Issue
 import spock.lang.Unroll
 
@@ -41,10 +43,7 @@ class UnusedDependencyRuleSpec extends IntegrationTestKitSpec {
 
     // TODO match indentation when adding dependencies
 
-    def setup() {
-        debug = true
-    }
-
+    @IgnoreIf({ GradleVersion.current().baseVersion >= GradleVersion.version("7.0") })
     @Unroll
     def 'unused compile dependencies are marked for deletion'() {
         when:

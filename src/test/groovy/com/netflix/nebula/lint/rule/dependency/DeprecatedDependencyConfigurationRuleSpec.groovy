@@ -2,9 +2,12 @@ package com.netflix.nebula.lint.rule.dependency
 
 
 import nebula.test.IntegrationTestKitSpec
+import org.gradle.util.GradleVersion
+import spock.lang.IgnoreIf
 import spock.lang.Subject
 import spock.lang.Unroll
 
+@IgnoreIf({ GradleVersion.current().baseVersion >= GradleVersion.version("7.0")})
 @Unroll
 @Subject(DeprecatedDependencyConfigurationRule)
 class DeprecatedDependencyConfigurationRuleSpec extends IntegrationTestKitSpec {

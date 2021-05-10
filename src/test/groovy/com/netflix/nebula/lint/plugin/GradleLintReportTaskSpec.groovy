@@ -80,8 +80,7 @@ class GradleLintReportTaskSpec extends IntegrationTestKitSpec {
         report.text.contains('TotalFiles=1')
     }
 
-    @Unroll
-    def 'generate a report with different type through parameter from cli with Gradle version: #version'() {
+    def 'generate a report with different type through parameter from cli'() {
         when:
         buildFile.text = """
             plugins {
@@ -100,8 +99,6 @@ class GradleLintReportTaskSpec extends IntegrationTestKitSpec {
             }
         """
 
-        gradleVersion = version == "current" ? null : version
-
         then:
         runTasks('generateGradleLintReport', '-PgradleLint.reportFormat=text')
 
@@ -111,9 +108,6 @@ class GradleLintReportTaskSpec extends IntegrationTestKitSpec {
         then:
         report.text.contains('Violation: Rule=dependency-parentheses')
         report.text.contains('TotalFiles=1')
-
-        where:
-        version << ['4.10.3', "current"]
     }
 
     def 'generate a report with only applied fixes using cli param to enable it'() {
