@@ -181,3 +181,7 @@ sourceCompatibility = JavaVersion.VERSION_1_8
     assemble.dependsOn("dependencyReport${confName.capitalize()}")
 }
 test.dependsOn 'shadowJar', 'generatePomFileForNebulaPublication'
+
+nebulaRelease {
+    releaseBranchPatterns.add("beta")
+}
