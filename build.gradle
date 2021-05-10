@@ -280,3 +280,12 @@ task gradle6ShadowJar(type: ShadowJar) {
 
 gradle6Jar.enabled = false
 gradle6Jar.dependsOn gradle6ShadowJar
+
+artifacts {
+    gradle6ApiElements(gradle6ShadowJar)
+    gradle6RuntimeElements(gradle6ShadowJar)
+}
+
+components.java.withVariantsFromConfiguration(configurations.shadowRuntimeElements) {
+    skip()
+}
