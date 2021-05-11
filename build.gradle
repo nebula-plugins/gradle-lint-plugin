@@ -256,6 +256,8 @@ gradle6Test {
 }
 
 task gradle6ShadowJar(type: ShadowJar) {
+    //exclude signatures. this is done by shadow jar plugin for existing task, custom task needs explicit declaration
+    exclude('META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA', 'module-info.class')
     from sourceSets.gradle6.output
     configurations = [project.configurations.plugin]
     archiveClassifier = 'gradle6'
