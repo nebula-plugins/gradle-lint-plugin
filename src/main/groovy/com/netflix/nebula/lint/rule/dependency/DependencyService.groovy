@@ -607,14 +607,20 @@ class DependencyService {
         Set<ResolvedArtifact> indirect = new HashSet()
     }
 
+    private String sourceSetCompileConfiguration(SourceSet sourceSet) {
+        return sourceSet.hasProperty('compileClasspathConfigurationName')?.getProperty(sourceSet) ?: sourceSet.compileConfigurationName
+    }
+
     private Iterable<String> sourceSetCompileConfigurations() {
-        (project.convention.getPlugin(JavaPluginConvention).sourceSets +
-                (project.getExtensions().findByName('android')?.sourceSets ?: []))*.compileConfigurationName
+        return (project.convention.getPlugin(JavaPluginConvention).sourceSets +
+                (project.getExtensions().findByName('android')?.sourceSets ?: [])).collect {
+            sourceSetCompileConfiguration(it)
+        }
     }
 
     SourceSet sourceSetByConf(String conf) {
         project.convention.findPlugin(JavaPluginConvention)?.sourceSets?.find {
-            it.compileClasspathConfigurationName == conf || it.compileConfigurationName == conf
+            sourceSetCompileConfiguration(it) == conf
         }
                 ?: project.convention.findPlugin(JavaPluginConvention)?.sourceSets?.find { sourceSet -> project.configurations.getByName(conf).extendsFrom.any { it.name == sourceSet.compileClasspathConfigurationName } } //find source set from parent
                 ?: project.configurations.findAll { it.extendsFrom.contains(project.configurations.getByName(conf)) }
@@ -676,8 +682,8 @@ class DependencyService {
         new Comparator<SourceSet>() {
             @Override
             int compare(SourceSet s1, SourceSet s2) {
-                def c1 = project.configurations.findByName(s1.compileConfigurationName)
-                def c2 = project.configurations.findByName(s2.compileConfigurationName)
+                def c1 = project.configurations.findByName(sourceSetCompileConfiguration(s1))
+                def c2 = project.configurations.findByName(sourceSetCompileConfiguration(s2))
 
                 if (allExtendsFrom(c1).contains(c2)) {
                     1
