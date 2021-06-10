@@ -53,6 +53,7 @@ dependencies {
     api 'com.netflix.nebula:nebula-gradle-interop:latest.release'
     api 'org.apache.maven:maven-model-builder:3.+'
     api  'com.google.guava:guava:19.0'
+    api 'org.codehaus.gpars:gpars:1.2.1'
 
     plugin('org.ow2.asm:asm:7.+') {
         version {
@@ -75,8 +76,6 @@ dependencies {
         transitive = false
     }
     plugin 'org.eclipse.jdt:core:3.1.1'
-
-    plugin 'org.codehaus.gpars:gpars:1.2.1'
 
     compileOnly "com.netflix.nebula:nebula-test:9.+"
 
@@ -137,27 +136,6 @@ shadowJar {
 
 jar.enabled = false
 jar.dependsOn shadowJar
-
-publishing {
-    publications {
-        withType(MavenPublication) {
-            pom.withXml {
-                asNode()
-                    .dependencies
-                    .dependency
-                    .findAll {
-                        // JGit is shaded inside the distribution, and we want the others to act as 'provided'
-                        [
-                                'core', 'org.eclipse.jgit', 'CodeNarc', // shaded and relocated
-                                'asm', 'asm-commons', 'commons-lang', // shaded and relocated
-                                'spock-core', 'nebula-test', 'junit', // act as 'provided'
-                        ].contains(it.artifactId.text())
-                    }
-                    .each { it.parent().remove(it) }
-            }
-        }
-    }
-}
 
 tasks.withType(Test) {
     maxHeapSize = '512m'
