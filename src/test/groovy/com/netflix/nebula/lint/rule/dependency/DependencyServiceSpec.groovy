@@ -409,15 +409,15 @@ class DependencyServiceSpec extends IntegrationTestKitSpec {
         resolvableConfig.name == resolvableConfigName
 
         where:
-        configName              | resolvableConfigName
-        'api'                   | 'compileClasspath'
-        'compileOnly'           | 'compileClasspath'
-        'implementation'        | 'compileClasspath'
-        'runtimeOnly'           | 'runtimeClasspath'
+        configName           | resolvableConfigName
+        'api'                | 'compileClasspath'
+        'compileOnly'        | 'compileClasspath'
+        'implementation'     | 'compileClasspath'
+        'runtimeOnly'        | 'runtimeClasspath'
 
-        'testCompileOnly'       | 'testCompileClasspath'
-        'testImplementation'    | 'testCompileClasspath'
-        'testRuntimeOnly'       | 'testRuntimeClasspath'
+        'testCompileOnly'    | 'testCompileClasspath'
+        'testImplementation' | 'testCompileClasspath'
+        'testRuntimeOnly'    | 'testRuntimeClasspath'
     }
 
     @Unroll
@@ -465,10 +465,15 @@ class DependencyServiceSpec extends IntegrationTestKitSpec {
                     canBeResolved = false
                     canBeConsumed = true
                 }
+                myNonResolvableConfigWithParent {
+                    canBeResolved = false
+                    canBeConsumed = true
+                }
                 myResolvableConfig {
                     canBeResolved = true
                     canBeConsumed = true
                 }
+                compileClasspath.extendsFrom myNonResolvableConfigWithParent
             }
         }
         writeJavaSourceFile('public class Main {}')
@@ -482,8 +487,9 @@ class DependencyServiceSpec extends IntegrationTestKitSpec {
         resolvableConfig.name == resolvableConfigName
 
         where:
-        configName              | resolvableConfigName
-        'myResolvableConfig'    | 'myResolvableConfig'
-        'myNonResolvableConfig' | 'myNonResolvableConfig' // returns the original config when the resolution alternative is unclear
+        configName                        | resolvableConfigName
+        'myResolvableConfig'              | 'myResolvableConfig'
+        'myNonResolvableConfigWithParent' | 'compileClasspath'
+        'myNonResolvableConfig'           | 'myNonResolvableConfig' // returns the original config when the resolution alternative is unclear
     }
 }

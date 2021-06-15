@@ -118,14 +118,6 @@ class DependencyService {
         return artifactsByClass
     }
 
-    Configuration findResolvableConfiguration(String confName) {
-        Configuration resolvableConfiguration = getResolvableConfigurationOrParent(confName)
-        if (!resolvableConfiguration) {
-            return null
-        }
-        return findAndReplaceDeprecatedConfiguration(resolvableConfiguration)
-    }
-
     /**
      * Replaces compile configuration for compileClasspath so we find proper usage of dependencies
      * @param configuration
@@ -159,12 +151,14 @@ class DependencyService {
      */
     protected Configuration findAndReplaceNonResolvableConfiguration(Configuration configuration) {
         Configuration replacementConfiguration = findAndReplaceDeprecatedConfiguration(configuration)
-        Configuration replacementClasspathConfiguration = replacementConfiguration
+        Configuration replacementClasspathConfiguration
 
         if (replacementConfiguration.name == 'api' || replacementConfiguration.name == 'implementation' || replacementConfiguration.name == 'compileOnly') {
             replacementClasspathConfiguration = project.configurations.findByName('compileClasspath')
         } else if (replacementConfiguration.name == 'runtime' || replacementConfiguration.name == 'runtimeOnly') {
             replacementClasspathConfiguration = project.configurations.findByName('runtimeClasspath')
+        } else if (!isResolvable(replacementConfiguration)) {
+            replacementClasspathConfiguration = getResolvableParent(configuration.name)
         }
         if (replacementClasspathConfiguration != null) {
             replacementConfiguration = replacementClasspathConfiguration
@@ -487,12 +481,13 @@ class DependencyService {
         }
     }
 
-    private Configuration getResolvableConfigurationOrParent(String confName) {
+    private Configuration getResolvableParent(String confName) {
         Configuration configuration = project.configurations.getByName(confName)
         if (isResolvable(confName)) {
             return configuration
         } else if (hasResolvableParentConfiguration(confName)) {
-            return configuration.extendsFrom.find { isResolvable(it.name) }
+            List<List<Configuration>> configurationHierarchy = constructConfigurationHierarchy(confName)
+            return configurationHierarchy.first().last()
         } else {
             return configuration
         }
