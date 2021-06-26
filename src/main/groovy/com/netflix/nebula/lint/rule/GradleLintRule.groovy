@@ -493,8 +493,8 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                                 return it.text
                             return null
                         }
-                        if (expr instanceof String)
-                            plugin = new GradlePlugin(expr)
+                        if (expr instanceof String || (expr instanceof Boolean && call.methodAsString == 'apply'))
+                            plugin = new GradlePlugin(expr.toString())
                     }
 
                     if (plugin) {
