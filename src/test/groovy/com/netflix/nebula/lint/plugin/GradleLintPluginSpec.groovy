@@ -17,6 +17,7 @@ package com.netflix.nebula.lint.plugin
 
 
 import nebula.test.IntegrationTestKitSpec
+import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 import spock.lang.Issue
 import spock.lang.Unroll
@@ -661,6 +662,57 @@ class GradleLintPluginSpec extends IntegrationTestKitSpec {
 
         then:
         !console.any { it.contains('dependency-parentheses') }
+    }
+
+    def 'lint task does not depend on compilation when wireJavaProject is false'() {
+        when:
+        buildFile << """
+            plugins {
+                id 'nebula.lint'
+                id 'java'
+            }
+            gradleLint { 
+                rules = ['dependency-parentheses']
+            }
+            dependencies {
+                implementation 'commons-logging:commons-logging:latest.release'
+            }
+        """
+        writeHelloWorld()
+
+        then:
+        def result = runTasks('-PgradleLint.wireJavaPlugin=false', 'lintGradle')
+
+        then:
+        !result.task(':compileJava')
+        result.task(':lintGradle').outcome == TaskOutcome.SUCCESS
+    }
+
+    def 'lint task depends on compilation by default'() {
+        when:
+        buildFile << """
+            plugins {
+                id 'nebula.lint'
+                id 'java'
+            }
+            repositories {
+                mavenCentral()
+            }
+            gradleLint { 
+                rules = ['dependency-parentheses']
+            }
+            dependencies {
+                implementation 'commons-logging:commons-logging:latest.release'
+            }
+        """
+        writeHelloWorld()
+
+        then:
+        BuildResult result = runTasks('lintGradle')
+
+        then:
+        result.task(':compileJava').outcome == TaskOutcome.SUCCESS
+        result.task(':lintGradle').outcome == TaskOutcome.SUCCESS
     }
 
     def 'lint task does not run when alwaysRun is off via cli'() {

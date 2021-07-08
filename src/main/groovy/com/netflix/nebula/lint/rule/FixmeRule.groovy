@@ -14,6 +14,13 @@ class FixmeRule implements Rule {
 
     @Override
     int getPriority() {
+        // A system property is used since not all lint rules are GradleModelAware in order to pass in a project
+        // We would prefer to use https://docs.gradle.org/6.1/javadoc/org/gradle/api/provider/ProviderFactory.html#systemProperty-java.lang.String-
+        // but this was introduced in Gradle 6.1
+        def nonCriticalPriority = System.getProperty('nebula.lint.fixmeAsNonCritical')
+        if (nonCriticalPriority != null && nonCriticalPriority == "true") {
+            return 2 // violations of fixmes are noncritical only when the property is used
+        }
         return 1 // violations of fixmes are always critical rule failures
     }
 

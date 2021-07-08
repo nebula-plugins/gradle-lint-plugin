@@ -18,10 +18,17 @@ abstract class AbstractLintPluginTaskConfigurer {
     void configure(Project project) {
         def lintExt = project.extensions.create('gradleLint', GradleLintExtension)
         createTasks(project, lintExt)
-        wireJavaPlugin(project)
+        wireJavaPluginConditionally(project)
     }
 
     abstract void createTasks(Project project, GradleLintExtension lintExtension)
+
+    protected void wireJavaPluginConditionally(Project project) {
+        boolean wireJavaProject = project.hasProperty('gradleLint.wireJavaPlugin') ? Boolean.valueOf(project.property('gradleLint.wireJavaPlugin').toString()) : true
+        if(wireJavaProject) {
+            wireJavaPlugin(project)
+        }
+    }
 
     abstract void wireJavaPlugin(Project project)
 

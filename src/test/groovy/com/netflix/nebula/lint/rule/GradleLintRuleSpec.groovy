@@ -85,6 +85,35 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         plugin << ['java', 'org.gradle.java']
     }
 
+    @Unroll
+    def 'visit `plugins` with apply - #plugin'() {
+        when:
+        project.buildFile << """
+            plugins {
+             id '${plugin}' apply false
+            }
+        """
+
+        def pluginCount = 0
+
+        runRulesAgainst(new GradleLintRule() {
+            String description = 'test'
+
+            @Override
+            void visitGradlePlugin(MethodCallExpression call, String conf, GradlePlugin gradlePluginGradleLintRuleSpec) {
+                if(call.methodAsString == 'apply') {
+                    pluginCount++
+                }
+            }
+        })
+
+        then:
+        pluginCount == 1
+
+        where:
+        plugin << ['java', 'org.gradle.java']
+    }
+
     def 'skip nested `plugins`'() {
         when:
         project.buildFile << """
@@ -392,7 +421,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         then:
         noExceptionThrown()
     }
-    
+
     def 'visit dependencies that are defined with map notation'() {
         when:
         project.buildFile << """
