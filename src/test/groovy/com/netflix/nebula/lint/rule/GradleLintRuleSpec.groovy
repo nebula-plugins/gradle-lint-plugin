@@ -96,7 +96,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
 
         def pluginCount = 0
 
-        runRulesAgainst(new GradleLintRule() {
+        runRulesAgainst(new AbstractExampleGradleLintRule() {
             String description = 'test'
 
             @Override
