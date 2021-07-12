@@ -487,7 +487,9 @@ class DependencyService {
             return configuration
         } else if (hasResolvableParentConfiguration(confName)) {
             List<List<Configuration>> configurationHierarchy = constructConfigurationHierarchy(confName)
-            return configurationHierarchy.first().last()
+            return configurationHierarchy.collectMany {
+                it.findAll {it.canBeResolved }
+            }.first()
         } else {
             return configuration
         }
@@ -628,7 +630,7 @@ class DependencyService {
         }
 
         // android
-        if (conf.startsWith('test')) {
+        if (conf.name.startsWith('test')) {
             return project.tasks.findByName('compileReleaseUnitTestJavaWithJavac')?.classpath
         }
         return project.tasks.findByName('compileReleaseJavaWithJavac')?.classpath
