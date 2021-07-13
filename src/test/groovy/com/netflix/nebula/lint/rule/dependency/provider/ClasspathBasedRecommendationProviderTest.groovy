@@ -48,7 +48,7 @@ class ClasspathBasedRecommendationProviderTest extends IntegrationTestKitSpec {
         project.getExtensions().add("commonsVersion", "1.1.2")
 
         project.dependencies {
-            compile module
+            implementation module
         }
 
         def provider = new MavenBomRecommendationProvider(project)
@@ -86,9 +86,9 @@ class ClasspathBasedRecommendationProviderTest extends IntegrationTestKitSpec {
         project.getExtensions().add("commonsVersion", "1.1.2")
 
         project.dependencies {
-            compile firstBom
-            compile secondBom
-            compile thirdBom
+            implementation firstBom
+            implementation secondBom
+            implementation thirdBom
         }
 
         def provider = new MavenBomRecommendationProvider(project)
@@ -128,9 +128,9 @@ class ClasspathBasedRecommendationProviderTest extends IntegrationTestKitSpec {
         project.getExtensions().add("commonsVersion", "1.1.2")
 
         project.dependencies {
-            compile firstBom
-            runtime secondBom
-            testCompile thirdBom
+            implementation firstBom
+            runtimeOnly secondBom
+            testImplementation thirdBom
         }
 
         def provider = new MavenBomRecommendationProvider(project)
@@ -172,10 +172,10 @@ class ClasspathBasedRecommendationProviderTest extends IntegrationTestKitSpec {
         project.getExtensions().add("commonsVersion", "1.1.2")
 
         project.dependencies {
-            compile firstBom
-            compile 'sample:bat:latest.release'
-            runtime secondBom
-            testCompile thirdBom
+            implementation firstBom
+            implementation 'sample:bat:latest.release'
+            runtimeOnly secondBom
+            testImplementation thirdBom
         }
 
         def provider = new MavenBomRecommendationProvider(project)
@@ -212,9 +212,9 @@ class ClasspathBasedRecommendationProviderTest extends IntegrationTestKitSpec {
         project.repositories { maven { url repo } }
 
         project.dependencies {
-            compile 'sample:fizz:1.0'
-            compile 'sample:bat:1.0'
-            compile 'sample:buzz:1.0'
+            implementation 'sample:fizz:1.0'
+            implementation 'sample:bat:1.0'
+            implementation 'sample:buzz:1.0'
         }
 
         Dependency dep = newDependency('bat')
@@ -246,9 +246,9 @@ class ClasspathBasedRecommendationProviderTest extends IntegrationTestKitSpec {
         project.repositories { maven { url repo } }
 
         project.dependencies {
-            compile 'sample:fizz:1.0'
-            compile 'sample:bat:1.0'
-            compile 'sample:buzz:1.0'
+            implementation 'sample:fizz:1.0'
+            implementation 'sample:bat:1.0'
+            implementation 'sample:buzz:1.0'
         }
 
         Dependency dep = newDependency('bat')

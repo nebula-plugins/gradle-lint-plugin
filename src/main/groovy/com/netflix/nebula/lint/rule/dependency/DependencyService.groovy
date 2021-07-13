@@ -77,12 +77,14 @@ class DependencyService {
         List<Configuration> terminalConfs = []
         def extendingConfs
         extendingConfs = { Configuration c ->
-            def subconfs = resolvableConfigurations().findAll { it.extendsFrom.any { it == c } }
-            for (Configuration subconf in subconfs) {
-                extendingConfs(subconf)
-            }
-            if (subconfs.isEmpty()) {
+            if (c.canBeResolved) {
                 terminalConfs.add(c)
+            } else {
+                Set<Configuration> parentConfigs = project.configurations.findAll { it.name != 'default' && it.extendsFrom.any { it == c } }
+                //def subconfs = resolvableConfigurations()
+                for (Configuration parent in parentConfigs) {
+                    extendingConfs(parent)
+                }
             }
         }
         extendingConfs(conf)
@@ -114,14 +116,6 @@ class DependencyService {
         }
 
         return artifactsByClass
-    }
-
-    Configuration findResolvableConfiguration(String confName) {
-        Configuration resolvableConfiguration = getResolvableConfigurationOrParent(confName)
-        if (!resolvableConfiguration) {
-            return null
-        }
-        return findAndReplaceDeprecatedConfiguration(resolvableConfiguration)
     }
 
     /**
@@ -157,12 +151,14 @@ class DependencyService {
      */
     protected Configuration findAndReplaceNonResolvableConfiguration(Configuration configuration) {
         Configuration replacementConfiguration = findAndReplaceDeprecatedConfiguration(configuration)
-        Configuration replacementClasspathConfiguration = replacementConfiguration
+        Configuration replacementClasspathConfiguration
 
         if (replacementConfiguration.name == 'api' || replacementConfiguration.name == 'implementation' || replacementConfiguration.name == 'compileOnly') {
             replacementClasspathConfiguration = project.configurations.findByName('compileClasspath')
         } else if (replacementConfiguration.name == 'runtime' || replacementConfiguration.name == 'runtimeOnly') {
             replacementClasspathConfiguration = project.configurations.findByName('runtimeClasspath')
+        } else if (!isResolvable(replacementConfiguration)) {
+            replacementClasspathConfiguration = getResolvableParent(configuration.name)
         }
         if (replacementClasspathConfiguration != null) {
             replacementConfiguration = replacementClasspathConfiguration
@@ -357,14 +353,10 @@ class DependencyService {
     }
 
     private Collection<ModuleVersionIdentifier> findDeclaredDependencies(Configuration configuration) {
-        def declared = configuration.resolvedConfiguration.firstLevelModuleDependencies.collect { it.module.id }
-        project.configurations.findAll { it.extendsFrom.contains(configuration) }.each { Configuration childConfig ->
-            if (isResolvable(childConfig)) {
-                declared.addAll childConfig.resolvedConfiguration.firstLevelModuleDependencies.collect { it.module.id }
-            } else {
-                declared.addAll getResolvableConfigurationOrParent(childConfig.name).resolvedConfiguration.firstLevelModuleDependencies.collect { it.module.id }
-            }
+        if (!configuration.isCanBeResolved()) {
+            new IllegalArgumentException("Configuration ${configuration.name} is not resolvable. We expect configurations like compileClasspath for declared dependency search")
         }
+        def declared = configuration.resolvedConfiguration.firstLevelModuleDependencies.collect { it.module.id }
         return declared
     }
 
@@ -394,6 +386,19 @@ class DependencyService {
             return false
         }
 
+        List<List<Configuration>> terminalPaths = constructConfigurationHierarchy(confName)
+
+        def sourceSetConfs = sourceSetCompileConfigurations()
+
+        // if any configuration path does NOT contain a sourceSet conf in it somewhere, it is a runtime-only concern
+        return terminalPaths.every { path ->
+            !path.any { config ->
+                sourceSetConfs.contains(config.name)
+            }
+        }
+    }
+
+    private List<List<Configuration>> constructConfigurationHierarchy(String startingPoint) {
         List<List<Configuration>> terminalPaths = []
 
         def confPaths
@@ -406,16 +411,8 @@ class DependencyService {
                 terminalPaths.add(path + [c])
             }
         }
-        confPaths(project.configurations.getByName(confName), [])
-
-        def sourceSetConfs = sourceSetCompileConfigurations()
-
-        // if any configuration path does NOT contain a sourceSet conf in it somewhere, it is a runtime-only concern
-        return terminalPaths.any { path ->
-            !path.any { config ->
-                sourceSetConfs.contains(config.name) || config.extendsFrom.name.any { parentConfigName -> sourceSetConfs.contains(parentConfigName) }
-            }
-        }
+        confPaths(project.configurations.getByName(startingPoint), [])
+        return terminalPaths
     }
 
     /**
@@ -456,18 +453,15 @@ class DependencyService {
      * source set to avoid false positives
      */
     @Memoized
-    Set<ModuleIdentifier> unusedDependencies(String confName) {
+    Set<ModuleIdentifier> unusedDependencies(String confName, String declaredConf) {
         def references = classReferences(confName)
         if (!references) {
             return Collections.emptySet()
         }
 
-        def resolvableConfig = findResolvableConfiguration(confName)
-        if (!resolvableConfig) {
-            return [] as Set
-        }
         try {
-            def unused = firstLevelDependenciesInConf(resolvableConfig, project.configurations.findByName(confName))
+            def resolvableConfig = project.configurations.findByName(confName)
+            def unused = firstLevelDependenciesInConf(resolvableConfig, project.configurations.findByName(declaredConf))
 
             // remove all directly used dependencies
             unused.removeAll(references.direct.collect { it.moduleVersion.id })
@@ -487,12 +481,15 @@ class DependencyService {
         }
     }
 
-    private Configuration getResolvableConfigurationOrParent(String confName) {
+    private Configuration getResolvableParent(String confName) {
         Configuration configuration = project.configurations.getByName(confName)
         if (isResolvable(confName)) {
             return configuration
         } else if (hasResolvableParentConfiguration(confName)) {
-            return configuration.extendsFrom.find { isResolvable(it.name) }
+            List<List<Configuration>> configurationHierarchy = constructConfigurationHierarchy(confName)
+            return configurationHierarchy.collectMany {
+                it.findAll {it.canBeResolved }
+            }.first()
         } else {
             return configuration
         }
@@ -569,7 +566,7 @@ class DependencyService {
         if (Configuration.class.declaredMethods.any { it.name == 'isCanBeResolved' }) {
             //compileOnly and its flavors are marked as resolvable but only for backward compatibility purposes
             //in reality they shouldn't be
-            return conf.canBeResolved && !conf.name.toLowerCase().endsWith("compileonly")
+            return conf.canBeResolved && !conf.name.toLowerCase().endsWith("compileonly") && conf.name != "default"
         }
         return true
     }
@@ -589,7 +586,10 @@ class DependencyService {
 
     boolean hasResolvableParentConfiguration(String conf) {
         try {
-            return project.configurations.getByName(conf).extendsFrom.any { it.canBeResolved }
+            List<List<Configuration>> configurationHierarchy = constructConfigurationHierarchy(conf)
+            return configurationHierarchy.any { List<Configuration> path ->
+                path.any {it.canBeResolved }
+            }
         } catch (UnknownConfigurationException ignored) {
             return false
         }
@@ -609,12 +609,12 @@ class DependencyService {
 
     private Iterable<String> sourceSetCompileConfigurations() {
         (project.convention.getPlugin(JavaPluginConvention).sourceSets +
-                (project.getExtensions().findByName('android')?.sourceSets ?: []))*.compileConfigurationName
+                (project.getExtensions().findByName('android')?.sourceSets ?: []))*.compileClasspathConfigurationName
     }
 
     SourceSet sourceSetByConf(String conf) {
         project.convention.findPlugin(JavaPluginConvention)?.sourceSets?.find {
-            it.compileClasspathConfigurationName == conf || it.compileConfigurationName == conf
+            it.compileClasspathConfigurationName == conf
         }
                 ?: project.convention.findPlugin(JavaPluginConvention)?.sourceSets?.find { sourceSet -> project.configurations.getByName(conf).extendsFrom.any { it.name == sourceSet.compileClasspathConfigurationName } } //find source set from parent
                 ?: project.configurations.findAll { it.extendsFrom.contains(project.configurations.getByName(conf)) }
@@ -630,7 +630,7 @@ class DependencyService {
         }
 
         // android
-        if (conf.startsWith('test')) {
+        if (conf.name.startsWith('test')) {
             return project.tasks.findByName('compileReleaseUnitTestJavaWithJavac')?.classpath
         }
         return project.tasks.findByName('compileReleaseJavaWithJavac')?.classpath
@@ -676,8 +676,8 @@ class DependencyService {
         new Comparator<SourceSet>() {
             @Override
             int compare(SourceSet s1, SourceSet s2) {
-                def c1 = project.configurations.findByName(s1.compileConfigurationName)
-                def c2 = project.configurations.findByName(s2.compileConfigurationName)
+                def c1 = project.configurations.findByName(s1.compileClasspathConfigurationName)
+                def c2 = project.configurations.findByName(s2.compileClasspathConfigurationName)
 
                 if (allExtendsFrom(c1).contains(c2)) {
                     1

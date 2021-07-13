@@ -25,9 +25,6 @@ import spock.lang.Unroll
 
 @Subject([FirstOrderDuplicateDependencyClassRule, DependencyParenthesesRule])
 class LintGradleTaskSpec extends IntegrationTestKitSpec {
-    def setup() {
-        debug = true
-    }
 
     @Unroll
     def 'mark violations that have no auto-remediation - configuration #configuration'() {
@@ -63,7 +60,7 @@ class LintGradleTaskSpec extends IntegrationTestKitSpec {
         result.output.contains('(no auto-fix available)')
 
         where:
-        configuration << ['compile', 'implementation']
+        configuration << ['implementation']
     }
 
     def 'critical rule failures cause build failure'() {

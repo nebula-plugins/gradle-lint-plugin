@@ -7,7 +7,6 @@ import spock.lang.Subject
 import spock.lang.Unroll
 
 @Unroll
-@Subject(DeprecatedDependencyConfigurationRule)
 @IgnoreIf({ jvm.isJava9Compatible() })
 class OldGradleDeprecatedDependencyConfigurationRuleSpec extends IntegrationTestKitSpec {
 

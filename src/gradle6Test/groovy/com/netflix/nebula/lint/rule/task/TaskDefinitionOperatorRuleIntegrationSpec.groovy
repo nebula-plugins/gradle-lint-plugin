@@ -2,11 +2,8 @@ package com.netflix.nebula.lint.rule.task
 
 
 import nebula.test.IntegrationTestKitSpec
-import spock.lang.Ignore
 import spock.lang.Subject
 
-@Ignore
-@Subject(TaskDefinitionOperatorRule)
 class TaskDefinitionOperatorRuleIntegrationSpec extends IntegrationTestKitSpec {
 
     def setup() {

@@ -16,6 +16,7 @@
 
 package com.netflix.nebula.lint.plugin
 
+import com.netflix.nebula.lint.rule.AbstractExampleGradleLintRule
 import com.netflix.nebula.lint.rule.GradleLintRule
 import org.gradle.api.Project
 import org.junit.Rule
@@ -93,11 +94,11 @@ class LintRuleRegistrySpec extends Specification {
         temp.newFile("META-INF/lint-rules/${ruleId}.properties")
     }
 
-    static class MockRule1 extends GradleLintRule {
+    static class MockRule1 extends AbstractExampleGradleLintRule {
         String description = 'mock1'
     }
 
-    static class MockRule2 extends GradleLintRule {
+    static class MockRule2 extends AbstractExampleGradleLintRule {
         String description = 'mock2'
     }
 }

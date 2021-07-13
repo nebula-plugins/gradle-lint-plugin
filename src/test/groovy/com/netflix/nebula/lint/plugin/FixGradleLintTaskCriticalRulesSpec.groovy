@@ -1,9 +1,13 @@
 package com.netflix.nebula.lint.plugin
 
+import com.netflix.nebula.lint.rule.AbstractExampleGradleLintRule
 import com.netflix.nebula.lint.rule.GradleLintRule
 import com.netflix.nebula.lint.rule.GradleModelAware
 import nebula.test.IntegrationSpec
+import org.codehaus.groovy.ast.expr.EmptyExpression
+import org.codehaus.groovy.ast.expr.LambdaExpression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
+import org.codehaus.groovy.ast.expr.MethodReferenceExpression
 
 class FixGradleLintTaskCriticalRulesSpec extends IntegrationSpec {
     def 'critical lint violations include cases requiring user action'() {
@@ -45,7 +49,7 @@ class FixGradleLintTaskCriticalRulesSpec extends IntegrationSpec {
     }
 }
 
-class UserActionRequiredExampleRule extends GradleLintRule implements GradleModelAware {
+class UserActionRequiredExampleRule extends AbstractExampleGradleLintRule implements GradleModelAware {
     String description = 'example rule that requires a user action'
 
     @Override

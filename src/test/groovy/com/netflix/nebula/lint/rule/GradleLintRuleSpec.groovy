@@ -45,7 +45,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
 
         def pluginCount = 0
 
-        runRulesAgainst(new GradleLintRule() {
+        runRulesAgainst(new AbstractExampleGradleLintRule() {
             String description = 'test'
 
             @Override
@@ -69,11 +69,11 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
 
         def pluginCount = 0
 
-        runRulesAgainst(new GradleLintRule() {
+        runRulesAgainst(new AbstractExampleGradleLintRule() {
             String description = 'test'
 
             @Override
-            void visitGradlePlugin(MethodCallExpression call, String conf, GradlePlugin gradlePluginGradleLintRuleSpec) {
+            void visitGradlePlugin(MethodCallExpression call, String conf, GradlePlugin gradlePluginAbstractExampleGradleLintRuleSpec) {
                 pluginCount++
             }
         })
@@ -96,7 +96,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
 
         def pluginCount = 0
 
-        runRulesAgainst(new GradleLintRule() {
+        runRulesAgainst(new AbstractExampleGradleLintRule() {
             String description = 'test'
 
             @Override
@@ -126,7 +126,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
 
         def pluginCount = 0
 
-        runRulesAgainst(new GradleLintRule() {
+        runRulesAgainst(new AbstractExampleGradleLintRule() {
             String description = 'test'
 
             @Override
@@ -165,7 +165,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
 
         def taskCount = 0
         def calls = []
-        runRulesAgainst(new GradleLintRule() {
+        runRulesAgainst(new AbstractExampleGradleLintRule() {
             String description = 'test'
 
             @Override
@@ -477,7 +477,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         when:
         project.buildFile << "apply plugin: 'java'"
 
-        def rule = new GradleLintRule() {
+        def rule = new AbstractExampleGradleLintRule() {
             String description = 'test'
 
             @Override
@@ -500,7 +500,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
             }
         """.stripIndent()
 
-        def rule = new GradleLintRule() {
+        def rule = new AbstractExampleGradleLintRule() {
             String description = 'test'
 
             @Override
@@ -637,7 +637,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
             }
         """
 
-        def rule = new GradleLintRule() {
+        def rule = new AbstractExampleGradleLintRule() {
             String description = 'test'
 
             @Override
@@ -663,7 +663,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
 
         MethodCallExpression parent = null
 
-        runRulesAgainst(new GradleLintRule() {
+        runRulesAgainst(new AbstractExampleGradleLintRule() {
             String description = 'test'
 
             @Override
@@ -685,7 +685,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
             }
         """
 
-        def results = runRulesAgainst(new GradleLintRule() {
+        def results = runRulesAgainst(new AbstractExampleGradleLintRule() {
             String description = 'test'
 
             @Override
@@ -711,7 +711,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
             }
         """.stripIndent()
 
-        String corrected = correct(new GradleLintRule() {
+        String corrected = correct(new AbstractExampleGradleLintRule() {
             String description = 'test insertIntoClosure'
 
             @Override
@@ -742,7 +742,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
             }
         """.stripIndent()
 
-        String corrected = correct(new GradleLintRule() {
+        String corrected = correct(new AbstractExampleGradleLintRule() {
             String description = 'test insertIntoClosure'
 
             @Override
@@ -780,7 +780,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         """
 
         def foundForces = []
-        def rule = new GradleLintRule() {
+        def rule = new AbstractExampleGradleLintRule() {
             String description = 'test'
 
             @Override
@@ -799,8 +799,8 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
      * @returns A simple rule barring the use of any `apply plugin` statements that
      * we can use in this test harness.
      */
-    GradleLintRule setupNoPluginsRule() {
-        def noPluginsRule = new GradleLintRule() {
+    AbstractExampleGradleLintRule setupNoPluginsRule() {
+        def noPluginsRule = new AbstractExampleGradleLintRule() {
             String description = 'test'
 
             @Override
@@ -818,9 +818,9 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         noPluginsRule
     }
 
-    abstract class GradleProjectLintRule extends GradleLintRule implements GradleModelAware {}
+    abstract class GradleProjectLintRule extends AbstractExampleGradleLintRule implements GradleModelAware {}
 
-    private class DependencyVisitingRule extends GradleLintRule implements GradleModelAware {
+    private class DependencyVisitingRule extends AbstractExampleGradleLintRule implements GradleModelAware {
         final String description = 'visit dependencies'
         List<GradleDependency> deps = []
         List<GradleDependency> allprojectDeps = []

@@ -83,11 +83,11 @@ class DependencyServiceSpec extends IntegrationTestKitSpec {
             }
 
             // a task to generate an unused dependency report for each configuration
-            project.configurations.collect { it.name }.each { conf ->
-                task "\${conf}Unused"(dependsOn: compileTestJava) {
+            [implementation: 'compileClasspath', testImplementation: 'testCompileClasspath'].each { declaredConf, resolvedConf ->
+                task "\${declaredConf}Unused"(dependsOn: compileTestJava) {
                     doLast {
-                        new File(projectDir, "\${conf}Unused.txt").text = DependencyService.forProject(project)
-                        .unusedDependencies(conf)
+                        new File(projectDir, "\${declaredConf}Unused.txt").text = DependencyService.forProject(project)
+                        .unusedDependencies(resolvedConf, declaredConf)
                         .join('\\n')
                     }
                   
@@ -152,14 +152,14 @@ class DependencyServiceSpec extends IntegrationTestKitSpec {
     def 'first level dependencies in conf'() {
         when:
         project.dependencies {
-            compile 'com.google.guava:guava:18.0'
-            testCompile 'junit:junit:latest.release'
+            implementation 'com.google.guava:guava:18.0'
+            testImplementation 'junit:junit:latest.release'
         }
 
-        def deps = DependencyService.forProject(project).firstLevelDependenciesInConf(project.configurations.testCompile, 'testCompile')
+        def deps = DependencyService.forProject(project).firstLevelDependenciesInConf(project.configurations.testCompileClasspath, 'testImplementation')
 
-        project.configurations.compile.incoming.afterResolve {
-            project.configurations.compile.incoming.resolutionResult.root.dependencies
+        project.configurations.compileClasspath.incoming.afterResolve {
+            project.configurations.compileClasspath.incoming.resolutionResult.root.dependencies
         }
 
         then:
@@ -176,13 +176,13 @@ class DependencyServiceSpec extends IntegrationTestKitSpec {
                 deeper
                 deep { extendsFrom deeper }
             }
-            configurations.compile { extendsFrom configurations.deep }
+            configurations.implementation { extendsFrom configurations.deep }
         }
 
         def service = DependencyService.forProject(project)
 
         then:
-        service.sourceSetByConf('compile')?.name == 'main'
+        service.sourceSetByConf('implementation')?.name == 'main'
         service.sourceSetByConf('providedCompile')?.name == 'main'
         service.sourceSetByConf('deeper')?.name == 'main'
     }
@@ -229,7 +229,7 @@ class DependencyServiceSpec extends IntegrationTestKitSpec {
 
     def 'identify parent source sets'() {
         expect:
-        DependencyService.forProject(project).parentSourceSetConfigurations('compile')*.name == ['testCompile']
+        DependencyService.forProject(project).parentSourceSetConfigurations('implementation')*.name == ['compileClasspath', 'testCompileClasspath']
     }
 
     @Unroll
@@ -387,11 +387,9 @@ class DependencyServiceSpec extends IntegrationTestKitSpec {
         confSuffix         | expectedSuffix
         'CompileOnly'      | 'CompileClasspath'
         'RuntimeOnly'      | 'RuntimeClasspath'
-        'Compile'          | 'CompileClasspath'
         'CompileClasspath' | 'CompileClasspath'
         'RuntimeClasspath' | 'RuntimeClasspath'
         'Implementation'   | 'CompileClasspath'
-        'Runtime'          | 'RuntimeClasspath'
     }
 
     @Unroll
@@ -411,19 +409,15 @@ class DependencyServiceSpec extends IntegrationTestKitSpec {
         resolvableConfig.name == resolvableConfigName
 
         where:
-        configName              | resolvableConfigName
-        'api'                   | 'compileClasspath'
-        'compile'               | 'compileClasspath'
-        'compileOnly'           | 'compileClasspath'
-        'implementation'        | 'compileClasspath'
-        'runtime'               | 'runtimeClasspath'
-        'runtimeOnly'           | 'runtimeClasspath'
+        configName           | resolvableConfigName
+        'api'                | 'compileClasspath'
+        'compileOnly'        | 'compileClasspath'
+        'implementation'     | 'compileClasspath'
+        'runtimeOnly'        | 'runtimeClasspath'
 
-        'testCompile'           | 'testCompileClasspath'
-        'testCompileOnly'       | 'testCompileClasspath'
-        'testImplementation'    | 'testCompileClasspath'
-        'testRuntime'           | 'testRuntimeClasspath'
-        'testRuntimeOnly'       | 'testRuntimeClasspath'
+        'testCompileOnly'    | 'testCompileClasspath'
+        'testImplementation' | 'testCompileClasspath'
+        'testRuntimeOnly'    | 'testRuntimeClasspath'
     }
 
     @Unroll
@@ -454,10 +448,8 @@ class DependencyServiceSpec extends IntegrationTestKitSpec {
 
         where:
         configName              | resolvableConfigName
-        'specialCompile'        | 'specialCompileClasspath'
         'specialCompileOnly'    | 'specialCompileClasspath'
         'specialImplementation' | 'specialCompileClasspath'
-        'specialRuntime'        | 'specialRuntimeClasspath'
         'specialRuntimeOnly'    | 'specialRuntimeClasspath'
     }
 
@@ -473,10 +465,15 @@ class DependencyServiceSpec extends IntegrationTestKitSpec {
                     canBeResolved = false
                     canBeConsumed = true
                 }
+                myNonResolvableConfigWithParent {
+                    canBeResolved = false
+                    canBeConsumed = true
+                }
                 myResolvableConfig {
                     canBeResolved = true
                     canBeConsumed = true
                 }
+                compileClasspath.extendsFrom myNonResolvableConfigWithParent
             }
         }
         writeJavaSourceFile('public class Main {}')
@@ -490,8 +487,9 @@ class DependencyServiceSpec extends IntegrationTestKitSpec {
         resolvableConfig.name == resolvableConfigName
 
         where:
-        configName              | resolvableConfigName
-        'myResolvableConfig'    | 'myResolvableConfig'
-        'myNonResolvableConfig' | 'myNonResolvableConfig' // returns the original config when the resolution alternative is unclear
+        configName                        | resolvableConfigName
+        'myResolvableConfig'              | 'myResolvableConfig'
+        'myNonResolvableConfigWithParent' | 'compileClasspath'
+        'myNonResolvableConfig'           | 'myNonResolvableConfig' // returns the original config when the resolution alternative is unclear
     }
 }
