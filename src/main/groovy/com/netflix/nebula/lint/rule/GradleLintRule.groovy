@@ -19,6 +19,7 @@ package com.netflix.nebula.lint.rule
 import com.netflix.nebula.lint.GradleViolation
 import com.netflix.nebula.lint.plugin.LintRuleRegistry
 import org.codehaus.groovy.ast.ASTNode
+import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.ast.expr.ArgumentListExpression
 import org.codehaus.groovy.ast.expr.BinaryExpression
 import org.codehaus.groovy.ast.expr.ClosureExpression
@@ -105,8 +106,9 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
 
     void visitBuildscript(MethodCallExpression call) {}
 
-    void visitGradleResolutionStrategyForce(MethodCallExpression call, String conf, Map<GradleDependency, Expression> forces) {
-    }
+    void visitGradleResolutionStrategyForce(MethodCallExpression call, String conf, Map<GradleDependency, Expression> forces) { }
+
+    void visitEndOfBuildFileProcessing(ClassNode node) {}
 
     protected boolean isIgnored() {
         callStack.any { call ->
@@ -334,6 +336,13 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                 }
                 if (taskName != null) {
                     GradleLintRule.this.visitTask(call, taskName as String, taskArgs)
+                }
+            }
+
+            @Override
+            void visitClassComplete(ClassNode node) {
+                if (node.name == "None") {
+                    visitEndOfBuildFileProcessing(node)
                 }
             }
 
