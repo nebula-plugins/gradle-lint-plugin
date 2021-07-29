@@ -19,7 +19,7 @@ Read the [full documentation](https://github.com/nebula-plugins/gradle-lint-plug
 
 To apply this plugin, please get the latest version from the [Gradle plugin portal](https://plugins.gradle.org/plugin/nebula.lint) and add the following to `build.gradle`:
 
-```groovy
+```gradle
 buildscript { repositories { mavenCentral() } }
 plugins {
   id 'nebula.lint' version '<latest version from the Gradle plugin portal>'
@@ -30,7 +30,7 @@ plugins {
 
 Alternatively:
 
-```groovy
+```gradle
 buildscript {
   repositories { mavenCentral() }
   dependencies {
@@ -44,7 +44,7 @@ apply plugin: 'nebula.lint'
 
 Define which rules you would like to lint against:
 
-```groovy
+```gradle
 gradleLint.rules = ['all-dependency'] // add as many rules here as you'd like
 ```
 
@@ -52,7 +52,7 @@ For an enterprise build, we recommend defining the lint rules in a `init.gradle`
 
 For multimodule projects, we recommend applying the plugin in an allprojects block:
 
-```groovy
+```gradle
 allprojects {
   apply plugin: 'nebula.lint'
   gradleLint.rules = ['all-dependency'] // add as many rules here as you'd like
@@ -72,11 +72,28 @@ If [gradle/gradle#11106](https://github.com/gradle/gradle/issues/11106) lands so
 
 While it is great to have automatic fix, not having it is worse. So for now warning about this with the same detail as before is much better than a broken experience with new gradle configurations
 
-## Warning
+## Kotlin build scripts
 
-Gradle Lint Plugin currently doesn't support:
+Gradle Lint Plugin currently doesn't support Kotlin build scrips (see issue [#166](https://github.com/nebula-plugins/gradle-lint-plugin/issues/166)).
+If you have a multimodule project with some subprojects using Kotlin build scripts you can use the Gradle Lint Plugin on the remaining Groovy build scripts using the following method:
 
-* kotlin build scripts. Please, switch to groovy build script if you want to use linting. [#166](https://github.com/nebula-plugins/gradle-lint-plugin/issues/166)
+```gradle
+plugins {
+  id 'nebula.lint' version '<latest version from the Gradle plugin portal>' apply(false)
+}
+
+allprojects { prj ->
+  if (!prj.buildscript.sourceFile.name.endsWith(".kts")) {
+    prj.apply plugin: 'nebula.lint'
+    
+    prj.gradleLint {
+      // ...
+    }
+  }
+}
+```
+
+This method does not work when using Kotlin build script in the root project!
 
 ## License
 
