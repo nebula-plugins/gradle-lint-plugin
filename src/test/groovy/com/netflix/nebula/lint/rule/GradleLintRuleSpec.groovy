@@ -20,6 +20,7 @@ import com.netflix.nebula.lint.GradleViolation
 import com.netflix.nebula.lint.plugin.GradleLintPlugin
 import com.netflix.nebula.lint.plugin.LintRuleRegistry
 import com.netflix.nebula.lint.rule.test.AbstractRuleSpec
+import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.ast.expr.Expression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.codehaus.groovy.ast.expr.VariableExpression
@@ -793,6 +794,32 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
 
         then:
         !foundForces.isEmpty()
+    }
+
+    def 'visit method at the end of file only once'() {
+        when:
+        project.buildFile << """
+            apply plugin: 'java'
+            
+            class DummyClassThatShouldBeIgnored { }
+            
+            class DummyClassThatShouldBeIgnored2 { }
+        """
+
+        def visitsAtEnd = 0
+        def rule = new AbstractExampleGradleLintRule() {
+            String description = 'test'
+
+            @Override
+            void visitEndOfBuildFileProcessing(ClassNode node) {
+                visitsAtEnd++
+            }
+        }
+
+        runRulesAgainst(rule)
+
+        then:
+        visitsAtEnd == 1
     }
 
     /**
