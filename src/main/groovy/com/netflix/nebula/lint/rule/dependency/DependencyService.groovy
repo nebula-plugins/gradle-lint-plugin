@@ -576,7 +576,7 @@ class DependencyService {
         def method = configuration.metaClass.getMetaMethod('getResolutionAlternatives')
         if (method != null) {
             def alternatives = configuration.getResolutionAlternatives()
-            if (alternatives != null && alternatives.size > 0) {
+            if (alternatives != null && alternatives instanceof List<String> && alternatives.size() > 0) {
                 return true
             }
         }
