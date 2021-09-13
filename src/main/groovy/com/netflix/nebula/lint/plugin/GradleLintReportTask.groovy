@@ -15,6 +15,7 @@
  */
 package com.netflix.nebula.lint.plugin
 
+import com.netflix.nebula.interop.GradleKt
 import com.netflix.nebula.lint.GradleLintPatchAction
 import com.netflix.nebula.lint.StyledTextService
 import com.netflix.nebula.lint.utils.DeprecationLoggerUtils
@@ -86,10 +87,18 @@ class GradleLintReportTask extends DefaultTask implements VerificationTask, Repo
             reports.enabled.each { Report r ->
                 ReportWriter writer = null
 
-                switch (r.name) {
-                    case 'xml': writer = new XmlReportWriter(outputFile: r.destination); break
-                    case 'html': writer = new HtmlReportWriter(outputFile: r.destination); break
-                    case 'text': writer = new TextReportWriter(outputFile: r.destination); break
+                if (GradleKt.versionCompareTo(project.gradle, '7.0') >= 0) {
+                    switch (r.name) {
+                        case 'xml': writer = new XmlReportWriter(outputFile: r.outputLocation.get().asFile); break
+                        case 'html': writer = new HtmlReportWriter(outputFile: r.outputLocation.get().asFile); break
+                        case 'text': writer = new TextReportWriter(outputFile: r.outputLocation.get().asFile); break
+                    }
+                } else {
+                    switch (r.name) {
+                        case 'xml': writer = new XmlReportWriter(outputFile: r.destination); break
+                        case 'html': writer = new HtmlReportWriter(outputFile: r.destination); break
+                        case 'text': writer = new TextReportWriter(outputFile: r.destination); break
+                    }
                 }
 
                 writer.writeReport(new AnalysisContext(ruleSet: lintService.ruleSet(project)), results)
