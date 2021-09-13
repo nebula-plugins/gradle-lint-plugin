@@ -1,6 +1,7 @@
 package com.netflix.nebula.lint.plugin
 
 import org.gradle.BuildResult
+import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.execution.TaskExecutionGraph
@@ -86,5 +87,24 @@ class LegacyGradleLintPluginTaskConfigurer extends AbstractLintPluginTaskConfigu
 
     private void configureReportTask(Project project, GradleLintExtension extension) {
         def task = project.tasks.create(GENERATE_GRADLE_LINT_REPORT, GradleLintReportTask, configureReportAction(project, extension))
+    }
+
+    @Override
+    Action<GradleLintReportTask> configureReportAction(Project project, GradleLintExtension extension) {
+        new Action<GradleLintReportTask>() {
+            @Override
+            void execute(GradleLintReportTask gradleLintReportTask) {
+                gradleLintReportTask.reportOnlyFixableViolations = getReportOnlyFixableViolations(project, extension)
+                gradleLintReportTask.reports.all { report ->
+                    report.conventionMapping.with {
+                        enabled = { report.name == getReportFormat(project, extension) }
+                        destination = {
+                            def fileSuffix = report.name == 'text' ? 'txt' : report.name
+                            new File(project.buildDir, "reports/gradleLint/${project.name}.$fileSuffix")
+                        }
+                    }
+                }
+            }
+        }
     }
 }
