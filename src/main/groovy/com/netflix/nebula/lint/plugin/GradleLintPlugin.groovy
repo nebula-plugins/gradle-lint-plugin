@@ -33,7 +33,7 @@ class GradleLintPlugin implements Plugin<Project> {
         LintRuleRegistry.classLoader = getClass().classLoader
 
         // TODO: we need to retire this once we have folks in Gradle 7.x+
-        if (GradleKt.versionCompareTo(project.gradle, '7.0') >= 0) {
+        if (GradleKt.versionCompareTo(project.gradle, '7.1') >= 0) {
             new Gradle7AndHigherLintPluginTaskConfigurer().configure(project)
         } else if (GradleKt.versionCompareTo(project.gradle, '5.0') >= 0) {
             new GradleBetween5And7LintPluginTaskConfigurer().configure(project)

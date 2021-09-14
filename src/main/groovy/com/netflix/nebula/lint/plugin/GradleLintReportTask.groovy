@@ -87,7 +87,7 @@ class GradleLintReportTask extends DefaultTask implements VerificationTask, Repo
             reports.enabled.each { Report r ->
                 ReportWriter writer = null
 
-                if (GradleKt.versionCompareTo(project.gradle, '7.0') >= 0) {
+                if (GradleKt.versionCompareTo(project.gradle, '7.1') >= 0) {
                     switch (r.name) {
                         case 'xml': writer = new XmlReportWriter(outputFile: r.outputLocation.get().asFile); break
                         case 'html': writer = new HtmlReportWriter(outputFile: r.outputLocation.get().asFile); break
