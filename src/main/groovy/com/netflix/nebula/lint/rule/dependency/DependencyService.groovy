@@ -652,7 +652,7 @@ class DependencyService {
         }
 
         // all android confs get squashed into either debug or release output dir?
-        if (conf.startsWith('test')) {
+        if (confName.startsWith('test')) {
             def androidTestDebugOutput = project.tasks.findByName('compileDebugUnitTestJavaWithJavac')?.destinationDir
             if (androidTestDebugOutput && androidTestDebugOutput.exists()) {
                 return androidTestDebugOutput
