@@ -213,6 +213,7 @@ class DependencyServiceSpec extends IntegrationTestKitSpec {
         """
 
         when:
+        System.setProperty("ignoreDeprecations", "true")
         def results = runTasks('compileClasspathSourceSetOutput')
         def dir = results.output.readLines().find { it.startsWith('@@') }.substring(2)
 
