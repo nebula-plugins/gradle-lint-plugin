@@ -201,13 +201,13 @@ class DependencyServiceSpec extends IntegrationTestKitSpec {
             
             task compileClasspathSourceSetOutput {
                 doLast {
-                  println('@@' + DependencyService.forProject(project).sourceSetByConf('compileClasspath').java.outputDir)
+                  println('@@' + DependencyService.forProject(project).sourceSetByConf('compileClasspath').java.classesDirectory.get())
                 }
             }
             
             task integTestSourceSetOutput {
                 doLast {
-                   println('@@' + DependencyService.forProject(project).sourceSetByConf('integTestCompileClasspath').java.outputDir)
+                   println('@@' + DependencyService.forProject(project).sourceSetByConf('integTestCompileClasspath').java.classesDirectory.get())
                 }
             }
         """
