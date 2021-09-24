@@ -643,6 +643,41 @@ class UnusedDependencyRuleSpec extends IntegrationTestKitSpec {
         }
     }
 
+    @Issue("351")
+    def 'fully parses project that uses antlr'() {
+        setup:
+        def expectedWarnings = [
+                'warning   unused-dependency                  this dependency is unused and can be removed'
+        ]
+
+      when:
+      buildFile.text = """\
+            plugins {
+                id 'antlr'
+                id 'nebula.lint'
+                id 'java'
+            }
+
+            gradleLint.rules = ['unused-dependency']
+
+            repositories { mavenCentral() }
+
+            dependencies {
+            antlr 'antlr:antlr:2.7.7'
+            implementation 'com.google.guava:guava:18.0'
+            implementation 'org.apache.httpcomponents:httpclient:4.5.3'
+
+}""".stripMargin()
+
+      writeJavaSourceFile(main)
+
+      def result = runTasks('compileJava', 'autoLintGradle')
+      then:
+      expectedWarnings.each {
+        assert result.output.contains(it)
+      }
+    }
+
     def dependencies(File _buildFile, String... confs = ['compile', 'testCompile', 'implementation', 'testImplementation', 'api']) {
         _buildFile.text.readLines()
                 .collect { it.trim() }
