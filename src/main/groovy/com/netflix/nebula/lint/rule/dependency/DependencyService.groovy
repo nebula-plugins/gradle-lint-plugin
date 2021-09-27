@@ -297,33 +297,36 @@ class DependencyService {
         def classpath = sourceSetClasspath(conf)
         def references = new DependencyReferences()
 
-        sourceSetOutput(confName).files.findAll { it.exists() }.each { output ->
-            def artifactsByClass = artifactsByClass(conf)
-            def compiledSourceClassLoader = new URLClassLoader((classpath + output)
-                    .collect { it.toURI().toURL() } as URL[], null as ClassLoader)
+        def confSourceSet = sourceSetOutput(confName)
+        if (confSourceSet != null) {
+            confSourceSet.files.findAll { it.exists() }.each { output ->
+                def artifactsByClass = artifactsByClass(conf)
+                def compiledSourceClassLoader = new URLClassLoader((classpath + output)
+                        .collect { it.toURI().toURL() } as URL[], null as ClassLoader)
 
-            Files.walkFileTree(output.toPath(), new SimpleFileVisitor<Path>() {
-                @Override
-                FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    if (file.toFile().name.endsWith('.class')) {
-                        try {
-                            def visitor = new DependencyClassVisitor(artifactsByClass, compiledSourceClassLoader)
-                            file.newInputStream().withCloseable { inputStream ->
-                                new ClassReader(inputStream).accept(visitor, ClassReader.SKIP_DEBUG)
+                Files.walkFileTree(output.toPath(), new SimpleFileVisitor<Path>() {
+                    @Override
+                    FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        if (file.toFile().name.endsWith('.class')) {
+                            try {
+                                def visitor = new DependencyClassVisitor(artifactsByClass, compiledSourceClassLoader)
+                                file.newInputStream().withCloseable { inputStream ->
+                                    new ClassReader(inputStream).accept(visitor, ClassReader.SKIP_DEBUG)
 
-                                references.direct.addAll(visitor.directReferences)
-                                references.indirect.addAll(visitor.indirectReferences)
+                                    references.direct.addAll(visitor.directReferences)
+                                    references.indirect.addAll(visitor.indirectReferences)
+                                }
+                            } catch (Throwable t) {
+                                // see https://github.com/nebula-plugins/gradle-lint-plugin/issues/88
+                                // type annotations can cause ArrayIndexOutOfBounds in ASM:
+                                // http://forge.ow2.org/tracker/index.php?func=detail&aid=317615&group_id=23&atid=100023
+                                logger.debug("unable to read class ${file.toFile().name}", t)
                             }
-                        } catch (Throwable t) {
-                            // see https://github.com/nebula-plugins/gradle-lint-plugin/issues/88
-                            // type annotations can cause ArrayIndexOutOfBounds in ASM:
-                            // http://forge.ow2.org/tracker/index.php?func=detail&aid=317615&group_id=23&atid=100023
-                            logger.debug("unable to read class ${file.toFile().name}", t)
                         }
+                        return FileVisitResult.CONTINUE
                     }
-                    return FileVisitResult.CONTINUE
-                }
-            })
+                })
+            }
         }
         return references
     }
