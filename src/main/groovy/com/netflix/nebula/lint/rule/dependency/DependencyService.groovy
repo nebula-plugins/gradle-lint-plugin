@@ -95,9 +95,12 @@ class DependencyService {
                 return terminalConf.resolvedConfiguration.resolvedArtifacts
             } else {
                 Configuration parent = terminalConf.extendsFrom.find { isResolvable(it) }
-                return findAndReplaceDeprecatedConfiguration(parent).resolvedConfiguration.resolvedArtifacts
+                if (parent) {
+                    return findAndReplaceDeprecatedConfiguration(parent).resolvedConfiguration.resolvedArtifacts                    
+                }
+
             }
-        }.flatten()
+        }.flatten().grep()
 
         GParsPool.withPool {
             artifactsToScan
