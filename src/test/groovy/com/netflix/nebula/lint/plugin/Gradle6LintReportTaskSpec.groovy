@@ -1,11 +1,12 @@
 package com.netflix.nebula.lint.plugin
 
 import nebula.test.IntegrationTestKitSpec
+import spock.lang.IgnoreIf
 import spock.lang.Issue
 
+@IgnoreIf({ jvm.isJava17Compatible() })
 class Gradle6LintReportTaskSpec extends IntegrationTestKitSpec {
     def setup() {
-        debug = true
         gradleVersion = '6.9'
     }
 

@@ -20,9 +20,11 @@ import nebula.test.IntegrationTestKitSpec
 import nebula.test.dependencies.DependencyGraphBuilder
 import nebula.test.dependencies.GradleDependencyGenerator
 import nebula.test.dependencies.ModuleBuilder
+import spock.lang.IgnoreIf
 import spock.lang.Subject
 import spock.lang.Unroll
 
+@IgnoreIf({ jvm.isJava17Compatible() }) // Because we use old version of Gradle and kotlin
 class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
 
     private static final String GRADLE_VERSION = "6.8.3"
