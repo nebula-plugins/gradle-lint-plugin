@@ -79,6 +79,11 @@ dependencies {
     gradle6TestImplementation "com.netflix.nebula:nebula-test:10.+"
     gradle6TestRuntimeOnly project.getLayout().files(pluginUnderTestMetadata)
     gradle6TestImplementation "dev.gradleplugins:gradle-test-kit:6.8.3"
+    gradle6TestImplementation ("dev.gradleplugins:gradle-api") {
+        version {
+            strictly '6.9'
+        }
+    }
 }
 
 afterEvaluate {
