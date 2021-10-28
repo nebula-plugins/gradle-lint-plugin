@@ -2,8 +2,10 @@ package com.netflix.nebula.lint.rule.task
 
 
 import nebula.test.IntegrationTestKitSpec
+import spock.lang.IgnoreIf
 import spock.lang.Subject
 
+@IgnoreIf({ jvm.isJava17Compatible() }) // Because we use old version of Gradle and kotlin
 class TaskDefinitionOperatorRuleIntegrationSpec extends IntegrationTestKitSpec {
 
     def setup() {

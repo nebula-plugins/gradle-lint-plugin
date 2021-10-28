@@ -1,9 +1,11 @@
 package com.netflix.nebula.lint.rule.plugin
 
 import nebula.test.IntegrationTestKitSpec
+import spock.lang.IgnoreIf
 import spock.lang.Issue
 import spock.lang.Unroll
 
+@IgnoreIf({ jvm.isJava17Compatible() }) // Because we use old version of Gradle and kotlin
 class GradleLintReportTaskSpec extends IntegrationTestKitSpec {
 
     def 'generate a report with different type through parameter from cli with Gradle version 4.10.3'() {

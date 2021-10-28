@@ -3,6 +3,7 @@ package com.netflix.nebula.lint.rule.plugin
 import nebula.test.IntegrationTestKitSpec
 import spock.lang.IgnoreIf
 
+@IgnoreIf({ jvm.isJava17Compatible() }) // Because we use old version of Gradle and kotlin
 class FixGradleLintTaskSpec extends IntegrationTestKitSpec {
     /**
      * Because Gradle changed the internal APIs we are using to performed stylized text logging...
