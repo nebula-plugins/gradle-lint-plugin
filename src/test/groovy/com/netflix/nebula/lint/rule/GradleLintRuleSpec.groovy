@@ -521,7 +521,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         }
 
         then:
-        correct(rule) == """
+        correct(rule).replaceAll("\\s", "") == """
             apply plugin: 'java'
             apply plugin: 'nebula.source-jar'
             apply plugin: 'nebula.javadoc-jar'
@@ -529,7 +529,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
             dependencies {
                 compile 'com.google.guava:guava:18.0'
             }
-        """.stripIndent()
+        """.stripIndent().replaceAll("\\s", "")
     }
 
 
@@ -697,11 +697,11 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         })
 
         then:
-        (results.violations[0] as GradleViolation).sourceLine == '''
+        (results.violations[0] as GradleViolation).sourceLine.replaceAll("\\s", "") == '''
             multiline {
               'this is a multiline'
             }
-        '''.stripIndent().trim()
+        '''.stripIndent().trim().replaceAll("\\s", "")
     }
 
     def 'insertIntoClosure indents 4 spaces'() {

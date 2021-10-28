@@ -157,12 +157,16 @@ class UndeclaredDependencyRuleSpec extends IntegrationTestKitSpec {
                 }
               }
               dependencies {
-                classpath "io.franzbecker:gradle-lombok:3.2.0"
+                classpath "io.franzbecker:gradle-lombok:5.0.0"
               }
             }
+            
 
             apply plugin: "io.franzbecker.gradle-lombok"
-
+            
+            lombok { // optional: values below are the defaults
+                version = "1.18.22"
+            }
             dependencies {
             ${deps.collect { "    $configuration '$it'" }.join('\n')}
             }
@@ -665,11 +669,15 @@ class UndeclaredDependencyRuleSpec extends IntegrationTestKitSpec {
                 }
               }
               dependencies {
-                classpath "io.franzbecker:gradle-lombok:3.2.0"
+                classpath "io.franzbecker:gradle-lombok:5.0.0"
               }
             }
 
             apply plugin: "io.franzbecker.gradle-lombok"
+
+            lombok { // optional: values below are the defaults
+                version = "1.18.22"
+            }
 
             dependencies {
             ${deps.collect { "    compileOnly '$it'" }.join('\n')}

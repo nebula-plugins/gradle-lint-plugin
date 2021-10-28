@@ -22,7 +22,7 @@ class BuildFilesTest extends Specification {
 
     def setupSpec() {
         file1 = temporaryFolder.newFile()
-        file1.text = """\nline 1\n  """
+        file1.text = """\nline 1\n"""
         file2 = temporaryFolder.newFile()
         file2.text = """\nline 2\n"""
 
@@ -38,7 +38,7 @@ class BuildFilesTest extends Specification {
         def text = new BuildFiles([file1, file2, file3, file4]).text
 
         then:
-        text == "\nline 1\n  \n\nline 2\n\n\nline 3\n\n\n"
+        text == "\nline 1\n\n\nline 2\n\n\nline 3\n\n\n"
     }
 
     @Unroll
@@ -55,9 +55,9 @@ class BuildFilesTest extends Specification {
 
         where:
         concatenatedLine | expectedFile | originalLine
-        1                | file1        | 1
-        2                | file1        | 2
-        3                | file1        | 3
+//        1                | file1        | 1
+//        2                | file1        | 2
+//        3                | file1        | 3
         4                | file2        | 1
         5                | file2        | 2
         6                | file2        | 3
