@@ -55,18 +55,8 @@ dependencies {
     api  'com.google.guava:guava:19.0'
     api 'org.codehaus.gpars:gpars:1.2.1'
 
-    plugin('org.ow2.asm:asm:7.+') {
-        version {
-            reject '7.2-beta'
-            because 'avoid getting prerelease versions'
-        }
-    }
-    plugin('org.ow2.asm:asm-commons:7.+') {
-        version {
-            reject '7.2-beta'
-            because 'avoid getting prerelease versions'
-        }
-    }
+    plugin('org.ow2.asm:asm:9.+')
+    plugin('org.ow2.asm:asm-commons:9.+')
     plugin('org.codenarc:CodeNarc:2.0.0') {
         transitive = false
     }
@@ -79,7 +69,7 @@ dependencies {
 
     compileOnly "com.netflix.nebula:nebula-test:9.+"
 
-    testImplementation 'org.ow2.asm:asm-util:5.2'
+    testImplementation 'org.ow2.asm:asm-util:9.+'
     testImplementation 'joda-time:joda-time:latest.release'
     testImplementation 'com.netflix.nebula:gradle-info-plugin:latest.release'
 
