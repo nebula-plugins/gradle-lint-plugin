@@ -49,7 +49,7 @@ jobs:
           restore-keys: |
             - ${{ runner.os }}-gradlewrapper-
       - name: Gradle build
-        run: ./gradlew --info --stacktrace build
+        run: ./gradlew --stacktrace build --scan
       - name: Post-success actions
         if: success()
         run: ./gradlew jacocoTestReport coveralls
