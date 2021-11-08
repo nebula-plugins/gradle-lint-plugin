@@ -2,9 +2,6 @@ package com.netflix.nebula.lint.rule
 
 import groovy.transform.CompileStatic
 
-import java.nio.charset.Charset
-import java.nio.file.Files
-
 /**
  * This class provides transformation from multiple build files to one concatenated text which is used for applying
  * lint rules. We keep original mapping so we can get based on line number in concatenated text original line and file.
@@ -15,14 +12,20 @@ class BuildFiles {
     private Map<LineRange, File> orderedFiles = new LinkedHashMap<>()
 
     BuildFiles(List<File> allFiles) {
-        int initialRangeTotal = 1
-        int endRangeTotal = 0
+        int currentLinesTotal = 0
         allFiles.each { File buildFile ->
-            int count = Files.lines(buildFile.toPath(), Charset.defaultCharset()).count().toInteger()
-            endRangeTotal += count
-            LineRange range = new LineRange(initialRangeTotal, endRangeTotal)
-            initialRangeTotal += count
+            int count = linesCount(buildFile)
+            LineRange range = new LineRange(currentLinesTotal + 1, currentLinesTotal + count)
+            currentLinesTotal += count
             orderedFiles.put(range, buildFile)
+        }
+    }
+
+    int linesCount(File file) {
+        file.withReader { reader ->
+            LineNumberReader lineNumberReader = new LineNumberReader(reader)
+            while (lineNumberReader.read() != -1) {}
+            lineNumberReader.getLineNumber() + 1
         }
     }
 
