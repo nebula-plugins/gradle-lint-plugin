@@ -19,8 +19,6 @@ abstract class GroovyAstVisitor implements GroovyClassVisitor, GroovyCodeVisitor
     void visitListOfExpressions(List<? extends Expression> list) {}
     void visitObjectInitializerStatements(ClassNode node) {}
     void visitEmptyStatement(EmptyStatement statement) {}
-    void visitLambdaExpression(def lambdaExpression) {}
-    void visitMethodReferenceExpression(def methodReferenceExpression) {}
 
     @Override void visitClass(ClassNode classNode) {}
     @Override void visitConstructor(ConstructorNode constructorNode) {}
