@@ -21,7 +21,32 @@ class BuildFiles {
         }
     }
 
-    int linesCount(File file) {
+    private static int linesCount(File file) {
+        /*
+         Enhancement (JDK 16): The line terminator definition was changed in java.io.LineNumberReader
+         More info: https://blogs.oracle.com/javamagazine/post/the-hidden-gems-in-java-16-and-java-17-from-streammapmulti-to-hexformat
+        */
+        if(System.getProperty("java.specification.version").isInteger() && System.getProperty("java.specification.version").toInteger() >= 16) {
+           linesCountModernJdk(file)
+        } else {
+           linesCountOlderJdk(file)
+        }
+    }
+
+    private static int linesCountModernJdk(File file) {
+        boolean shouldAddOne = file.text.empty || file.text.endsWith("\n")
+        file.withReader { reader ->
+            LineNumberReader lineNumberReader = new LineNumberReader(reader)
+            while (lineNumberReader.read() != -1) {}
+            if(shouldAddOne) {
+                lineNumberReader.getLineNumber() + 1
+            } else {
+                lineNumberReader.getLineNumber()
+            }
+        }
+    }
+
+    private static int linesCountOlderJdk(File file) {
         file.withReader { reader ->
             LineNumberReader lineNumberReader = new LineNumberReader(reader)
             while (lineNumberReader.read() != -1) {}
