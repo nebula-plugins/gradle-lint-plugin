@@ -1,4 +1,4 @@
-package com.netflix.nebula.lint.plugin
+package com.netflix.nebula.lint.rule.plugin
 
 import nebula.test.IntegrationTestKitSpec
 import spock.lang.Issue
