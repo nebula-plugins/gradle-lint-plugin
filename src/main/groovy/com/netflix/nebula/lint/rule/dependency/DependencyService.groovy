@@ -1,6 +1,7 @@
 package com.netflix.nebula.lint.rule.dependency
 
 import com.netflix.nebula.interop.GradleKt
+import com.netflix.nebula.lint.SourceSetUtils
 import groovy.transform.Memoized
 import groovyx.gpars.GParsPool
 import org.gradle.api.Project
@@ -12,8 +13,8 @@ import org.gradle.api.artifacts.ResolvedDependency
 import org.gradle.api.artifacts.UnknownConfigurationException
 import org.gradle.api.file.FileCollection
 import org.gradle.api.internal.artifacts.DefaultModuleIdentifier
-import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.SourceSet
+import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.util.VersionNumber
 import org.objectweb.asm.ClassReader
 import org.slf4j.Logger
@@ -614,15 +615,16 @@ class DependencyService {
     }
 
     private Iterable<String> sourceSetCompileConfigurations() {
-        (project.convention.getPlugin(JavaPluginConvention).sourceSets +
+        (SourceSetUtils.getSourceSets(project) +
                 (project.getExtensions().findByName('android')?.sourceSets ?: []))*.compileClasspathConfigurationName
     }
 
     SourceSet sourceSetByConf(String conf) {
-        project.convention.findPlugin(JavaPluginConvention)?.sourceSets?.find {
+        SourceSetContainer sourceSets = SourceSetUtils.getSourceSets(project)
+        sourceSets?.find {
             it.compileClasspathConfigurationName == conf
         }
-                ?: project.convention.findPlugin(JavaPluginConvention)?.sourceSets?.find { sourceSet -> project.configurations.getByName(conf).extendsFrom.any { it.name == sourceSet.compileClasspathConfigurationName } } //find source set from parent
+                ?: sourceSets?.find { sourceSet -> project.configurations.getByName(conf).extendsFrom.any { it.name == sourceSet.compileClasspathConfigurationName } } //find source set from parent
                 ?: project.configurations.findAll { it.extendsFrom.contains(project.configurations.getByName(conf)) }
                 .collect { sourceSetByConf(it.name) }
                 .find { true } // get the first source set, if one is available that matches
