@@ -1,5 +1,6 @@
 package com.netflix.nebula.lint.rule.dependency
 
+import com.netflix.nebula.lint.SourceSetUtils
 import com.netflix.nebula.lint.rule.GradleDependency
 import com.netflix.nebula.lint.rule.GradleLintRule
 import com.netflix.nebula.lint.rule.GradleModelAware
@@ -8,7 +9,6 @@ import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ModuleIdentifier
 import org.gradle.api.artifacts.ModuleVersionIdentifier
-import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.SourceSet
 
 class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
@@ -32,7 +32,7 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
     void visitGradleDependency(MethodCallExpression call, String declaredConf, GradleDependency dep) {
         String conf = dependencyService.findAndReplaceNonResolvableConfiguration(project.configurations.getByName(declaredConf)).name
 
-        if(project.convention.findPlugin(JavaPluginConvention)) {
+        if(SourceSetUtils.hasSourceSets(project)) {
             def mid = dep.toModule()
 
             if (!declaredDependenciesByConf.containsKey(declaredConf)) {
@@ -89,10 +89,9 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
     void visitClassComplete(ClassNode node) {
         Set<ModuleVersionIdentifier> insertedDependencies = [] as Set
 
-        def convention = project.convention.findPlugin(JavaPluginConvention)
-        if(convention) {
+        if(SourceSetUtils.hasSourceSets(project)) {
             // sort the sourceSets from least dependent to most dependent, e.g. [main, test, integTest]
-            def sortedSourceSets = convention.sourceSets.sort(false, dependencyService.sourceSetComparator())
+            def sortedSourceSets = SourceSetUtils.getSourceSets(project).sort(false, dependencyService.sourceSetComparator())
 
             sortedSourceSets.each { sourceSet ->
                 def confName = sourceSet.compileClasspathConfigurationName

@@ -1,5 +1,6 @@
 package com.netflix.nebula.lint.rule.dependency
 
+import com.netflix.nebula.lint.SourceSetUtils
 import com.netflix.nebula.lint.rule.GradleLintRule
 import com.netflix.nebula.lint.rule.GradleModelAware
 import groovy.transform.CompileDynamic
@@ -8,7 +9,6 @@ import org.codehaus.groovy.ast.ASTNode
 import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.gradle.api.artifacts.ModuleVersionIdentifier
-import org.gradle.api.plugins.JavaPluginConvention
 
 @CompileStatic
 class UndeclaredDependencyRule extends GradleLintRule implements GradleModelAware {
@@ -35,10 +35,9 @@ class UndeclaredDependencyRule extends GradleLintRule implements GradleModelAwar
         Set<ModuleVersionIdentifier> insertedDependencies = [] as Set
         Map<String, HashMap<String, ASTNode>> violations = new HashMap()
 
-        def convention = project.convention.findPlugin(JavaPluginConvention)
-        if (convention != null) {
+        if (SourceSetUtils.hasSourceSets(project)) {
             // sort the sourceSets from least dependent to most dependent, e.g. [main, test, integTest]
-            def sortedSourceSets = convention.sourceSets.sort(false, dependencyService.sourceSetComparator())
+            def sortedSourceSets = SourceSetUtils.getSourceSets(project).sort(false, dependencyService.sourceSetComparator())
 
             sortedSourceSets.each { sourceSet ->
                 def confName = sourceSet.compileClasspathConfigurationName
