@@ -157,7 +157,9 @@ class DependencyService {
         Configuration replacementConfiguration = findAndReplaceDeprecatedConfiguration(configuration)
         Configuration replacementClasspathConfiguration
 
-        if (replacementConfiguration.name == 'api' || replacementConfiguration.name == 'implementation' || replacementConfiguration.name == 'compileOnly') {
+        if(replacementConfiguration.name == 'api' && project.plugins.hasPlugin('java-platform')) {
+            project.configurations.create('test')
+        } else if (replacementConfiguration.name == 'api' || replacementConfiguration.name == 'implementation' || replacementConfiguration.name == 'compileOnly') {
             replacementClasspathConfiguration = project.configurations.findByName('compileClasspath')
         } else if (replacementConfiguration.name == 'runtime' || replacementConfiguration.name == 'runtimeOnly') {
             replacementClasspathConfiguration = project.configurations.findByName('runtimeClasspath')
