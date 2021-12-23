@@ -492,44 +492,4 @@ class DependencyServiceSpec extends IntegrationTestKitSpec {
         'myNonResolvableConfigWithParent' | 'compileClasspath'
         'myNonResolvableConfig'           | 'myNonResolvableConfig' // returns the original config when the resolution alternative is unclear
     }
-
-    @Unroll
-    def 'findAndReplaceNonResolvableConfiguration works with java-platform plugin'() {
-        given:
-        project.with {
-            apply plugin: 'java-platform'
-
-            // to verify with custom configurations
-            configurations {
-                myNonResolvableConfig {
-                    canBeResolved = false
-                    canBeConsumed = true
-                }
-                myNonResolvableConfigWithParent {
-                    canBeResolved = false
-                    canBeConsumed = true
-                }
-                myResolvableConfig {
-                    canBeResolved = true
-                    canBeConsumed = true
-                }
-                compileClasspath.extendsFrom myNonResolvableConfigWithParent
-            }
-        }
-        writeJavaSourceFile('public class Main {}')
-
-        def dependencyService = DependencyService.forProject(project)
-
-        when:
-        def resolvableConfig = dependencyService.findAndReplaceNonResolvableConfiguration(project.configurations."$configName")
-
-        then:
-        resolvableConfig.name == resolvableConfigName
-
-        where:
-        configName                        | resolvableConfigName
-        'myResolvableConfig'              | 'myResolvableConfig'
-        'myNonResolvableConfigWithParent' | 'compileClasspath'
-        'myNonResolvableConfig'           | 'myNonResolvableConfig' // returns the original config when the resolution alternative is unclear
-    }
 }
