@@ -92,14 +92,23 @@ class GradleViolation extends Violation {
         // achieve this by taking the node's (columnNumber-1)+4 OR columnNumber+3
 
         if (closure) {
+            def indentedChanges = changes.stripIndent()
+                    .split('\n')
+                    .collect { line -> ''.padRight(node.columnNumber + 3) + line }
+                    .join('\n')
             if (closure.lineNumber == closure.lastLineNumber) {
-                // TODO what to do about single line closures?
-            } else {
-                def indentedChanges = changes.stripIndent()
+                def originalFileText = files.original(closure.lineNumber).file.text
+                def originalLine = originalFileText.readLines()[closure.lineNumber-1]
+                String originalClosureContent = originalLine.substring(closure.code.columnNumber - 1, closure.code.lastColumnNumber - 1).stripIndent()
                         .split('\n')
                         .collect { line -> ''.padRight(node.columnNumber + 3) + line }
                         .join('\n')
-
+                if (insertAtStart) {
+                    replaceWith(closure,'{\n' + indentedChanges + '\n' + originalClosureContent + '\n}')
+                } else {
+                    replaceWith(closure,'{\n' + originalClosureContent + '\n' + indentedChanges + '\n}')
+                }
+            } else {
                 def lineNumberToStartInsertion = insertAtStart ? closure.lineNumber : closure.lastLineNumber
                 BuildFiles.Original original = files.original(lineNumberToStartInsertion)
                 if (insertAtStart) {
