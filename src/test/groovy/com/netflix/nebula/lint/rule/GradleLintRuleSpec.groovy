@@ -733,6 +733,60 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         corrected.equals(expected)
     }
 
+    def 'insertIntoClosure handles single line closures'() {
+        when:
+        project.buildFile << """\
+            block { something 'else' }
+        """.stripIndent()
+
+        String corrected = correct(new AbstractExampleGradleLintRule() {
+            String description = 'test insertIntoClosure'
+
+            @Override
+            void visitMethodCallExpression(MethodCallExpression call) {
+                if (call.methodAsString == 'block')
+                    addBuildLintViolation('inserting into block', call)
+                .insertIntoClosure(call, 'inserted true')
+            }
+        })
+
+        then:
+        String expected = """\
+            block {
+                inserted true
+                something 'else'
+            }
+        """.stripIndent()
+        corrected.equals(expected)
+    }
+
+    def 'insertIntoClosureAtTheEnd handles single line closures'() {
+        when:
+        project.buildFile << """\
+            block { something 'else' }
+        """.stripIndent()
+
+        String corrected = correct(new AbstractExampleGradleLintRule() {
+            String description = 'test insertIntoClosure'
+
+            @Override
+            void visitMethodCallExpression(MethodCallExpression call) {
+                if (call.methodAsString == 'block')
+                    addBuildLintViolation('inserting into block', call)
+                .insertIntoClosureAtTheEnd(call, 'inserted true')
+            }
+        })
+
+        then:
+        String expected = """\
+            block {
+                something 'else'
+                inserted true
+            }
+        """.stripIndent()
+        corrected.equals(expected)
+    }
+
     def 'insertIntoClosure indents 4 spaces - nested'() {
         when:
         project.buildFile << """\
