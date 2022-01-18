@@ -543,10 +543,15 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                     }
                     //in cases of dynamically declared names we won't be able to find project in previous step
                     //fall back to a first project from children list
-                    if (subproject == null) {
+                    if (subproject == null && project.childProjects.values()) {
                         subproject = project.childProjects.values().first()
                     }
-                    configurations = subproject.configurations
+
+                    if(subproject) {
+                        configurations = subproject.configurations
+                    } else {
+                        return false
+                    }
                 } else {
                     configurations = project.configurations
                 }
