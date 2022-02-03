@@ -15,7 +15,7 @@
  */
 
 plugins {
-    id 'nebula.plugin-plugin' version '16.1.0'
+    id 'nebula.plugin-plugin' version '16.2.0'
     id "org.jetbrains.kotlin.jvm" version "1.5.31"
     id 'com.github.johnrengelman.shadow' version '7.0.0'
     id 'java-gradle-plugin'
