@@ -30,22 +30,32 @@ contacts {
     }
 }
 
-configurations {
-    plugin.description = 'The compile dependencies for the plugin, excluding the local dependencies to avoid problems with Shadow'
-    compileClasspath.extendsFrom plugin
-    runtimeClasspath.extendsFrom plugin
-    testCompileClasspath.extendsFrom plugin
-    testRuntimeClasspath.extendsFrom plugin
-}
-
 facets {
     gradle6Test {
         parentSourceSet = 'main'
     }
 }
 
+configurations {
+    plugin.description = 'The compile dependencies for the plugin, excluding the local dependencies to avoid problems with Shadow'
+    compileClasspath.extendsFrom plugin
+    runtimeClasspath.extendsFrom plugin
+    testCompileClasspath.extendsFrom plugin
+    testRuntimeClasspath.extendsFrom plugin
+    gradle6TestCompileClasspath.extendsFrom plugin
+    gradle6TestRuntimeClasspath.extendsFrom plugin
+}
+
 gradle6Test {
     useJUnit()
+}
+
+def jgitVersion = '5.0.1.201806211838-r'
+
+configurations.all {
+    resolutionStrategy {
+        force "org.eclipse.jgit:org.eclipse.jgit:$jgitVersion"
+    }
 }
 
 dependencies {
@@ -72,7 +82,7 @@ dependencies {
     }
     plugin 'commons-lang:commons-lang:2.6'
 
-    plugin ('org.eclipse.jgit:org.eclipse.jgit:5.0.1.201806211838-r') {
+    plugin ("org.eclipse.jgit:org.eclipse.jgit:$jgitVersion") {
         transitive = false
     }
     plugin 'org.eclipse.jdt:core:3.1.1'
