@@ -18,6 +18,7 @@ package com.netflix.nebula.lint.plugin
 import com.netflix.nebula.lint.*
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
+import org.gradle.api.Task
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
@@ -40,6 +41,11 @@ class LintGradleTask extends DefaultTask {
 
     LintGradleTask() {
         group = 'lint'
+        try {
+            def method = Task.getMethod("notCompatibleWithConfigurationCache")
+            method.invoke(this)
+        } catch (NoSuchMethodException ignore) {
+        }
     }
 
     @TaskAction
