@@ -20,10 +20,11 @@ package com.netflix.nebula.lint.rule.dependency
 
 
 import nebula.test.IntegrationTestKitSpec
+import spock.lang.Ignore
 import spock.lang.IgnoreIf
 import spock.lang.Unroll
 
-@IgnoreIf({ jvm.isJava9Compatible() })
+@Ignore("Revisit this test")
 class RecommendedVersionsRuleSpec extends IntegrationTestKitSpec {
     private static final String V_4_POINT_5 = '4.5'
     private static final String V_4_POINT_6 = '4.6'
