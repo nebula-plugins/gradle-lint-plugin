@@ -104,20 +104,30 @@ afterEvaluate {
     }
 }
 
-pluginBundle {
-    website = 'https://github.com/nebula-plugins/gradle-lint-plugin'
-    vcsUrl = 'https://github.com/nebula-plugins/gradle-lint-plugin.git'
-    description = 'Pluggable and configurable linter tool for identifying and reporting on patterns of misuse or deprecations in Gradle scripts'
-
+gradlePlugin {
     plugins {
         gradeLint {
             id = 'nebula.lint'
             displayName = 'Nebula Lint plugin'
             description = 'Pluggable and configurable linter tool for identifying and reporting on patterns of misuse or deprecations in Gradle scripts'
-            tags = ['nebula', 'lint']
+            implementationClass = 'com.netflix.nebula.lint.plugin.GradleLintPlugin'
+        }
+        gradeLint {
+            id = 'nebula.configEnvironment'
+            displayName = 'Nebula Config Environment plugin'
+            description = 'Pluggable and configurable linter tool for identifying and reporting on patterns of misuse or deprecations in Gradle scripts'
+            implementationClass = 'com.netflix.nebula.config.plugin.ConfigurationEnvironmentPlugin'
         }
     }
 }
+
+
+pluginBundle {
+    website = 'https://github.com/nebula-plugins/gradle-lint-plugin'
+    vcsUrl = 'https://github.com/nebula-plugins/gradle-lint-plugin.git'
+    tags = ['nebula', 'lint']
+}
+
 
 // Relocate jgit dependency not available in Maven Central
 // Replaces the main artifact by removing the classifier for the shadow jar, and replacing jar with shadowJar
