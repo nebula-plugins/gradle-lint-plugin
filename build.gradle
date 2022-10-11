@@ -15,9 +15,9 @@
  */
 
 plugins {
-    id 'com.netflix.nebula.plugin-plugin' version '19.0.1'
+    id 'nebula.plugin-plugin' version '16.3.0'
     id "org.jetbrains.kotlin.jvm" version "1.5.31"
-    id 'com.github.johnrengelman.shadow' version '7.1.2'
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
     id 'java-gradle-plugin'
 }
 
@@ -104,30 +104,20 @@ afterEvaluate {
     }
 }
 
-gradlePlugin {
+pluginBundle {
+    website = 'https://github.com/nebula-plugins/gradle-lint-plugin'
+    vcsUrl = 'https://github.com/nebula-plugins/gradle-lint-plugin.git'
+    description = 'Pluggable and configurable linter tool for identifying and reporting on patterns of misuse or deprecations in Gradle scripts'
+
     plugins {
         gradeLint {
             id = 'nebula.lint'
             displayName = 'Nebula Lint plugin'
             description = 'Pluggable and configurable linter tool for identifying and reporting on patterns of misuse or deprecations in Gradle scripts'
-            implementationClass = 'com.netflix.nebula.lint.plugin.GradleLintPlugin'
-        }
-        gradeLint {
-            id = 'nebula.configEnvironment'
-            displayName = 'Nebula Config Environment plugin'
-            description = 'Pluggable and configurable linter tool for identifying and reporting on patterns of misuse or deprecations in Gradle scripts'
-            implementationClass = 'com.netflix.nebula.config.plugin.ConfigurationEnvironmentPlugin'
+            tags = ['nebula', 'lint']
         }
     }
 }
-
-
-pluginBundle {
-    website = 'https://github.com/nebula-plugins/gradle-lint-plugin'
-    vcsUrl = 'https://github.com/nebula-plugins/gradle-lint-plugin.git'
-    tags = ['nebula', 'lint']
-}
-
 
 // Relocate jgit dependency not available in Maven Central
 // Replaces the main artifact by removing the classifier for the shadow jar, and replacing jar with shadowJar
