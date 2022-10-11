@@ -15,9 +15,9 @@
  */
 
 plugins {
-    id 'nebula.plugin-plugin' version '16.3.0'
+    id 'com.netflix.nebula.plugin-plugin' version '19.0.1'
     id "org.jetbrains.kotlin.jvm" version "1.5.31"
-    id 'com.github.johnrengelman.shadow' version '7.0.0'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
     id 'java-gradle-plugin'
 }
 
