@@ -1,5 +1,6 @@
 package com.netflix.nebula.lint.rule.dependency
 
+import com.netflix.nebula.lint.VersionNumber
 import com.netflix.nebula.lint.rule.GradleDependency
 import com.netflix.nebula.lint.rule.GradleLintRule
 import com.netflix.nebula.lint.rule.GradleModelAware
@@ -10,7 +11,6 @@ import org.codehaus.groovy.ast.expr.Expression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.gradle.api.Incubating
 import org.gradle.api.artifacts.Configuration
-import org.gradle.util.VersionNumber
 
 /**
  * This is like a declarative form of the use of a Substitute Nebula Resolution Rule:

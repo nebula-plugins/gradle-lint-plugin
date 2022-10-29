@@ -2,6 +2,7 @@ package com.netflix.nebula.lint.rule.dependency
 
 import com.netflix.nebula.interop.GradleKt
 import com.netflix.nebula.lint.SourceSetUtils
+import com.netflix.nebula.lint.VersionNumber
 import groovy.transform.Memoized
 import groovyx.gpars.GParsPool
 import org.gradle.api.Project
@@ -15,7 +16,6 @@ import org.gradle.api.file.FileCollection
 import org.gradle.api.internal.artifacts.DefaultModuleIdentifier
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
-import org.gradle.util.VersionNumber
 import org.objectweb.asm.ClassReader
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
