@@ -190,3 +190,7 @@ test.dependsOn 'shadowJar', 'generatePomFileForNebulaPublication'
 nebulaRelease {
     releaseBranchPatterns.add("beta")
 }
+
+validatePlugins {
+    enableStricterValidation = true
+}
