@@ -13,6 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath 'org.ajoberstar.grgit:grgit-core:4.1.1'
+    }
+}
 
 plugins {
     id 'nebula.plugin-plugin' version '16.3.0'
@@ -63,7 +73,6 @@ dependencies {
     api 'com.netflix.nebula:nebula-gradle-interop:latest.release'
     api 'org.apache.maven:maven-model-builder:3.+'
     api 'org.codehaus.gpars:gpars:1.2.1'
-
     plugin  'com.google.guava:guava:19.0'
     plugin('org.ow2.asm:asm:9.+') {
         version {
@@ -192,5 +201,5 @@ nebulaRelease {
 }
 
 validatePlugins {
-    enableStricterValidation = true
+    enableStricterValidation = false
 }
