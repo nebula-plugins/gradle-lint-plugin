@@ -26,7 +26,7 @@ buildscript {
 
 plugins {
     id 'nebula.plugin-plugin' version '16.3.0'
-    id "org.jetbrains.kotlin.jvm" version "1.8.0"
+    id "org.jetbrains.kotlin.jvm" version "1.7.21"
     id 'com.github.johnrengelman.shadow' version '7.0.0'
     id 'java-gradle-plugin'
 }
@@ -202,4 +202,8 @@ nebulaRelease {
 
 validatePlugins {
     enableStricterValidation = false
+}
+
+javaCrossCompile {
+    disableKotlinSupport = true
 }
