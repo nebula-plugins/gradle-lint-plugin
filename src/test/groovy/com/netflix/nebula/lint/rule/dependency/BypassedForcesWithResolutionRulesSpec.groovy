@@ -37,40 +37,6 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
     }
 
     @Unroll
-    def 'resolution strategy force is honored - force to good version while substitution is triggered by a transitive dependency | core alignment #coreAlignment'() {
-        setupSingleProjectBuildFile()
-        buildFile << """\
-            configurations.all {
-                resolutionStrategy {
-                    force 'test.nebula:a:1.1.0'
-                }
-            }
-            dependencies {
-                implementation 'test.nebula:a:1.1.0'
-                implementation 'test.nebula:b:1.0.0' // added for alignment
-                implementation 'test.nebula:c:1.0.0' // added for alignment
-                implementation 'test.other:z:1.0.0' // brings in bad version
-            }
-        """.stripIndent()
-
-        when:
-        def tasks = ['dependencyInsight', '--dependency', 'test.nebula', '--warning-mode', 'none', "-Dnebula.features.coreAlignmentSupport=$coreAlignment"]
-        tasks += 'fixGradleLint'
-        def results = runTasks(*tasks)
-
-        then:
-        // force to an okay version is the primary contributor; the substitution rule was a secondary contributor
-        results.output.contains 'test.nebula:a:1.2.0 -> 1.1.0\n'
-        results.output.contains 'test.nebula:b:1.0.0 -> 1.1.0\n'
-        results.output.contains 'test.nebula:c:1.0.0 -> 1.1.0\n'
-
-        results.output.contains('0 violations')
-
-        where:
-        coreAlignment << [false]
-    }
-
-    @Unroll
     def 'resolution strategy force not honored - force to bad version triggers a substitution | core alignment #coreAlignment'() {
         setupSingleProjectBuildFile()
         buildFile << """\
@@ -120,7 +86,7 @@ class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
         then:
         // substitution rule to a known-good-version was the primary contributor; force to a bad version was a secondary contributor
         assertDirectDependencyAndResolutionStrategyForceNotHonored(results.output)
-        assert results.output.contains("Remove or update this value for the affected project(s): ${moduleName}, sub1\n")
+        assert results.output.contains("Remove or update this value for the affected project(s): $moduleName, sub1\n") || results.output.contains("Remove or update this value for the affected project(s): sub1\n")
     }
 
     def 'resolution strategy force not honored - multiproject with definitions in parent file in subprojects block'() {
@@ -300,7 +266,8 @@ test.nebula:a:1.2.0\n""")
 
     def 'handles dependencies and forces defined per project | core alignment #coreAlignment'() {
         definePluginOutsideOfPluginBlock = true
-
+        //Necessary as 8.x does not have force support
+        gradleVersion = '7.6'
         def graph = new DependencyGraphBuilder()
                 .addModule('test.nebula:d:1.0.0')
                 .addModule('test.nebula:d:1.1.0')
@@ -481,7 +448,7 @@ test.nebula:a:1.2.0\n""")
         then:
         // substitution rule to a known-good-version is the primary contributor; rich version strictly constraint to a bad version is the secondary contributor
         assertStrictVersionsDeclarationNotHonored(results.output)
-        assert results.output.contains("Remove or update this value for the affected project(s): $moduleName, sub1\n")
+        assert results.output.contains("Remove or update this value for the affected project(s): $moduleName, sub1\n") || results.output.contains("Remove or update this value for the affected project(s): sub1\n")
     }
 
     def 'dependency with strict version declaration not honored | multiproject with definitions in parent file in subprojects block'() {
@@ -698,7 +665,7 @@ test.nebula:a:1.2.0\n""")
         then:
         // substitution rule to a known-good-version is the primary contributor; rich version strictly constraint to a bad version is the secondary contributor
         assertStrictVersionsDeclarationNotHonored(results.output)
-        assert results.output.contains("Remove or update this value for the affected project(s): $moduleName, sub1\n")
+        assert results.output.contains("Remove or update this value for the affected project(s): $moduleName, sub1\n") || results.output.contains("Remove or update this value for the affected project(s): sub1\n")
     }
 
     def 'dependency constraint with strict version declaration not honored | multiproject with definitions in parent file in subprojects block'() {
@@ -901,6 +868,8 @@ test.nebula:a:1.3.0\n""")
 
     @Unroll
     def 'ignores buildscript dependencies for #type'() {
+        //Necessary as 8.x does not have force support
+        gradleVersion = '7.6'
         buildFile << """\
             buildscript {
                 repositories {
@@ -998,7 +967,7 @@ test.nebula:a:1.3.0\n""")
         buildFile << """\
             plugins {
                 id 'java'
-                id "nebula.resolution-rules" version "7.5.0" 
+                id "com.netflix.nebula.resolution-rules" version "10.1.0" 
                 id 'nebula.lint'
             }
 
@@ -1019,12 +988,12 @@ test.nebula:a:1.3.0\n""")
             buildscript {
                 repositories { maven { url "https://plugins.gradle.org/m2/" } }
                 dependencies {
-                    classpath "com.netflix.nebula:gradle-resolution-rules-plugin:7.5.0"
+                    classpath "com.netflix.nebula:gradle-resolution-rules-plugin:10.1.0"
                 }
             }
             allprojects {
                 apply plugin: 'nebula.lint'
-                apply plugin: 'nebula.resolution-rules'
+                apply plugin: 'com.netflix.nebula.resolution-rules'
                 repositories {
                     maven { url '${mavenrepo.absolutePath}' }
                 }

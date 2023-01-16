@@ -76,4 +76,6 @@ abstract class GroovyAstVisitor implements GroovyClassVisitor, GroovyCodeVisitor
     @Override void visitArgumentlistExpression(ArgumentListExpression argumentListExpression) {}
     @Override void visitClosureListExpression(ClosureListExpression closureListExpression) {}
     @Override void visitBytecodeExpression(BytecodeExpression bytecodeExpression) {}
+    @Override void visitLambdaExpression(LambdaExpression lambdaExpression) {}
+    @Override void visitMethodReferenceExpression(MethodReferenceExpression methodReferenceExpression) {}
 }
