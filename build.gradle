@@ -25,9 +25,9 @@ buildscript {
 }
 
 plugins {
-    id 'nebula.plugin-plugin' version '16.3.0'
-    id "org.jetbrains.kotlin.jvm" version "1.7.21"
-    id 'com.github.johnrengelman.shadow' version '7.0.0'
+    id 'com.netflix.nebula.plugin-plugin' version '20.3.0'
+    id "org.jetbrains.kotlin.jvm" version "1.8.0"
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
     id 'java-gradle-plugin'
 }
 
@@ -40,24 +40,12 @@ contacts {
     }
 }
 
-facets {
-    gradle6Test {
-        parentSourceSet = 'main'
-    }
-}
-
 configurations {
     plugin.description = 'The compile dependencies for the plugin, excluding the local dependencies to avoid problems with Shadow'
     compileClasspath.extendsFrom plugin
     runtimeClasspath.extendsFrom plugin
     testCompileClasspath.extendsFrom plugin
     testRuntimeClasspath.extendsFrom plugin
-    gradle6TestCompileClasspath.extendsFrom plugin
-    gradle6TestRuntimeClasspath.extendsFrom plugin
-}
-
-gradle6Test {
-    useJUnit()
 }
 
 def jgitVersion = '5.0.1.201806211838-r'
@@ -69,7 +57,7 @@ configurations.all {
 }
 
 dependencies {
-    compileOnly 'dev.gradleplugins:gradle-api:6.8.3'
+    compileOnly 'dev.gradleplugins:gradle-api:7.6'
     api 'com.netflix.nebula:nebula-gradle-interop:latest.release'
     api 'org.apache.maven:maven-model-builder:3.8.3'
     api 'org.codehaus.gpars:gpars:1.2.1'
@@ -96,15 +84,11 @@ dependencies {
     }
     plugin 'org.eclipse.jdt:core:3.1.1'
 
-    compileOnly "com.netflix.nebula:nebula-test:9.+"
+    compileOnly "com.netflix.nebula:nebula-test:10.+"
 
     testImplementation 'org.ow2.asm:asm-util:5.2'
     testImplementation 'joda-time:joda-time:latest.release'
     testImplementation 'com.netflix.nebula:gradle-info-plugin:latest.release'
-
-    gradle6TestImplementation "com.netflix.nebula:nebula-test:9.+"
-    gradle6TestRuntimeOnly project.getLayout().files(pluginUnderTestMetadata)
-    gradle6TestImplementation "dev.gradleplugins:gradle-test-kit:6.8.3"
 }
 
 afterEvaluate {
@@ -113,27 +97,32 @@ afterEvaluate {
     }
 }
 
-pluginBundle {
-    website = 'https://github.com/nebula-plugins/gradle-lint-plugin'
-    vcsUrl = 'https://github.com/nebula-plugins/gradle-lint-plugin.git'
-    description = 'Pluggable and configurable linter tool for identifying and reporting on patterns of misuse or deprecations in Gradle scripts'
-
+gradlePlugin {
     plugins {
-        gradeLint {
+        legacyNebulaLint {
             id = 'nebula.lint'
             displayName = 'Nebula Lint plugin'
             description = 'Pluggable and configurable linter tool for identifying and reporting on patterns of misuse or deprecations in Gradle scripts'
-            tags = ['nebula', 'lint']
+            implementationClass = 'com.netflix.nebula.lint.plugin.GradleLintPlugin'
+            tags.set(['nebula', 'lint'])
+        }
+        nebulaLint {
+            id = 'com.netflix.nebula.lint'
+            displayName = 'Nebula Lint plugin'
+            description = 'Pluggable and configurable linter tool for identifying and reporting on patterns of misuse or deprecations in Gradle scripts'
+            implementationClass = 'com.netflix.nebula.lint.plugin.GradleLintPlugin'
+            tags.set(['nebula', 'lint'])
         }
     }
 }
+
 
 // Relocate jgit dependency not available in Maven Central
 // Replaces the main artifact by removing the classifier for the shadow jar, and replacing jar with shadowJar
 // Relocated dependencies are removed from the generated pom
 shadowJar {
     configurations = [project.configurations.plugin]
-    classifier = null
+    archiveClassifier.set(null)
     dependencies {
         include(dependency('com.google.guava:guava'))
         include(dependency('org.eclipse.jdt:core'))
@@ -158,9 +147,21 @@ shadowJar {
 jar.enabled = false
 jar.dependsOn shadowJar
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(8))
+    }
+}
+
 tasks.withType(Test) {
     maxHeapSize = '512m'
-    maxParallelForks = 4
+    maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(System.getenv("JDK_VERSION_FOR_TESTS")?.toInteger() ?: 8)
+    }
+    doFirst {
+        logger.lifecycle("Executing tests with JDK: ${System.getenv("JDK_VERSION_FOR_TESTS")?.toInteger() ?: 8}")
+    }
     testLogging {
         events "PASSED", "FAILED", "SKIPPED"
         afterSuite { desc, result ->
@@ -183,8 +184,6 @@ tasks.named('compileKotlin') {
     classpath += files(sourceSets.main.groovy.classesDirectory)
 }
 
-targetCompatibility = JavaVersion.VERSION_1_8
-sourceCompatibility = JavaVersion.VERSION_1_8
 
 ['compileClasspath', 'runtimeClasspath', 'testCompileClasspath', 'testRuntimeClasspath'].each { confName ->
     tasks.register("dependencyReport${confName.capitalize()}", DependencyReportTask) {
