@@ -3,7 +3,7 @@ package com.netflix.nebula.lint.plugin
 import org.gradle.api.Action
 import org.gradle.api.Project
 
-class Gradle7AndHigherLintPluginTaskConfigurer extends GradleBetween5And7LintPluginTaskConfigurer {
+class LintPluginTaskConfigurer extends GradleLintPluginTaskConfigurer {
     @Override
     Action<GradleLintReportTask> configureReportAction(Project project, GradleLintExtension extension) {
         new Action<GradleLintReportTask>() {
