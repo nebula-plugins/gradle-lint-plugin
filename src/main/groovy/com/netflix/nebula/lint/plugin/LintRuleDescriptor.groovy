@@ -17,17 +17,52 @@
 package com.netflix.nebula.lint.plugin
 
 import groovy.transform.Canonical
-import org.gradle.util.GUtil
+import org.gradle.api.UncheckedIOException
+
+import javax.annotation.Nullable
 
 @Canonical
 class LintRuleDescriptor {
     URL propertiesFileUrl
 
     String getImplementationClassName() {
-        GUtil.loadProperties(propertiesFileUrl).getProperty('implementation-class')
+        loadProperties(propertiesFileUrl).getProperty('implementation-class')
     }
 
     List<String> getIncludes() {
-        GUtil.loadProperties(propertiesFileUrl).getProperty('includes')?.split(',') ?: [] as List<String>
+        loadProperties(propertiesFileUrl).getProperty('includes')?.split(',') ?: [] as List<String>
+    }
+
+    private  static Properties loadProperties(URL url) {
+        try {
+            URLConnection uc = url.openConnection()
+            uc.setUseCaches(false)
+            return loadProperties(uc.inputStream)
+        } catch (IOException e) {
+            throw new UncheckedIOException(e)
+        }
+    }
+
+    private static Properties loadProperties(InputStream inputStream) {
+        Properties properties = new Properties()
+        try {
+            properties.load(inputStream)
+        } catch (IOException e) {
+            throw new UncheckedIOException(e)
+        } finally {
+            closeQuietly(inputStream)
+        }
+
+        return properties
+    }
+
+    private static void closeQuietly(@Nullable Closeable resource) {
+        try {
+            if (resource != null) {
+                resource.close()
+            }
+        } catch (IOException e) {
+        }
+
     }
 }
