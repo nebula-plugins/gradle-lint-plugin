@@ -9,7 +9,7 @@ import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.TaskState
 import org.gradle.api.tasks.compile.AbstractCompile
 
-class GradleBetween5And7LintPluginTaskConfigurer extends GradleLintPluginTaskConfigurer{
+class GradleSevenZeroLintPluginTaskConfigurer extends GradleLintPluginTaskConfigurer{
     @Override
     Action<GradleLintReportTask> configureReportAction(Project project, GradleLintExtension extension) {
         new Action<GradleLintReportTask>() {
