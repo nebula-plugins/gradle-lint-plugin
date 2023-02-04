@@ -42,6 +42,10 @@ contacts {
 
 configurations {
     plugin.description = 'The compile dependencies for the plugin, excluding the local dependencies to avoid problems with Shadow'
+    compileClasspath.extendsFrom shadow
+    runtimeClasspath.extendsFrom shadow
+    testCompileClasspath.extendsFrom shadow
+    testRuntimeClasspath.extendsFrom shadow
     compileClasspath.extendsFrom plugin
     runtimeClasspath.extendsFrom plugin
     testCompileClasspath.extendsFrom plugin
@@ -58,9 +62,9 @@ configurations.all {
 
 dependencies {
     compileOnly 'dev.gradleplugins:gradle-api:7.6'
-    api 'com.netflix.nebula:nebula-gradle-interop:latest.release'
-    api 'org.apache.maven:maven-model-builder:3.8.3'
-    api 'org.codehaus.gpars:gpars:1.2.1'
+    shadow 'com.netflix.nebula:nebula-gradle-interop:latest.release'
+    shadow 'org.apache.maven:maven-model-builder:3.8.3'
+    shadow 'org.codehaus.gpars:gpars:1.2.1'
     plugin  'com.google.guava:guava:19.0'
     plugin('org.ow2.asm:asm:9.+') {
         version {
