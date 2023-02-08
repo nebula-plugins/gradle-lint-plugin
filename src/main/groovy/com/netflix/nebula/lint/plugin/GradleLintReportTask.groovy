@@ -141,7 +141,7 @@ class GradleLintReportTask extends DefaultTask implements VerificationTask, Repo
         if (reportOnlyFixableViolations) {
             new GradleLintPatchAction(project).lintFinished(results.violations)
             List<Violation> toRemove = results.violations.findAll {
-                it.fixes.size == 0 || it.fixes.any { it.reasonForNotFixing != null }
+                it.fixes.size() == 0 || it.fixes.any { it.reasonForNotFixing != null }
             }
             toRemove.each {
                 results.removeViolation(it)

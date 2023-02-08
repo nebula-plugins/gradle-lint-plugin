@@ -45,7 +45,7 @@ class EmptyClosureRule extends GradleLintRule {
             taskNames.add(it)
         }
 
-        if (isDeletable(call.methodAsString) && expressions.size == 1 && expressions.last() instanceof ClosureExpression) {
+        if (isDeletable(call.methodAsString) && expressions.size() == 1 && expressions.last() instanceof ClosureExpression) {
             if(expressions.last().code.empty) {
                 emptyClosureCalls.add(call)
             }
