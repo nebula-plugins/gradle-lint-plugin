@@ -14,13 +14,13 @@ class DependencyHelper {
     static void removeVersion(GradleViolation violation, MethodCallExpression call, GradleDependency dep) {
         GradleDependency depClone = dep.clone()
         depClone.version = ''
-        if (call.arguments.expressions.size == 1 && call.arguments.expressions[0] instanceof ConstantExpression) {
+        if (call.arguments.expressions.size() == 1 && call.arguments.expressions[0] instanceof ConstantExpression) {
             handleConstantExpression(violation, call.arguments.expressions[0], "'${depClone.toNotation()}'")
-        } else if (call.arguments.expressions.size == 1 && call.arguments.expressions[0] instanceof GStringExpression) {
+        } else if (call.arguments.expressions.size() == 1 && call.arguments.expressions[0] instanceof GStringExpression) {
             handleGStringExpression(violation, call.arguments.expressions[0], "\"${depClone.toNotation()}\"")
-        } else if (call.arguments.expressions.size == 1 && call.arguments.expressions[0] instanceof NamedArgumentListExpression) {
+        } else if (call.arguments.expressions.size() == 1 && call.arguments.expressions[0] instanceof NamedArgumentListExpression) {
             removeNamedArgumentListExpression(violation, call.arguments.expressions[0], 'version')
-        } else if (call.arguments.expressions.size == 2 && call.arguments.expressions[1] instanceof ClosureExpression) {
+        } else if (call.arguments.expressions.size() == 2 && call.arguments.expressions[1] instanceof ClosureExpression) {
             if (!closureContainsForce(call.arguments.expressions[1])) {
                 def depExpression = call.arguments.expressions[0]
                 if (depExpression instanceof ConstantExpression) {
@@ -37,11 +37,11 @@ class DependencyHelper {
     static void replaceVersion(GradleViolation violation, MethodCallExpression call, GradleDependency dep, String replacement) {
         GradleDependency depClone = dep.clone()
         depClone.version = replacement
-        if (call.arguments.expressions.size == 1 && call.arguments.expressions[0] instanceof ConstantExpression) {
+        if (call.arguments.expressions.size() == 1 && call.arguments.expressions[0] instanceof ConstantExpression) {
             handleConstantExpression(violation, call.arguments.expressions[0], "'${depClone.toNotation()}'")
-        } else if (call.arguments.expressions.size == 1 && call.arguments.expressions[0] instanceof NamedArgumentListExpression) {
+        } else if (call.arguments.expressions.size() == 1 && call.arguments.expressions[0] instanceof NamedArgumentListExpression) {
             replaceNamedArgumentListExpression(violation, call.arguments.expressions[0], 'version', replacement)
-        } else if (call.arguments.expressions.size == 2 && call.arguments.expressions[1] instanceof ClosureExpression) {
+        } else if (call.arguments.expressions.size() == 2 && call.arguments.expressions[1] instanceof ClosureExpression) {
             def depExpression = call.arguments.expressions[0]
             if (depExpression instanceof ConstantExpression) {
                 handleConstantExpression(violation, depExpression, "'${depClone.toNotation()}'")
@@ -52,11 +52,11 @@ class DependencyHelper {
     }
 
     static void replaceDependency(GradleViolation violation, MethodCallExpression call, GradleDependency dep) {
-        if (call.arguments.expressions.size == 1 && call.arguments.expressions[0] instanceof ConstantExpression) {
+        if (call.arguments.expressions.size() == 1 && call.arguments.expressions[0] instanceof ConstantExpression) {
             handleConstantExpression(violation, call.arguments.expressions[0], "'${dep.toNotation()}'")
-        } else if (call.arguments.expressions.size == 1 && call.arguments.expressions[0] instanceof NamedArgumentListExpression) {
+        } else if (call.arguments.expressions.size() == 1 && call.arguments.expressions[0] instanceof NamedArgumentListExpression) {
             replaceNamedArgumentListExpression(violation, call.arguments.expressions[0], dep.toMap())
-        } else if (call.arguments.expressions.size == 2 && call.arguments.expressions[1] instanceof ClosureExpression) {
+        } else if (call.arguments.expressions.size() == 2 && call.arguments.expressions[1] instanceof ClosureExpression) {
             def depExpression = call.arguments.expressions[0]
             if (depExpression instanceof ConstantExpression) {
                 handleConstantExpression(violation, depExpression, "'${dep.toNotation()}'")
