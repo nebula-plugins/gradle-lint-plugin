@@ -11,7 +11,7 @@ class Issue39Spec extends IntegrationTestKitSpec {
         buildFile.text = """
             plugins {
                 id 'nebula.lint'
-                id 'com.netflix.nebula.integtest' version '10.1.2'
+                id 'com.netflix.nebula.integtest' version '10.1.4'
                 id 'java'
             }
 

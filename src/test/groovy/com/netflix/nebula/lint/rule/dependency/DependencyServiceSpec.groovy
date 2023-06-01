@@ -195,7 +195,7 @@ class DependencyServiceSpec extends IntegrationTestKitSpec {
 
             plugins {
                 id 'java'
-                id 'nebula.integtest' version '7.0.7'
+                id 'com.netflix.nebula.integtest' version '10.1.4'
                 id 'nebula.lint'
             }
             
