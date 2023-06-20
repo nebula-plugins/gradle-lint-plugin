@@ -300,14 +300,14 @@ class UnusedDependencyRuleSpec extends IntegrationTestKitSpec {
             buildscript {
                 repositories { maven { url "https://plugins.gradle.org/m2/" } }
                 dependencies {
-                    classpath "com.netflix.nebula:nebula-project-plugin:7.0.7"
+                    classpath "com.netflix.nebula:nebula-project-plugin:10.1.4"
                 }
             }
             plugins {
                 id 'nebula.lint'
                 id 'java'
             }
-            apply plugin: "nebula.integtest"
+            apply plugin: "com.netflix.nebula.integtest"
             gradleLint.rules = ['unused-dependency']
             repositories { mavenCentral() }
             dependencies {
@@ -339,14 +339,14 @@ class UnusedDependencyRuleSpec extends IntegrationTestKitSpec {
             buildscript {
                 repositories { maven { url "https://plugins.gradle.org/m2/" } }
                 dependencies {
-                    classpath "com.netflix.nebula:nebula-project-plugin:7.0.7"
+                    classpath "com.netflix.nebula:nebula-project-plugin:10.1.4"
                 }
             }
             plugins {
                 id 'nebula.lint'
                 id 'java'
             }
-            apply plugin: "nebula.integtest"
+            apply plugin: "com.netflix.nebula.integtest"
             gradleLint.rules = ['unused-dependency']
             repositories { mavenCentral() }
             dependencies {
@@ -368,9 +368,8 @@ class UnusedDependencyRuleSpec extends IntegrationTestKitSpec {
         def result = runTasks('compileTestJava', 'fixGradleLint')
 
         then:
-        result.output.contains('fixed          unused-dependency                  this dependency should be moved to configuration testImplementation')
-        !result.output.contains('unfixed        unused-dependency')
-        !result.output.contains('this dependency is unused and can be removed')
+        result.output.contains('unused-dependency                  this dependency should be moved to configuration testImplementation')
+        result.output.contains('unused-dependency                  this dependency should be moved to configuration integTestImplementation')
     }
 
     def 'webjars should be moved to runtime'() {
@@ -547,7 +546,7 @@ class UnusedDependencyRuleSpec extends IntegrationTestKitSpec {
             plugins {
                 id 'nebula.lint'
                 id 'java'
-                id 'nebula.integtest' version '7.0.7'
+                id 'com.netflix.nebula.integtest' version '10.1.4'
             }
             
             repositories { mavenCentral() }

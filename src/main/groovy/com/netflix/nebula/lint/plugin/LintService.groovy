@@ -116,7 +116,7 @@ class LintService {
         def analyzer = new ReportableAnalyzer(project)
 
         ([project] + project.subprojects).each { p ->
-            def files = SourceCollector.getAllFiles(p.buildFile, p.projectDir)
+            def files = SourceCollector.getAllFiles(p.buildFile, p)
             def buildFiles = new BuildFiles(files)
             def ruleSet = ruleSetForProject(p, onlyCriticalRules)
             if (!ruleSet.rules.isEmpty()) {
