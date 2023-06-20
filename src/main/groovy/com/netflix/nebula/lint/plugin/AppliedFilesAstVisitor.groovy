@@ -5,22 +5,37 @@ import org.codehaus.groovy.ast.ClassCodeVisitorSupport
 import org.codehaus.groovy.ast.expr.MapExpression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.codehaus.groovy.control.SourceUnit
+import org.gradle.api.Project
 
 /**
  * Groovy AST visitor which searches for `apply from: 'another.gradle'` It takes the file and process it recursively
  */
 class AppliedFilesAstVisitor extends ClassCodeVisitorSupport {
 
-    File projectDir
+    Project project
     List<File> appliedFiles = new ArrayList()
+    Map<String, String> projectVariablesMapping
 
-    AppliedFilesAstVisitor(File projectDir) {
-        this.projectDir = projectDir
+    AppliedFilesAstVisitor(Project project) {
+        this.project = project
+        projectVariablesMapping = [
+                "\$projectDir" : project.projectDir.toString(),
+                "\$project.projectDir" : project.projectDir.toString(),
+                "\$rootDir" : project.rootDir.toString(),
+                "\$project.rootDir" : project.rootDir.toString(),
+        ]
     }
 
     void visitApplyFrom(String from) {
         if (! isHttpLink(from)) {
-            appliedFiles.addAll(SourceCollector.getAllFiles(new File(projectDir, from), projectDir))
+            //handle if path contains ${rootDir} ${project.rootDir} ${projectDir} ${project.projectDir}
+            def projectVariable = projectVariablesMapping.find {from.contains(it.key) }
+            if (projectVariable) {
+                def absolutePath = from.replaceAll("\\$projectVariable.key", projectVariable.value)
+                appliedFiles.addAll(SourceCollector.getAllFiles(new File(absolutePath), project))
+            } else {
+                appliedFiles.addAll(SourceCollector.getAllFiles(new File(project.projectDir, from), project))
+            }
         }
     }
 
