@@ -14,7 +14,7 @@ class GradleSevenOneAndHigherLintPluginTaskConfigurer extends GradleSevenZeroLin
                     def fileSuffix = report.name == 'text' ? 'txt' : report.name
                     report.conventionMapping.with {
                         required.set(report.name == getReportFormat(project, extension))
-                        outputLocation.set(new File(project.buildDir, "reports/gradleLint/${project.name}.$fileSuffix"))
+                        outputLocation.set(project.layout.buildDirectory.file("reports/gradleLint/${project.name}.$fileSuffix"))
                     }
                 }
             }

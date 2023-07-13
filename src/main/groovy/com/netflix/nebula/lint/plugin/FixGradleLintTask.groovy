@@ -63,7 +63,7 @@ class FixGradleLintTask extends DefaultTask implements VerificationTask {
             it.lintFinished(violations)
         }
 
-        def patchFile = new File(project.buildDir, GradleLintPatchAction.PATCH_NAME)
+        def patchFile = new File(project.layout.buildDirectory.asFile.get(), GradleLintPatchAction.PATCH_NAME)
         if (patchFile.exists()) {
             new ApplyCommand(new NotNecessarilyGitRepository(project.projectDir)).setPatch(patchFile.newInputStream()).call()
         }

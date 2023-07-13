@@ -21,7 +21,7 @@ class GradleSevenZeroLintPluginTaskConfigurer extends GradleLintPluginTaskConfig
                         enabled = { report.name == getReportFormat(project, extension) }
                         destination = {
                             def fileSuffix = report.name == 'text' ? 'txt' : report.name
-                            new File(project.buildDir, "reports/gradleLint/${project.name}.$fileSuffix")
+                            new File(project.layout.buildDirectory.asFile.get(), "reports/gradleLint/${project.name}.$fileSuffix")
                         }
                     }
                 }
