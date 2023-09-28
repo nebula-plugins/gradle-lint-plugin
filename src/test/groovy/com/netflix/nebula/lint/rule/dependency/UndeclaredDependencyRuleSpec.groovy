@@ -18,6 +18,7 @@ package com.netflix.nebula.lint.rule.dependency
 import nebula.test.IntegrationTestKitSpec
 import nebula.test.dependencies.Coordinate
 import nebula.test.dependencies.maven.Pom
+import spock.lang.IgnoreIf
 import spock.lang.Subject
 import spock.lang.Unroll
 
@@ -26,7 +27,7 @@ class UndeclaredDependencyRuleSpec extends IntegrationTestKitSpec {
     private static final def sample = new Coordinate('sample', 'alpha', '1.0')
     private static final def commonsLogging = new Coordinate('commons-logging', 'commons-logging', '1.2')
     private static final def commonsLang = new Coordinate('commons-lang', 'commons-lang', '2.6')
-    private static final def lombok = new Coordinate('org.projectlombok', 'lombok', '1.18.22')
+    private static final def lombok = new Coordinate('org.projectlombok', 'lombok', '1.18.30')
     private static final def junit = new Coordinate('junit', 'junit', '4.12')
 
     def main = '''
@@ -134,6 +135,7 @@ class UndeclaredDependencyRuleSpec extends IntegrationTestKitSpec {
     }
 
     @Unroll
+    @IgnoreIf({ jvm.isJava21() })
     def 'adds dependencies alphabetically for #configuration configuration'() {
         given:
         def repo = new File(projectDir, 'repo')
@@ -157,7 +159,7 @@ class UndeclaredDependencyRuleSpec extends IntegrationTestKitSpec {
                 }
               }
               dependencies {
-                classpath "io.freefair.gradle:lombok-plugin:6.6.1"
+                classpath "io.freefair.gradle:lombok-plugin:8.3"
               }
             }
 
@@ -645,6 +647,7 @@ class UndeclaredDependencyRuleSpec extends IntegrationTestKitSpec {
         sample | 'compile'
     }
 
+    @IgnoreIf({ jvm.isJava21() })
     def 'when using compileOnly configuration, transitives are resolved before linting so no changes are made'() {
         given:
         def repo = new File(projectDir, 'repo')
@@ -665,7 +668,7 @@ class UndeclaredDependencyRuleSpec extends IntegrationTestKitSpec {
                 }
               }
               dependencies {
-                classpath "io.freefair.gradle:lombok-plugin:6.6.1"
+                classpath "io.freefair.gradle:lombok-plugin:8.3"
               }
             }
 

@@ -22,7 +22,7 @@ jobs:
     strategy:
       matrix:
         # test against latest update of some major Java version(s), as well as specific LTS version(s)
-        java: [ 8, 17, 20]
+        java: [ 8, 17, 21]
     name: Gradle Build without Publish
     steps:
       - uses: actions/checkout@v1

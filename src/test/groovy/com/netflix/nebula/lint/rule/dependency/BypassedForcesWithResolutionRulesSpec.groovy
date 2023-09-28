@@ -264,7 +264,7 @@ test.nebula:a:1.2.0\n""")
         coreAlignment << [true]
     }
 
-    @IgnoreIf({ jvm.isJava20() })
+    @IgnoreIf({ jvm.isJava21() })
     def 'handles dependencies and forces defined per project | core alignment #coreAlignment'() {
         definePluginOutsideOfPluginBlock = true
         //Necessary as 8.x does not have force support
@@ -868,7 +868,7 @@ test.nebula:a:1.3.0\n""")
     }
 
     @Unroll
-    @IgnoreIf({ jvm.isJava20() })
+    @IgnoreIf({ jvm.isJava21() })
     def 'ignores buildscript dependencies for #type'() {
         //Necessary as 8.x does not have force support
         gradleVersion = '7.6'

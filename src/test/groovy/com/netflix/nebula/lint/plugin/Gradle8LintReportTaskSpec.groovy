@@ -5,7 +5,7 @@ import spock.lang.Issue
 
 class Gradle8LintReportTaskSpec extends IntegrationTestKitSpec {
     def setup() {
-        gradleVersion = '8.1.1'
+        gradleVersion = '8.4-rc-2'
         debug = true
     }
 
