@@ -15,18 +15,26 @@ abstract class GradleLintPluginTaskConfigurer extends AbstractLintPluginTaskConf
     @Override
     void createTasks(Project project, GradleLintExtension lintExt) {
         if (project.rootProject == project) {
-            def autoLintTask = project.tasks.create(AUTO_LINT_GRADLE, LintGradleTask)
-            autoLintTask.listeners = lintExt.listeners
-
-            def manualLintTask = project.tasks.register(LINT_GRADLE, LintGradleTask) {
+            def autoLintTask = project.tasks.register(AUTO_LINT_GRADLE, LintGradleTask)
+            autoLintTask.configure {
                 group = LINT_GROUP
-                failOnWarning = true
+                listeners.set(lintExt.listeners)
+                projectRootDir.set(project.rootDir)
+            }
+
+            def manualLintTask = project.tasks.register(LINT_GRADLE, LintGradleTask)
+            manualLintTask.configure {
+                group = LINT_GROUP
+                failOnWarning.set(true)
+                projectRootDir.set(project.rootDir)
             }
 
 
-            def criticalLintTask = project.tasks.register(CRITICAL_LINT_GRADLE, LintGradleTask) {
+            def criticalLintTask = project.tasks.register(CRITICAL_LINT_GRADLE, LintGradleTask)
+            criticalLintTask.configure {
                 group = LINT_GROUP
-                onlyCriticalRules = true
+                onlyCriticalRules.set(true)
+                projectRootDir.set(project.rootDir)
             }
 
 
@@ -71,7 +79,7 @@ abstract class GradleLintPluginTaskConfigurer extends AbstractLintPluginTaskConf
         }
     }
 
-    protected void configureAutoLint(Task autoLintTask, Project project, GradleLintExtension lintExt, List<TaskProvider> lintTasks, TaskProvider criticalLintTask) {
+    protected void configureAutoLint(TaskProvider<LintGradleTask> autoLintTask, Project project, GradleLintExtension lintExt, List<TaskProvider> lintTasks, TaskProvider criticalLintTask) {
         List<TaskProvider> lintTasksToVerify = lintTasks + criticalLintTask
         project.afterEvaluate {
             if (lintExt.autoLintAfterFailure) {
@@ -90,7 +98,7 @@ abstract class GradleLintPluginTaskConfigurer extends AbstractLintPluginTaskConf
      * @param lintExt
      * @param lintTasksToVerify
      */
-    protected void configureAutoLintWithFailures(Task autoLintTask, Project project, GradleLintExtension lintExt, List<TaskProvider> lintTasksToVerify) {
+    protected void configureAutoLintWithFailures(TaskProvider<LintGradleTask> autoLintTask, Project project, GradleLintExtension lintExt, List<TaskProvider> lintTasksToVerify) {
         boolean hasExplicitLintTask = project.gradle.startParameter.taskNames.any { lintTasksToVerify.name.contains(it) }
         if (!hasValidTaskConfiguration(project, lintExt) || hasExplicitLintTask) {
             return
@@ -108,7 +116,7 @@ abstract class GradleLintPluginTaskConfigurer extends AbstractLintPluginTaskConf
      * @param lintTasks
      * @param criticalLintTask
      */
-    protected void configureAutoLintWithoutFailures(Task autoLintTask, Project project, GradleLintExtension lintExt, List<TaskProvider> lintTasks, TaskProvider criticalLintTask) {
+    protected void configureAutoLintWithoutFailures(TaskProvider<LintGradleTask> autoLintTask, Project project, GradleLintExtension lintExt, List<TaskProvider> lintTasks, TaskProvider criticalLintTask) {
         project.gradle.taskGraph.whenReady { taskGraph ->
             List<Task> allTasks = taskGraph.allTasks
             if (hasValidTaskConfiguration(project, lintExt)) {
@@ -126,7 +134,7 @@ abstract class GradleLintPluginTaskConfigurer extends AbstractLintPluginTaskConf
                             return
                         }
                         if (task.path == lastTask.path && !taskState.failure) {
-                            autoLintTask.lint()
+                            autoLintTask.get().lint()
                         }
                     }
                 })
@@ -141,7 +149,7 @@ abstract class GradleLintPluginTaskConfigurer extends AbstractLintPluginTaskConf
      * @param lintTasks
      * @param autoLintTask
      */
-    protected void finalizeAllTasksWithAutoLint(Project project, List<TaskProvider> lintTasks, Task autoLintTask, GradleLintExtension lintExt) {
+    protected void finalizeAllTasksWithAutoLint(Project project, List<TaskProvider> lintTasks, TaskProvider<LintGradleTask> autoLintTask, GradleLintExtension lintExt) {
         project.tasks.configureEach { task ->
             boolean skipForSpecificTask = lintExt.skipForTasks.any { taskToSkip -> task.name.endsWith(taskToSkip) }
 

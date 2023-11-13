@@ -23,10 +23,6 @@ import spock.lang.Subject
 
 @Subject([UnusedDependencyRule, DependencyParenthesesRule])
 class FixGradleLintTaskSpec extends BaseIntegrationTestKitSpec {
-    def setup() {
-        debug = true
-    }
-
     def 'overlapping patches result in unfixed or semi-fixed results'() {
         when:
         buildFile.text = """
