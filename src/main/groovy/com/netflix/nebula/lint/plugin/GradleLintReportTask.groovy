@@ -44,17 +44,12 @@ import javax.inject.Inject
 
 import static com.netflix.nebula.lint.StyledTextService.Styling.Bold
 
-class GradleLintReportTask extends DefaultTask implements VerificationTask, Reporting<CodeNarcReports> {
+abstract class GradleLintReportTask extends DefaultTask implements VerificationTask, Reporting<CodeNarcReports> {
 
     @Nested
     private final CodeNarcReportsImpl reports
     @Input
     boolean reportOnlyFixableViolations
-
-    /**
-     * Whether or not the build should break when the verifications performed by this task fail.
-     */
-    boolean ignoreFailures
 
     GradleLintReportTask() {
         CodeNarcReportsImpl codeNarcReports

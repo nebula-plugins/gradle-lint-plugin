@@ -38,12 +38,14 @@ abstract class GradleLintPluginTaskConfigurer extends AbstractLintPluginTaskConf
             }
 
 
-            def fixTask = project.tasks.register(FIX_GRADLE_LINT, FixGradleLintTask) {
-                userDefinedListeners = lintExt.listeners
+            def fixTask = project.tasks.register(FIX_GRADLE_LINT, FixGradleLintTask)
+            fixTask.configure {
+                userDefinedListeners.set(lintExt.listeners)
             }
 
-            def fixTask2 = project.tasks.register(FIX_LINT_GRADLE, FixGradleLintTask) {
-                userDefinedListeners = lintExt.listeners
+            def fixTask2 = project.tasks.register(FIX_LINT_GRADLE, FixGradleLintTask)
+            fixTask2.configure {
+                userDefinedListeners.set(lintExt.listeners)
             }
 
             List<TaskProvider> lintTasks = [fixTask, fixTask2, manualLintTask]
