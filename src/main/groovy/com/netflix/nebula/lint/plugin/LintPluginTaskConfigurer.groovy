@@ -9,7 +9,7 @@ class LintPluginTaskConfigurer extends GradleLintPluginTaskConfigurer {
         new Action<GradleLintReportTask>() {
             @Override
             void execute(GradleLintReportTask gradleLintReportTask) {
-                gradleLintReportTask.reportOnlyFixableViolations = getReportOnlyFixableViolations(project, extension)
+                gradleLintReportTask.reportOnlyFixableViolations.set(getReportOnlyFixableViolations(project, extension))
                 gradleLintReportTask.reports.all { report ->
                     def fileSuffix = report.name == 'text' ? 'txt' : report.name
                     report.conventionMapping.with {

@@ -15,7 +15,7 @@ class GradleSevenZeroLintPluginTaskConfigurer extends GradleLintPluginTaskConfig
         new Action<GradleLintReportTask>() {
             @Override
             void execute(GradleLintReportTask gradleLintReportTask) {
-                gradleLintReportTask.reportOnlyFixableViolations = getReportOnlyFixableViolations(project, extension)
+                gradleLintReportTask.reportOnlyFixableViolations.set(getReportOnlyFixableViolations(project, extension))
                 gradleLintReportTask.reports.all { report ->
                     report.conventionMapping.with {
                         enabled = { report.name == getReportFormat(project, extension) }
