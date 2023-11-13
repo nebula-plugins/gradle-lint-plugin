@@ -158,7 +158,6 @@ java {
 }
 
 tasks.withType(Test) {
-    maxHeapSize = '512m'
     maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
     javaLauncher = javaToolchains.launcherFor {
         languageVersion = JavaLanguageVersion.of(System.getenv("JDK_VERSION_FOR_TESTS")?.toInteger() ?: 8)

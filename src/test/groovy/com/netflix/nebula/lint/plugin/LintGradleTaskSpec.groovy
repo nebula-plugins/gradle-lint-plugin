@@ -15,16 +15,15 @@
  */
 package com.netflix.nebula.lint.plugin
 
-
+import com.netflix.nebula.lint.BaseIntegrationTestKitSpec
 import com.netflix.nebula.lint.rule.dependency.DependencyParenthesesRule
 import com.netflix.nebula.lint.rule.dependency.FirstOrderDuplicateDependencyClassRule
-import nebula.test.IntegrationTestKitSpec
 import org.gradle.testkit.runner.TaskOutcome
 import spock.lang.Subject
 import spock.lang.Unroll
 
 @Subject([FirstOrderDuplicateDependencyClassRule, DependencyParenthesesRule])
-class LintGradleTaskSpec extends IntegrationTestKitSpec {
+class LintGradleTaskSpec extends BaseIntegrationTestKitSpec {
 
     @Unroll
     def 'mark violations that have no auto-remediation - configuration #configuration'() {

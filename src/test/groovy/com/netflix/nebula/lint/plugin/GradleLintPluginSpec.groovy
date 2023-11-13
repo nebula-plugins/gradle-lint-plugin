@@ -15,14 +15,13 @@
  */
 package com.netflix.nebula.lint.plugin
 
-
-import nebula.test.IntegrationTestKitSpec
+import com.netflix.nebula.lint.BaseIntegrationTestKitSpec
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 import spock.lang.Issue
 import spock.lang.Unroll
 
-class GradleLintPluginSpec extends IntegrationTestKitSpec {
+class GradleLintPluginSpec extends BaseIntegrationTestKitSpec {
     def setup() {
         debug = true
     }

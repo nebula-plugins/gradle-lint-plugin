@@ -1,6 +1,6 @@
 package com.netflix.nebula.lint.rule.dependency
 
-
+import com.netflix.nebula.lint.BaseIntegrationTestKitSpec
 import nebula.test.IntegrationTestKitSpec
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
@@ -13,7 +13,7 @@ import spock.lang.Unroll
 import static com.netflix.nebula.lint.rule.dependency.DependencyClassVisitorSpec.gav
 
 @Subject(DependencyService)
-class DependencyServiceSpec extends IntegrationTestKitSpec {
+class DependencyServiceSpec extends BaseIntegrationTestKitSpec {
     Project project
 
     def setup() {

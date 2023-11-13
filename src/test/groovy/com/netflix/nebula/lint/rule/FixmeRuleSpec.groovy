@@ -1,10 +1,10 @@
 package com.netflix.nebula.lint.rule
 
-import nebula.test.IntegrationTestKitSpec
+import com.netflix.nebula.lint.BaseIntegrationTestKitSpec
 import spock.lang.Subject
 
 @Subject(FixmeRule)
-class FixmeRuleSpec extends IntegrationTestKitSpec {
+class FixmeRuleSpec extends BaseIntegrationTestKitSpec {
     def tasks = ['assemble', 'fixGradleLint']
 
     def setup() {

@@ -1,13 +1,11 @@
 package com.netflix.nebula.lint.plugin
 
+import com.netflix.nebula.lint.BaseIntegrationTestKitSpec
 import nebula.test.IntegrationTestKitSpec
 import spock.lang.Issue
 import spock.lang.Unroll
 
-class GradleLintReportTaskSpec extends IntegrationTestKitSpec {
-    def setup() {
-        debug = true
-    }
+class GradleLintReportTaskSpec extends BaseIntegrationTestKitSpec {
 
     def 'generate a report'() {
         when:

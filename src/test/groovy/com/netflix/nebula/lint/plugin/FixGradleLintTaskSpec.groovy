@@ -15,15 +15,14 @@
  */
 package com.netflix.nebula.lint.plugin
 
+import com.netflix.nebula.lint.BaseIntegrationTestKitSpec
 import com.netflix.nebula.lint.rule.dependency.DependencyParenthesesRule
 import com.netflix.nebula.lint.rule.dependency.UnusedDependencyRule
-import nebula.test.IntegrationTestKitSpec
-import spock.lang.IgnoreIf
 import spock.lang.Issue
 import spock.lang.Subject
 
 @Subject([UnusedDependencyRule, DependencyParenthesesRule])
-class FixGradleLintTaskSpec extends IntegrationTestKitSpec {
+class FixGradleLintTaskSpec extends BaseIntegrationTestKitSpec {
     def setup() {
         debug = true
     }

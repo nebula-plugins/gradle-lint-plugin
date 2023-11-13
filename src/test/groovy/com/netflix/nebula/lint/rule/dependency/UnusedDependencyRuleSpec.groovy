@@ -15,14 +15,13 @@
  */
 package com.netflix.nebula.lint.rule.dependency
 
-
-import nebula.test.IntegrationTestKitSpec
+import com.netflix.nebula.lint.BaseIntegrationTestKitSpec
 import org.gradle.util.GradleVersion
 import spock.lang.IgnoreIf
 import spock.lang.Issue
 import spock.lang.Unroll
 
-class UnusedDependencyRuleSpec extends IntegrationTestKitSpec {
+class UnusedDependencyRuleSpec extends BaseIntegrationTestKitSpec {
     static def guava = 'com.google.guava:guava:18.0'
     static def asm = 'org.ow2.asm:asm:5.0.4'
     // Dependency that provides guava:18.0 transitively

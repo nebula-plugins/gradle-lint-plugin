@@ -1,8 +1,8 @@
 package com.netflix.nebula.lint.issues
 
-import nebula.test.IntegrationTestKitSpec
+import com.netflix.nebula.lint.BaseIntegrationTestKitSpec
 
-class Issue314Spec extends IntegrationTestKitSpec {
+class Issue314Spec extends BaseIntegrationTestKitSpec {
 
     def main = '''
             import org.apache.commons.logging.Log;

@@ -1,12 +1,11 @@
 package com.netflix.nebula.lint.plugin
 
-import nebula.test.IntegrationTestKitSpec
+import com.netflix.nebula.lint.BaseIntegrationTestKitSpec
 import spock.lang.Issue
 
-class Gradle8LintReportTaskSpec extends IntegrationTestKitSpec {
+class Gradle8LintReportTaskSpec extends BaseIntegrationTestKitSpec {
     def setup() {
         gradleVersion = '8.4-rc-2'
-        debug = true
     }
 
     def 'generate a report'() {

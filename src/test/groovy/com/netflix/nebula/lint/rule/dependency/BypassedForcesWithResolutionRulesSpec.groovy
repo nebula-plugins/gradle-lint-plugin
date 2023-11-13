@@ -16,18 +16,18 @@
 
 package com.netflix.nebula.lint.rule.dependency
 
+import com.netflix.nebula.lint.BaseIntegrationTestKitSpec
 import nebula.test.IntegrationTestKitSpec
 import nebula.test.dependencies.DependencyGraphBuilder
 import nebula.test.dependencies.GradleDependencyGenerator
 import nebula.test.dependencies.ModuleBuilder
-import org.gradle.util.GradleVersion
 import spock.lang.Ignore
 import spock.lang.IgnoreIf
 import spock.lang.Subject
 import spock.lang.Unroll
 
 @Subject(BypassedForcesRule)
-class BypassedForcesWithResolutionRulesSpec extends IntegrationTestKitSpec {
+class BypassedForcesWithResolutionRulesSpec extends BaseIntegrationTestKitSpec {
     File rulesJsonFile
     File mavenrepo
 

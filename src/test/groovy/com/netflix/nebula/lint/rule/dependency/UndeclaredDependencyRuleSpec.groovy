@@ -15,7 +15,7 @@
  */
 package com.netflix.nebula.lint.rule.dependency
 
-import nebula.test.IntegrationTestKitSpec
+import com.netflix.nebula.lint.BaseIntegrationTestKitSpec
 import nebula.test.dependencies.Coordinate
 import nebula.test.dependencies.maven.Pom
 import spock.lang.IgnoreIf
@@ -23,7 +23,7 @@ import spock.lang.Subject
 import spock.lang.Unroll
 
 @Subject(UndeclaredDependencyRule)
-class UndeclaredDependencyRuleSpec extends IntegrationTestKitSpec {
+class UndeclaredDependencyRuleSpec extends BaseIntegrationTestKitSpec {
     private static final def sample = new Coordinate('sample', 'alpha', '1.0')
     private static final def commonsLogging = new Coordinate('commons-logging', 'commons-logging', '1.2')
     private static final def commonsLang = new Coordinate('commons-lang', 'commons-lang', '2.6')
