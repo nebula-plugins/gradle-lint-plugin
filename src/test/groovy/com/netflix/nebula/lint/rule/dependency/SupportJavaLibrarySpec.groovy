@@ -18,13 +18,12 @@
 
 package com.netflix.nebula.lint.rule.dependency
 
-
-import nebula.test.IntegrationTestKitSpec
+import com.netflix.nebula.lint.BaseIntegrationTestKitSpec
 import nebula.test.dependencies.Coordinate
 import nebula.test.dependencies.maven.Pom
 import spock.lang.Unroll
 
-class SupportJavaLibrarySpec extends IntegrationTestKitSpec {
+class SupportJavaLibrarySpec extends BaseIntegrationTestKitSpec {
     private static final def sample = new Coordinate('sample', 'alpha', '1.0')
     private static final def junit = new Coordinate('junit', 'junit', '4.11')
     def repo
@@ -39,7 +38,6 @@ class SupportJavaLibrarySpec extends IntegrationTestKitSpec {
         ArtifactHelpers.setupSampleJar(repo, sample)
 
         definePluginOutsideOfPluginBlock = true
-        debug = true
     }
 
     @Unroll

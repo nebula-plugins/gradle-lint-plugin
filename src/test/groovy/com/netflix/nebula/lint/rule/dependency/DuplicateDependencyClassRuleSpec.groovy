@@ -16,22 +16,19 @@
 
 package com.netflix.nebula.lint.rule.dependency
 
-import nebula.test.IntegrationTestKitSpec
+import com.netflix.nebula.lint.BaseIntegrationTestKitSpec
 import spock.lang.Issue
 import spock.lang.Subject
 import spock.lang.Unroll
 
 @Subject([FirstOrderDuplicateDependencyClassRule, TransitiveDuplicateDepenencyClassRule])
-class DuplicateDependencyClassRuleSpec extends IntegrationTestKitSpec {
+class DuplicateDependencyClassRuleSpec extends BaseIntegrationTestKitSpec {
     static def guava = 'com.google.guava:guava:18.0'
     static def collections = 'com.google.collections:google-collections:1.0'
     static def guava_transitive = 'com.netflix.nebula:gradle-metrics-plugin:4.1.6'
     static def asm = 'org.ow2.asm:asm:5.0.4'
     static def asm_asm = 'asm:asm:3.3.1'
 
-    def setup() {
-        debug = true
-    }
 
     @Unroll
     def 'dependencies with duplicate classes cause violations #configuration results in #message'() {

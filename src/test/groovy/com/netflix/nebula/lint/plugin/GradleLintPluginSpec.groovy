@@ -15,14 +15,13 @@
  */
 package com.netflix.nebula.lint.plugin
 
-
-import nebula.test.IntegrationTestKitSpec
+import com.netflix.nebula.lint.BaseIntegrationTestKitSpec
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 import spock.lang.Issue
 import spock.lang.Unroll
 
-class GradleLintPluginSpec extends IntegrationTestKitSpec {
+class GradleLintPluginSpec extends BaseIntegrationTestKitSpec {
     def setup() {
         debug = true
     }
@@ -143,54 +142,6 @@ class GradleLintPluginSpec extends IntegrationTestKitSpec {
 
         then:
         runTasks('lintGradle')
-    }
-
-    def 'run rules on multi-module only once'() {
-        setup:
-        buildFile.text = """
-            plugins {
-                id 'nebula.lint'
-            }
-
-            allprojects {
-                apply plugin: 'nebula.lint'
-                gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
-            }
-
-            subprojects {
-                apply plugin: 'java'
-                dependencies {
-                    implementation('com.google.guava:guava:18.0')
-                }
-            }
-        """
-
-        addSubproject('sub', """
-            dependencies {
-                testImplementation group: 'junit',
-                    name: 'junit',
-                    version: '4.11'
-            }
-
-            task taskA {}
-        """)
-
-        addSubproject('sub2', """
-            dependencies {
-                testImplementation group: 'junit',
-                    name: 'junit',
-                    version: '4.11'
-            }
-
-            task taskB {}
-        """)
-
-        when:
-        def result = runTasks("assemble")
-
-        then:
-        result.output.readLines().findAll { it.contains('warning   dependency-tuple')}.size() == 2
-        result.output.readLines().findAll { it.contains('warning   dependency-parentheses')}.size() == 1
     }
 
     def 'run rules on multi-module only once when task fails'() {

@@ -1,20 +1,19 @@
 package com.netflix.nebula.lint.rule.dependency
 
-
-import nebula.test.IntegrationSpec
+import com.netflix.nebula.lint.BaseIntegrationTestKitSpec
 import spock.lang.Subject
 
 @Subject(MultiProjectCircularDependencyRule)
-class MultiProjectCircularDependencyRuleSpec extends IntegrationSpec {
+class MultiProjectCircularDependencyRuleSpec extends BaseIntegrationTestKitSpec {
 
     def 'No project dependencies'() {
         setup:
         buildFile << """
             plugins {
                 id 'java'
+                id 'com.netflix.nebula.lint'
             }
-            apply plugin: 'nebula.lint'
-
+            
             gradleLint.rules = ['multiproject-circular-dependency']    
         """
         addSubproject('foo', '''\
@@ -32,10 +31,10 @@ class MultiProjectCircularDependencyRuleSpec extends IntegrationSpec {
 
 
         when:
-        def result = runTasksSuccessfully('fixGradleLint')
+        def result = runTasks('fixGradleLint')
 
         then:
-        !result.standardOutput.contains("Multi-project circular dependencies are not allowed.")
+        !result.output.contains("Multi-project circular dependencies are not allowed.")
     }
 
     def 'detects circular dependencies in multi project'() {
@@ -43,8 +42,8 @@ class MultiProjectCircularDependencyRuleSpec extends IntegrationSpec {
         buildFile << """
             plugins {
                 id 'java'
+                id 'com.netflix.nebula.lint'
             }
-            apply plugin: 'nebula.lint'
 
             gradleLint.rules = ['multiproject-circular-dependency']    
         """
@@ -65,10 +64,10 @@ class MultiProjectCircularDependencyRuleSpec extends IntegrationSpec {
 
 
         when:
-        def result = runTasksSuccessfully('fixGradleLint')
+        def result = runTasks('fixGradleLint')
 
         then:
-        result.standardOutput.contains("Multi-project circular dependencies are not allowed. Circular dependency found between projects 'foo' and 'bar'")
+        result.output.contains("Multi-project circular dependencies are not allowed. Circular dependency found between projects 'foo' and 'bar'")
     }
 
     def 'detects circular dependencies in multi project - with excludes'() {
@@ -76,9 +75,8 @@ class MultiProjectCircularDependencyRuleSpec extends IntegrationSpec {
         buildFile << """
             plugins {
                 id 'java'
+                id 'com.netflix.nebula.lint'
             }
-            apply plugin: 'nebula.lint'
-
             gradleLint.rules = ['multiproject-circular-dependency']    
         """
         addSubproject('foo', '''\
@@ -100,10 +98,10 @@ class MultiProjectCircularDependencyRuleSpec extends IntegrationSpec {
 
 
         when:
-        def result = runTasksSuccessfully('fixGradleLint')
+        def result = runTasks('fixGradleLint')
 
         then:
-        result.standardOutput.contains("Multi-project circular dependencies are not allowed. Circular dependency found between projects 'foo' and 'bar'")
+        result.output.contains("Multi-project circular dependencies are not allowed. Circular dependency found between projects 'foo' and 'bar'")
     }
 
 
@@ -112,9 +110,8 @@ class MultiProjectCircularDependencyRuleSpec extends IntegrationSpec {
         buildFile << """
             plugins {
                 id 'java'
+                id 'com.netflix.nebula.lint'
             }
-            apply plugin: 'nebula.lint'
-
             gradleLint.rules = ['multiproject-circular-dependency']    
         """
         addSubproject('foo', '''\
@@ -146,10 +143,10 @@ class MultiProjectCircularDependencyRuleSpec extends IntegrationSpec {
 
 
         when:
-        def result = runTasksSuccessfully('fixGradleLint')
+        def result = runTasks('fixGradleLint')
 
         then:
-        result.standardOutput.contains("Multi-project circular dependencies are not allowed. Circular dependency found between projects 'foo' and 'bar'")
+        result.output.contains("Multi-project circular dependencies are not allowed. Circular dependency found between projects 'foo' and 'bar'")
     }
 
     def 'detects circular dependencies in multi project - multi violations'() {
@@ -157,8 +154,8 @@ class MultiProjectCircularDependencyRuleSpec extends IntegrationSpec {
         buildFile << """
             plugins {
                 id 'java'
+                id 'com.netflix.nebula.lint'
             }
-            apply plugin: 'nebula.lint'
 
             gradleLint.rules = ['multiproject-circular-dependency']    
         """
@@ -187,11 +184,11 @@ class MultiProjectCircularDependencyRuleSpec extends IntegrationSpec {
 
 
         when:
-        def result = runTasksSuccessfully('fixGradleLint')
+        def result = runTasks('fixGradleLint')
 
         then:
-        result.standardOutput.contains("Multi-project circular dependencies are not allowed. Circular dependency found between projects 'foo' and 'bar'")
-        result.standardOutput.contains("Multi-project circular dependencies are not allowed. Circular dependency found between projects 'foo' and 'baz'")
+        result.output.contains("Multi-project circular dependencies are not allowed. Circular dependency found between projects 'foo' and 'bar'")
+        result.output.contains("Multi-project circular dependencies are not allowed. Circular dependency found between projects 'foo' and 'baz'")
     }
 
     def 'detects circular dependencies in multi project - no parenthesis results in gradle failure but not lint'() {
@@ -199,8 +196,8 @@ class MultiProjectCircularDependencyRuleSpec extends IntegrationSpec {
         buildFile << """
             plugins {
                 id 'java'
+                id 'com.netflix.nebula.lint'
             }
-            apply plugin: 'nebula.lint'
 
             gradleLint.rules = ['multiproject-circular-dependency']    
         """
@@ -221,10 +218,10 @@ class MultiProjectCircularDependencyRuleSpec extends IntegrationSpec {
 
 
         when:
-        def result = runTasksWithFailure('fixGradleLint')
+        def result = runTasksAndFail('fixGradleLint')
 
         then:
-        result.standardError.contains("Could not get unknown property ':foo' for DefaultProjectDependency{dependencyProject='project ':bar'', configuration='default'}")
+        result.output.contains("Could not get unknown property ':foo' for DefaultProjectDependency{dependencyProject='project ':bar'', configuration='default'}")
     }
 
     def 'detects circular dependencies in multi project - with bad syntax excludes fails but not in lint'() {
@@ -232,8 +229,8 @@ class MultiProjectCircularDependencyRuleSpec extends IntegrationSpec {
         buildFile << """
             plugins {
                 id 'java'
+                id 'com.netflix.nebula.lint'
             }
-            apply plugin: 'nebula.lint'
 
             gradleLint.rules = ['multiproject-circular-dependency']    
         """
@@ -256,9 +253,9 @@ class MultiProjectCircularDependencyRuleSpec extends IntegrationSpec {
 
 
         when:
-        def result = runTasksWithFailure('fixGradleLint')
+        def result = runTasksAndFail('fixGradleLint')
 
         then:
-        !result.standardError.contains("Could not get unknown property ':foo' for DefaultProjectDependency{dependencyProject='project ':bar'', configuration='default'}")
+        !result.output.contains("Could not get unknown property ':foo' for DefaultProjectDependency{dependencyProject='project ':bar'', configuration='default'}")
     }
 }

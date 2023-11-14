@@ -1,13 +1,9 @@
 package com.netflix.nebula.lint.rule
 
-
-import nebula.test.IntegrationTestKitSpec
+import com.netflix.nebula.lint.BaseIntegrationTestKitSpec
 import spock.lang.Issue
 
-class GradleLintRuleIntegSpec extends IntegrationTestKitSpec {
-    def setup() {
-        debug = true
-    }
+class GradleLintRuleIntegSpec extends BaseIntegrationTestKitSpec {
 
     @Issue('#67')
     def 'find dependencies that are provided by extension properties'() {

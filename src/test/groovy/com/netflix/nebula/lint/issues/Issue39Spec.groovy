@@ -1,11 +1,11 @@
 package com.netflix.nebula.lint.issues
 
+import com.netflix.nebula.lint.BaseIntegrationTestKitSpec
 import com.netflix.nebula.lint.rule.dependency.UnusedDependencyRule
-import nebula.test.IntegrationTestKitSpec
 import spock.lang.Subject
 
 @Subject(UnusedDependencyRule)
-class Issue39Spec extends IntegrationTestKitSpec {
+class Issue39Spec extends BaseIntegrationTestKitSpec {
     def 'place dependencies in the correct configuration by source set'() {
         when:
         buildFile.text = """

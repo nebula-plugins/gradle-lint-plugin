@@ -1,11 +1,11 @@
 package com.netflix.nebula.lint.rule.dependency
 
-import nebula.test.IntegrationTestKitSpec
+import com.netflix.nebula.lint.BaseIntegrationTestKitSpec
 import spock.lang.Ignore
 import spock.lang.Subject
 
 @Subject(MinimumDependencyVersionRule)
-class MinimumDependencyVersionRuleSpec extends IntegrationTestKitSpec {
+class MinimumDependencyVersionRuleSpec extends BaseIntegrationTestKitSpec {
     def tasks = ['assemble', 'fixGradleLint', '-PgradleLint.minVersions=com.google.guava:guava:19.0']
 
     def setup() {
@@ -20,8 +20,6 @@ class MinimumDependencyVersionRuleSpec extends IntegrationTestKitSpec {
 
             repositories { mavenCentral() }
         """.stripIndent()
-
-        debug = true
     }
 
     def 'warn first order dependency versions not meeting the minimum - api configuration'() {

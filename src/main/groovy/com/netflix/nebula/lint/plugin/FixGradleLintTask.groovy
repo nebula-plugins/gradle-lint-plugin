@@ -24,6 +24,7 @@ import com.netflix.nebula.lint.StyledTextService
 import org.eclipse.jgit.api.ApplyCommand
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
+import org.gradle.api.provider.ListProperty
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
@@ -32,24 +33,22 @@ import org.gradle.api.tasks.VerificationTask
 
 import static com.netflix.nebula.lint.StyledTextService.Styling.*
 
-class FixGradleLintTask extends DefaultTask implements VerificationTask {
+abstract class FixGradleLintTask extends DefaultTask implements VerificationTask {
     @Input
     @Optional
-    List<GradleLintViolationAction> userDefinedListeners = []
+    abstract ListProperty<GradleLintViolationAction> getUserDefinedListeners()
 
     /**
      * Special listener tied into nebula.metrics via nebula.info to ship violation information to a
      * metrics endpoint
      */
     @Internal
-    GradleLintInfoBrokerAction infoBrokerAction = new GradleLintInfoBrokerAction(project)
+    GradleLintInfoBrokerAction infoBrokerAction
 
-    /**
-     * Whether or not the build should break when the verifications performed by this task fail.
-     */
-    boolean ignoreFailures
 
     FixGradleLintTask() {
+        infoBrokerAction = new GradleLintInfoBrokerAction(project)
+        userDefinedListeners.convention([])
         outputs.upToDateWhen { false }
         group = 'lint'
     }
@@ -59,7 +58,7 @@ class FixGradleLintTask extends DefaultTask implements VerificationTask {
         def violations = new LintService().lint(project, false).violations
                 .unique { v1, v2 -> v1.is(v2) ? 0 : 1 }
 
-        (getUserDefinedListeners() + infoBrokerAction + new GradleLintPatchAction(project)).each {
+        (userDefinedListeners.get() + infoBrokerAction + new GradleLintPatchAction(project)).each {
             it.lintFinished(violations)
         }
 
@@ -68,7 +67,7 @@ class FixGradleLintTask extends DefaultTask implements VerificationTask {
             new ApplyCommand(new NotNecessarilyGitRepository(project.projectDir)).setPatch(patchFile.newInputStream()).call()
         }
 
-        (getUserDefinedListeners() + infoBrokerAction + consoleOutputAction()).each {
+        (userDefinedListeners.get() + infoBrokerAction + consoleOutputAction()).each {
             it.lintFixesApplied(violations)
         }
 

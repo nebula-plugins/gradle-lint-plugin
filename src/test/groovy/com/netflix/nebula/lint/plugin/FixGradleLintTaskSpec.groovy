@@ -15,19 +15,14 @@
  */
 package com.netflix.nebula.lint.plugin
 
+import com.netflix.nebula.lint.BaseIntegrationTestKitSpec
 import com.netflix.nebula.lint.rule.dependency.DependencyParenthesesRule
 import com.netflix.nebula.lint.rule.dependency.UnusedDependencyRule
-import nebula.test.IntegrationTestKitSpec
-import spock.lang.IgnoreIf
 import spock.lang.Issue
 import spock.lang.Subject
 
 @Subject([UnusedDependencyRule, DependencyParenthesesRule])
-class FixGradleLintTaskSpec extends IntegrationTestKitSpec {
-    def setup() {
-        debug = true
-    }
-
+class FixGradleLintTaskSpec extends BaseIntegrationTestKitSpec {
     def 'overlapping patches result in unfixed or semi-fixed results'() {
         when:
         buildFile.text = """

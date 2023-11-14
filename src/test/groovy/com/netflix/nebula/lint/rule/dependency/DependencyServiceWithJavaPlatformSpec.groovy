@@ -1,13 +1,13 @@
 package com.netflix.nebula.lint.rule.dependency
 
-import nebula.test.IntegrationTestKitSpec
+import com.netflix.nebula.lint.BaseIntegrationTestKitSpec
 import org.gradle.api.Project
 import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.Subject
 import spock.lang.Unroll
 
 @Subject(DependencyService)
-class DependencyServiceWithJavaPlatformSpec extends IntegrationTestKitSpec {
+class DependencyServiceWithJavaPlatformSpec extends BaseIntegrationTestKitSpec {
     Project project
 
     def setup() {

@@ -1,10 +1,10 @@
 package com.netflix.nebula.lint.rule.dependency
 
-import nebula.test.IntegrationSpec
+import com.netflix.nebula.lint.BaseIntegrationTestKitSpec
 import spock.lang.Subject
 
 @Subject(DependencyService)
-class FindMethodReferencesSpec extends IntegrationSpec {
+class FindMethodReferencesSpec extends BaseIntegrationTestKitSpec {
 
     def 'find method references no exclusion'() {
         buildFile.text = """\
@@ -12,9 +12,8 @@ class FindMethodReferencesSpec extends IntegrationSpec {
 
             plugins {
                 id 'java'
+                id 'com.netflix.nebula.lint'
             }
-
-            apply plugin: 'nebula.lint'
 
             repositories { mavenCentral() }
             dependencies {
@@ -51,7 +50,7 @@ class FindMethodReferencesSpec extends IntegrationSpec {
 
 
         when:
-        runTasksSuccessfully('compileClasspathMethodReferences')
+        runTasks('compileClasspathMethodReferences')
         String methodReferences = new File(projectDir, 'compileClasspathMethodReferences.txt').text
 
         then:
@@ -65,10 +64,9 @@ class FindMethodReferencesSpec extends IntegrationSpec {
 
             plugins {
                 id 'java'
+                id 'com.netflix.nebula.lint'
             }
-
-            apply plugin: 'nebula.lint'
-
+            
             repositories { mavenCentral() }
             dependencies {
                 implementation 'com.google.guava:guava:19.0'
@@ -104,7 +102,7 @@ class FindMethodReferencesSpec extends IntegrationSpec {
 
 
         when:
-        runTasksSuccessfully('compileClasspathMethodReferences')
+        runTasks('compileClasspathMethodReferences')
         String methodReferences = new File(projectDir, 'compileClasspathMethodReferences.txt').text
 
         then:
@@ -117,10 +115,9 @@ class FindMethodReferencesSpec extends IntegrationSpec {
 
             plugins {
                 id 'java'
+                id 'com.netflix.nebula.lint'
             }
-
-            apply plugin: 'nebula.lint'
-
+            
             repositories { mavenCentral() }
             dependencies {
                 implementation 'com.google.guava:guava:19.0'
@@ -155,7 +152,7 @@ class FindMethodReferencesSpec extends IntegrationSpec {
 
 
         when:
-        def r = runTasksSuccessfully('compileClasspathMethodReferences')
+        def r = runTasks('compileClasspathMethodReferences')
         String methodReferences = new File(projectDir, 'compileClasspathMethodReferences.txt').text
 
         then:
@@ -169,10 +166,9 @@ class FindMethodReferencesSpec extends IntegrationSpec {
 
             plugins {
                 id 'java'
+                id 'com.netflix.nebula.lint'
             }
-
-            apply plugin: 'nebula.lint'
-
+            
             repositories { mavenCentral() }
             dependencies {
                 implementation 'com.google.guava:guava:19.0'
@@ -208,7 +204,7 @@ class FindMethodReferencesSpec extends IntegrationSpec {
 
 
         when:
-        runTasksSuccessfully('compileClasspathMethodReferences')
+        runTasks('compileClasspathMethodReferences')
         String methodReferences = new File(projectDir, 'compileClasspathMethodReferences.txt').text
 
         then:
@@ -221,9 +217,9 @@ class FindMethodReferencesSpec extends IntegrationSpec {
 
             plugins {
                 id 'java'
+                id 'com.netflix.nebula.lint'
             }
-
-            apply plugin: 'nebula.lint'
+           
 
             repositories { mavenCentral() }
             dependencies {
@@ -268,7 +264,7 @@ class FindMethodReferencesSpec extends IntegrationSpec {
 
 
         when:
-        runTasksSuccessfully('compileClasspathMethodReferences')
+        runTasks('compileClasspathMethodReferences')
         String methodReferences = new File(projectDir, 'compileClasspathMethodReferences.txt').text
 
         then:
@@ -282,9 +278,9 @@ class FindMethodReferencesSpec extends IntegrationSpec {
 
             plugins {
                 id 'java'
+                id 'com.netflix.nebula.lint'
             }
-
-            apply plugin: 'nebula.lint'
+           
 
             repositories { mavenCentral() }
             dependencies {
@@ -320,10 +316,10 @@ class FindMethodReferencesSpec extends IntegrationSpec {
 
 
         when:
-        def result = runTasksSuccessfully('compileClasspathMethodReferences')
+        def result = runTasks('compileClasspathMethodReferences')
 
         then:
-        result.standardOutput.contains("""[
+        result.output.contains("""[
     {
         "methodReferences": [
             {
@@ -395,10 +391,9 @@ class FindMethodReferencesSpec extends IntegrationSpec {
 
             plugins {
                 id 'java'
+                id 'com.netflix.nebula.lint'
             }
-
-            apply plugin: 'nebula.lint'
-
+            
             repositories { mavenCentral() }
             dependencies {
                 implementation 'com.google.guava:guava:19.0'
@@ -440,7 +435,7 @@ class FindMethodReferencesSpec extends IntegrationSpec {
         def result = runTasks('compileClasspathMethodReferences')
 
         then:
-        result.standardOutput.contains("""[
+        result.output.contains("""[
     {
         "methodReferences": [
             {

@@ -19,6 +19,8 @@ import com.netflix.nebula.lint.*
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.Task
+import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
@@ -26,20 +28,26 @@ import org.gradle.api.tasks.TaskAction
 
 import static com.netflix.nebula.lint.StyledTextService.Styling.*
 
-class LintGradleTask extends DefaultTask {
+abstract class LintGradleTask extends DefaultTask {
     @Input
     @Optional
-    List<GradleLintViolationAction> listeners = []
+    abstract ListProperty<GradleLintViolationAction> getListeners()
 
     @Input
     @Optional
-    Boolean failOnWarning = false
+    abstract Property<Boolean> getFailOnWarning()
 
     @Input
     @Optional
-    Boolean onlyCriticalRules = false
+    abstract Property<Boolean> getOnlyCriticalRules()
+
+    @Input
+    abstract Property<File> getProjectRootDir()
 
     LintGradleTask() {
+        listeners.convention([])
+        failOnWarning.convention(false)
+        onlyCriticalRules.convention(false)
         group = 'lint'
         try {
             def method = Task.getMethod("notCompatibleWithConfigurationCache")
@@ -50,10 +58,10 @@ class LintGradleTask extends DefaultTask {
 
     @TaskAction
     void lint() {
-        def violations = new LintService().lint(project, getOnlyCriticalRules()).violations
+        def violations = new LintService().lint(project, onlyCriticalRules.get()).violations
                 .unique { v1, v2 -> v1.is(v2) ? 0 : 1 }
 
-        (getListeners() + new GradleLintPatchAction(project) + new GradleLintInfoBrokerAction(project) + consoleOutputAction).each {
+        (listeners.get() + new GradleLintPatchAction(project) + new GradleLintInfoBrokerAction(project) + consoleOutputAction).each {
             it.lintFinished(violations)
         }
     }
@@ -82,7 +90,7 @@ class LintGradleTask extends DefaultTask {
             violations.groupBy { it.file }.each { buildFile, violationsByFile ->
 
                 violationsByFile.each { v ->
-                    String buildFilePath = project.rootDir.toURI().relativize(v.file.toURI()).toString()
+                    String buildFilePath = projectRootDir.get().toURI().relativize(v.file.toURI()).toString()
                     if (v.rule.priority == 1) {
                         textOutput.withStyle(Red).text('error'.padRight(10))
                     } else {
@@ -120,7 +128,7 @@ class LintGradleTask extends DefaultTask {
                     throw new GradleException("This build contains $errors critical lint violation${errors == 1 ? '' : 's'}")
                 }
 
-                if (getFailOnWarning()) {
+                if (failOnWarning.get()) {
                     throw new GradleException("This build contains $warnings lint violation${warnings == 1 ? '' : 's'}")
                 }
             }
