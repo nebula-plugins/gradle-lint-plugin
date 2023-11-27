@@ -336,8 +336,6 @@ class DuplicateDependencyClassRuleSpec extends BaseIntegrationTestKitSpec {
 
     @Issue('#246')
     def 'duplicate META-INF/versions/9/module-info do not cause violations'() {
-        debug = true
-
         buildFile.text = """
             plugins {
                 id 'java'

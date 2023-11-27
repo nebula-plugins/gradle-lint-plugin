@@ -22,6 +22,7 @@ class DependencyServiceSpec extends BaseIntegrationTestKitSpec {
             apply plugin: 'java'
             repositories { mavenCentral() }
         }
+        disableConfigurationCache()
     }
 
     def 'check if configuration is resolved'() {

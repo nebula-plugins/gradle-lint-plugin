@@ -22,9 +22,6 @@ import spock.lang.Issue
 import spock.lang.Unroll
 
 class GradleLintPluginSpec extends BaseIntegrationTestKitSpec {
-    def setup() {
-        debug = true
-    }
 
     def 'run multiple rules on a single module project'() {
         when:
@@ -33,7 +30,9 @@ class GradleLintPluginSpec extends BaseIntegrationTestKitSpec {
                 id 'nebula.lint'
                 id 'java'
             }
-
+            repositories {
+                mavenCentral()
+            }
             gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
 
             dependencies {
@@ -64,6 +63,9 @@ class GradleLintPluginSpec extends BaseIntegrationTestKitSpec {
                 id 'java'
             }
 
+            repositories {
+                mavenCentral()
+            }
             gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
             
             dependencies {
@@ -129,6 +131,9 @@ class GradleLintPluginSpec extends BaseIntegrationTestKitSpec {
             subprojects {
                 apply plugin: 'java'
                 apply plugin: 'nebula.lint'
+                repositories {
+                    mavenCentral()
+                }                
             }
 
             gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
@@ -136,7 +141,7 @@ class GradleLintPluginSpec extends BaseIntegrationTestKitSpec {
 
         addSubproject('sub', """
             dependencies {
-                implementation('a:a:1')
+                implementation('com.google.guava:guava:19.0')
             }
         """)
 
@@ -286,6 +291,9 @@ class GradleLintPluginSpec extends BaseIntegrationTestKitSpec {
 
             subprojects {
                 apply plugin: 'java'
+                repositories {
+                    mavenCentral()
+                }
                 dependencies {
                     implementation('com.google.guava:guava:18.0')
                 }
@@ -373,6 +381,10 @@ class GradleLintPluginSpec extends BaseIntegrationTestKitSpec {
 
             gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
 
+            repositories {
+                mavenCentral()
+            }
+            
             dependencies {
                 implementation('com.google.guava:guava:18.0')
             }
@@ -389,6 +401,10 @@ class GradleLintPluginSpec extends BaseIntegrationTestKitSpec {
 
             gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
 
+            repositories {
+                mavenCentral()
+            }
+            
             dependencies {
                 implementation 'com.google.guava:guava:18.0'
             }
@@ -413,6 +429,9 @@ class GradleLintPluginSpec extends BaseIntegrationTestKitSpec {
 
             subprojects {
                 apply plugin: 'java'
+                repositories {
+                    mavenCentral()
+                }
                 dependencies {
                     implementation('com.google.guava:guava:18.0')
                 }
@@ -454,9 +473,11 @@ class GradleLintPluginSpec extends BaseIntegrationTestKitSpec {
         addSubproject('sub', """
             apply plugin: 'java'
             apply plugin: 'nebula.lint'
-            
+            repositories {
+                mavenCentral()
+            }
             dependencies {
-                implementation('a:a:1')
+                implementation('com.google.guava:guava:19.0')
             }
         """)
 
@@ -573,6 +594,9 @@ class GradleLintPluginSpec extends BaseIntegrationTestKitSpec {
                 id 'java'
             }
             gradleLint.rules = ['dependency-parentheses']
+            repositories {
+                    mavenCentral()
+            }
             dependencies {
                 implementation('commons-logging:commons-logging:latest.release')
             }
@@ -598,6 +622,9 @@ class GradleLintPluginSpec extends BaseIntegrationTestKitSpec {
             gradleLint { 
                 rules = ['dependency-parentheses']
                 alwaysRun = false
+            }
+            repositories {
+                    mavenCentral()
             }
             dependencies {
                 implementation('commons-logging:commons-logging:latest.release')
@@ -674,6 +701,9 @@ class GradleLintPluginSpec extends BaseIntegrationTestKitSpec {
                 id 'java'
             }
             gradleLint.rules = ['dependency-parentheses']
+            repositories {
+                mavenCentral()
+            }
             dependencies {
                 implementation('commons-logging:commons-logging:latest.release')
             }
@@ -698,6 +728,9 @@ class GradleLintPluginSpec extends BaseIntegrationTestKitSpec {
                 id 'java'
             }
             gradleLint.rules = ['dependency-parentheses']
+            repositories {
+                mavenCentral()
+            }
             dependencies {
                 implementation('commons-logging:commons-logging:latest.release')
             }
@@ -717,12 +750,16 @@ class GradleLintPluginSpec extends BaseIntegrationTestKitSpec {
     @Unroll
     def 'lint task does not run for task #taskName'() {
         when:
+        disableConfigurationCache() // component and model report are not config cache compatible anyway
         buildFile << """
             plugins {
                 id 'nebula.lint'
                 id 'java'
             }
             gradleLint.rules = ['dependency-parentheses']
+            repositories {
+                mavenCentral()
+            }
             dependencies {
                 implementation('commons-logging:commons-logging:latest.release')
             }
@@ -754,6 +791,9 @@ class GradleLintPluginSpec extends BaseIntegrationTestKitSpec {
                 id 'java'
             }
             gradleLint.rules = ['dependency-parentheses']
+            repositories {
+                mavenCentral()
+            }
             dependencies {
                 implementation('commons-logging:commons-logging:latest.release')
             }            
