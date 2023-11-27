@@ -31,7 +31,7 @@ import static com.netflix.nebula.lint.StyledTextService.Styling.*
 abstract class LintGradleTask extends DefaultTask {
     @Input
     @Optional
-    abstract ListProperty<GradleLintViolationAction> getListeners()
+    List<GradleLintViolationAction> listeners = []
 
     @Input
     @Optional
@@ -45,7 +45,6 @@ abstract class LintGradleTask extends DefaultTask {
     abstract Property<File> getProjectRootDir()
 
     LintGradleTask() {
-        listeners.convention([])
         failOnWarning.convention(false)
         onlyCriticalRules.convention(false)
         group = 'lint'
@@ -61,7 +60,7 @@ abstract class LintGradleTask extends DefaultTask {
         def violations = new LintService().lint(project, onlyCriticalRules.get()).violations
                 .unique { v1, v2 -> v1.is(v2) ? 0 : 1 }
 
-        (listeners.get() + new GradleLintPatchAction(project) + new GradleLintInfoBrokerAction(project) + consoleOutputAction).each {
+        (getListeners() + new GradleLintPatchAction(project) + new GradleLintInfoBrokerAction(project) + consoleOutputAction).each {
             it.lintFinished(violations)
         }
     }

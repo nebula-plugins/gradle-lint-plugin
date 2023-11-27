@@ -18,7 +18,7 @@ abstract class GradleLintPluginTaskConfigurer extends AbstractLintPluginTaskConf
             def autoLintTask = project.tasks.register(AUTO_LINT_GRADLE, LintGradleTask)
             autoLintTask.configure {
                 group = LINT_GROUP
-                listeners.set(lintExt.listeners)
+                listeners = lintExt.listeners
                 projectRootDir.set(project.rootDir)
                 notCompatibleWithConfigurationCache("Gradle Lint Plugin is not compatible with configuration cache because it requires project model")
             }
