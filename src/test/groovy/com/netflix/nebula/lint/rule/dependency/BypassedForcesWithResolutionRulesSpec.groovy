@@ -33,7 +33,6 @@ class BypassedForcesWithResolutionRulesSpec extends BaseIntegrationTestKitSpec {
 
     def setup() {
         setupDependenciesAndRules()
-        debug = true
     }
 
     @Unroll

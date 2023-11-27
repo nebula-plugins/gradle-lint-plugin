@@ -10,6 +10,8 @@ class GradleSevenOneAndHigherLintPluginTaskConfigurer extends GradleSevenZeroLin
             @Override
             void execute(GradleLintReportTask gradleLintReportTask) {
                 gradleLintReportTask.reportOnlyFixableViolations = getReportOnlyFixableViolations(project, extension)
+                gradleLintReportTask.notCompatibleWithConfigurationCache("Gradle Lint Plugin is not compatible with configuration cache because it requires project model")
+
                 gradleLintReportTask.reports.all { report ->
                     def fileSuffix = report.name == 'text' ? 'txt' : report.name
                     report.conventionMapping.with {

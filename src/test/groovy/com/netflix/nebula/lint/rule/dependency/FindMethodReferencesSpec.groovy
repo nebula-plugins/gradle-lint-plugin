@@ -6,6 +6,10 @@ import spock.lang.Subject
 @Subject(DependencyService)
 class FindMethodReferencesSpec extends BaseIntegrationTestKitSpec {
 
+    def setup(){
+        disableConfigurationCache()
+    }
+
     def 'find method references no exclusion'() {
         buildFile.text = """\
             import com.netflix.nebula.lint.rule.dependency.*

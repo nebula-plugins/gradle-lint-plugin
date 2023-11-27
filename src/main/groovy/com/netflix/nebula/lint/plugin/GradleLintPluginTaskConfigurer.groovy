@@ -20,6 +20,7 @@ abstract class GradleLintPluginTaskConfigurer extends AbstractLintPluginTaskConf
                 group = LINT_GROUP
                 listeners.set(lintExt.listeners)
                 projectRootDir.set(project.rootDir)
+                notCompatibleWithConfigurationCache("Gradle Lint Plugin is not compatible with configuration cache because it requires project model")
             }
 
             def manualLintTask = project.tasks.register(LINT_GRADLE, LintGradleTask)
@@ -27,6 +28,7 @@ abstract class GradleLintPluginTaskConfigurer extends AbstractLintPluginTaskConf
                 group = LINT_GROUP
                 failOnWarning.set(true)
                 projectRootDir.set(project.rootDir)
+                notCompatibleWithConfigurationCache("Gradle Lint Plugin is not compatible with configuration cache because it requires project model")
             }
 
 
@@ -35,17 +37,20 @@ abstract class GradleLintPluginTaskConfigurer extends AbstractLintPluginTaskConf
                 group = LINT_GROUP
                 onlyCriticalRules.set(true)
                 projectRootDir.set(project.rootDir)
+                notCompatibleWithConfigurationCache("Gradle Lint Plugin is not compatible with configuration cache because it requires project model")
             }
 
 
             def fixTask = project.tasks.register(FIX_GRADLE_LINT, FixGradleLintTask)
             fixTask.configure {
                 userDefinedListeners.set(lintExt.listeners)
+                notCompatibleWithConfigurationCache("Gradle Lint Plugin is not compatible with configuration cache because it requires project model")
             }
 
             def fixTask2 = project.tasks.register(FIX_LINT_GRADLE, FixGradleLintTask)
             fixTask2.configure {
                 userDefinedListeners.set(lintExt.listeners)
+                notCompatibleWithConfigurationCache("Gradle Lint Plugin is not compatible with configuration cache because it requires project model")
             }
 
             List<TaskProvider> lintTasks = [fixTask, fixTask2, manualLintTask]
