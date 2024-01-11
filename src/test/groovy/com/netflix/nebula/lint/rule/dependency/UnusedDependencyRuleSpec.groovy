@@ -690,6 +690,7 @@ class UnusedDependencyRuleSpec extends BaseIntegrationTestKitSpec {
             repositories { mavenCentral() }
 
             dependencies {
+                implementation 'com.google.guava:guava:18.0'
                 gradleLint.ignore('unused-dependency') {
                     implementation 'org.apache.httpcomponents:httpclient:4.5.3'
                 }
