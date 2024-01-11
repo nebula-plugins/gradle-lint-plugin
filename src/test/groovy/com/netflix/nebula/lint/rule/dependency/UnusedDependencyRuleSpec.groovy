@@ -675,6 +675,34 @@ class UnusedDependencyRuleSpec extends BaseIntegrationTestKitSpec {
         assert result.output.contains(it)
       }
     }
+    
+    @Issue('#380')
+    def 'ignore dependencies in closures when rule is ignored'() {
+        setup:
+        buildFile.text = """
+            plugins {
+                id 'java'
+                id 'nebula.lint'
+            }
+
+            gradleLint.rules = ['all-dependency']
+
+            repositories { mavenCentral() }
+
+            dependencies {
+                gradleLint.ignore('unused-dependency') {
+                    implementation 'org.apache.httpcomponents:httpclient:4.5.3'
+                }
+            }
+        """
+
+        when:
+        writeJavaSourceFile(main)
+        def result = runTasks('compileJava')
+
+        then:
+        !result.output.contains('warning   unused-dependency                  this dependency is unused and can be removed')
+    }
 
     def dependencies(File _buildFile, String... confs = ['compile', 'testCompile', 'implementation', 'testImplementation', 'api']) {
         _buildFile.text.readLines()
