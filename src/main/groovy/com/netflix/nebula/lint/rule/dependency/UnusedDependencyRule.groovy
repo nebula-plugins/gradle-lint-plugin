@@ -32,12 +32,6 @@ class UnusedDependencyRule extends GradleLintRule implements GradleModelAware {
     void visitGradleDependency(MethodCallExpression call, String declaredConf, GradleDependency dep) {
         if (ignored) { 
             return // short-circuit ignored dependencies
-        } else {
-            callStack.any { call2 -> 
-                print(call2.methodAsString)
-                print(call2.objectExpression.text)
-                print(call2.arguments.expressions)
-            }
         }
         String conf = dependencyService.findAndReplaceNonResolvableConfiguration(project.configurations.getByName(declaredConf)).name
 
