@@ -19,12 +19,14 @@
 package com.netflix.nebula.lint.rule.dependency.provider;
 
 import groovy.transform.CompileStatic;
+import org.gradle.api.Action;
 import org.gradle.api.Project;
-import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.ConfigurationContainer;
-import org.gradle.api.artifacts.Dependency;
-import org.gradle.api.artifacts.DependencySet;
+import org.gradle.api.artifacts.*;
+import org.gradle.api.artifacts.component.ComponentIdentifier;
+import org.gradle.api.specs.Spec;
 import org.gradle.api.specs.Specs;
+import org.gradle.internal.deprecation.DeprecationLogger;
+import org.gradle.util.GradleVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +61,12 @@ public abstract class ClasspathBasedRecommendationProvider extends AbstractRecom
                         project.getDependencies()
                                 .create(dep.getGroup() + ":" + dep.getName() + ":" + dep.getVersion() + "@pom"));
 
-                Set<File> files = bomConf.getResolvedConfiguration().getLenientConfiguration().getFiles(Specs.SATISFIES_ALL);
+                final Set<File> files = new LinkedHashSet<>();
+                // TODO: Replace this following  https://docs.gradle.org/8.8-rc-1/userguide/upgrading_version_8.html#deprecate_filtered_configuration_file_and_filecollection_methods
+                DeprecationLogger.whileDisabled(() -> {
+                    files.addAll(bomConf.getResolvedConfiguration().getLenientConfiguration().getFiles(Specs.SATISFIES_ALL));
+                });
+
                 for (File file : files) {
                     if (shouldAddToBoms(file)) {
                         boms.add(file);
