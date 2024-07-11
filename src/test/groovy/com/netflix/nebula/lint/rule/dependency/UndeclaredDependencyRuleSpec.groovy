@@ -25,7 +25,7 @@ import spock.lang.Unroll
 @Subject(UndeclaredDependencyRule)
 class UndeclaredDependencyRuleSpec extends BaseIntegrationTestKitSpec {
     private static final def sample = new Coordinate('sample', 'alpha', '1.0')
-    private static final def commonsLogging = new Coordinate('commons-logging', 'commons-logging', '1.3.2')
+    private static final def commonsLogging = new Coordinate('commons-logging', 'commons-logging', '1.3.3')
     private static final def commonsLang = new Coordinate('commons-lang', 'commons-lang', '2.6')
     private static final def lombok = new Coordinate('org.projectlombok', 'lombok', '1.18.30')
     private static final def junit = new Coordinate('junit', 'junit', '4.12')

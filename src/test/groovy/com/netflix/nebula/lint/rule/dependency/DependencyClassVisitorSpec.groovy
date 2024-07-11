@@ -18,7 +18,6 @@ package com.netflix.nebula.lint.rule.dependency
 
 import org.gradle.api.internal.artifacts.DefaultModuleVersionIdentifier
 import org.gradle.api.internal.artifacts.DefaultResolvedDependency
-import org.gradle.api.internal.artifacts.ResolvedConfigurationIdentifier
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -256,7 +255,6 @@ class DependencyClassVisitorSpec extends Specification {
 
     static DefaultResolvedDependency gav(String g, String a, String v) {
         def mvid = new DefaultModuleVersionIdentifier(g, a, v)
-        def id = new ResolvedConfigurationIdentifier(mvid, 'compile')
-        new DefaultResolvedDependency(id, null)
+        new DefaultResolvedDependency("compile", mvid, null)
     }
 }
