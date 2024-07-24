@@ -67,7 +67,9 @@ class GradleLintPatchAction extends GradleLintViolationAction {
                 headers += "deleted file mode ${fileMode.mode}"
                 break
             case Update:
-                // no hint necessary
+                if(fileMode == FileMode.Executable) {
+                    headers += "new mode ${fileMode.mode}"
+                }
                 break
         }
         return headers.collect { "|$it" }.join('\n')

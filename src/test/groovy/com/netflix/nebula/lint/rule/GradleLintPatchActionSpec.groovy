@@ -797,4 +797,40 @@ class GradleLintPatchActionSpec extends Specification {
             +e
             '''.substring(1).stripIndent()
     }
+
+    def 'replace honors file mode when executable'() {
+        setup:
+        def f = temp.newFile('my.sh')
+        f.setExecutable(true)
+
+        f.text = '''\
+        a
+        b
+        c
+        '''.stripIndent()
+
+        def changes = '''\
+        hello
+        multiline
+        '''.stripIndent()
+
+        when:
+        def lines = f.readLines()
+        def fix = new GradleLintReplaceWith(violation, f, 1..lines.size(), 1, lines[-1].length() + 1, changes)
+        def patch = new GradleLintPatchAction(project).patch([fix])
+
+        then:
+        patch == '''
+            diff --git a/my.sh b/my.sh
+            new mode 100755
+            --- a/my.sh
+            +++ b/my.sh
+            @@ -1,3 +1,2 @@
+            -a
+            -b
+            -c
+            +hello
+            +multiline
+             '''.substring(1).stripIndent()
+    }
 }
