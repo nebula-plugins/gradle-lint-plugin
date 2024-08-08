@@ -25,7 +25,7 @@ buildscript {
 }
 
 plugins {
-    id 'com.netflix.nebula.plugin-plugin' version '20.11.0'
+    id 'com.netflix.nebula.plugin-plugin' version '21.0.0'
     id "org.jetbrains.kotlin.jvm" version "1.8.0"
     id 'com.github.johnrengelman.shadow' version '7.1.2'
     id 'java-gradle-plugin'
@@ -157,15 +157,9 @@ java {
     }
 }
 
-tasks.withType(Test) {
+tasks.withType(Test).configureEach {
     maxHeapSize = '512m'
     maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
-    javaLauncher = javaToolchains.launcherFor {
-        languageVersion = JavaLanguageVersion.of(System.getenv("JDK_VERSION_FOR_TESTS")?.toInteger() ?: 8)
-    }
-    doFirst {
-        logger.lifecycle("Executing tests with JDK: ${System.getenv("JDK_VERSION_FOR_TESTS")?.toInteger() ?: 8}")
-    }
     testLogging {
         events "PASSED", "FAILED", "SKIPPED"
         afterSuite { desc, result ->
@@ -181,10 +175,10 @@ tasks.withType(Test) {
 
 // Kotlin compiles first, stubbing Java dependencies, however it can't stub Groovy and we need to call Groovy code from Kotlin. For details see:
 // https://discuss.gradle.org/t/kotlin-groovy-and-java-compilation/14903/10
-tasks.named('compileGroovy') {
+tasks.named('compileGroovy').configure {
     classpath = sourceSets.main.compileClasspath
 }
-tasks.named('compileKotlin') {
+tasks.named('compileKotlin').configure {
     classpath += files(sourceSets.main.groovy.classesDirectory)
 }
 

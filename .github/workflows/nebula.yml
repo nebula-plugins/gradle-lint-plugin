@@ -22,7 +22,7 @@ jobs:
     strategy:
       matrix:
         # test against latest update of some major Java version(s), as well as specific LTS version(s)
-        java: [ 8, 17, 21]
+        java: [8, 17, 21]
     name: Gradle Build without Publish
     steps:
       - uses: actions/checkout@v1
@@ -30,17 +30,13 @@ jobs:
         run: |
           git config --global user.name "Nebula Plugin Maintainers"
           git config --global user.email "nebula-plugins-oss@netflix.com"
-      - name: Set up JDK 8
-        uses: actions/setup-java@v2
+      - name: Set up JDKs
+        uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '8'
-          java-package: jdk
-      - name: Setup jdk
-        uses: actions/setup-java@v2
-        with:
-          distribution: 'zulu'
-          java-version: ${{ matrix.java }}
+          java-version: |
+            8
+            ${{ matrix.java }}
           java-package: jdk
       - uses: actions/cache@v1
         id: gradle-cache
@@ -74,10 +70,14 @@ jobs:
         run: |
           git config --global user.name "Nebula Plugin Maintainers"
           git config --global user.email "nebula-plugins-oss@netflix.com"
-      - name: Setup jdk 8
-        uses: actions/setup-java@v1
+      - name: Set up JDKs
+        uses: actions/setup-java@v4
         with:
-          java-version: 1.8
+          distribution: 'zulu'
+          java-version: |
+            8
+            21
+          java-package: jdk
       - uses: actions/cache@v1
         id: gradle-cache
         with:
@@ -115,10 +115,14 @@ jobs:
         run: |
           git config --global user.name "Nebula Plugin Maintainers"
           git config --global user.email "nebula-plugins-oss@netflix.com"
-      - name: Setup jdk 8
-        uses: actions/setup-java@v1
+      - name: Set up JDKs
+        uses: actions/setup-java@v4
         with:
-          java-version: 1.8
+          distribution: 'zulu'
+          java-version: |
+            8
+            21
+          java-package: jdk
       - uses: actions/cache@v1
         id: gradle-cache
         with:
@@ -143,4 +147,3 @@ jobs:
           startsWith(github.ref, 'refs/tags/v') &&
           (!contains(github.ref, '-rc.'))
         run: ./gradlew --info --stacktrace -Dgradle.publish.key=${{ secrets.gradlePublishKey }} -Dgradle.publish.secret=${{ secrets.gradlePublishSecret }} -Prelease.useLastTag=true final
-

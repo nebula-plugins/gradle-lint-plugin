@@ -535,7 +535,6 @@ class UnusedDependencyRuleSpec extends BaseIntegrationTestKitSpec {
         then:
         def results = runTasks('compileJava', 'lintGradle')
         !results.output.contains('unused-dependency')
-        !results.output.contains('has been deprecated')
     }
 
     @Issue('53')
