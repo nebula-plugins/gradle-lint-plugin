@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2019 Netflix, Inc.
+ * Copyright 2015-2024 Netflix, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,9 @@
 package com.netflix.nebula.lint.plugin
 
 import com.netflix.nebula.interop.GradleKt
-import org.gradle.BuildAdapter
 import org.gradle.api.BuildCancelledException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.execution.TaskExecutionGraphListener
 
 class GradleLintPlugin implements Plugin<Project> {
     @Override
@@ -31,14 +29,9 @@ class GradleLintPlugin implements Plugin<Project> {
         }
 
         LintRuleRegistry.classLoader = getClass().classLoader
-
-        // TODO: we need to retire this once we have folks in Gradle 7.1+
-        if (GradleKt.versionCompareTo(project.gradle, '7.1') >= 0) {
-            new GradleSevenOneAndHigherLintPluginTaskConfigurer().configure(project)
-        } else if (GradleKt.versionCompareTo(project.gradle, '7.0') >= 0) {
-            new GradleSevenZeroLintPluginTaskConfigurer().configure(project)
+        if (GradleKt.versionLessThan(project.gradle, '7.1')) {
+            throw new BuildCancelledException("Gradle Lint Plugin requires Gradle 7.1 or newer.")
         }
+        new GradleLintPluginTaskConfigurer().configure(project)
     }
-
-    protected static abstract class LintListener extends BuildAdapter implements TaskExecutionGraphListener {}
 }

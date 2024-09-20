@@ -1,3 +1,18 @@
+/*
+ * Copyright 2015-2024 Netflix, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.netflix.nebula.lint.plugin
 
 import org.gradle.api.Action
@@ -9,8 +24,25 @@ import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.TaskState
 import org.gradle.api.tasks.compile.AbstractCompile
 
-abstract class GradleLintPluginTaskConfigurer extends AbstractLintPluginTaskConfigurer {
-    abstract Action<GradleLintReportTask> configureReportAction(Project project, GradleLintExtension extension)
+class GradleLintPluginTaskConfigurer extends AbstractLintPluginTaskConfigurer {
+    @Override
+    Action<GradleLintReportTask> configureReportAction(Project project, GradleLintExtension extension) {
+        new Action<GradleLintReportTask>() {
+            @Override
+            void execute(GradleLintReportTask gradleLintReportTask) {
+                gradleLintReportTask.reportOnlyFixableViolations = getReportOnlyFixableViolations(project, extension)
+                gradleLintReportTask.notCompatibleWithConfigurationCache("Gradle Lint Plugin is not compatible with configuration cache because it requires project model")
+
+                gradleLintReportTask.reports.all { report ->
+                    def fileSuffix = report.name == 'text' ? 'txt' : report.name
+                    report.conventionMapping.with {
+                        required.set(report.name == getReportFormat(project, extension))
+                        outputLocation.set(project.layout.buildDirectory.file("reports/gradleLint/${project.name}.$fileSuffix"))
+                    }
+                }
+            }
+        }
+    }
 
     @Override
     void createTasks(Project project, GradleLintExtension lintExt) {
