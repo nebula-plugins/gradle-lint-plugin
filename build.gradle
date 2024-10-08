@@ -26,7 +26,7 @@ buildscript {
 
 plugins {
     id 'com.netflix.nebula.plugin-plugin' version '21.2.0'
-    id "org.jetbrains.kotlin.jvm" version "1.8.0"
+    id "org.jetbrains.kotlin.jvm" version '2.0.20'
     id 'com.github.johnrengelman.shadow' version '7.1.2'
     id 'java-gradle-plugin'
 }
@@ -178,10 +178,11 @@ tasks.withType(Test).configureEach {
 tasks.named('compileGroovy').configure {
     classpath = sourceSets.main.compileClasspath
 }
-tasks.named('compileKotlin').configure {
-    classpath += files(sourceSets.main.groovy.classesDirectory)
+tasks.named('compileKotlin') {
+    // Kotlin also depends on the result of Groovy compilation
+    // which automatically makes it depend of compileGroovy
+    libraries.from(files(sourceSets.main.groovy.classesDirectory))
 }
-
 
 ['compileClasspath', 'runtimeClasspath', 'testCompileClasspath', 'testRuntimeClasspath'].each { confName ->
     tasks.register("dependencyReport${confName.capitalize()}", DependencyReportTask) {
