@@ -15,54 +15,77 @@
  */
 package com.netflix.nebula.lint.plugin
 
-import com.netflix.nebula.interop.GradleKt
 import com.netflix.nebula.lint.GradleLintPatchAction
 import com.netflix.nebula.lint.StyledTextService
-import com.netflix.nebula.lint.utils.DeprecationLoggerUtils
+import com.netflix.nebula.lint.plugin.report.LintReport
+import com.netflix.nebula.lint.plugin.report.internal.LintHtmlReport
+import com.netflix.nebula.lint.plugin.report.internal.LintTextReport
+import com.netflix.nebula.lint.plugin.report.internal.LintXmlReport
 import org.codenarc.AnalysisContext
-import org.codenarc.report.HtmlReportWriter
-import org.codenarc.report.ReportWriter
-import org.codenarc.report.TextReportWriter
-import org.codenarc.report.XmlReportWriter
 import org.codenarc.results.Results
 import org.codenarc.rule.Violation
 import org.gradle.api.Action
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
-import org.gradle.api.plugins.quality.CodeNarcReports
-import org.gradle.api.plugins.quality.internal.CodeNarcReportsImpl
+import org.gradle.api.InvalidUserDataException
+import org.gradle.api.NamedDomainObjectContainer
+import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
-import org.gradle.api.reporting.Report
-import org.gradle.api.reporting.Reporting
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.VerificationTask
 import org.gradle.internal.reflect.Instantiator
-import org.gradle.util.GradleVersion
 
 import javax.inject.Inject
 
 import static com.netflix.nebula.lint.StyledTextService.Styling.Bold
 
-abstract class GradleLintReportTask extends DefaultTask implements VerificationTask, Reporting<CodeNarcReports> {
-
-    @Nested
-    private final CodeNarcReportsImpl reports
+abstract class GradleLintReportTask extends DefaultTask implements VerificationTask {
 
     @Input
     abstract Property<Boolean> getReportOnlyFixableViolations()
 
-    GradleLintReportTask() {
-        reports = project.objects.newInstance(CodeNarcReportsImpl.class, this)
+    @Internal
+    final Property<String> projectName
+
+    @Internal
+    final DirectoryProperty reportsDir
+
+    @Internal
+    final NamedDomainObjectContainer<LintReport> reports
+
+    @Inject
+    GradleLintReportTask(ObjectFactory objects) {
+        projectName = objects.property(String).convention(project.name)
+        reportsDir = objects.directoryProperty()
+        reports =
+                objects.domainObjectContainer(
+                        LintReport, { name ->
+                    switch (name) {
+                        case "html":
+                            return objects.newInstance(LintHtmlReport, objects, this)
+                        case "xml":
+                            return objects.newInstance(LintXmlReport, objects, this)
+                        case "text":
+                            return objects.newInstance(LintTextReport, objects, this)
+                        default:
+                            throw new InvalidUserDataException(name + " is invalid as the report name")
+                    }
+                })
+        reports.create('text', {
+            it.required.set(true)
+        })
+        reports.create('xml')
+        reports.create('html')
         outputs.upToDateWhen { false }
         group = 'lint'
     }
 
     @TaskAction
     void generateReport() {
-        if (reports.enabled) {
+        if (reports.any { it.required.isPresent() && it.required.get()}) {
             def lintService = new LintService()
             def results = lintService.lint(project, false)
             filterOnlyFixableViolations(results)
@@ -73,24 +96,10 @@ abstract class GradleLintReportTask extends DefaultTask implements VerificationT
             textOutput.withStyle(Bold).text("$violationCount lint violation${violationCount == 1 ? '' : 's'}")
             textOutput.println(' in this project')
 
-            reports.enabled.each { Report r ->
-                ReportWriter writer = null
-
-                if (GradleKt.versionCompareTo(project.gradle, '7.1') >= 0) {
-                    switch (r.name) {
-                        case 'xml': writer = new XmlReportWriter(outputFile: r.outputLocation.get().asFile); break
-                        case 'html': writer = new HtmlReportWriter(outputFile: r.outputLocation.get().asFile); break
-                        case 'text': writer = new TextReportWriter(outputFile: r.outputLocation.get().asFile); break
-                    }
-                } else {
-                    switch (r.name) {
-                        case 'xml': writer = new XmlReportWriter(outputFile: r.destination); break
-                        case 'html': writer = new HtmlReportWriter(outputFile: r.destination); break
-                        case 'text': writer = new TextReportWriter(outputFile: r.destination); break
-                    }
+            reports.each {
+                if(it.required.isPresent() && it.required.get()) {
+                    it.write(new AnalysisContext(ruleSet: lintService.ruleSet(project)), results)
                 }
-
-                writer.writeReport(new AnalysisContext(ruleSet: lintService.ruleSet(project)), results)
             }
 
             int errors = results.violations.count { Violation v -> v.rule.priority == 1 }
@@ -101,6 +110,7 @@ abstract class GradleLintReportTask extends DefaultTask implements VerificationT
 
     }
 
+
     @Inject
     Instantiator getInstantiator() {
         null // see http://gradle.1045684.n5.nabble.com/injecting-dependencies-into-task-instances-td5712637.html
@@ -109,20 +119,21 @@ abstract class GradleLintReportTask extends DefaultTask implements VerificationT
     /**
      * Returns the reports to be generated by this task.
      */
-    @Override
-    CodeNarcReports getReports() {
+    NamedDomainObjectContainer<LintReport> getReports() {
         reports
     }
 
     /**
      * Configures the reports to be generated by this task.
      */
-    @Override
-    CodeNarcReports reports(Closure closure) {
+    NamedDomainObjectContainer<LintReport> reports(Closure closure) {
         reports.configure(closure)
     }
 
-    CodeNarcReports reports(Action<? super CodeNarcReports> action) {
+    /**
+     * Configures the reports to be generated by this task.
+     */
+    NamedDomainObjectContainer<LintReport> reports(Action<? super LintReport> action) {
         return action.execute(reports)
     }
 

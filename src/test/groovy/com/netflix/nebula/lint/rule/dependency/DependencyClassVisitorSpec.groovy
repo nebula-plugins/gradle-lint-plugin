@@ -18,6 +18,7 @@ package com.netflix.nebula.lint.rule.dependency
 
 import org.gradle.api.internal.artifacts.DefaultModuleVersionIdentifier
 import org.gradle.api.internal.artifacts.DefaultResolvedDependency
+import org.gradle.util.GradleVersion
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -255,6 +256,11 @@ class DependencyClassVisitorSpec extends Specification {
 
     static DefaultResolvedDependency gav(String g, String a, String v) {
         def mvid = new DefaultModuleVersionIdentifier(g, a, v)
-        new DefaultResolvedDependency("compile", mvid, null)
+
+        if(GradleVersion.current().compareTo(GradleVersion.version('8.11-milestone-1'))  >= 0) {
+            new DefaultResolvedDependency("compile", mvid, null, null)
+        } else {
+            new DefaultResolvedDependency("compile", mvid, null)
+        }
     }
 }
