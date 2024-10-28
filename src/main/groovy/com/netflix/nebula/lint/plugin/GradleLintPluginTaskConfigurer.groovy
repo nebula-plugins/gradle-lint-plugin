@@ -115,6 +115,12 @@ class GradleLintPluginTaskConfigurer extends AbstractLintPluginTaskConfigurer {
                     fixLintGradleTask.dependsOn(project.tasks.withType(AbstractCompile))
                 }
             })
+            project.rootProject.tasks.named(CRITICAL_LINT_GRADLE).configure(new Action<Task>() {
+                @Override
+                void execute(Task criticalLintGradle) {
+                    criticalLintGradle.dependsOn(project.tasks.withType(AbstractCompile))
+                }
+            })
         }
     }
 

@@ -347,6 +347,10 @@ class GradleLintPluginSpec extends BaseIntegrationTestKitSpec {
                 id 'java'
             }
 
+            repositories {
+               mavenCentral()
+            }
+            
             gradleLint.rules = ['dependency-parentheses']
             gradleLint.criticalRules = ['dependency-tuple']
 
@@ -368,6 +372,45 @@ class GradleLintPluginSpec extends BaseIntegrationTestKitSpec {
         console.findAll { it.startsWith('error') }.size() == 1
         console.any { it.contains('dependency-tuple') }
         console.every { ! it.contains('dependency-parentheses') }
+    }
+
+
+    def 'critical lint depends on compilation tasks'() {
+        given:
+        buildFile << """
+            plugins {
+                id 'nebula.lint'
+                id 'java'
+            }
+
+            repositories {
+                mavenCentral()
+            }
+            
+            gradleLint.rules = ['dependency-parentheses']
+            gradleLint.criticalRules = ['dependency-tuple']
+
+            dependencies {
+                implementation('com.google.guava:guava:18.0')
+                testImplementation group: 'junit',
+                    name: 'junit',
+                    version: '4.11'
+            }
+        """
+        disableConfigurationCache()
+        writeHelloWorld()
+
+        when:
+        def results = runTasksAndFail('criticalLintGradle')
+
+        then:
+        def console = results.output.readLines()
+        console.findAll { it.startsWith('error') }.size() == 1
+        console.any { it.contains('dependency-tuple') }
+        console.every { ! it.contains('dependency-parentheses') }
+
+        and:
+        results.task(':classes').outcome in [TaskOutcome.SUCCESS, TaskOutcome.UP_TO_DATE, TaskOutcome.FROM_CACHE]
     }
 
     @Unroll
