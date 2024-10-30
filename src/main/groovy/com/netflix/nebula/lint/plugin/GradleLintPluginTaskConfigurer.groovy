@@ -23,6 +23,7 @@ import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.TaskState
 import org.gradle.api.tasks.compile.AbstractCompile
+import org.gradle.jvm.tasks.Jar
 
 class GradleLintPluginTaskConfigurer extends AbstractLintPluginTaskConfigurer {
     @Override
@@ -118,7 +119,7 @@ class GradleLintPluginTaskConfigurer extends AbstractLintPluginTaskConfigurer {
             project.rootProject.tasks.named(CRITICAL_LINT_GRADLE).configure(new Action<Task>() {
                 @Override
                 void execute(Task criticalLintGradle) {
-                    criticalLintGradle.dependsOn(project.tasks.withType(AbstractCompile))
+                    criticalLintGradle.dependsOn(project.tasks.withType(AbstractCompile), project.tasks.withType(Jar))
                 }
             })
         }
