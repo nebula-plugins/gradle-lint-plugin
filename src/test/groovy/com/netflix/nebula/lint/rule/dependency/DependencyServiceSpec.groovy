@@ -87,9 +87,11 @@ class DependencyServiceSpec extends BaseIntegrationTestKitSpec {
             [implementation: 'compileClasspath', testImplementation: 'testCompileClasspath'].each { declaredConf, resolvedConf ->
                 task "\${declaredConf}Unused"(dependsOn: compileTestJava) {
                     doLast {
-                        new File(projectDir, "\${declaredConf}Unused.txt").text = DependencyService.forProject(project)
-                        .unusedDependencies(resolvedConf, declaredConf)
-                        .join('\\n')
+                        org.gradle.internal.deprecation.DeprecationLogger.whileDisabled {
+                            new File(projectDir, "\${declaredConf}Unused.txt").text = DependencyService.forProject(project)
+                            .unusedDependencies(resolvedConf, declaredConf)
+                            .join('\\n')
+                        }
                     }
                   
                 }
@@ -132,9 +134,11 @@ class DependencyServiceSpec extends BaseIntegrationTestKitSpec {
             project.configurations.collect { it.name }.each { conf ->
                 task "\${conf}Undeclared"(dependsOn: compileTestJava) {
                     doLast {
-                         new File(projectDir, "\${conf}Undeclared.txt").text = DependencyService.forProject(project)
-                        .undeclaredDependencies(conf)
-                        .join('\\n')
+                        org.gradle.internal.deprecation.DeprecationLogger.whileDisabled {
+                             new File(projectDir, "\${conf}Undeclared.txt").text = DependencyService.forProject(project)
+                            .undeclaredDependencies(conf)
+                            .join('\\n')
+                        }
                     }
                 }
             }
@@ -202,13 +206,17 @@ class DependencyServiceSpec extends BaseIntegrationTestKitSpec {
             
             task compileClasspathSourceSetOutput {
                 doLast {
-                  println('@@' + DependencyService.forProject(project).sourceSetByConf('compileClasspath').java.classesDirectory.get())
+                    org.gradle.internal.deprecation.DeprecationLogger.whileDisabled {
+                        println('@@' + DependencyService.forProject(project).sourceSetByConf('compileClasspath').java.classesDirectory.get())
+                    }
                 }
             }
             
             task integTestSourceSetOutput {
                 doLast {
-                   println('@@' + DependencyService.forProject(project).sourceSetByConf('integTestCompileClasspath').java.classesDirectory.get())
+                    org.gradle.internal.deprecation.DeprecationLogger.whileDisabled {
+                        println('@@' + DependencyService.forProject(project).sourceSetByConf('integTestCompileClasspath').java.classesDirectory.get())
+                    }
                 }
             }
         """
@@ -258,10 +266,12 @@ class DependencyServiceSpec extends BaseIntegrationTestKitSpec {
 
             task coreContents {
                 doLast {
-                    new File(projectDir, "coreContents.txt").text = DependencyService.forProject(project)
-                    .jarContents(configurations.compileClasspath.resolvedConfiguration.firstLevelModuleDependencies[0].module.id.module)
-                    .classes
-                    .join('\\n')
+                    org.gradle.internal.deprecation.DeprecationLogger.whileDisabled {
+                        new File(projectDir, "coreContents.txt").text = DependencyService.forProject(project)
+                        .jarContents(configurations.compileClasspath.resolvedConfiguration.firstLevelModuleDependencies[0].module.id.module)
+                        .classes
+                        .join('\\n')
+                    }
                 }
             }
         """
@@ -315,9 +325,11 @@ class DependencyServiceSpec extends BaseIntegrationTestKitSpec {
             
             task resolvableAndResolvedConfigurations {
                 doLast {
-                    new File(projectDir, "resolvableAndResolvedConfigurations.txt").text = DependencyService.forProject(project)
-                    .resolvableAndResolvedConfigurations()
-                    .join('\\n')
+                    org.gradle.internal.deprecation.DeprecationLogger.whileDisabled {
+                         new File(projectDir, "resolvableAndResolvedConfigurations.txt").text = DependencyService.forProject(project)
+                        .resolvableAndResolvedConfigurations()
+                        .join('\\n')
+                    }
                 }
             }
             """.stripIndent()

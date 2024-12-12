@@ -16,7 +16,7 @@
 buildscript {
     repositories {
         maven {
-            url "https://plugins.gradle.org/m2/"
+            url = "https://plugins.gradle.org/m2/"
         }
     }
     dependencies {
@@ -90,7 +90,7 @@ dependencies {
 
     compileOnly "com.netflix.nebula:nebula-test:10.+"
 
-    testImplementation 'org.ow2.asm:asm-util:5.2'
+    testImplementation 'org.ow2.asm:asm-util:9.7.1'
     testImplementation 'joda-time:joda-time:latest.release'
     testImplementation 'com.netflix.nebula:gradle-info-plugin:latest.release'
 }

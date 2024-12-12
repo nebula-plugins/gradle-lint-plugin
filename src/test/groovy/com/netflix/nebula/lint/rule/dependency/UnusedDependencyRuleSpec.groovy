@@ -297,7 +297,7 @@ class UnusedDependencyRuleSpec extends BaseIntegrationTestKitSpec {
     def 'suggest that dependencies should be moved - used in only 1 nested configuration'() {
         buildFile.text = """
             buildscript {
-                repositories { maven { url "https://plugins.gradle.org/m2/" } }
+                repositories { maven { url = "https://plugins.gradle.org/m2/" } }
                 dependencies {
                     classpath "com.netflix.nebula:nebula-project-plugin:10.1.4"
                 }
@@ -336,7 +336,7 @@ class UnusedDependencyRuleSpec extends BaseIntegrationTestKitSpec {
     def 'suggest that dependencies should be moved - used in 2 configurations in a hierarchy'() {
         buildFile.text = """
             buildscript {
-                repositories { maven { url "https://plugins.gradle.org/m2/" } }
+                repositories { maven { url = "https://plugins.gradle.org/m2/" } }
                 dependencies {
                     classpath "com.netflix.nebula:nebula-project-plugin:10.1.4"
                 }

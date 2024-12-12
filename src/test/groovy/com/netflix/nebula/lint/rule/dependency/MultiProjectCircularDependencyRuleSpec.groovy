@@ -221,7 +221,7 @@ class MultiProjectCircularDependencyRuleSpec extends BaseIntegrationTestKitSpec 
         def result = runTasksAndFail('fixGradleLint')
 
         then:
-        result.output.contains("Could not get unknown property ':foo' for DefaultProjectDependency{identityPath=':bar', configuration='default'}")
+        result.output.contains("Could not get unknown property ':foo' for project ':bar' of type org.gradle.api.internal.artifacts.dependencies.DefaultProjectDependency")
     }
 
     def 'detects circular dependencies in multi project - with bad syntax excludes fails but not in lint'() {

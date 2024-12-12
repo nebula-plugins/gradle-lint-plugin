@@ -28,9 +28,11 @@ class FindMethodReferencesSpec extends BaseIntegrationTestKitSpec {
             project.configurations.collect { it.name }.each { conf ->
                 task "\${conf}MethodReferences"(dependsOn: compileTestJava) {
                     doLast {
-                        new File(projectDir, "\${conf}MethodReferences.txt").text = DependencyService.forProject(project)
-                        .methodReferences(conf)
-                        .join('\\n')
+                        org.gradle.internal.deprecation.DeprecationLogger.whileDisabled {
+                            new File(projectDir, "\${conf}MethodReferences.txt").text = DependencyService.forProject(project)
+                            .methodReferences(conf)
+                            .join('\\n')
+                        }
                     }
                   
                 }
@@ -80,9 +82,11 @@ class FindMethodReferencesSpec extends BaseIntegrationTestKitSpec {
             project.configurations.collect { it.name }.each { conf ->
                 task "\${conf}MethodReferences"(dependsOn: compileTestJava) {
                     doLast {
-                        new File(projectDir, "\${conf}MethodReferences.txt").text = DependencyService.forProject(project)
-                        .methodReferencesExcluding(conf)
-                        .join('\\n')
+                       org.gradle.internal.deprecation.DeprecationLogger.whileDisabled {
+                            new File(projectDir, "\${conf}MethodReferences.txt").text = DependencyService.forProject(project)
+                            .methodReferencesExcluding(conf)
+                            .join('\\n')
+                        }
                     }
                   
                 }
@@ -131,9 +135,11 @@ class FindMethodReferencesSpec extends BaseIntegrationTestKitSpec {
             project.configurations.collect { it.name }.each { conf ->
                 task "\${conf}MethodReferences"(dependsOn: compileTestJava) {
                     doLast {
-                        new File(projectDir, "\${conf}MethodReferences.txt").text = DependencyService.forProject(project)
-                        .methodReferencesIncludeOnly(conf, ['com/google/common/collect'])
-                        .join('\\n')
+                       org.gradle.internal.deprecation.DeprecationLogger.whileDisabled {
+                            new File(projectDir, "\${conf}MethodReferences.txt").text = DependencyService.forProject(project)
+                            .methodReferencesIncludeOnly(conf, ['com/google/common/collect'])
+                            .join('\\n')
+                       }
                     }
                   
                 }
@@ -182,9 +188,11 @@ class FindMethodReferencesSpec extends BaseIntegrationTestKitSpec {
             project.configurations.collect { it.name }.each { conf ->
                 task "\${conf}MethodReferences"(dependsOn: compileTestJava) {
                     doLast {
-                        new File(projectDir, "\${conf}MethodReferences.txt").text = DependencyService.forProject(project)
-                        .methodReferencesExcluding(conf, ['com/google/common/collect'])
-                        .join('\\n')
+                        org.gradle.internal.deprecation.DeprecationLogger.whileDisabled {
+                            new File(projectDir, "\${conf}MethodReferences.txt").text = DependencyService.forProject(project)
+                            .methodReferencesExcluding(conf, ['com/google/common/collect'])
+                            .join('\\n')
+                        }
                     }
                   
                 }
@@ -234,9 +242,12 @@ class FindMethodReferencesSpec extends BaseIntegrationTestKitSpec {
             project.configurations.collect { it.name }.each { conf ->
                 task "\${conf}MethodReferences"(dependsOn: compileTestJava) {
                     doLast {
-                        new File(projectDir, "\${conf}MethodReferences.txt").text = DependencyService.forProject(project)
-                        .methodReferencesExcluding(conf)
-                        .join('\\n')
+                        org.gradle.internal.deprecation.DeprecationLogger.whileDisabled {
+    
+                            new File(projectDir, "\${conf}MethodReferences.txt").text = DependencyService.forProject(project)
+                            .methodReferencesExcluding(conf)
+                            .join('\\n')
+                        }
                     }
                   
                 }
@@ -297,7 +308,9 @@ class FindMethodReferencesSpec extends BaseIntegrationTestKitSpec {
             project.configurations.collect { it.name }.each { conf ->
                 task "\${conf}MethodReferences"(dependsOn: compileTestJava) {
                     doLast {
-                        println new JsonBuilder( DependencyService.forProject(project).methodReferences(conf) ).toPrettyString() 
+                        org.gradle.internal.deprecation.DeprecationLogger.whileDisabled {
+                            println new JsonBuilder( DependencyService.forProject(project).methodReferences(conf) ).toPrettyString() 
+                        }
                     }
                 }
             }
@@ -410,7 +423,9 @@ class FindMethodReferencesSpec extends BaseIntegrationTestKitSpec {
             project.configurations.collect { it.name }.each { conf ->
                 task "\${conf}MethodReferences"(dependsOn: compileTestJava) {
                     doLast {
-                        println new JsonBuilder( DependencyService.forProject(project).methodReferencesExcluding(conf) ).toPrettyString() 
+                        org.gradle.internal.deprecation.DeprecationLogger.whileDisabled {
+                            println new JsonBuilder( DependencyService.forProject(project).methodReferencesExcluding(conf) ).toPrettyString() 
+                        }
                     }
                 }                     
             }

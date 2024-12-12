@@ -36,6 +36,7 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.VerificationTask
+import org.gradle.internal.deprecation.DeprecationLogger
 import org.gradle.internal.reflect.Instantiator
 
 import javax.inject.Inject
@@ -85,29 +86,31 @@ abstract class GradleLintReportTask extends DefaultTask implements VerificationT
 
     @TaskAction
     void generateReport() {
-        if (reports.any { it.required.isPresent() && it.required.get()}) {
-            def lintService = new LintService()
-            def results = lintService.lint(project, false)
-            filterOnlyFixableViolations(results)
-            def violationCount = results.violations.size()
-            def textOutput = new StyledTextService(getServices())
+        //TODO: address Invocation of Task.project at execution time has been deprecated.
+        DeprecationLogger.whileDisabled {
+            if (reports.any { it.required.isPresent() && it.required.get()}) {
+                def lintService = new LintService()
+                def results = lintService.lint(project, false)
+                filterOnlyFixableViolations(results)
+                def violationCount = results.violations.size()
+                def textOutput = new StyledTextService(getServices())
 
-            textOutput.text('Generated a report containing information about ')
-            textOutput.withStyle(Bold).text("$violationCount lint violation${violationCount == 1 ? '' : 's'}")
-            textOutput.println(' in this project')
+                textOutput.text('Generated a report containing information about ')
+                textOutput.withStyle(Bold).text("$violationCount lint violation${violationCount == 1 ? '' : 's'}")
+                textOutput.println(' in this project')
 
-            reports.each {
-                if(it.required.isPresent() && it.required.get()) {
-                    it.write(new AnalysisContext(ruleSet: lintService.ruleSet(project)), results)
+                reports.each {
+                    if(it.required.isPresent() && it.required.get()) {
+                        it.write(new AnalysisContext(ruleSet: lintService.ruleSet(project)), results)
+                    }
+                }
+
+                int errors = results.violations.count { Violation v -> v.rule.priority == 1 }
+                if (errors > 0) {
+                    throw new GradleException("This build contains $errors critical lint violation${errors == 1 ? '' : 's'}")
                 }
             }
-
-            int errors = results.violations.count { Violation v -> v.rule.priority == 1 }
-            if (errors > 0) {
-                throw new GradleException("This build contains $errors critical lint violation${errors == 1 ? '' : 's'}")
-            }
         }
-
     }
 
 
