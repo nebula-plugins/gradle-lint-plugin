@@ -155,7 +155,7 @@ class UndeclaredDependencyRuleSpec extends BaseIntegrationTestKitSpec {
             buildscript {
               repositories {
                 maven {
-                  url "https://plugins.gradle.org/m2/"
+                  url = "https://plugins.gradle.org/m2/"
                 }
               }
               dependencies {
@@ -418,7 +418,7 @@ class UndeclaredDependencyRuleSpec extends BaseIntegrationTestKitSpec {
             gradleLint.rules = ['undeclared-dependency']
 
             repositories {
-                maven { url "${repo.toURI().toURL()}" }
+                maven { url = "${repo.toURI().toURL()}" }
                 mavenCentral()
             }
 
@@ -664,7 +664,7 @@ class UndeclaredDependencyRuleSpec extends BaseIntegrationTestKitSpec {
             buildscript {
               repositories {
                 maven {
-                  url "https://plugins.gradle.org/m2/"
+                  url = "https://plugins.gradle.org/m2/"
                 }
               }
               dependencies {
@@ -717,7 +717,7 @@ apply plugin: "io.freefair.lombok"
             apply plugin: '$languagePlugin'
             gradleLint.rules = ['undeclared-dependency']
             repositories {
-                maven { url "${repo.toURI().toURL()}" }
+                maven { url = "${repo.toURI().toURL()}" }
                 mavenCentral()
             }
             """.stripIndent()
@@ -730,7 +730,7 @@ apply plugin: "io.freefair.lombok"
                 apply plugin: 'java'
                 gradleLint.rules = ['undeclared-dependency']
                 repositories {
-                    maven { url "${repo.toURI().toURL()}" }
+                    maven { url = "${repo.toURI().toURL()}" }
                     mavenCentral()
                 }
             """.stripIndent()

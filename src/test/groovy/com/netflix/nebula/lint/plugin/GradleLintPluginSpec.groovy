@@ -793,6 +793,8 @@ class GradleLintPluginSpec extends BaseIntegrationTestKitSpec {
     @Unroll
     def 'lint task does not run for task #taskName'() {
         when:
+        //TODO: remove ignoreDeprecations once https://github.com/gradle/gradle/issues/31691 is addressed
+        System.setProperty('ignoreDeprecations', 'true')
         disableConfigurationCache() // component and model report are not config cache compatible anyway
         buildFile << """
             plugins {

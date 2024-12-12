@@ -115,7 +115,7 @@ class SupportJavaLibrarySpec extends BaseIntegrationTestKitSpec {
         |    }
         |    gradleLint.rules=['all-dependency']
         |    repositories {
-        |        maven { url "${repo.toURI().toURL()}" }
+        |        maven { url = "${repo.toURI().toURL()}" }
         |        mavenCentral()
         |    }
         |}

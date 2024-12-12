@@ -25,6 +25,7 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
+import org.gradle.internal.deprecation.DeprecationLogger
 
 import static com.netflix.nebula.lint.StyledTextService.Styling.*
 
@@ -57,12 +58,16 @@ abstract class LintGradleTask extends DefaultTask {
 
     @TaskAction
     void lint() {
-        def violations = new LintService().lint(project, onlyCriticalRules.get()).violations
-                .unique { v1, v2 -> v1.is(v2) ? 0 : 1 }
+        //TODO: address Invocation of Task.project at execution time has been deprecated.
+        DeprecationLogger.whileDisabled {
+            def violations = new LintService().lint(project, onlyCriticalRules.get()).violations
+                    .unique { v1, v2 -> v1.is(v2) ? 0 : 1 }
 
-        (getListeners() + new GradleLintPatchAction(project) + new GradleLintInfoBrokerAction(project) + consoleOutputAction).each {
-            it.lintFinished(violations)
+            (getListeners() + new GradleLintPatchAction(project) + new GradleLintInfoBrokerAction(project) + consoleOutputAction).each {
+                it.lintFinished(violations)
+            }
         }
+
     }
 
     @Internal

@@ -30,6 +30,7 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.VerificationTask
+import org.gradle.internal.deprecation.DeprecationLogger
 
 import static com.netflix.nebula.lint.StyledTextService.Styling.*
 
@@ -55,21 +56,25 @@ abstract class FixGradleLintTask extends DefaultTask implements VerificationTask
 
     @TaskAction
     void lintCorrections() {
-        def violations = new LintService().lint(project, false).violations
-                .unique { v1, v2 -> v1.is(v2) ? 0 : 1 }
+        //TODO: address Invocation of Task.project at execution time has been deprecated.
+        DeprecationLogger.whileDisabled {
+            def violations = new LintService().lint(project, false).violations
+                    .unique { v1, v2 -> v1.is(v2) ? 0 : 1 }
 
-        (userDefinedListeners.get() + infoBrokerAction + new GradleLintPatchAction(project)).each {
-            it.lintFinished(violations)
+            (userDefinedListeners.get() + infoBrokerAction + new GradleLintPatchAction(project)).each {
+                it.lintFinished(violations)
+            }
+
+            def patchFile = new File(project.layout.buildDirectory.asFile.get(), GradleLintPatchAction.PATCH_NAME)
+            if (patchFile.exists()) {
+                new ApplyCommand(new NotNecessarilyGitRepository(project.projectDir)).setPatch(patchFile.newInputStream()).call()
+            }
+
+            (userDefinedListeners.get() + infoBrokerAction + consoleOutputAction()).each {
+                it.lintFixesApplied(violations)
+            }
         }
 
-        def patchFile = new File(project.layout.buildDirectory.asFile.get(), GradleLintPatchAction.PATCH_NAME)
-        if (patchFile.exists()) {
-            new ApplyCommand(new NotNecessarilyGitRepository(project.projectDir)).setPatch(patchFile.newInputStream()).call()
-        }
-
-        (userDefinedListeners.get() + infoBrokerAction + consoleOutputAction()).each {
-            it.lintFixesApplied(violations)
-        }
 
     }
 

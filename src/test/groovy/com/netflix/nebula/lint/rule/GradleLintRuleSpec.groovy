@@ -205,7 +205,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         project.buildFile << """
             buildscript {
                 repositories {
-                    maven { url 'https://plugins.gradle.org/m2/' }
+                    maven { url = 'https://plugins.gradle.org/m2/' }
                 }
 
                 dependencies {

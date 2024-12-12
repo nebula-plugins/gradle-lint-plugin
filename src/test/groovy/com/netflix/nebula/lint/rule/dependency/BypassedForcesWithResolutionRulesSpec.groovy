@@ -285,7 +285,7 @@ test.nebula:a:1.2.0\n""")
             allprojects {
                 apply plugin: 'nebula.lint'
                 repositories {
-                    maven { url '${mavenrepo.absolutePath}' }
+                    maven { url = '${mavenrepo.absolutePath}' }
                 }
                 gradleLint.rules = ['bypassed-forces']
             }
@@ -874,7 +874,7 @@ test.nebula:a:1.3.0\n""")
         buildFile << """\
             buildscript {
                 repositories {
-                    maven { url "https://plugins.gradle.org/m2/" }
+                    maven { url = "https://plugins.gradle.org/m2/" }
                 }
                 dependencies {
                     classpath("com.netflix.nebula:nebula-dependency-recommender:9.0.2") {
@@ -968,7 +968,7 @@ test.nebula:a:1.3.0\n""")
         buildFile << """\
             plugins {
                 id 'java'
-                id "com.netflix.nebula.resolution-rules" version "10.1.0" 
+                id "com.netflix.nebula.resolution-rules" version "11.4.1" 
                 id 'nebula.lint'
             }
 
@@ -976,7 +976,7 @@ test.nebula:a:1.3.0\n""")
                 resolutionRules files('$rulesJsonFile')
             }
             repositories {
-                maven { url '${mavenrepo.absolutePath}' }
+                maven { url = '${mavenrepo.absolutePath}' }
             }
             gradleLint.rules = ['bypassed-forces']
             """.stripIndent()
@@ -987,16 +987,16 @@ test.nebula:a:1.3.0\n""")
 
         buildFile << """\
             buildscript {
-                repositories { maven { url "https://plugins.gradle.org/m2/" } }
+                repositories { maven { url = "https://plugins.gradle.org/m2/" } }
                 dependencies {
-                    classpath "com.netflix.nebula:gradle-resolution-rules-plugin:10.1.0"
+                    classpath "com.netflix.nebula:gradle-resolution-rules-plugin:11.4.1"
                 }
             }
             allprojects {
                 apply plugin: 'nebula.lint'
                 apply plugin: 'com.netflix.nebula.resolution-rules'
                 repositories {
-                    maven { url '${mavenrepo.absolutePath}' }
+                    maven { url = '${mavenrepo.absolutePath}' }
                 }
                 gradleLint.rules = ['bypassed-forces']
             }
