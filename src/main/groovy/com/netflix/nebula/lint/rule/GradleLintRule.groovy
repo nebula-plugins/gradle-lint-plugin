@@ -20,16 +20,7 @@ import com.netflix.nebula.lint.GradleViolation
 import com.netflix.nebula.lint.plugin.LintRuleRegistry
 import org.codehaus.groovy.ast.ASTNode
 import org.codehaus.groovy.ast.ClassNode
-import org.codehaus.groovy.ast.expr.ArgumentListExpression
-import org.codehaus.groovy.ast.expr.BinaryExpression
-import org.codehaus.groovy.ast.expr.ClosureExpression
-import org.codehaus.groovy.ast.expr.ConstantExpression
-import org.codehaus.groovy.ast.expr.Expression
-import org.codehaus.groovy.ast.expr.GStringExpression
-import org.codehaus.groovy.ast.expr.MapExpression
-import org.codehaus.groovy.ast.expr.MethodCallExpression
-import org.codehaus.groovy.ast.expr.PropertyExpression
-import org.codehaus.groovy.ast.expr.VariableExpression
+import org.codehaus.groovy.ast.expr.*
 import org.codehaus.groovy.ast.stmt.ExpressionStatement
 import org.codenarc.rule.AbstractAstVisitorRule
 import org.codenarc.rule.AstVisitor
@@ -43,7 +34,6 @@ import org.slf4j.LoggerFactory
 import java.text.ParseException
 
 abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
-    Project project // will be non-null if type is GradleModelAware, otherwise null
     BuildFiles buildFiles
     SourceCode sourceCode
     List<GradleViolation> gradleViolations = []
@@ -146,6 +136,21 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                 _dslStack(expr.objectExpression) + expr.methodAsString
             else if (expr instanceof VariableExpression)
                 expr.text == 'this' ? [] : [expr.text]
+            else []
+        }
+
+        calls.collect { call -> _dslStack(call) }.flatten() as List<String>
+    }
+
+    final List<Expression> typedDslStack(List<MethodCallExpression> calls) {
+        def _dslStack
+        _dslStack = { Expression expr ->
+            if (expr instanceof PropertyExpression)
+                _dslStack(expr.objectExpression) + expr.property
+            else if (expr instanceof MethodCallExpression)
+                _dslStack(expr.objectExpression) + expr
+            else if (expr instanceof VariableExpression)
+                expr.text == 'this' ? [] : [expr]
             else []
         }
 
