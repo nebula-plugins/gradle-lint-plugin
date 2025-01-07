@@ -36,25 +36,29 @@ abstract class ModelAwareGradleLintRule extends GradleLintRule {
     Map<String, List<String>> projectDefaultImports = null
 
     TypeInformation receiver(MethodCallExpression call) {
-        List<Expression> fullCallStack = typedDslStack(callStack + call)
-        List<TypeInformation> typedStack = []
-        for (Expression currentMethod in fullCallStack) {
-            if (typedStack.empty) {
-                typedStack.add(new TypeInformation(project))
-            }
-            while (!typedStack.empty) {
-                def current = typedStack.last()
-                def candidate = findDirectCandidate(current, currentMethod)
-                if (candidate != null) {
-                    typedStack.add(candidate)
-                    break
+        try {
+            List<Expression> fullCallStack = typedDslStack(callStack + call)
+            List<TypeInformation> typedStack = []
+            for (Expression currentMethod in fullCallStack) {
+                if (typedStack.empty) {
+                    typedStack.add(new TypeInformation(project))
                 }
-                typedStack.removeLast()
+                while (!typedStack.empty) {
+                    def current = typedStack.last()
+                    def candidate = findDirectCandidate(current, currentMethod)
+                    if (candidate != null) {
+                        typedStack.add(candidate)
+                        break
+                    }
+                    typedStack.removeLast()
+                }
             }
-        }
-        if (typedStack.size() >= 2) { //there should be the method return type and the receiver at least
-            return typedStack[-2]
-        } else {
+            if (typedStack.size() >= 2) { //there should be the method return type and the receiver at least
+                return typedStack[-2]
+            } else {
+                return null
+            }
+        } catch (Exception e) {
             return null
         }
     }
