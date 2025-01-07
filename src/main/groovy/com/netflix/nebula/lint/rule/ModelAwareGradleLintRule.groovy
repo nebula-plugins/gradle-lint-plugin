@@ -33,7 +33,6 @@ import org.gradle.configuration.ImportsReader
 import javax.annotation.Nullable
 
 abstract class ModelAwareGradleLintRule extends GradleLintRule {
-    Project project
     Map<String, List<String>> projectDefaultImports = null
 
     TypeInformation receiver(MethodCallExpression call) {

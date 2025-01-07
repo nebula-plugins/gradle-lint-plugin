@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory
 import java.text.ParseException
 
 abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
+    Project project
     BuildFiles buildFiles
     SourceCode sourceCode
     List<GradleViolation> gradleViolations = []

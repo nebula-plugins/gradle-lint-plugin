@@ -32,7 +32,6 @@ import javax.annotation.Nullable
  */
 @Deprecated // We suggest using ModelAwareGradleLintRule instead
 trait GradleModelAware {
-    Project project
     Map<String, List<String>> projectDefaultImports = null
 
     TypeInformation receiver(MethodCallExpression call) {
