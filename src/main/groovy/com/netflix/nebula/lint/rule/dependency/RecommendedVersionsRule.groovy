@@ -19,13 +19,12 @@
 package com.netflix.nebula.lint.rule.dependency
 
 import com.netflix.nebula.lint.rule.GradleDependency
-import com.netflix.nebula.lint.rule.GradleLintRule
-import com.netflix.nebula.lint.rule.GradleModelAware
+import com.netflix.nebula.lint.rule.ModelAwareGradleLintRule
 import com.netflix.nebula.lint.rule.dependency.provider.MavenBomRecommendationProvider
 import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 
-class RecommendedVersionsRule extends GradleLintRule implements GradleModelAware {
+class RecommendedVersionsRule extends ModelAwareGradleLintRule {
     private static final String GRADLE_VERSION_WITH_EXPERIMENTAL_FEATURES = '4.5'
     private static final String GRADLE_VERSION_WITH_OPT_IN_FEATURES = '4.6'
     private static final String GRADLE_VERSION_WITH_DEFAULT_FEATURES = '5.0'

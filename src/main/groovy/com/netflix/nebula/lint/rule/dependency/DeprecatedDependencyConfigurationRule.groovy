@@ -3,8 +3,7 @@ package com.netflix.nebula.lint.rule.dependency
 import com.netflix.nebula.interop.GradleKt
 import com.netflix.nebula.lint.GradleViolation
 import com.netflix.nebula.lint.rule.GradleDependency
-import com.netflix.nebula.lint.rule.GradleLintRule
-import com.netflix.nebula.lint.rule.GradleModelAware
+import com.netflix.nebula.lint.rule.ModelAwareGradleLintRule
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.codehaus.groovy.ast.expr.ConstantExpression
@@ -12,7 +11,7 @@ import org.codehaus.groovy.ast.expr.Expression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 
 @CompileStatic
-class DeprecatedDependencyConfigurationRule extends GradleLintRule implements GradleModelAware {
+class DeprecatedDependencyConfigurationRule extends ModelAwareGradleLintRule {
     String description = 'Replace deprecated configurations in dependencies'
 
     private final Map CONFIGURATION_REPLACEMENTS = [

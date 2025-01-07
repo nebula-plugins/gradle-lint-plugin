@@ -1,8 +1,7 @@
 package com.netflix.nebula.lint.rule.dependency
 
 import com.netflix.nebula.lint.rule.GradleDependency
-import com.netflix.nebula.lint.rule.GradleLintRule
-import com.netflix.nebula.lint.rule.GradleModelAware
+import com.netflix.nebula.lint.rule.ModelAwareGradleLintRule
 import groovy.transform.CompileStatic
 import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.ast.expr.ArgumentListExpression
@@ -24,7 +23,7 @@ import org.slf4j.LoggerFactory
 
 import java.util.stream.Collectors
 
-class BypassedForcesRule extends GradleLintRule implements GradleModelAware {
+class BypassedForcesRule extends ModelAwareGradleLintRule {
     String description = 'remove bypassed forces and strict constraints. Works for static and ranged declarations'
     Map<String, Collection<ForcedDependency>> forcedDependenciesPerProject = new HashMap<String, Collection<ForcedDependency>>()
     private final DefaultVersionComparator VERSIONED_COMPARATOR = new DefaultVersionComparator()

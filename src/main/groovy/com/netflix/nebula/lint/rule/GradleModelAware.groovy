@@ -30,6 +30,7 @@ import javax.annotation.Nullable
  * Decorate lint rule visitors with this interface in order to use the
  * evaluated Gradle project model in the rule
  */
+@Deprecated // We suggest using ModelAwareGradleLintRule instead
 trait GradleModelAware {
     Project project
     Map<String, List<String>> projectDefaultImports = null
@@ -188,22 +189,5 @@ trait GradleModelAware {
             }
         }
         return null
-    }
-}
-
-class TypeInformation {
-    @Nullable
-    Class clazz
-    @Nullable
-    Object object
-
-    TypeInformation(Object object) {
-        this.object = object
-        this.clazz = object.class
-    }
-
-    TypeInformation(Object object, Class clazz) {
-        this.object = object
-        this.clazz = clazz
     }
 }

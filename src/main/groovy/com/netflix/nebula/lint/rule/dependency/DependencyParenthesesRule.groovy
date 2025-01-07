@@ -17,12 +17,11 @@
 package com.netflix.nebula.lint.rule.dependency
 
 import com.netflix.nebula.lint.rule.GradleDependency
-import com.netflix.nebula.lint.rule.GradleLintRule
-import com.netflix.nebula.lint.rule.GradleModelAware
+import com.netflix.nebula.lint.rule.ModelAwareGradleLintRule
 import org.codehaus.groovy.ast.expr.ClosureExpression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 
-class DependencyParenthesesRule extends GradleLintRule implements GradleModelAware {
+class DependencyParenthesesRule extends ModelAwareGradleLintRule {
     String description = "don't put parentheses around dependency definitions unless it is necessary"
 
     @Override

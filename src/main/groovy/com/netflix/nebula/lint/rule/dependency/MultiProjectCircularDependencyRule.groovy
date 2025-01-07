@@ -1,7 +1,6 @@
 package com.netflix.nebula.lint.rule.dependency
 
-import com.netflix.nebula.lint.rule.GradleLintRule
-import com.netflix.nebula.lint.rule.GradleModelAware
+import com.netflix.nebula.lint.rule.ModelAwareGradleLintRule
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.transform.TupleConstructor
@@ -11,7 +10,7 @@ import org.codehaus.groovy.ast.expr.MethodCallExpression
 
 
 @CompileStatic
-class MultiProjectCircularDependencyRule extends GradleLintRule implements GradleModelAware {
+class MultiProjectCircularDependencyRule extends ModelAwareGradleLintRule {
     String description = 'Detect circular dependencies in multi projects'
 
     private final String PROJECT_METHOD_NAME = 'project'

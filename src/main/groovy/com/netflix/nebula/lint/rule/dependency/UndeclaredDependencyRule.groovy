@@ -1,8 +1,7 @@
 package com.netflix.nebula.lint.rule.dependency
 
 import com.netflix.nebula.lint.SourceSetUtils
-import com.netflix.nebula.lint.rule.GradleLintRule
-import com.netflix.nebula.lint.rule.GradleModelAware
+import com.netflix.nebula.lint.rule.ModelAwareGradleLintRule
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.codehaus.groovy.ast.ASTNode
@@ -11,7 +10,7 @@ import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.gradle.api.artifacts.ModuleVersionIdentifier
 
 @CompileStatic
-class UndeclaredDependencyRule extends GradleLintRule implements GradleModelAware {
+class UndeclaredDependencyRule extends ModelAwareGradleLintRule {
     private static final String DEPENDENCIES_BLOCK = 'rootDependenciesBlock'
     String description = 'Ensure that directly used transitives are declared as first order dependencies'
     DependencyService dependencyService

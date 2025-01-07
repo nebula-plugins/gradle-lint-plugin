@@ -2,8 +2,7 @@ package com.netflix.nebula.lint.rule.dependency
 
 import com.netflix.nebula.lint.VersionNumber
 import com.netflix.nebula.lint.rule.GradleDependency
-import com.netflix.nebula.lint.rule.GradleLintRule
-import com.netflix.nebula.lint.rule.GradleModelAware
+import com.netflix.nebula.lint.rule.ModelAwareGradleLintRule
 import groovy.transform.CompileStatic
 import org.codehaus.groovy.ast.ASTNode
 import org.codehaus.groovy.ast.ClassNode
@@ -20,7 +19,7 @@ import org.gradle.api.artifacts.Configuration
  */
 @Incubating
 @CompileStatic
-class MinimumDependencyVersionRule extends GradleLintRule implements GradleModelAware {
+class MinimumDependencyVersionRule extends ModelAwareGradleLintRule {
     String description = 'pull up dependencies to a minimum version if necessary'
     Set alreadyAdded = [] as Set
     Set<Configuration> resolvableAndResolvedConfigurations

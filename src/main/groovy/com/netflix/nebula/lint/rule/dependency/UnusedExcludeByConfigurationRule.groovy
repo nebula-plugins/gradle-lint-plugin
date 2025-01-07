@@ -17,13 +17,12 @@
 package com.netflix.nebula.lint.rule.dependency
 
 import com.netflix.nebula.lint.rule.GradleDependency
-import com.netflix.nebula.lint.rule.GradleLintRule
-import com.netflix.nebula.lint.rule.GradleModelAware
+import com.netflix.nebula.lint.rule.ModelAwareGradleLintRule
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.specs.Specs
 
-class UnusedExcludeByConfigurationRule extends GradleLintRule implements GradleModelAware {
+class UnusedExcludeByConfigurationRule extends ModelAwareGradleLintRule {
     String description = 'excludes that have no effect on the classpath should be removed for clarity'
 
     @Override

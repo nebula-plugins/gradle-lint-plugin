@@ -1,11 +1,10 @@
 package com.netflix.nebula.lint.rule.dsl
 
-import com.netflix.nebula.lint.rule.GradleLintRule
-import com.netflix.nebula.lint.rule.GradleModelAware
+import com.netflix.nebula.lint.rule.ModelAwareGradleLintRule
 import org.codehaus.groovy.ast.expr.ClosureExpression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 
-class SpaceAssignmentRule extends GradleLintRule implements GradleModelAware {
+class SpaceAssignmentRule extends ModelAwareGradleLintRule {
 
     String description = "space-assignment syntax is deprecated"
 

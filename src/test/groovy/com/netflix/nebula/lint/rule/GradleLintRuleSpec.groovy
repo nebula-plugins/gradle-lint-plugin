@@ -885,9 +885,9 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         noPluginsRule
     }
 
-    abstract class GradleProjectLintRule extends AbstractExampleGradleLintRule implements GradleModelAware {}
+    abstract class GradleProjectLintRule extends AbstractModelAwareExampleGradleLintRule {}
 
-    private class DependencyVisitingRule extends AbstractExampleGradleLintRule implements GradleModelAware {
+    private class DependencyVisitingRule extends AbstractModelAwareExampleGradleLintRule {
         final String description = 'visit dependencies'
         List<GradleDependency> deps = []
         List<GradleDependency> allprojectDeps = []

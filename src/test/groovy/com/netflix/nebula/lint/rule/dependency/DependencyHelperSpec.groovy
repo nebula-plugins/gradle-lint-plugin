@@ -1,8 +1,7 @@
 package com.netflix.nebula.lint.rule.dependency
 
+import com.netflix.nebula.lint.rule.AbstractModelAwareExampleGradleLintRule
 import com.netflix.nebula.lint.rule.GradleDependency
-import com.netflix.nebula.lint.rule.AbstractExampleGradleLintRule
-import com.netflix.nebula.lint.rule.GradleModelAware
 import nebula.test.IntegrationSpec
 import nebula.test.dependencies.DependencyGraphBuilder
 import nebula.test.dependencies.GradleDependencyGenerator
@@ -178,7 +177,7 @@ class DependencyHelperSpec extends IntegrationSpec {
     }
 }
 
-class TestDependencyRemoveVersionRule extends AbstractExampleGradleLintRule implements GradleModelAware {
+class TestDependencyRemoveVersionRule extends AbstractModelAwareExampleGradleLintRule  {
     String description = "remove all versions"
 
     @Override
@@ -188,7 +187,7 @@ class TestDependencyRemoveVersionRule extends AbstractExampleGradleLintRule impl
     }
 }
 
-class TestDependencyReplaceVersionRule extends AbstractExampleGradleLintRule implements GradleModelAware {
+class TestDependencyReplaceVersionRule extends AbstractModelAwareExampleGradleLintRule {
     String description = "replace all versions"
 
     @Override
@@ -198,7 +197,7 @@ class TestDependencyReplaceVersionRule extends AbstractExampleGradleLintRule imp
     }
 }
 
-class TestDependencyReplaceRule extends AbstractExampleGradleLintRule implements GradleModelAware {
+class TestDependencyReplaceRule extends AbstractModelAwareExampleGradleLintRule {
     String description = "replace dependency"
 
     @Override
