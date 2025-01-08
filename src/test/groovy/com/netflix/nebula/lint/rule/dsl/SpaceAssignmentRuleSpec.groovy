@@ -32,7 +32,9 @@ class SpaceAssignmentRuleSpec extends BaseIntegrationTestKitSpec {
                 maven {
                     url = "https://another.example.com"
                 }
-            }
+                maven { url "https://another.example2.com" }
+                maven { url 'https://repo.spring.io/milestone' }
+             }
             
             java {
                 sourceCompatibility JavaVersion.VERSION_1_8
@@ -47,16 +49,21 @@ class SpaceAssignmentRuleSpec extends BaseIntegrationTestKitSpec {
         def result = runTasks('autoLintGradle', '--warning-mode', 'none')
 
         then:
-        result.output.contains("4 problems (0 errors, 4 warnings)")
+        result.output.contains("6 problems (0 errors, 6 warnings)")
 
         when:
-        runTasks('fixLintGradle', '--warning-mode', 'none')
+        runTasks('fixLintGradle', '--warning-mode', 'none', '--no-configuration-cache')
 
         then:
         buildFile.text.contains('buildDir = file("out")')
         buildFile.text.contains('url = "https://example.com"')
         buildFile.text.contains('url =("https://example2.com")')
+        buildFile.text.contains('maven { url = "https://another.example2.com" }')
+        !buildFile.text.contains('maven { maven { url = "https://another.example2.com" } }')
         buildFile.text.contains('sourceCompatibility = JavaVersion.VERSION_1_8')
+
+        and:
+        runTasks('help')
     }
 
     def 'reports and fixes a violation if space assignment syntax is used in some complex cases'() {
@@ -145,5 +152,8 @@ class SpaceAssignmentRuleSpec extends BaseIntegrationTestKitSpec {
         buildFile.text.contains('description = "t15"')
         buildFile.text.contains('distributionPath = "t18"')
         buildFile.text.contains('distributionPath = "t22"')
+
+        and:
+        runTasks('help', '--warning-mode', 'none')
     }
 }
