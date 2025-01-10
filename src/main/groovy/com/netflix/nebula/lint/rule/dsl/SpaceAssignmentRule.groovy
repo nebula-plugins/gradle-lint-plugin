@@ -12,6 +12,9 @@ class SpaceAssignmentRule extends ModelAwareGradleLintRule {
 
     @Override
     void visitMethodCallExpression(MethodCallExpression call) {
+        if(dslStack().contains("plugins")) {
+            return
+        }
         if (call.arguments.size() != 1 || call.arguments[-1] instanceof ClosureExpression) {
             return
         }
