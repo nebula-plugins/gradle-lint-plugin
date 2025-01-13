@@ -43,13 +43,28 @@ class SpaceAssignmentRuleSpec extends BaseIntegrationTestKitSpec {
             println(Pattern.quote("test"))
             SystemProperties i = SystemProperties.getInstance()
             i.getJavaIoTmpDir()
+            
+            group 'com.netflix.test'
+            
+            subprojects {
+                group 'com.netflix.test'
+            }
+            
+            allprojects {
+                group 'com.netflix.test'
+            }
+            
+            def matcher = ("test" =~ /ab[d|f]/)
+            if (matcher.find()) {
+                def x = matcher.group(1).replace(".", "/")
+            }
         """
 
         when:
         def result = runTasks('autoLintGradle', '--warning-mode', 'none')
 
         then:
-        result.output.contains("6 problems (0 errors, 6 warnings)")
+        result.output.contains("9 problems (0 errors, 9 warnings)")
 
         when:
         runTasks('fixLintGradle', '--warning-mode', 'none', '--no-configuration-cache')
@@ -61,6 +76,10 @@ class SpaceAssignmentRuleSpec extends BaseIntegrationTestKitSpec {
         buildFile.text.contains('maven { url = "https://another.example2.com" }')
         !buildFile.text.contains('maven { maven { url = "https://another.example2.com" } }')
         buildFile.text.contains('sourceCompatibility = JavaVersion.VERSION_1_8')
+        buildFile.text.contains('group = \'com.netflix.test\'')
+        !buildFile.text.contains('group \'com.netflix.test\'')
+        buildFile.text.contains('matcher.group(1)')
+        !buildFile.text.contains('matcher.group = (1)')
 
         and:
         runTasks('help')

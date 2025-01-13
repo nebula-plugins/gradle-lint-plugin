@@ -15,6 +15,9 @@ class SpaceAssignmentRule extends ModelAwareGradleLintRule {
         if(dslStack().contains("plugins")) {
             return
         }
+        if(call.methodAsString == 'group' && !isGradleGroup(call)) {
+            return
+        }
         if (call.arguments.size() != 1 || call.arguments[-1] instanceof ClosureExpression) {
             return
         }
@@ -43,6 +46,18 @@ class SpaceAssignmentRule extends ModelAwareGradleLintRule {
         } else {
             addViolation(call)
         }
+    }
+
+    private boolean isGradleGroup(MethodCallExpression call) {
+        if(call.methodAsString != 'group') {
+            return false
+        }
+
+        return dslStack().empty ||
+                dslStack().containsAll(['subprojects']) ||
+                dslStack().containsAll(['allprojects']) ||
+                dslStack().contains('configureEach') ||
+                dslStack().contains('tasks')
     }
 
     private void addViolation(MethodCallExpression call) {
