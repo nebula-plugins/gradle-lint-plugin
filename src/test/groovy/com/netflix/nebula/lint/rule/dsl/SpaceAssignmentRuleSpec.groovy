@@ -58,6 +58,13 @@ class SpaceAssignmentRuleSpec extends BaseIntegrationTestKitSpec {
             if (matcher.find()) {
                 def x = matcher.group(1).replace(".", "/")
             }
+            tasks.register('hello') {
+              doLast {
+                    if (matcher.find()) {
+                    def x = matcher.group(1).replace(".", "/")
+                }
+              }
+            }            
         """
 
         when:

@@ -56,8 +56,7 @@ class SpaceAssignmentRule extends ModelAwareGradleLintRule {
         return dslStack().empty ||
                 dslStack().containsAll(['subprojects']) ||
                 dslStack().containsAll(['allprojects']) ||
-                dslStack().contains('configureEach') ||
-                dslStack().contains('tasks')
+                dslStack().contains('configureEach')
     }
 
     private void addViolation(MethodCallExpression call) {
