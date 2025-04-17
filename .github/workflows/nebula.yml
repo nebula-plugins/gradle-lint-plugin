@@ -38,14 +38,14 @@ jobs:
             8
             ${{ matrix.java }}
           java-package: jdk
-      - uses: actions/cache@v1
+      - uses: actions/cache@v4
         id: gradle-cache
         with:
           path: ~/.gradle/caches
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle/dependency-locks/*.lockfile') }}
           restore-keys: |
             - ${{ runner.os }}-gradle-
-      - uses: actions/cache@v1
+      - uses: actions/cache@v4
         id: gradle-wrapper-cache
         with:
           path: ~/.gradle/wrapper
@@ -78,14 +78,14 @@ jobs:
             8
             21
           java-package: jdk
-      - uses: actions/cache@v1
+      - uses: actions/cache@v4
         id: gradle-cache
         with:
           path: ~/.gradle/caches
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle/dependency-locks/*.lockfile') }}
           restore-keys: |
             - ${{ runner.os }}-gradle-
-      - uses: actions/cache@v1
+      - uses: actions/cache@v4
         id: gradle-wrapper-cache
         with:
           path: ~/.gradle/wrapper
@@ -123,14 +123,14 @@ jobs:
             8
             21
           java-package: jdk
-      - uses: actions/cache@v1
+      - uses: actions/cache@v4
         id: gradle-cache
         with:
           path: ~/.gradle/caches
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle/dependency-locks/*.lockfile') }}
           restore-keys: |
             - ${{ runner.os }}-gradle-
-      - uses: actions/cache@v1
+      - uses: actions/cache@v4
         id: gradle-wrapper-cache
         with:
           path: ~/.gradle/wrapper
