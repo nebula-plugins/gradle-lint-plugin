@@ -89,10 +89,8 @@ class GradleLintPluginTaskConfigurer extends AbstractLintPluginTaskConfigurer {
             List<TaskProvider> lintTasks = [fixTask, fixTask2, manualLintTask]
 
             configureAutoLint(autoLintTask, project, lintExt, lintTasks, criticalLintTask)
-
+            configureReportTask(project, lintExt)
         }
-
-        configureReportTask(project, lintExt)
     }
 
     @Override
