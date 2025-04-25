@@ -193,7 +193,7 @@ class DependencyService {
         return null
     }
 
-    Set<Configuration> resolvableConfigurations() {
+    synchronized Set<Configuration> resolvableConfigurations() {
         return project.configurations.findAll { isResolvable(it) }.findAll { !hasAResolutionAlternative(it) }
     }
 
