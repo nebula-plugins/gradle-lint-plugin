@@ -48,6 +48,7 @@ abstract class FixGradleLintTask extends DefaultTask implements VerificationTask
 
 
     FixGradleLintTask() {
+        description = 'Fixes lint violations in the build files'
         infoBrokerAction = new GradleLintInfoBrokerAction(project)
         userDefinedListeners.convention([])
         outputs.upToDateWhen { false }
