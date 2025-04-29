@@ -80,6 +80,7 @@ abstract class GradleLintReportTask extends DefaultTask implements VerificationT
         })
         reports.create('xml')
         reports.create('html')
+        description = 'Generates a report of lint violations in the build files'
         outputs.upToDateWhen { false }
         group = 'lint'
     }
