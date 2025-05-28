@@ -18,9 +18,19 @@ package com.netflix.nebula.lint.rule
 
 import com.netflix.nebula.lint.GradleViolation
 import com.netflix.nebula.lint.plugin.LintRuleRegistry
+import com.netflix.nebula.lint.plugin.UnexpectedLintRuleFailureException
 import org.codehaus.groovy.ast.ASTNode
 import org.codehaus.groovy.ast.ClassNode
-import org.codehaus.groovy.ast.expr.*
+import org.codehaus.groovy.ast.expr.ArgumentListExpression
+import org.codehaus.groovy.ast.expr.BinaryExpression
+import org.codehaus.groovy.ast.expr.ClosureExpression
+import org.codehaus.groovy.ast.expr.ConstantExpression
+import org.codehaus.groovy.ast.expr.Expression
+import org.codehaus.groovy.ast.expr.GStringExpression
+import org.codehaus.groovy.ast.expr.MapExpression
+import org.codehaus.groovy.ast.expr.MethodCallExpression
+import org.codehaus.groovy.ast.expr.PropertyExpression
+import org.codehaus.groovy.ast.expr.VariableExpression
 import org.codehaus.groovy.ast.stmt.ExpressionStatement
 import org.codenarc.rule.AbstractAstVisitorRule
 import org.codenarc.rule.AstVisitor
@@ -198,11 +208,25 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
      */
     protected void beforeApplyTo() {}
 
+    /**
+     * Allows a rule to add in rule-specific context to the error message if a rule fails to apply.
+     */
+    protected String ruleFailureContext() {
+        return ""
+    }
+
     @Override
     final List<Violation> applyTo(SourceCode sourceCode) {
         this.sourceCode = sourceCode
-        beforeApplyTo()
-        rule.applyTo(sourceCode)
+        try {
+            beforeApplyTo()
+            rule.applyTo(sourceCode)
+        } catch (Exception e) {
+            String failureContext = ruleFailureContext().isEmpty() ? "" : ". ${ruleFailureContext()}"
+            String message = "Error processing rule Lint Rule '${ruleId}'${failureContext}"
+
+            throw new UnexpectedLintRuleFailureException(message, e)
+        }
         gradleViolations
     }
 
