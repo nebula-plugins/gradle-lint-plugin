@@ -16,12 +16,15 @@
 
 package com.netflix.nebula.lint
 
+import com.netflix.nebula.lint.plugin.UnexpectedLintRuleFailureException
 import groovy.transform.Canonical
 import org.apache.commons.lang.StringUtils
 import org.gradle.api.Project
 
 import static FileMode.Symlink
-import static com.netflix.nebula.lint.PatchType.*
+import static com.netflix.nebula.lint.PatchType.Create
+import static com.netflix.nebula.lint.PatchType.Delete
+import static com.netflix.nebula.lint.PatchType.Update
 import static java.nio.file.Files.readSymbolicLink
 
 @Canonical
@@ -34,9 +37,26 @@ class GradleLintPatchAction extends GradleLintViolationAction {
     void lintFinished(Collection<GradleViolation> violations) {
         File buildDir = project.layout.buildDirectory.asFile.getOrElse(new File(project.projectDir, "build"))
         buildDir.mkdirs()
-        new File(buildDir, PATCH_NAME).withWriter { w ->
+        try {
             def patch = patch(violations*.fixes.flatten() as List<GradleLintFix>)
-            w.write(patch)
+            new File(buildDir, PATCH_NAME).withWriter { w ->
+                w.write(patch)
+            }
+        } catch (Exception e) {
+            def rules = violations.findAll { it.rule != null }.collect { it.rule }
+            def ruleFailureContexts = rules.collect { rule -> rule.ruleFailureContext() }
+                    .findAll { it -> !(it as String).isEmpty() }
+            def ruleNames = rules.collect { rule -> rule.getName() }
+            def ruleFailureContextMessage = ruleFailureContexts.isEmpty() ? '' : "- " + ruleFailureContexts.join('\n- ')
+
+            String errorMessage = """
+Error generating patch for the combined set of changes from these lint rule(s): [${ruleNames.join(", ")}]\n
+To resolve this, please try applying the rules individually.\n
+For example, if the related rules with combined set of changes are [rule1, rule2], you can run: './gradlew fixGradleLint -PgradleLint.rules=rule1' followed by './gradlew fixGradleLint -PgradleLint.rules=rule2' so that the changes are applied one at a time.\n
+${ruleFailureContextMessage}
+Exception: ${e.getMessage()}
+"""
+            throw new UnexpectedLintRuleFailureException(errorMessage, e)
         }
     }
 
