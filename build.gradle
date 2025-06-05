@@ -65,7 +65,7 @@ dependencies {
     shadow 'com.netflix.nebula:nebula-gradle-interop:latest.release'
     shadow 'org.apache.maven:maven-model-builder:3.8.3'
     shadow 'org.codehaus.gpars:gpars:1.2.1'
-    plugin  'com.google.guava:guava:19.0'
+    plugin  'com.google.guava:guava:33.4.8-jre'
     plugin('org.ow2.asm:asm:9.+') {
         version {
             reject '7.2-beta'
