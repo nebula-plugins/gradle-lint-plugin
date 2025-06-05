@@ -16,6 +16,7 @@
 
 package com.netflix.nebula.lint.plugin
 
+
 import com.netflix.nebula.lint.GradleViolation
 import com.netflix.nebula.lint.rule.BuildFiles
 import com.netflix.nebula.lint.rule.GradleLintRule
@@ -30,7 +31,8 @@ import org.codenarc.ruleset.ListRuleSet
 import org.codenarc.ruleset.RuleSet
 import org.codenarc.source.SourceString
 import org.gradle.api.Project
-import org.gradle.api.UnknownDomainObjectException
+
+import java.util.function.Supplier
 
 class LintService {
     def registry = new LintRuleRegistry()
@@ -39,14 +41,14 @@ class LintService {
      * An analyzer that can be used over and over again against multiple subprojects, compiling the results, and recording
      * the affected files according to which files the violation fixes touch
      */
-    class ReportableAnalyzer extends AbstractSourceAnalyzer {
+    class ReportableAnalyzer extends AbstractSourceAnalyzer implements Serializable {
         DirectoryResults resultsForRootProject
 
-        ReportableAnalyzer(Project project) {
-            resultsForRootProject = new DirectoryResults(project.projectDir.absolutePath)
+        ReportableAnalyzer(File rootDir) {
+            resultsForRootProject = new DirectoryResults(rootDir.absolutePath)
         }
 
-        Results analyze(Project analyzedProject, String source, RuleSet ruleSet) {
+        Results analyze(ProjectInfo analyzedProject, String source, RuleSet ruleSet) {
             DirectoryResults results
             if (resultsForRootProject.path != analyzedProject.projectDir.absolutePath) {
                 results = new DirectoryResults(analyzedProject.projectDir.absolutePath)
@@ -75,47 +77,53 @@ class LintService {
         }
     }
 
-    private RuleSet ruleSetForProject(Project p, boolean onlyCriticalRules) {
-        if (p.buildFile.exists()) {
-            GradleLintExtension extension
-            try {
-                extension = p.extensions.getByType(GradleLintExtension)
-            } catch (UnknownDomainObjectException ignored) {
-                // if the subproject has not applied lint, use the extension configuration from the root project
-                extension = p.rootProject.extensions.getByType(GradleLintExtension)
-            }
-
-            def rules = (p.hasProperty('gradleLint.rules') ? p.property('gradleLint.rules') : null)?.toString()?.split(',')?.toList() ?:
-                    extension.rules + extension.criticalRules
-
-            def includedRules = rules.unique()
-                    .collect { registry.buildRules(it, p, extension.criticalRules.contains(it)) }
-                    .flatten() as List<Rule>
-
-            if (onlyCriticalRules) {
-                includedRules = includedRules.findAll { it instanceof GradleLintRule && it.critical }
-            }
-
-            def excludedRules = (p.hasProperty('gradleLint.excludedRules') ?
-                    p.property('gradleLint.excludedRules').toString().split(',').toList() : []) + extension.excludedRules
-            if (!excludedRules.isEmpty())
-                includedRules.retainAll { !excludedRules.contains(it.name) }
-
-            return RuleSetFactory.configureRuleSet(includedRules)
+    private RuleSet ruleSetForProject(ProjectInfo p, boolean onlyCriticalRules) {
+        if (p.buildFile == null || !p.buildFile.exists()) {
+            LOGGER.warn("Build file for project '{}' (path: '{}') is null or does not exist. Returning empty ruleset.", p.name, p.path)
+            return new ListRuleSet([])
         }
-        return new ListRuleSet([])
+
+        List<String> rulesToConsider = p.effectiveRuleNames ?: []
+
+        Supplier<Project> projectSupplier = { -> null } as Supplier<Project>
+
+        List<Rule> includedRules = rulesToConsider.unique()
+                .collect { String ruleName ->
+                    this.registry.buildRules(ruleName, projectSupplier, p.criticalRuleNamesForThisProject.contains(ruleName))
+                }
+                .flatten() as List<Rule>
+
+        if (onlyCriticalRules) {
+            includedRules = includedRules.findAll { Rule rule -> rule.isCritical() }
+        }
+        List<String> excludedRuleNames = p.effectiveExcludedRuleNames ?: []
+
+        if (!excludedRuleNames.isEmpty()) {
+            includedRules.retainAll { Rule rule -> !excludedRuleNames.contains(rule.getName()) }
+        }
+
+        return RuleSetFactory.configureRuleSet(includedRules)
     }
 
-    RuleSet ruleSet(Project project) {
+
+    RuleSet ruleSet(ProjectTree projectTree) {
         def ruleSet = new CompositeRuleSet()
-        ([project] + project.subprojects).each { p -> ruleSet.addRuleSet(ruleSetForProject(p, false)) }
+        projectTree.allProjects.each { ProjectInfo pInfo ->
+            ruleSet.addRuleSet(ruleSetForProject(pInfo, false))
+        }
         return ruleSet
     }
 
-    Results lint(Project project, boolean onlyCriticalRules) {
-        def analyzer = new ReportableAnalyzer(project)
-
-        ([project] + project.subprojects).each { p ->
+    Results lint(ProjectTree projectTree , boolean onlyCriticalRules) {
+        if (projectTree.allProjects.isEmpty()) {
+            return new DirectoryResults("empty_project_tree_results") // Return empty results
+        }
+        File rootDir = projectTree.allProjects.first().rootDir
+        def analyzer = new ReportableAnalyzer(rootDir)
+       // assert projectTree.getOrNull() != null
+        //assert !projectTree.get().allProjects.empty
+        //List<Project> projectsToLint = [project] + project.subprojects
+        projectTree.allProjects.each {p ->
             def files = SourceCollector.getAllFiles(p.buildFile, p)
             def buildFiles = new BuildFiles(files)
             def ruleSet = ruleSetForProject(p, onlyCriticalRules)
