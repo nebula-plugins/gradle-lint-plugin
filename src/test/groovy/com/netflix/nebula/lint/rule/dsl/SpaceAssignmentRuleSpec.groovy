@@ -6,6 +6,14 @@ import spock.lang.Subject
 @Subject(SpaceAssignmentRule)
 class SpaceAssignmentRuleSpec extends BaseIntegrationTestKitSpec {
 
+    def setup() {
+        System.setProperty("ignoreDeprecations", "true")
+    }
+
+    def cleanup() {
+        System.setProperty("ignoreDeprecations", "false")
+    }
+
     def 'reports and fixes a violation if space assignment syntax is used - simple cases'() {
         buildFile << """
             import java.util.regex.Pattern;
@@ -181,5 +189,81 @@ class SpaceAssignmentRuleSpec extends BaseIntegrationTestKitSpec {
 
         and:
         runTasks('help', '--warning-mode', 'none')
+    }
+
+    def 'reports and fixes a violation if space assignment syntax is used as a property getter - simple cases'() {
+        buildFile << """
+            plugins {
+                id 'java'
+                id 'nebula.lint'
+            }
+            gradleLint.rules = ['space-assignment']
+            tasks.register('task1') {
+                if (project.hasProperty('myCustomDescription')) {
+                    description = project.property('myCustomDescription')
+                }
+                doLast {
+                    logger.warn "myCustomDescription: \${description}"
+                }
+            }
+            tasks.register('task2', Exec) {
+                commandLine "echo"
+                args ('--task2', project.property("myCustomProperty1"))
+                doLast {
+                    logger.warn "myCustomProperty1: \${project.property('myCustomProperty1')}"
+                }
+            }
+            def a = project.property "myCustomProperty2"
+            
+            def subA = project(':subA')
+            subA.afterEvaluate { evaluatedProject ->
+                def b = project.rootProject.allprojects.find { it.name == "subA"}.property("myCustomPropertySubA1")
+                def c = rootProject.childProjects.subA.property("myCustomPropertySubA2")
+                def d = project.findProject(':subA').property("myCustomPropertySubA3")
+                tasks.register('showProperties') {
+                    doLast {
+                        logger.warn "myCustomProperty2: \${a}"
+                        logger.warn "subA.myCustomPropertySubA1: \${b}"
+                        logger.warn "subA.myCustomPropertySubA2: \${c}"
+                        logger.warn "subA.myCustomPropertySubA3: \${d}"
+                    }
+                }
+            }
+            """.stripIndent()
+
+        new File(projectDir, "gradle.properties") << """)
+            myCustomDescription=This is a custom description
+            myCustomProperty1=property1
+            myCustomProperty2=property2
+        """.stripIndent()
+
+        addSubproject('subA', """
+            ext {
+                myCustomPropertySubA1 = "subA-one"
+                myCustomPropertySubA2 = "subA-two"
+                myCustomPropertySubA3 = "subA-three"
+            }
+            """.stripIndent())
+
+        when:
+        runTasks('fixLintGradle', '--warning-mode', 'none')
+        def results = runTasks('task1', 'task2', 'showProperties')
+
+        then: "fixes are applied correctly"
+        buildFile.text.contains("description = project.findProperty('myCustomDescription')")
+        buildFile.text.contains("args ('--task2', project.findProperty(\"myCustomProperty1\"))")
+        buildFile.text.contains("logger.warn \"myCustomProperty1: \${project.findProperty('myCustomProperty1')}\"")
+        buildFile.text.contains("def a = project.findProperty \"myCustomProperty2\"")
+        buildFile.text.contains("def b = project.rootProject.allprojects.find { it.name == \"subA\"}.findProperty(\"myCustomPropertySubA1\")")
+        buildFile.text.contains("def c = rootProject.childProjects.subA.findProperty(\"myCustomPropertySubA2\")")
+        buildFile.text.contains("def d = project.findProject(':subA').findProperty(\"myCustomPropertySubA3\")")
+
+        and: "properties are read and printed correctly"
+        results.output.contains("myCustomDescription: This is a custom description")
+        results.output.contains("myCustomProperty1: property1")
+        results.output.contains("myCustomProperty2: property2")
+        results.output.contains("subA.myCustomPropertySubA1: subA-one")
+        results.output.contains("subA.myCustomPropertySubA2: subA-two")
+        results.output.contains("subA.myCustomPropertySubA3: subA-three")
     }
 }
