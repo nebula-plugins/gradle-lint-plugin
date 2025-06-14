@@ -86,7 +86,7 @@ dependencies {
     plugin ("org.eclipse.jgit:org.eclipse.jgit:$jgitVersion") {
         transitive = false
     }
-    plugin 'org.eclipse.jdt:core:3.1.1'
+    plugin 'org.eclipse.jdt:core:3.3.0-v_771'
 
     compileOnly "com.netflix.nebula:nebula-test:10.+"
 
