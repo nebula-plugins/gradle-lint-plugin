@@ -3,7 +3,6 @@ package com.netflix.nebula.lint.rule.dependency
 import com.netflix.nebula.interop.GradleKt
 import com.netflix.nebula.lint.SourceSetUtils
 import com.netflix.nebula.lint.VersionNumber
-import com.netflix.nebula.lint.plugin.ProjectInfo
 import groovy.transform.Memoized
 import groovyx.gpars.GParsPool
 import org.gradle.api.Project
@@ -46,7 +45,7 @@ class DependencyService {
         return extension.dependencyService
     }
 
-    static synchronized void removeForProject(ProjectInfo project) {
+    static synchronized void removeForProject(Project project) {
         def extension = project.extensions.findByType(DependencyServiceExtension)
         if (extension) {
             extension.dependencyService = null

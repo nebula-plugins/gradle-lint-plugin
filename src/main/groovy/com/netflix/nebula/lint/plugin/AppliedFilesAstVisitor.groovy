@@ -12,11 +12,11 @@ import org.gradle.api.Project
  */
 class AppliedFilesAstVisitor extends ClassCodeVisitorSupport {
 
-    ProjectInfo project
+    Project project
     List<File> appliedFiles = new ArrayList()
     Map<String, String> projectVariablesMapping
 
-    AppliedFilesAstVisitor(ProjectInfo project) {
+    AppliedFilesAstVisitor(Project project) {
         this.project = project
         projectVariablesMapping = [
                 "\$projectDir" : project.projectDir.toString(),

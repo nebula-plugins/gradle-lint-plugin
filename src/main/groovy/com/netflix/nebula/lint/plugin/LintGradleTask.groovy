@@ -18,66 +18,16 @@ package com.netflix.nebula.lint.plugin
 import com.netflix.nebula.lint.*
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
-import org.gradle.api.Project
+import org.gradle.api.Task
+import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
-import org.gradle.api.tasks.*
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Optional
+import org.gradle.api.tasks.TaskAction
 import org.gradle.internal.deprecation.DeprecationLogger
-//import static com.netflix.nebula.lint.StyledTextService.Styling.*
 
-class ProjectInfo implements Serializable{
-    @Input String name
-    @Input String path
-    @InputDirectory @PathSensitive(PathSensitivity.RELATIVE) File projectDir
-    @InputDirectory @PathSensitive(PathSensitivity.RELATIVE) File rootDir
-    @InputFile @PathSensitive(PathSensitivity.RELATIVE) File buildFile
-    @Input List<String> effectiveRuleNames = []
-    @Input List<String> effectiveExcludedRuleNames = []
-    @Input List<String> criticalRuleNamesForThisProject = []
-
-
-    static ProjectInfo from(Project project ,GradleLintExtension rootProjectExtension) {
-        if (rootProjectExtension == null) {
-            throw new IllegalStateException("Root project GradleLintExtension is required but not found.")
-        }
-
-        GradleLintExtension projectSpecificExtension = project.extensions.findByType(GradleLintExtension.class) ?: rootProjectExtension
-        List<String> calculatedEffectiveRules
-        if (project.hasProperty('gradleLint.rules')) {
-            calculatedEffectiveRules = project.property('gradleLint.rules').toString().split(',').collect { it.trim() }.unique()
-        } else {
-            calculatedEffectiveRules = ((projectSpecificExtension.getRules() ?: []) + (projectSpecificExtension.getCriticalRules() ?: [])).unique()
-        }
-
-        List<String> propertyExcludedRules = []
-        if (project.hasProperty('gradleLint.excludedRules')) {
-            propertyExcludedRules = project.property('gradleLint.excludedRules').toString().split(',').collect { it.trim() }
-        }
-
-        List<String> calculatedEffectiveExcludedRules = (propertyExcludedRules + (projectSpecificExtension.getExcludedRules() ?: [])).unique()
-        List<String> actualCriticalRulesForThisProject = new ArrayList<>(projectSpecificExtension.getCriticalRules() ?: [])
-
-
-        return new ProjectInfo(
-                name: project.name,
-                path: project.path,
-                projectDir: project.projectDir,
-                rootDir: project.rootDir,
-                buildFile: project.buildFile,
-                effectiveRuleNames: calculatedEffectiveRules,
-                effectiveExcludedRuleNames: calculatedEffectiveExcludedRules,
-                criticalRuleNamesForThisProject: actualCriticalRulesForThisProject
-        )
-    }
-}
-
-class ProjectTree {
-    @Nested
-    List<ProjectInfo> allProjects
-
-    ProjectTree(List<ProjectInfo> allProjects) {
-        this.allProjects = allProjects
-    }
-}
+import static com.netflix.nebula.lint.StyledTextService.Styling.*
 
 abstract class LintGradleTask extends DefaultTask {
     @Input
@@ -95,46 +45,25 @@ abstract class LintGradleTask extends DefaultTask {
     @Input
     abstract Property<File> getProjectRootDir()
 
-    @Nested
-    abstract Property<ProjectTree> getProjectTree()
-
-    protected ProjectTree computeProjectTree(Project project) {
-        // TODO-Nouran: collect project and subproject information
-       // def projectInfos = ([project] + project.subprojects).collect {ProjectInfo.from(it)}
-       // return new ProjectTree( projectInfos)
-        GradleLintExtension rootExt = project.extensions.findByType(GradleLintExtension.class)
-        if (rootExt == null) {
-            throw new IllegalStateException("GradleLintExtension not found on root project '${project.path}'. Please ensure the lint plugin is applied to the root project.")
-        }
-        List<ProjectInfo> projectInfos = ([project] + project.getSubprojects().asList()).collect {Project p -> ProjectInfo.from(p, rootExt) }
-        return new ProjectTree(projectInfos)
-    }
-
     LintGradleTask() {
         failOnWarning.convention(false)
         onlyCriticalRules.convention(false)
-        getProjectRootDir().set(getProject().getRootProject().getProjectDir())
-        projectTree.set(getProject().getProviders().provider(() -> computeProjectTree(getProject().getRootProject())))
-       // projectTree.set(getProject().getProviders().provider(() -> computeProjectTree(getProject())))
         group = 'lint'
-       /* try {
+        try {
             def method = Task.getMethod("notCompatibleWithConfigurationCache")
             method.invoke(this)
         } catch (NoSuchMethodException ignore) {
-        }*/
+        }
     }
 
     @TaskAction
     void lint() {
-
+        //TODO: address Invocation of Task.project at execution time has been deprecated.
         DeprecationLogger.whileDisabled {
-            def violations = new LintService().lint(projectTree.get(),onlyCriticalRules.get()).violations
+            def violations = new LintService().lint(project, onlyCriticalRules.get()).violations
                     .unique { v1, v2 -> v1.is(v2) ? 0 : 1 }
-            File rootDirFile = projectRootDir.get()
-            def patchAction = new GradleLintPatchAction(rootDirFile)
-            def infoAction = new GradleLintInfoBrokerAction(rootDirFile)
 
-            (getListeners() + patchAction + infoAction + consoleOutputAction).each {
+            (getListeners() + new GradleLintPatchAction(project) + new GradleLintInfoBrokerAction(project) + consoleOutputAction).each {
                 it.lintFinished(violations)
             }
         }
@@ -161,6 +90,7 @@ abstract class LintGradleTask extends DefaultTask {
                     textOutput.println('Because none were serious, the build\'s overall status was unaffected.\n')
                 }
             }
+
             violations.groupBy { it.file }.each { buildFile, violationsByFile ->
 
                 violationsByFile.each { v ->
