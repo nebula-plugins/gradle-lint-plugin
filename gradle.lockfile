@@ -2,7 +2,11 @@
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
 cglib:cglib-nodep:3.2.2=integTestRuntimeClasspath,testRuntimeClasspath
-com.google.guava:guava:19.0=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.google.errorprone:error_prone_annotations:2.36.0=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.google.guava:failureaccess:1.0.3=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.google.guava:guava:33.4.8-jre=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.google.j2objc:j2objc-annotations:3.0.0=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.jcraft:jzlib:1.1.2=integTestRuntimeClasspath,testRuntimeClasspath
 com.netflix.nebula:gradle-contacts-plugin:7.0.1=integTestRuntimeClasspath,testRuntimeClasspath
 com.netflix.nebula:gradle-info-plugin:14.0.0=integTestCompileClasspath,integTestRuntimeClasspath,testCompileClasspath,testRuntimeClasspath
@@ -49,6 +53,7 @@ org.hamcrest:hamcrest-core:1.3=compileClasspath,integTestCompileClasspath,integT
 org.hamcrest:hamcrest:2.2=compileClasspath,integTestCompileClasspath,integTestRuntimeClasspath,testCompileClasspath,testRuntimeClasspath
 org.jetbrains.kotlin:kotlin-stdlib:2.1.0=compileClasspath,integTestCompileClasspath,integTestRuntimeClasspath,runtimeClasspath,shadow,testCompileClasspath,testRuntimeClasspath
 org.jetbrains:annotations:13.0=compileClasspath,integTestCompileClasspath,integTestRuntimeClasspath,runtimeClasspath,shadow,testCompileClasspath,testRuntimeClasspath
+org.jspecify:jspecify:1.0.0=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 org.junit.platform:junit-platform-commons:1.9.0=compileClasspath,integTestCompileClasspath,integTestRuntimeClasspath,testCompileClasspath,testRuntimeClasspath
 org.junit.platform:junit-platform-engine:1.9.0=compileClasspath,integTestCompileClasspath,integTestRuntimeClasspath,testCompileClasspath,testRuntimeClasspath
 org.multiverse:multiverse-core:0.7.0=compileClasspath,runtimeClasspath,shadow,testCompileClasspath,testRuntimeClasspath
