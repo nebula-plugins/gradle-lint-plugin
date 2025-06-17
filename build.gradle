@@ -25,7 +25,7 @@ buildscript {
 }
 
 plugins {
-    id 'com.netflix.nebula.plugin-plugin' version '21.2.2'
+    id 'com.netflix.nebula.plugin-plugin' version '21.3.3'
     id "org.jetbrains.kotlin.jvm" version '2.1.0'
     id("com.gradleup.shadow") version "9.0.0-beta1"
     id 'java-gradle-plugin'
