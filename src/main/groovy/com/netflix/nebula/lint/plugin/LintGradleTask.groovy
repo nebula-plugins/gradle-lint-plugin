@@ -18,6 +18,7 @@ package com.netflix.nebula.lint.plugin
 import com.netflix.nebula.lint.*
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
+import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
@@ -137,5 +138,29 @@ abstract class LintGradleTask extends DefaultTask {
                 }
             }
         }
+    }
+}
+class ProjectInfo implements Serializable{
+    String name
+    String path
+    File rootDir
+    File buildFile
+    File projectDir
+
+    static ProjectInfo from (Project project){
+        return new ProjectInfo(
+                name:project.name,
+                path:project.path,
+                rootDir:project.rootDir,
+                buildFile: project.buildFile,
+                projectDir:project.projectDir
+        )
+    }
+}
+class ProjectTree{
+    List<ProjectInfo> allProjects
+
+    ProjectTree(List<ProjectInfo> allProjects){
+        this.allProjects = allProjects
     }
 }
