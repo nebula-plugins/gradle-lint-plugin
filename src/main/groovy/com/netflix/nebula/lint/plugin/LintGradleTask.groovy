@@ -46,9 +46,14 @@ abstract class LintGradleTask extends DefaultTask {
     @Input
     abstract Property<File> getProjectRootDir()
 
+    @Input
+    abstract Property<ProjectTree> getProjectTree()
+
     LintGradleTask() {
         failOnWarning.convention(false)
         onlyCriticalRules.convention(false)
+        projectTree.set(project.provider {computeProjectTree(project)})
+        projectRootDir.set(project.rootDir)
         group = 'lint'
         try {
             def method = Task.getMethod("notCompatibleWithConfigurationCache")
@@ -56,6 +61,11 @@ abstract class LintGradleTask extends DefaultTask {
         } catch (NoSuchMethodException ignore) {
         }
     }
+
+    ProjectTree computeProjectTree(Project project){
+        List<ProjectInfo> projectInfos = ([project] + project.getSubprojects().asList()).collect{Project p -> ProjectInfo.from(p)}
+        return new ProjectTree(projectInfos)
+        }
 
     @TaskAction
     void lint() {
