@@ -83,7 +83,7 @@ dependencies {
     }
     plugin 'commons-lang:commons-lang:2.6'
 
-    plugin ("org.eclipse.jgit:org.eclipse.jgit:$jgitVersion") {
+    plugin ("org.eclipse.jgit:org.eclipse.jgit:$jgitVersion") { //6.6.1.202309212850-r
         transitive = false
     }
     plugin 'org.eclipse.jdt:core:3.3.0-v_771'
@@ -186,7 +186,7 @@ tasks.named('compileKotlin') {
 
 ['compileClasspath', 'runtimeClasspath', 'testCompileClasspath', 'testRuntimeClasspath'].each { confName ->
     tasks.register("dependencyReport${confName.capitalize()}", DependencyReportTask) {
-        configurations = [project.configurations.getByName(confName)] as Set
+        configurations = [project.configurations.named(confName)] as Set
         outputFile = new File(project.projectDir, "build/reports/project/${confName}-dependencies.txt")
     }
     check.dependsOn("dependencyReport${confName.capitalize()}")
