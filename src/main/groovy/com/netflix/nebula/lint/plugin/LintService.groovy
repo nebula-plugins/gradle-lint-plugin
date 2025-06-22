@@ -19,6 +19,7 @@ package com.netflix.nebula.lint.plugin
 import com.netflix.nebula.lint.GradleViolation
 import com.netflix.nebula.lint.rule.BuildFiles
 import com.netflix.nebula.lint.rule.GradleLintRule
+import com.netflix.nebula.lint.rule.ModelAwareGradleLintRule
 import com.netflix.nebula.lint.rule.dependency.DependencyService
 import org.codenarc.analyzer.AbstractSourceAnalyzer
 import org.codenarc.results.DirectoryResults
@@ -120,15 +121,20 @@ class LintService {
             def buildFiles = new BuildFiles(files)
             def ruleSet = ruleSetForProject(p, onlyCriticalRules)
             if (!ruleSet.rules.isEmpty()) {
+                boolean containsModelAwareRule = false
                 // establish which file we are linting for each rule
                 ruleSet.rules.each { rule ->
-                    if (rule instanceof GradleLintRule)
+                    if (rule instanceof GradleLintRule) {
                         rule.buildFiles = buildFiles
+                    }
+                    if (rule instanceof ModelAwareGradleLintRule) {
+                        containsModelAwareRule = true
+                    }
                 }
-
                 analyzer.analyze(p, buildFiles.text, ruleSet)
-
-                DependencyService.removeForProject(p)
+                if (containsModelAwareRule){
+                    DependencyService.removeForProject(p)
+                }
             }
         }
 
