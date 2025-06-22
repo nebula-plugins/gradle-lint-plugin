@@ -12,6 +12,24 @@ class SourceCollector {
      * It scans given build file for possible `apply from: 'another.gradle'` and recursively
      * collect all build files which are present.
      */
+    static List<File> getAllFiles(File buildFile, ProjectInfo project) {
+        if (buildFile.exists()) {
+            List<File> result = new ArrayList<>()
+            result.add(buildFile)
+            SourceCode sourceCode = new SourceString(buildFile.text)
+            ModuleNode ast = sourceCode.getAst()
+            if (ast != null && ast.getClasses() != null) {
+                for (ClassNode classNode : ast.getClasses()) {
+                    AppliedFilesAstVisitor visitor = new AppliedFilesAstVisitor(project)
+                    visitor.visitClass(classNode)
+                    result.addAll(visitor.appliedFiles)
+                }
+            }
+            return result
+        } else {
+            return Collections.emptyList()
+        }
+    }
     static List<File> getAllFiles(File buildFile, Project project) {
         if (buildFile.exists()) {
             List<File> result = new ArrayList<>()

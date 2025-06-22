@@ -25,6 +25,14 @@ class AppliedFilesAstVisitor extends ClassCodeVisitorSupport {
                 "\$project.rootDir" : project.rootDir.toString(),
         ]
     }
+    AppliedFilesAstVisitor(ProjectInfo project) {
+        projectVariablesMapping = [
+                "\$projectDir" : project.projectDir.toString(),
+                "\$project.projectDir" : project.projectDir.toString(),
+                "\$rootDir" : project.rootDir.toString(),
+                "\$project.rootDir" : project.rootDir.toString(),
+        ]
+    }
 
     void visitApplyFrom(String from) {
         if (! isHttpLink(from)) {
