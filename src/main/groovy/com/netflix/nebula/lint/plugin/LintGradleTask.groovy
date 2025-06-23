@@ -156,6 +156,7 @@ class ProjectInfo implements Serializable{
     File rootDir
     File buildFile
     File projectDir
+    File buildDir
 
     static ProjectInfo from (Project project){
         return new ProjectInfo(
@@ -163,7 +164,8 @@ class ProjectInfo implements Serializable{
                 path:project.path,
                 rootDir:project.rootDir,
                 buildFile: project.buildFile,
-                projectDir:project.projectDir
+                projectDir:project.projectDir,
+                buildDir: project.layout.buildDirectory.asFile.getOrElse(new File(project.projectDir, "build"))
         )
     }
 }
