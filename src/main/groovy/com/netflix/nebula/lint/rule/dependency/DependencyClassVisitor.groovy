@@ -272,5 +272,7 @@ final class DependencyClassVisitor extends ClassVisitor {
         void visitEnum(String name, String desc, String value) {
             readType(desc)
         }
+
+        @Override AnnotationVisitor visitArray(String name) { this }
     }
 }
