@@ -27,6 +27,7 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
 import org.gradle.internal.deprecation.DeprecationLogger
+import org.gradle.api.UnknownDomainObjectException
 
 import static com.netflix.nebula.lint.StyledTextService.Styling.*
 
@@ -49,6 +50,12 @@ abstract class LintGradleTask extends DefaultTask {
     @Input
     abstract Property<ProjectTree> getProjectTree()
 
+    @Internal
+    Project getRootProject() {
+        return project.rootProject
+    }
+
+
     LintGradleTask() {
         failOnWarning.convention(false)
         onlyCriticalRules.convention(false)
@@ -70,8 +77,9 @@ abstract class LintGradleTask extends DefaultTask {
     @TaskAction
     void lint() {
         //TODO: address Invocation of Task.project at execution time has been deprecated.
+        def rootProject = getRootProject()
         DeprecationLogger.whileDisabled {
-            def violations = new LintService().lint(project, onlyCriticalRules.get()).violations
+            def violations = new LintService().lint(projectTree.get(),rootProject, onlyCriticalRules.get()).violations
                     .unique { v1, v2 -> v1.is(v2) ? 0 : 1 }
 
             (getListeners() + new GradleLintPatchAction(project) + new GradleLintInfoBrokerAction(project) + consoleOutputAction).each {
@@ -156,16 +164,33 @@ class ProjectInfo implements Serializable{
     File rootDir
     File buildFile
     File projectDir
-    File buildDir
+    GradleLintExtension extension
+    Map<String, Object> properties
 
     static ProjectInfo from (Project project){
+        GradleLintExtension extension
+        try {
+            extension = project.extensions.getByType(GradleLintExtension)
+        } catch (UnknownDomainObjectException ignored) {
+            extension = project.rootProject.extensions.getByType(GradleLintExtension)
+        }
+
+        Map<String, Object> properties = [:]
+        if (project.hasProperty('gradleLint.rules')) {
+            properties['gradleLint.rules'] = project.property('gradleLint.rules')
+        }
+        if (project.hasProperty('gradleLint.excludedRules')) {
+            properties['gradleLint.excludedRules'] = project.property('gradleLint.excludedRules')
+        }
+        
         return new ProjectInfo(
                 name:project.name,
                 path:project.path,
                 rootDir:project.rootDir,
                 buildFile: project.buildFile,
                 projectDir:project.projectDir,
-                buildDir: project.layout.buildDirectory.asFile.getOrElse(new File(project.projectDir, "build"))
+                extension: extension,
+                properties: properties
         )
     }
 }

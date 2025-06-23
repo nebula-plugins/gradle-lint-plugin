@@ -47,7 +47,6 @@ class LintRuleRegistry {
 
 
     List<Rule> buildRules(String ruleId, Supplier<Project> projectSupplier, boolean critical) {
-        Project project = projectSupplier.get()
         assert classLoader != null
         def ruleDescriptor = findRuleDescriptor(ruleId)
         if (ruleDescriptor == null)
@@ -60,13 +59,13 @@ class LintRuleRegistry {
             throw new InvalidRuleException(String.format("No implementation class or includes specified for rule '%s' in %s.", ruleId, ruleDescriptor))
         }
 
-        def included = includes.collect { buildRules(it as String, project, critical) }.flatten() as List<Rule>
+        def included = includes.collect { buildRules(it as String, projectSupplier, critical) }.flatten() as List<Rule>
 
         if(implClassName) {
             try {
                 Rule r = (Rule) classLoader.loadClass(implClassName).newInstance()
                 if(r instanceof ModelAwareGradleLintRule) {
-                    (r as ModelAwareGradleLintRule).project = project
+                    (r as ModelAwareGradleLintRule).project = projectSupplier.get()
                 }
 
                 if(r instanceof GradleLintRule) {
