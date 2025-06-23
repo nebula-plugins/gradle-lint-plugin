@@ -109,7 +109,7 @@ class LintService {
     RuleSet ruleSet(ProjectTree projectTree) {
         def ruleSet = new CompositeRuleSet()
         projectTree.allProjects.each { p ->
-            ruleSet.addRuleSet(ruleSetForProject(p,projectTree, false))}
+            ruleSet.addRuleSet(ruleSetForProject(p, false))}
             return ruleSet
     }
 
