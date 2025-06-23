@@ -29,6 +29,8 @@ import org.gradle.api.tasks.TaskAction
 import org.gradle.internal.deprecation.DeprecationLogger
 import org.gradle.api.UnknownDomainObjectException
 
+import java.util.function.Supplier
+
 import static com.netflix.nebula.lint.StyledTextService.Styling.*
 
 abstract class LintGradleTask extends DefaultTask {
@@ -59,7 +61,7 @@ abstract class LintGradleTask extends DefaultTask {
     LintGradleTask() {
         failOnWarning.convention(false)
         onlyCriticalRules.convention(false)
-        projectTree.set(project.provider {computeProjectTree(project)})
+        projectTree.set(project.provider {ProjectTree.from(project)})
         projectRootDir.set(project.rootDir)
         group = 'lint'
         try {
@@ -69,17 +71,10 @@ abstract class LintGradleTask extends DefaultTask {
         }
     }
 
-    ProjectTree computeProjectTree(Project project){
-        List<ProjectInfo> projectInfos = ([project] + project.getSubprojects().asList()).collect{Project p -> ProjectInfo.from(p)}
-        return new ProjectTree(projectInfos)
-        }
-
     @TaskAction
     void lint() {
-        //TODO: address Invocation of Task.project at execution time has been deprecated.
-        def rootProject = getRootProject()
         DeprecationLogger.whileDisabled {
-            def violations = new LintService().lint(projectTree.get(),rootProject, onlyCriticalRules.get()).violations
+            def violations = new LintService().lint(projectTree.get(), onlyCriticalRules.get()).violations
                     .unique { v1, v2 -> v1.is(v2) ? 0 : 1 }
 
             (getListeners() + new GradleLintPatchAction(project) + new GradleLintInfoBrokerAction(project) + consoleOutputAction).each {
@@ -166,7 +161,7 @@ class ProjectInfo implements Serializable{
     File projectDir
     GradleLintExtension extension
     Map<String, Object> properties
-
+    Supplier<Project> projectSupplier
     static ProjectInfo from (Project project){
         GradleLintExtension extension
         try {
@@ -190,14 +185,25 @@ class ProjectInfo implements Serializable{
                 buildFile: project.buildFile,
                 projectDir:project.projectDir,
                 extension: extension,
-                properties: properties
+                properties: properties,
+                projectSupplier: { project }
         )
+
     }
+
+
 }
 class ProjectTree{
     List<ProjectInfo> allProjects
 
+
     ProjectTree(List<ProjectInfo> allProjects){
         this.allProjects = allProjects
+
+    }
+
+    static from(Project project) {
+        List<ProjectInfo> projectInfos = ([project] + project.getSubprojects().asList()).collect{Project p -> ProjectInfo.from(p)}
+        return new ProjectTree(projectInfos)
     }
 }

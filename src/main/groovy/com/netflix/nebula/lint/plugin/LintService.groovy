@@ -77,27 +77,19 @@ class LintService {
             []
         }
     }
-    Project findProjectByPath(Project rootProject, String path) {
-        if (rootProject.path == path) {
-            return rootProject
-        }
-        return rootProject.subprojects.find { it.path == path }
-    }
 
-    private Supplier<Project> createProjectSupplier(Project rootProject, String projectPath) {
-        return { -> findProjectByPath(rootProject, projectPath) } as Supplier<Project>
-    }
 
-    private RuleSet ruleSetForProject(ProjectInfo projectInfo, Project rootProject,boolean onlyCriticalRules) {
+
+
+    private RuleSet ruleSetForProject(ProjectInfo projectInfo,boolean onlyCriticalRules) {
         if (projectInfo.buildFile.exists()) {
-            def extension = projectInfo.extension
+            def extension = projectInfo.extension //work on it
 
             def rules = (projectInfo.properties['gradleLint.rules'])?.toString()?.split(',')?.toList() ?:
                     extension.rules + extension.criticalRules
 
-            Supplier<Project> projectSupplier = createProjectSupplier(rootProject, projectInfo.path)
             def includedRules = rules.unique()
-                    .collect { registry.buildRules(it,projectSupplier, extension.criticalRules.contains(it)) }
+                    .collect { registry.buildRules(it, projectInfo.projectSupplier, extension.criticalRules.contains(it)) }
                     .flatten() as List<Rule>
 
             if (onlyCriticalRules) {
@@ -112,9 +104,6 @@ class LintService {
         }
         return new ListRuleSet([])
     }
-    private RuleSet ruleSetForProject(Project project, boolean onlyCriticalRules) {
-        return ruleSetForProject({ project } as Supplier<Project>, onlyCriticalRules)
-    }
 
 
     RuleSet ruleSet(ProjectTree projectTree) {
@@ -124,16 +113,19 @@ class LintService {
             return ruleSet
     }
 
+    Results lint(Project project, boolean onlyCriticalRules) {
+        return lint(ProjectTree.from(project), onlyCriticalRules)
+    }
 
-    Results lint(ProjectTree projectTree,Project rootProject ,boolean onlyCriticalRules) {
+    Results lint(ProjectTree projectTree, boolean onlyCriticalRules) {
         ProjectInfo rootProjectInfo = projectTree.allProjects.find { it.path == ":" }
         def analyzer = new ReportableAnalyzer(rootProjectInfo)
 
         projectTree.allProjects.each { p ->
-            Supplier<Project> projectSupplier = createProjectSupplier(rootProject, p.path)
+
             def files = SourceCollector.getAllFiles(p.buildFile, p)
             def buildFiles = new BuildFiles(files)
-            def ruleSet = ruleSetForProject(p,rootProject, onlyCriticalRules)
+            def ruleSet = ruleSetForProject(p, onlyCriticalRules)
             if (!ruleSet.rules.isEmpty()) {
                 boolean containsModelAwareRule = false
                 // establish which file we are linting for each rule
@@ -147,7 +139,7 @@ class LintService {
                 }
                 analyzer.analyze(p, buildFiles.text, ruleSet)
                 if (containsModelAwareRule){
-                    Project project = projectSupplier.get()
+                    Project project = p.projectSupplier.get()
                     DependencyService.removeForProject(project)
                 }
             }
