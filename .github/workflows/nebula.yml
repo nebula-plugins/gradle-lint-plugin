@@ -25,7 +25,7 @@ jobs:
         java: [8, 17, 21]
     name: Gradle Build without Publish
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v4
       - name: Setup git user
         run: |
           git config --global user.name "Nebula Plugin Maintainers"
@@ -65,7 +65,7 @@ jobs:
       NETFLIX_OSS_SONATYPE_USERNAME: ${{ secrets.ORG_SONATYPE_USERNAME }}
       NETFLIX_OSS_SONATYPE_PASSWORD: ${{ secrets.ORG_SONATYPE_PASSWORD }}
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v4
       - name: Setup git user
         run: |
           git config --global user.name "Nebula Plugin Maintainers"
@@ -110,7 +110,7 @@ jobs:
       NETFLIX_OSS_REPO_USERNAME: ${{ secrets.ORG_NETFLIXOSS_USERNAME }}
       NETFLIX_OSS_REPO_PASSWORD: ${{ secrets.ORG_NETFLIXOSS_PASSWORD }}
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v4
       - name: Setup git user
         run: |
           git config --global user.name "Nebula Plugin Maintainers"
