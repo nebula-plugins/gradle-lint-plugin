@@ -27,7 +27,6 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
 import org.gradle.internal.deprecation.DeprecationLogger
-import org.gradle.api.UnknownDomainObjectException
 
 import java.util.function.Supplier
 
@@ -153,6 +152,9 @@ abstract class LintGradleTask extends DefaultTask {
         }
     }
 }
+/**
+ * A CC-compatible projection of project data.
+ */
 class ProjectInfo implements Serializable{
     String name
     String path
@@ -163,13 +165,9 @@ class ProjectInfo implements Serializable{
     Map<String, Object> properties
     Supplier<Project> projectSupplier
     static ProjectInfo from (Project project){
-        GradleLintExtension extension
-        try {
-            extension = project.extensions.getByType(GradleLintExtension)
-        } catch (UnknownDomainObjectException ignored) {
-            extension = project.rootProject.extensions.getByType(GradleLintExtension)
-        }
-
+        GradleLintExtension extension =
+                project.extensions.findByType(GradleLintExtension) ?:
+                project.rootProject.extensions.findByType(GradleLintExtension)
         Map<String, Object> properties = [:]
         if (project.hasProperty('gradleLint.rules')) {
             properties['gradleLint.rules'] = project.property('gradleLint.rules')
@@ -177,7 +175,7 @@ class ProjectInfo implements Serializable{
         if (project.hasProperty('gradleLint.excludedRules')) {
             properties['gradleLint.excludedRules'] = project.property('gradleLint.excludedRules')
         }
-        
+
         return new ProjectInfo(
                 name:project.name,
                 path:project.path,
