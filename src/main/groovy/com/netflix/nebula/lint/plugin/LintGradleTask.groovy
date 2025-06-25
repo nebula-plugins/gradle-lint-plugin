@@ -20,6 +20,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
@@ -51,16 +52,15 @@ abstract class LintGradleTask extends DefaultTask {
     @Input
     abstract Property<ProjectTree> getProjectTree()
 
-    @Internal
-    Project getRootProject() {
-        return project.rootProject
-    }
+    @Input
+    abstract Property<ProjectInfo> getProjectInfo()
 
 
     LintGradleTask() {
         failOnWarning.convention(false)
         onlyCriticalRules.convention(false)
-        projectTree.set(project.provider {ProjectTree.from(project)})
+        projectTree.set(project.provider {ProjectTree.from(project) })
+        projectInfo.set(project.provider { ProjectInfo.from(project) })
         projectRootDir.set(project.rootDir)
         group = 'lint'
         try {
@@ -76,7 +76,7 @@ abstract class LintGradleTask extends DefaultTask {
             def violations = new LintService().lint(projectTree.get(), onlyCriticalRules.get()).violations
                     .unique { v1, v2 -> v1.is(v2) ? 0 : 1 }
 
-            (getListeners() + new GradleLintPatchAction(project) + new GradleLintInfoBrokerAction(project) + consoleOutputAction).each {
+            (getListeners() + new GradleLintPatchAction(getProjectInfo().get()) + new GradleLintInfoBrokerAction(project) + consoleOutputAction).each {
                 it.lintFinished(violations)
             }
         }
@@ -161,6 +161,7 @@ class ProjectInfo implements Serializable{
     File rootDir
     File buildFile
     File projectDir
+    File buildDirectory
     GradleLintExtension extension
     Map<String, Object> properties
     Supplier<Project> projectSupplier
@@ -184,7 +185,8 @@ class ProjectInfo implements Serializable{
                 projectDir:project.projectDir,
                 extension: extension,
                 properties: properties,
-                projectSupplier: { project }
+                projectSupplier: { project },
+                buildDirectory : project.layout.buildDirectory.get().asFile
         )
 
     }
