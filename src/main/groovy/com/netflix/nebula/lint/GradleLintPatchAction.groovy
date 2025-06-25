@@ -46,7 +46,7 @@ class GradleLintPatchAction extends GradleLintViolationAction {
 
     @Override
     void lintFinished(Collection<GradleViolation> violations) {
-        File buildDir = projectInfo ? projectInfo.buildDirectory.getOrElse(new File(project.projectDir, "build")) : project.layout.buildDirectory.asFile.getOrElse(new File(project.projectDir, "build"))
+        File buildDir = projectInfo ? projectInfo.buildDirectory : project.layout.buildDirectory.asFile.getOrElse(new File(project.projectDir, "build"))
         buildDir.mkdirs()
         try {
             def patch = patch(violations*.fixes.flatten() as List<GradleLintFix>)
