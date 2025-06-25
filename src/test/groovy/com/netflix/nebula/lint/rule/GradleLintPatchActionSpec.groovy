@@ -18,6 +18,7 @@ package com.netflix.nebula.lint.rule
 
 import com.netflix.nebula.lint.*
 import org.gradle.api.Project
+import org.gradle.api.plugins.ExtensionContainer
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
@@ -34,7 +35,17 @@ class GradleLintPatchActionSpec extends Specification {
 
     def setup() {
         buildFile = temp.newFile('build.gradle')
-        project = [getRootDir: { temp.root }] as Project
+        project = [
+                getRootDir: { temp.root },
+                getExtensions: { [findByType: { null } ] as ExtensionContainer },
+                getRootProject: { project },
+                hasProperty: { false },
+                getName: { ":" },
+                getPath: { ":" },
+                getBuildFile: { buildFile },
+                getProjectDir: { temp.root },
+                getBuildDir: { temp.root },
+        ] as Project
         violation = new GradleViolation(
                 new BuildFiles([buildFile]), // does not matter
                 null, // does not matter

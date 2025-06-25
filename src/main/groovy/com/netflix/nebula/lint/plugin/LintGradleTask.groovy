@@ -165,7 +165,7 @@ class ProjectInfo implements Serializable{
     GradleLintExtension extension
     Map<String, Object> properties
     Supplier<Project> projectSupplier
-    static ProjectInfo from (Project project){
+    static ProjectInfo from(Project project){
         GradleLintExtension extension =
                 project.extensions.findByType(GradleLintExtension) ?:
                 project.rootProject.extensions.findByType(GradleLintExtension)
@@ -186,7 +186,7 @@ class ProjectInfo implements Serializable{
                 extension: extension,
                 properties: properties,
                 projectSupplier: { project },
-                buildDirectory : project.layout.buildDirectory.get().asFile
+                buildDirectory : project.buildDir
         )
 
     }

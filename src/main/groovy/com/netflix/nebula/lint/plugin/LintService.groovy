@@ -83,7 +83,7 @@ class LintService {
 
     private RuleSet ruleSetForProject(ProjectInfo projectInfo,boolean onlyCriticalRules) {
         if (projectInfo.buildFile.exists()) {
-            def extension = projectInfo.extension //work on it
+            def extension = projectInfo.extension
 
             def rules = (projectInfo.properties['gradleLint.rules'])?.toString()?.split(',')?.toList() ?:
                     extension.rules + extension.criticalRules
