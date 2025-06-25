@@ -34,7 +34,8 @@ class GradleLintPatchAction extends GradleLintViolationAction {
     ProjectInfo projectInfo
 
     GradleLintPatchAction(Project project) {
-        this.projectInfo = ProjectInfo.from(project)
+        this.project = project
+
     }
 
     GradleLintPatchAction(ProjectInfo projectInfo) {
@@ -45,7 +46,7 @@ class GradleLintPatchAction extends GradleLintViolationAction {
 
     @Override
     void lintFinished(Collection<GradleViolation> violations) {
-        File buildDir = projectInfo.buildDirectory.getOrElse(new File(project.projectDir, "build"))
+        File buildDir = projectInfo ? projectInfo.buildDirectory.getOrElse(new File(project.projectDir, "build")) : project.layout.buildDirectory.asFile.getOrElse(new File(project.projectDir, "build"))
         buildDir.mkdirs()
         try {
             def patch = patch(violations*.fixes.flatten() as List<GradleLintFix>)
@@ -262,7 +263,7 @@ Exception: ${e.getMessage()}
             if (i > 0)
                 combinedPatch += '\n'
 
-            def relativePath = projectInfo.rootDir.toPath().relativize(file.toPath()).toString()
+            def relativePath = projectInfo? projectInfo.rootDir.toPath().relativize(file.toPath()).toString() : project.rootDir.toPath().relativize(file.toPath()).toString()
             def diffHeader = """\
                 ${diffHintsWithMargin(relativePath, patchType, fileMode)}
                 |--- ${patchType == Create ? '/dev/null' : 'a/' + relativePath}
