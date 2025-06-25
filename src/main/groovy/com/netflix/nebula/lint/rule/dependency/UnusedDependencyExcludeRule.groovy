@@ -60,7 +60,7 @@ class UnusedDependencyExcludeRule extends ModelAwareGradleLintRule {
         // doing something. Note that all*.exclude style exclusions are applied to all of the configurations at the time
         // of project evaluation, but not lintExcludeConf.
         def excludeIsInTransitiveClosure = false
-        def deps = lintExcludeConf.resolvedConfiguration.lenientConfiguration.getFirstLevelModuleDependencies(Specs.SATISFIES_ALL)
+        def deps = lintExcludeConf.resolvedConfiguration.lenientConfiguration.getFirstLevelModuleDependencies()
         while(!deps.isEmpty() && !excludeIsInTransitiveClosure) {
             deps = deps.collect { d ->
                 if((!group || d.moduleGroup == group) && (!name || d.moduleName == name)) {

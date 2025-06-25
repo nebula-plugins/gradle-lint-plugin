@@ -12,7 +12,7 @@ class DependencyHelperSpec extends IntegrationSpec {
     @Unroll('should transform(remove) #dep -> #depResult')
     def 'removes version'() {
         given:
-        new File(projectDir, 'src/main/resources/META-INF/lint-rules')
+        new File(projectDir, 'src/main/resources/META-INF/lint-rules').mkdirs()
 
         def graph = new DependencyGraphBuilder().addModule('a:b:1.0.0').addModule('test.nebula:foo:1.0.0').build()
         def generator = new GradleDependencyGenerator(graph, "${projectDir}/myrepo")
@@ -69,7 +69,7 @@ class DependencyHelperSpec extends IntegrationSpec {
     @Unroll('should transform(replace) #dep -> #depResult')
     def 'replaces version'() {
         given:
-        new File(projectDir, 'src/main/resources/META-INF/lint-rules')
+        new File(projectDir, 'src/main/resources/META-INF/lint-rules').mkdirs()
 
         def graph = new DependencyGraphBuilder()
                 .addModule('a:b:1.0.0')
@@ -127,7 +127,7 @@ class DependencyHelperSpec extends IntegrationSpec {
     @Unroll('should replace #dep -> #depResult')
     def 'replaces dependency'() {
         given:
-        new File(projectDir, 'src/main/resources/META-INF/lint-rules')
+        new File(projectDir, 'src/main/resources/META-INF/lint-rules').mkdirs()
 
         def graph = new DependencyGraphBuilder().addModule('bar:baz:2.0.0').addModule('test.nebula:foo:1.0.0').build()
         def generator = new GradleDependencyGenerator(graph, "${projectDir}/myrepo")

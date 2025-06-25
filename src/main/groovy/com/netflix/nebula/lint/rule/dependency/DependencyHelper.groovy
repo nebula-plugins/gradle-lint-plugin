@@ -9,11 +9,11 @@ import org.codehaus.groovy.ast.expr.GStringExpression
 import org.codehaus.groovy.ast.expr.MapExpression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.codehaus.groovy.ast.expr.NamedArgumentListExpression
+import org.codehaus.groovy.ast.expr.VariableExpression
 
 class DependencyHelper {
     static void removeVersion(GradleViolation violation, MethodCallExpression call, GradleDependency dep) {
-        GradleDependency depClone = dep.clone()
-        depClone.version = ''
+        GradleDependency depClone = new GradleDependency(dep.group, dep.name, null, dep.classifier, dep.ext, dep.conf, dep.syntax)
         if (call.arguments.expressions.size() == 1 && call.arguments.expressions[0] instanceof ConstantExpression) {
             handleConstantExpression(violation, call.arguments.expressions[0], "'${depClone.toNotation()}'")
         } else if (call.arguments.expressions.size() == 1 && call.arguments.expressions[0] instanceof GStringExpression) {
@@ -35,16 +35,31 @@ class DependencyHelper {
     }
 
     static void replaceVersion(GradleViolation violation, MethodCallExpression call, GradleDependency dep, String replacement) {
-        GradleDependency depClone = dep.clone()
-        depClone.version = replacement
+        // Skip processing if the version contains variables
+        if (dep.version && (dep.version.contains('${') || dep.version.startsWith('$'))) {
+            return
+        }
+        
+        // Skip processing if the AST contains variable expressions for map-style dependencies
+        if (call.arguments.expressions.any { it instanceof NamedArgumentListExpression || it instanceof MapExpression }) {
+            def mapExpr = call.arguments.expressions.find { it instanceof NamedArgumentListExpression || it instanceof MapExpression }
+            if (mapExpr && hasVariableInMapExpression(mapExpr)) {
+                return
+            }
+        }
+        GradleDependency depClone = new GradleDependency(dep.group, dep.name, replacement, dep.classifier, dep.ext, dep.conf, dep.syntax)
         if (call.arguments.expressions.size() == 1 && call.arguments.expressions[0] instanceof ConstantExpression) {
             handleConstantExpression(violation, call.arguments.expressions[0], "'${depClone.toNotation()}'")
+        } else if (call.arguments.expressions.size() == 1 && call.arguments.expressions[0] instanceof GStringExpression) {
+            handleGStringExpression(violation, call.arguments.expressions[0], "\"${depClone.toNotation()}\"")
         } else if (call.arguments.expressions.size() == 1 && call.arguments.expressions[0] instanceof NamedArgumentListExpression) {
             replaceNamedArgumentListExpression(violation, call.arguments.expressions[0], 'version', replacement)
         } else if (call.arguments.expressions.size() == 2 && call.arguments.expressions[1] instanceof ClosureExpression) {
             def depExpression = call.arguments.expressions[0]
             if (depExpression instanceof ConstantExpression) {
                 handleConstantExpression(violation, depExpression, "'${depClone.toNotation()}'")
+            } else if (depExpression instanceof GStringExpression) {
+                handleGStringExpression(violation, call.arguments.expressions[0], "\"${depClone.toNotation()}\"")
             } else if (depExpression instanceof MapExpression) {
                 replaceMapExpression(violation, call.arguments.expressions[0], 'version', replacement)
             }
@@ -110,7 +125,7 @@ class DependencyHelper {
     private static void replaceMapLikeExpression(GradleViolation violation, mapLikeExpr, String key, String newValue) {
         def mapEntries = mapLikeExpr.mapEntryExpressions.clone()
         def mapString = mapEntries
-                .collect { (it.keyExpression.value == key && it.valueExpression instanceof ConstantExpression) ? "${it.keyExpression.value}: '${newValue}'" : "${it.keyExpression.value}: '${it.valueExpression.value}'" }
+                .collect { it.keyExpression.value == key ? "${it.keyExpression.value}: '${newValue}'" : "${it.keyExpression.value}: '${it.valueExpression.value}'" }
                 .join(', ')
         violation.replaceWith(mapLikeExpr, mapString)
     }
@@ -129,5 +144,11 @@ class DependencyHelper {
                 .collect { replacements.keySet().contains(it.keyExpression.value) ? "${it.keyExpression.value}: '${replacements.get(it.keyExpression.value)}'" : "${it.keyExpression.value}: '${it.valueExpression.value}'" }
                 .join(', ')
         violation.replaceWith(mapLikeExpr, mapString)
+    }
+
+    private static boolean hasVariableInMapExpression(def mapLikeExpr) {
+        return mapLikeExpr.mapEntryExpressions.any { entry ->
+            entry.keyExpression.value == 'version' && entry.valueExpression instanceof VariableExpression
+        }
     }
 }

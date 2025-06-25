@@ -25,9 +25,9 @@ buildscript {
 }
 
 plugins {
-    id 'com.netflix.nebula.plugin-plugin' version '21.3.3'
-    id "org.jetbrains.kotlin.jvm" version '2.1.0'
-    id("com.gradleup.shadow") version "9.0.0-beta1"
+    id 'com.netflix.nebula.plugin-plugin' version '22.0.2'
+    id "org.jetbrains.kotlin.jvm" version '2.2.0'
+    id("com.gradleup.shadow") version "9.0.0-beta7"
     id 'java-gradle-plugin'
 }
 
@@ -61,11 +61,10 @@ configurations.all {
 }
 
 dependencies {
-    compileOnly 'dev.gradleplugins:gradle-api:7.6'
     shadow 'com.netflix.nebula:nebula-gradle-interop:latest.release'
     shadow 'org.apache.maven:maven-model-builder:3.8.3'
     shadow 'org.codehaus.gpars:gpars:1.2.1'
-    plugin  'com.google.guava:guava:33.4.8-jre'
+    plugin 'com.google.guava:guava:33.4.8-jre'
     plugin('org.ow2.asm:asm:9.+') {
         version {
             reject '7.2-beta'
@@ -78,19 +77,19 @@ dependencies {
             because 'avoid getting prerelease versions'
         }
     }
-    plugin('org.codenarc:CodeNarc:2.0.0') {
+    plugin('org.codenarc:CodeNarc:3.6.0-groovy-4.0') {
         transitive = false
     }
     plugin 'commons-lang:commons-lang:2.6'
 
-    plugin ("org.eclipse.jgit:org.eclipse.jgit:$jgitVersion") {
+    plugin("org.eclipse.jgit:org.eclipse.jgit:$jgitVersion") {
         transitive = false
     }
     plugin 'org.eclipse.jdt:core:3.3.0-v_771'
 
-    compileOnly "com.netflix.nebula:nebula-test:10.+"
+    compileOnly "com.netflix.nebula:nebula-test:11.+"
 
-    testImplementation 'org.ow2.asm:asm-util:9.7.1'
+    testImplementation 'org.ow2.asm:asm-util:9.8'
     testImplementation 'joda-time:joda-time:latest.release'
     testImplementation 'com.netflix.nebula:gradle-info-plugin:latest.release'
 }
@@ -153,7 +152,7 @@ jar.dependsOn shadowJar
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(8))
+        languageVersion.set(JavaLanguageVersion.of(17))
     }
 }
 

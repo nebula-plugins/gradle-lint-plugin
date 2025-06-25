@@ -19,14 +19,8 @@
 package com.netflix.nebula.lint.rule.dependency.provider;
 
 import groovy.transform.CompileStatic;
-import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.*;
-import org.gradle.api.artifacts.component.ComponentIdentifier;
-import org.gradle.api.specs.Spec;
-import org.gradle.api.specs.Specs;
-import org.gradle.internal.deprecation.DeprecationLogger;
-import org.gradle.util.GradleVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,6 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @CompileStatic
 public abstract class ClasspathBasedRecommendationProvider extends AbstractRecommendationProvider {
@@ -62,10 +57,8 @@ public abstract class ClasspathBasedRecommendationProvider extends AbstractRecom
                                 .create(dep.getGroup() + ":" + dep.getName() + ":" + dep.getVersion() + "@pom"));
 
                 final Set<File> files = new LinkedHashSet<>();
-                // TODO: Replace this following  https://docs.gradle.org/8.8-rc-1/userguide/upgrading_version_8.html#deprecate_filtered_configuration_file_and_filecollection_methods
-                DeprecationLogger.whileDisabled(() -> {
-                    files.addAll(bomConf.getResolvedConfiguration().getLenientConfiguration().getFiles(Specs.SATISFIES_ALL));
-                });
+                files.addAll(bomConf.getResolvedConfiguration().getLenientConfiguration().getArtifacts().stream().map(ResolvedArtifact::getFile).collect(Collectors.toSet()));
+
 
                 for (File file : files) {
                     if (shouldAddToBoms(file)) {

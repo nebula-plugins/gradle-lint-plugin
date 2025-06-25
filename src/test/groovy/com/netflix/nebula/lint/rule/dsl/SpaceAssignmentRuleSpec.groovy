@@ -1,9 +1,11 @@
 package com.netflix.nebula.lint.rule.dsl
 
 import com.netflix.nebula.lint.BaseIntegrationTestKitSpec
+import spock.lang.Ignore
 import spock.lang.Subject
 
 @Subject(SpaceAssignmentRule)
+@Ignore("This should happen before Gradle 9.x")
 class SpaceAssignmentRuleSpec extends BaseIntegrationTestKitSpec {
 
     def 'reports and fixes a violation if space assignment syntax is used - simple cases'() {

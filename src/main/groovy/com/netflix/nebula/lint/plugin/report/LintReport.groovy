@@ -20,6 +20,7 @@ import org.gradle.util.internal.ClosureBackedAction
 
 import javax.annotation.Nullable
 import javax.inject.Inject
+import java.lang.reflect.InvocationTargetException
 
 abstract class LintReport implements SingleFileReport,
         CustomizableHtmlReport {
@@ -140,7 +141,16 @@ abstract class LintReport implements SingleFileReport,
     abstract AbstractReportWriter getWriter()
 
     void write(AnalysisContext analysisContext, Results results) {
-        writer.writeReport(analysisContext, results)
+        def writer = getWriter()
+        def outputFile = outputLocation.get().asFile
+        
+        // Ensure parent directory exists
+        outputFile.parentFile.mkdirs()
+        
+        // Use the 3-parameter writeReport method that takes a Writer
+        outputFile.withWriter { fileWriter ->
+            writer.writeReport(fileWriter, analysisContext, results)
+        }
     }
 
     /**

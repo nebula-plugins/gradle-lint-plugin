@@ -20,9 +20,13 @@ class AppliedFilesAstVisitor extends ClassCodeVisitorSupport {
         this.project = project
         projectVariablesMapping = [
                 "\$projectDir" : project.projectDir.toString(),
+                "\${projectDir}" : project.projectDir.toString(),
                 "\$project.projectDir" : project.projectDir.toString(),
+                "\${project.projectDir}" : project.projectDir.toString(),
                 "\$rootDir" : project.rootDir.toString(),
+                "\${rootDir}" : project.rootDir.toString(),
                 "\$project.rootDir" : project.rootDir.toString(),
+                "\${project.rootDir}" : project.rootDir.toString(),
         ]
     }
 
@@ -31,7 +35,7 @@ class AppliedFilesAstVisitor extends ClassCodeVisitorSupport {
             //handle if path contains ${rootDir} ${project.rootDir} ${projectDir} ${project.projectDir}
             def projectVariable = projectVariablesMapping.find {from.contains(it.key) }
             if (projectVariable) {
-                def absolutePath = from.replaceAll("\\$projectVariable.key", projectVariable.value)
+                def absolutePath = from.replace(projectVariable.key, projectVariable.value)
                 appliedFiles.addAll(SourceCollector.getAllFiles(new File(absolutePath), project))
             } else {
                 appliedFiles.addAll(SourceCollector.getAllFiles(new File(project.projectDir, from), project))

@@ -36,7 +36,7 @@ class SourceCollectorTest extends ProjectSpec {
         def rootFile = new File(projectDir, 'build.gradle')
         def level1Sibling1 = new File(projectDir, 'level1Sibling1.gradle')
         def level1Sibling2 = new File(projectDir, 'level1Sibling2.gradle')
-        def level1Sibling3 = new File(projectDir, 'level1Sibling2.gradle')
+        def level1Sibling3 = new File(projectDir, 'level1Sibling3.gradle')
         def level2 = new File(projectDir, 'level2.gradle')
         rootFile.text = """
             apply from: "\${project.projectDir}/level1Sibling1.gradle"
