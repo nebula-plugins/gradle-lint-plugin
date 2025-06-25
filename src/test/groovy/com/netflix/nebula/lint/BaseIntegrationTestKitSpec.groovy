@@ -6,6 +6,8 @@ abstract class BaseIntegrationTestKitSpec extends IntegrationTestKitSpec {
     def setup() {
         // Enable configuration cache :)
         new File(projectDir, 'gradle.properties') << '''org.gradle.configuration-cache=true'''.stripIndent()
+
+        gradleVersion = '9.0.0-rc-1'
     }
 
 
