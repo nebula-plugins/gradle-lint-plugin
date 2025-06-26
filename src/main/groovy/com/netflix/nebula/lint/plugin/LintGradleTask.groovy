@@ -65,7 +65,7 @@ abstract class LintGradleTask extends DefaultTask {
         projectTree.set(project.provider {ProjectTree.from(project) })
         projectInfo.set(project.provider { ProjectInfo.from(project) })
         projectRootDir.set(project.rootDir)
-        infoBrokerAction = new GradleLintInfoBrokerAction(projectInfo.get())
+        infoBrokerAction = new GradleLintInfoBrokerAction(project)
         group = 'lint'
         try {
             def method = Task.getMethod("notCompatibleWithConfigurationCache")

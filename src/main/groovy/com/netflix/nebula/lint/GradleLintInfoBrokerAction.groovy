@@ -9,17 +9,10 @@ import org.gradle.api.Project
 class GradleLintInfoBrokerAction extends GradleLintViolationAction {
     Plugin nebulaInfoBroker
     ProjectInfo projectInfo
-    Project project
+
 
     GradleLintInfoBrokerAction(Project project){
-        this.project = project
-        project.getPlugins().withId('nebula.info-broker') { plugin ->
-            nebulaInfoBroker = plugin
-        }
-    }
-
-    GradleLintInfoBrokerAction(ProjectInfo projectInfo){
-        this.projectInfo = projectInfo
+        this.projectInfo = ProjectInfo.from(project)
         project.getPlugins().withId('nebula.info-broker') { plugin ->
             nebulaInfoBroker = plugin
         }
@@ -43,7 +36,7 @@ class GradleLintInfoBrokerAction extends GradleLintViolationAction {
     }
 
     LintReportItem buildReportItem(GradleViolation v) {
-        def buildFilePath = projectInfo? projectInfo.rootDir.toURI().relativize(v.file.toURI()).toString() : project.rootDir.toURI().relativize(v.file.toURI()).toString()
+        def buildFilePath = projectInfo.rootDir.toURI().relativize(v.file.toURI()).toString()
         new LintReportItem(buildFilePath, v.rule.name, v.rule.getPriority() as String,
                 v.lineNumber ?: -1, v.sourceLine ?: 'unspecified', v.message ?: "")
     }
