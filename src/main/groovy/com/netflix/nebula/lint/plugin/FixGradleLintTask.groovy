@@ -25,6 +25,7 @@ import org.eclipse.jgit.api.ApplyCommand
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
@@ -46,9 +47,22 @@ abstract class FixGradleLintTask extends DefaultTask implements VerificationTask
     @Internal
     GradleLintInfoBrokerAction infoBrokerAction
 
+    @Input
+    abstract Property<ProjectInfo> getProjectInfo()
+
+    @Internal
+    GradleLintPatchAction patchAction
+
+    @Input
+    abstract Property<ProjectTree> getProjectTree()
+
+
 
     FixGradleLintTask() {
         infoBrokerAction = new GradleLintInfoBrokerAction(project)
+        patchAction = new GradleLintPatchAction(projectInfo.get())
+        projectInfo.set(project.provider { ProjectInfo.from(project) })
+        projectTree.set(project.provider {ProjectTree.from(project) })
         userDefinedListeners.convention([])
         outputs.upToDateWhen { false }
         group = 'lint'
@@ -58,16 +72,16 @@ abstract class FixGradleLintTask extends DefaultTask implements VerificationTask
     void lintCorrections() {
         //TODO: address Invocation of Task.project at execution time has been deprecated.
         DeprecationLogger.whileDisabled {
-            def violations = new LintService().lint(project, false).violations
+            def violations = new LintService().lint(projectTree.get(), false).violations
                     .unique { v1, v2 -> v1.is(v2) ? 0 : 1 }
 
-            (userDefinedListeners.get() + infoBrokerAction + new GradleLintPatchAction(project)).each {
+            (userDefinedListeners.get() + infoBrokerAction + patchAction).each {
                 it.lintFinished(violations)
             }
 
-            def patchFile = new File(project.layout.buildDirectory.asFile.get(), GradleLintPatchAction.PATCH_NAME)
+            def patchFile = new File(projectInfo.get().buildDirectory, GradleLintPatchAction.PATCH_NAME)
             if (patchFile.exists()) {
-                new ApplyCommand(new NotNecessarilyGitRepository(project.projectDir)).setPatch(patchFile.newInputStream()).call()
+                new ApplyCommand(new NotNecessarilyGitRepository(projectInfo.get().projectDir)).setPatch(patchFile.newInputStream()).call()
             }
 
             (userDefinedListeners.get() + infoBrokerAction + consoleOutputAction()).each {
