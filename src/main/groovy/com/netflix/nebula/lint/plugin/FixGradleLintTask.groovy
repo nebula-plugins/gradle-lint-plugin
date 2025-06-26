@@ -47,22 +47,22 @@ abstract class FixGradleLintTask extends DefaultTask implements VerificationTask
     @Internal
     GradleLintInfoBrokerAction infoBrokerAction
 
-    @Input
+    @Internal
     abstract Property<ProjectInfo> getProjectInfo()
 
     @Internal
     GradleLintPatchAction patchAction
 
-    @Input
+    @Internal
     abstract Property<ProjectTree> getProjectTree()
 
 
 
     FixGradleLintTask() {
-        infoBrokerAction = new GradleLintInfoBrokerAction(project)
-        patchAction = new GradleLintPatchAction(projectInfo.get())
         projectInfo.set(project.provider { ProjectInfo.from(project) })
         projectTree.set(project.provider {ProjectTree.from(project) })
+        infoBrokerAction = new GradleLintInfoBrokerAction(project)
+        patchAction = new GradleLintPatchAction(projectInfo.get())
         userDefinedListeners.convention([])
         outputs.upToDateWhen { false }
         group = 'lint'

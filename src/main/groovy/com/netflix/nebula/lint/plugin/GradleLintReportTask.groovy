@@ -57,14 +57,16 @@ abstract class GradleLintReportTask extends DefaultTask implements VerificationT
     @Internal
     final NamedDomainObjectContainer<LintReport> reports
 
-    @Input
+    @Internal
     abstract Property<ProjectInfo> getProjectInfo()
 
-    @Input
+    @Internal
     abstract Property<ProjectTree> getProjectTree()
 
     @Inject
     GradleLintReportTask(ObjectFactory objects) {
+        projectInfo.set(project.provider { ProjectInfo.from(project) })
+        projectTree.set(project.provider { ProjectTree.from(project) })
         projectName = objects.property(String).convention(projectInfo.get().name)
         reportsDir = objects.directoryProperty()
         reports =
