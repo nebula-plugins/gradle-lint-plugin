@@ -55,6 +55,9 @@ abstract class LintGradleTask extends DefaultTask {
     @Input
     abstract Property<ProjectInfo> getProjectInfo()
 
+    @Internal
+    GradleLintInfoBrokerAction infoBrokerAction
+
 
     LintGradleTask() {
         failOnWarning.convention(false)
@@ -62,6 +65,7 @@ abstract class LintGradleTask extends DefaultTask {
         projectTree.set(project.provider {ProjectTree.from(project) })
         projectInfo.set(project.provider { ProjectInfo.from(project) })
         projectRootDir.set(project.rootDir)
+        infoBrokerAction = new GradleLintInfoBrokerAction(projectInfo.get())
         group = 'lint'
         try {
             def method = Task.getMethod("notCompatibleWithConfigurationCache")
@@ -76,7 +80,7 @@ abstract class LintGradleTask extends DefaultTask {
             def violations = new LintService().lint(projectTree.get(), onlyCriticalRules.get()).violations
                     .unique { v1, v2 -> v1.is(v2) ? 0 : 1 }
 
-            (getListeners() + new GradleLintPatchAction(getProjectInfo().get()) + new GradleLintInfoBrokerAction(project) + consoleOutputAction).each {
+            (getListeners() + new GradleLintPatchAction(getProjectInfo().get()) + infoBrokerAction + consoleOutputAction).each {
                 it.lintFinished(violations)
             }
         }
