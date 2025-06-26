@@ -23,6 +23,8 @@ abstract class LintXmlReport extends LintReport {
 
     @Override
     AbstractReportWriter getWriter() {
-        return new XmlReportWriter(outputFile: outputLocation.get().asFile)
+        def writer = new XmlReportWriter()
+        writer.outputFile = outputLocation.get().asFile
+        return writer
     }
 }

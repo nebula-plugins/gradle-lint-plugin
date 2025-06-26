@@ -663,22 +663,34 @@ class DependencyService {
 
         // all android confs get squashed into either debug or release output dir?
         if (confName.startsWith('test')) {
-            def androidTestDebugOutput = project.tasks.findByName('compileDebugUnitTestJavaWithJavac')?.destinationDir
-            if (androidTestDebugOutput && androidTestDebugOutput.exists()) {
-                return androidTestDebugOutput
+            def androidTestDebugTask = project.tasks.findByName('compileDebugUnitTestJavaWithJavac')
+            if (androidTestDebugTask) {
+                def androidTestDebugOutput = androidTestDebugTask.destinationDir
+                if (androidTestDebugOutput && androidTestDebugOutput.exists()) {
+                    return androidTestDebugOutput
+                }
             }
 
-            def androidTestReleaseOutput = project.tasks.findByName('compileReleaseUnitTestJavaWithJavac')?.destinationDir
-            return androidTestReleaseOutput
+            def androidTestReleaseTask = project.tasks.findByName('compileReleaseUnitTestJavaWithJavac')
+            if (androidTestReleaseTask) {
+                return androidTestReleaseTask.destinationDir
+            }
+            return null
         }
 
-        def androidDebugOutput = project.tasks.findByName('compileDebugJavaWithJavac')?.destinationDir
-        if (androidDebugOutput && androidDebugOutput.exists()) {
-            return androidDebugOutput
+        def androidDebugTask = project.tasks.findByName('compileDebugJavaWithJavac')
+        if (androidDebugTask) {
+            def androidDebugOutput = androidDebugTask.destinationDir
+            if (androidDebugOutput && androidDebugOutput.exists()) {
+                return androidDebugOutput
+            }
         }
 
-        def androidReleaseOutput = project.tasks.findByName('compileReleaseJavaWithJavac')?.destinationDir
-        return androidReleaseOutput
+        def androidReleaseTask = project.tasks.findByName('compileReleaseJavaWithJavac')
+        if (androidReleaseTask) {
+            return androidReleaseTask.destinationDir
+        }
+        return null
     }
 
     Comparator<? super SourceSet> sourceSetComparator() {

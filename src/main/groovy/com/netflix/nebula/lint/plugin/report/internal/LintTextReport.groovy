@@ -22,6 +22,8 @@ abstract class LintTextReport extends LintReport {
 
     @Override
     AbstractReportWriter getWriter() {
-        return new TextReportWriter(outputFile: outputLocation.get().asFile)
+        def writer = new TextReportWriter()
+        writer.outputFile = outputLocation.get().asFile
+        return writer
     }
 }

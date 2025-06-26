@@ -235,7 +235,7 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
      * @return a single or multi-line code snippet stripped of indentation, code that exists on the starting line
      * prior to the starting column, and code that exists on the last line after the ending column
      */
-    private final String sourceCode(ASTNode node) {
+    final String sourceCode(ASTNode node) {
         if (!node) return null
 
         // make a copy of violating lines so they can be formatted for display in a report
@@ -486,14 +486,14 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                         def shell = new GroovyShell()
                         shell.setVariable('project', project as Project)
                         try {
-                            dep = shell.evaluate('project.' + sourceCode(call.arguments))
+                            dep = shell.evaluate('project.' + sourceCode(call.arguments as ASTNode))
                             dependency = GradleDependency.fromConstant(dep)
                             if (dependency != null) {
                                 dependency.syntax = GradleDependency.Syntax.EvaluatedArbitraryCode
                             }
                         } catch (Throwable t) {
                             // if we cannot evaluate this expression, just give up
-                            logger.debug("Unable to evaluate dependency expression ${sourceCode(call.arguments)}", t)
+                            logger.debug("Unable to evaluate dependency expression ${sourceCode(call.arguments as ASTNode)}", t)
                             dep = new NotEvaluatedObject(call.arguments)
                         }
                         if (dependency == null) {

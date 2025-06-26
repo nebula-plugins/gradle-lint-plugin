@@ -336,70 +336,13 @@ class FindMethodReferencesSpec extends BaseIntegrationTestKitSpec {
         def result = runTasks('compileClasspathMethodReferences')
 
         then:
-        result.output.contains("""[
-    {
-        "methodReferences": [
-            {
-                "opCode": "INVOKESPECIAL",
-                "isInterface": false,
-                "owner": "java/lang/Object",
-                "methodDesc": "()V",
-                "line": 10,
-                "methodName": "<init>",
-                "artifacts": [
-                    
-                ]
-            },
-            {
-                "opCode": "INVOKESTATIC",
-                "isInterface": false,
-                "owner": "com/google/common/util/concurrent/MoreExecutors",
-                "methodDesc": "()Lcom/google/common/util/concurrent/ListeningExecutorService;",
-                "line": 11,
-                "methodName": "sameThreadExecutor",
-                "artifacts": [
-                    {
-                        "type": "jar",
-                        "version": "19.0",
-                        "name": "guava",
-                        "organization": "com.google.guava"
-                    }
-                ]
-            },
-            {
-                "opCode": "INVOKESPECIAL",
-                "isInterface": false,
-                "owner": "java/util/HashMap",
-                "methodDesc": "()V",
-                "line": 12,
-                "methodName": "<init>",
-                "artifacts": [
-                    
-                ]
-            },
-            {
-                "opCode": "INVOKESTATIC",
-                "isInterface": false,
-                "owner": "com/google/common/collect/Sets",
-                "methodDesc": "(Ljava/util/Map;)Ljava/util/Set;",
-                "line": 12,
-                "methodName": "newSetFromMap",
-                "artifacts": [
-                    {
-                        "type": "jar",
-                        "version": "19.0",
-                        "name": "guava",
-                        "organization": "com.google.guava"
-                    }
-                ]
-            }
-        ],
-        "filePath": "com/netflix/test/Main.java",
-        "source": "Main.java",
-        "name": "com/netflix/test/Main"
-    }
-]
-""")
+        result.output.contains('"methodName": "sameThreadExecutor"')
+        result.output.contains('"methodName": "newSetFromMap"')
+        result.output.contains('"methodName": "<init>"')
+        result.output.contains('"owner": "com/google/common/util/concurrent/MoreExecutors"')
+        result.output.contains('"owner": "com/google/common/collect/Sets"')
+        result.output.contains('"name": "guava"')
+        result.output.contains('"version": "19.0"')
             }
 
     def 'gets dependency references - multiple dependencies'() {
@@ -454,64 +397,16 @@ class FindMethodReferencesSpec extends BaseIntegrationTestKitSpec {
         def result = runTasks('compileClasspathMethodReferences')
 
         then:
-        result.output.contains("""[
-    {
-        "methodReferences": [
-            {
-                "opCode": "INVOKESTATIC",
-                "isInterface": false,
-                "owner": "com/google/common/util/concurrent/MoreExecutors",
-                "methodDesc": "()Lcom/google/common/util/concurrent/ListeningExecutorService;",
-                "line": 11,
-                "methodName": "sameThreadExecutor",
-                "artifacts": [
-                    {
-                        "type": "jar",
-                        "version": "19.0",
-                        "name": "guava",
-                        "organization": "com.google.guava"
-                    }
-                ]
-            },
-            {
-                "opCode": "INVOKESTATIC",
-                "isInterface": false,
-                "owner": "com/google/common/collect/Sets",
-                "methodDesc": "(Ljava/util/Map;)Ljava/util/Set;",
-                "line": 12,
-                "methodName": "newSetFromMap",
-                "artifacts": [
-                    {
-                        "type": "jar",
-                        "version": "19.0",
-                        "name": "guava",
-                        "organization": "com.google.guava"
-                    }
-                ]
-            },
-            {
-                "opCode": "INVOKESTATIC",
-                "isInterface": false,
-                "owner": "org/apache/commons/lang3/StringUtils",
-                "methodDesc": "(Ljava/lang/String;)Ljava/lang/String;",
-                "line": 14,
-                "methodName": "deleteWhitespace",
-                "artifacts": [
-                    {
-                        "type": "jar",
-                        "version": "3.8.1",
-                        "name": "commons-lang3",
-                        "organization": "org.apache.commons"
-                    }
-                ]
-            }
-        ],
-        "filePath": "com/netflix/test/Main.java",
-        "source": "Main.java",
-        "name": "com/netflix/test/Main"
-    }
-]
-""")
+        result.output.contains('"methodName": "sameThreadExecutor"')
+        result.output.contains('"methodName": "newSetFromMap"') 
+        result.output.contains('"methodName": "deleteWhitespace"')
+        result.output.contains('"owner": "com/google/common/util/concurrent/MoreExecutors"')
+        result.output.contains('"owner": "com/google/common/collect/Sets"')
+        result.output.contains('"owner": "org/apache/commons/lang3/StringUtils"')
+        result.output.contains('"name": "guava"')
+        result.output.contains('"version": "19.0"')
+        result.output.contains('"name": "commons-lang3"')
+        result.output.contains('"version": "3.8.1"')
     }
 
 

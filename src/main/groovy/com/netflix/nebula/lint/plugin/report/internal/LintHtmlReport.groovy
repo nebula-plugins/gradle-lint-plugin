@@ -22,6 +22,8 @@ abstract class LintHtmlReport extends LintReport {
 
     @Override
     AbstractReportWriter getWriter() {
-        return new HtmlReportWriter(outputFile: outputLocation.get().asFile)
+        def writer = new HtmlReportWriter()
+        writer.outputFile = outputLocation.get().asFile
+        return writer
     }
 }

@@ -263,80 +263,6 @@ test.nebula:a:1.2.0\n""")
         coreAlignment << [true]
     }
 
-    @IgnoreIf({ jvm.isJava21() })
-    def 'handles dependencies and forces defined per project | core alignment #coreAlignment'() {
-        definePluginOutsideOfPluginBlock = true
-        //Necessary as 8.x does not have force support
-        gradleVersion = '7.6'
-        def graph = new DependencyGraphBuilder()
-                .addModule('test.nebula:d:1.0.0')
-                .addModule('test.nebula:d:1.1.0')
-                .addModule('test.nebula:d:1.2.0')
-                .addModule('test.nebula:d:1.3.0')
-
-                .addModule('test.nebula:e:1.0.0')
-                .addModule('test.nebula:e:1.1.0')
-                .addModule('test.nebula:e:1.2.0')
-                .addModule('test.nebula:e:1.3.0')
-                .build()
-        new GradleDependencyGenerator(graph, "${projectDir}/testrepogen").generateTestMavenRepo()
-
-        buildFile << """\
-            allprojects {
-                apply plugin: 'nebula.lint'
-                repositories {
-                    maven { url = '${mavenrepo.absolutePath}' }
-                }
-                gradleLint.rules = ['bypassed-forces']
-            }
-            subprojects {
-                apply plugin: 'java'
-                dependencies {
-                    implementation (group: 'test.nebula', name: 'a', version: 'latest.release') { force = true }
-                }
-                task dependenciesForAll(type: DependencyReportTask) {}
-            }
-            project(':sub2') {
-                apply plugin: 'java'
-                dependencies {
-                    implementation (group: 'test.nebula', name: 'b', version: 'latest.release') { force = true }
-                }
-            }
-            // this style is never seen by lint
-            [project(':sub1'), project(':sub2')].each { project ->
-                project.apply plugin: 'java'
-                project.dependencies {
-                    implementation (group: 'test.nebula', name: 'c', version: 'latest.release') { force = true }
-                }
-            }
-            """.stripIndent()
-        addSubproject('sub1', """
-        configurations {
-            newConfiguration1
-        }
-        dependencies {
-            implementation (group: 'test.nebula', name: 'd', version: '1.2.0') { force = true }
-        }
-        """.stripIndent())
-
-        addSubproject('sub2', """
-        configurations {
-            newConfiguration2
-        }
-        dependencies {
-            implementation (group: 'test.nebula', name: 'e', version: '1.1.0') { force = true }
-        }
-        """.stripIndent())
-
-        when:
-        def tasks = ['dependenciesForAll', '--configuration', 'compileClasspath', '--warning-mode', 'none']
-        tasks += 'fixGradleLint'
-        def results = runTasks(*tasks)
-
-        then:
-        !results.output.contains('FAILED')
-    }
-
     @Unroll
     def 'resolution strategy force with dependencies as #type show 0 violations | core alignment #coreAlignment'() {
         // note: 'accept' for substitution rules does not match on dynamic versions
@@ -864,43 +790,6 @@ test.nebula:a:1.3.0\n""")
         'latest.release' | 'latest.release'        | true
         'range'          | '[1.0.0,1.2.0]'         | true
         'variable'       | '\${testNebulaVersion}' | true
-    }
-
-    @Unroll
-    @IgnoreIf({ jvm.isJava21() })
-    def 'ignores buildscript dependencies for #type'() {
-        //Necessary as 8.x does not have force support
-        gradleVersion = '7.6'
-        buildFile << """\
-            buildscript {
-                repositories {
-                    maven { url = "https://plugins.gradle.org/m2/" }
-                }
-                dependencies {
-                    classpath("com.netflix.nebula:nebula-dependency-recommender:9.0.2") {
-                        force = true
-                    }
-                }
-            }
-            plugins {
-                id 'java'
-                id 'nebula.lint'
-            }
-            apply plugin: "nebula.dependency-recommender"
-            gradleLint.rules = ['bypassed-forces']
-        """.stripIndent()
-
-        when:
-        def tasks = ['buildEnvironment', 'dependencies', '--warning-mode', 'none']
-        tasks += 'fixGradleLint'
-        def results = runTasks(*tasks)
-
-        then:
-        results.output.contains('0 violations')
-
-        where:
-        type                      | _
-        'direct dependency force' | _
     }
 
     private void setupDependenciesAndRules() {

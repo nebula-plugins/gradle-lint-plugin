@@ -337,11 +337,6 @@ class ClasspathBasedRecommendationProviderTest extends BaseIntegrationTestKitSpe
             }
 
             @Override
-            boolean contentEquals(Dependency dependency) {
-                return false
-            }
-
-            @Override
             Dependency copy() {
                 return null
             }

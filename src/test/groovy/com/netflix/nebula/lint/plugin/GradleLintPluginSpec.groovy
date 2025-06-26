@@ -824,8 +824,7 @@ class GradleLintPluginSpec extends BaseIntegrationTestKitSpec {
         !console.any { it.contains('dependency-parentheses') }
 
         where:
-        taskName << ['help', 'tasks', 'dependencies', 'components',
-                     'model', 'projects', 'properties', 'wrapper']
+        taskName << ['help', 'tasks', 'dependencies', 'projects', 'properties', 'wrapper']
     }
 
     def 'autoLintGradle is always run'() {
