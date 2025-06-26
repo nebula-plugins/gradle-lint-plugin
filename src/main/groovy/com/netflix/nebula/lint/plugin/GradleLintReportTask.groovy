@@ -57,9 +57,15 @@ abstract class GradleLintReportTask extends DefaultTask implements VerificationT
     @Internal
     final NamedDomainObjectContainer<LintReport> reports
 
+    @Input
+    abstract Property<ProjectInfo> getProjectInfo()
+
+    @Input
+    abstract Property<ProjectTree> getProjectTree()
+
     @Inject
     GradleLintReportTask(ObjectFactory objects) {
-        projectName = objects.property(String).convention(project.name)
+        projectName = objects.property(String).convention(projectInfo.get().name)
         reportsDir = objects.directoryProperty()
         reports =
                 objects.domainObjectContainer(
@@ -90,7 +96,7 @@ abstract class GradleLintReportTask extends DefaultTask implements VerificationT
         DeprecationLogger.whileDisabled {
             if (reports.any { it.required.isPresent() && it.required.get()}) {
                 def lintService = new LintService()
-                def results = lintService.lint(project, false)
+                def results = lintService.lint(projectTree.get(), false)
                 filterOnlyFixableViolations(results)
                 def violationCount = results.violations.size()
                 def textOutput = new StyledTextService(getServices())
@@ -101,7 +107,7 @@ abstract class GradleLintReportTask extends DefaultTask implements VerificationT
 
                 reports.each {
                     if(it.required.isPresent() && it.required.get()) {
-                        it.write(new AnalysisContext(ruleSet: lintService.ruleSet(project)), results)
+                        it.write(new AnalysisContext(ruleSet: lintService.ruleSet(projectTree.get())), results)
                     }
                 }
 
@@ -142,7 +148,7 @@ abstract class GradleLintReportTask extends DefaultTask implements VerificationT
 
     void filterOnlyFixableViolations(Results results) {
         if (reportOnlyFixableViolations.isPresent() && reportOnlyFixableViolations.get()) {
-            new GradleLintPatchAction(project).lintFinished(results.violations)
+            new GradleLintPatchAction(projectInfo.get()).lintFinished(results.violations)
             List<Violation> toRemove = results.violations.findAll {
                 it.fixes.size() == 0 || it.fixes.any { it.reasonForNotFixing != null }
             }
