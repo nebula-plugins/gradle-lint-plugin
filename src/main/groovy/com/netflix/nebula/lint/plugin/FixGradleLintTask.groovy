@@ -24,6 +24,7 @@ import com.netflix.nebula.lint.StyledTextService
 import org.eclipse.jgit.api.ApplyCommand
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
+import org.gradle.api.Task
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
@@ -66,11 +67,15 @@ abstract class FixGradleLintTask extends DefaultTask implements VerificationTask
         userDefinedListeners.convention([])
         outputs.upToDateWhen { false }
         group = 'lint'
+        try {
+            def method = Task.getMethod("notCompatibleWithConfigurationCache")
+            method.invoke(this)
+        } catch (NoSuchMethodException ignore) {
+        }
     }
 
     @TaskAction
     void lintCorrections() {
-        //TODO: address Invocation of Task.project at execution time has been deprecated.
         DeprecationLogger.whileDisabled {
             def violations = new LintService().lint(projectTree.get(), false).violations
                     .unique { v1, v2 -> v1.is(v2) ? 0 : 1 }
