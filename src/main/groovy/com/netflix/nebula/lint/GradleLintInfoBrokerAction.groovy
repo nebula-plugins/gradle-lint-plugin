@@ -13,7 +13,7 @@ class GradleLintInfoBrokerAction extends GradleLintViolationAction {
 
     GradleLintInfoBrokerAction(Task task){
         this.projectInfo = ProjectInfo.from(task)
-        task.project.project.getPlugins().withId('nebula.info-broker') { plugin ->
+        task.project.getPlugins().withId('nebula.info-broker') { plugin ->
             nebulaInfoBroker = plugin
         }
     }
