@@ -49,21 +49,20 @@ abstract class FixGradleLintTask extends DefaultTask implements VerificationTask
     GradleLintInfoBrokerAction infoBrokerAction
 
     @Internal
-    abstract Property<ProjectInfo> getProjectInfo()
-
-    @Internal
     GradleLintPatchAction patchAction
 
     @Internal
     abstract Property<ProjectTree> getProjectTree()
 
-
+    @Internal
+    ProjectInfo getProjectInfo() {
+        return projectTree.get().baseProject
+    }
 
     FixGradleLintTask() {
-        projectInfo.set(project.provider { ProjectInfo.from(project) })
-        projectTree.set(project.provider {ProjectTree.from(project) })
-        infoBrokerAction = new GradleLintInfoBrokerAction(project)
-        patchAction = new GradleLintPatchAction(projectInfo.get())
+        projectTree.set(project.provider {ProjectTree.from(this) })
+        infoBrokerAction = new GradleLintInfoBrokerAction(this)
+        patchAction = new GradleLintPatchAction(getProjectInfo())
         userDefinedListeners.convention([])
         outputs.upToDateWhen { false }
         group = 'lint'
@@ -84,9 +83,9 @@ abstract class FixGradleLintTask extends DefaultTask implements VerificationTask
                 it.lintFinished(violations)
             }
 
-            def patchFile = new File(projectInfo.get().buildDirectory, GradleLintPatchAction.PATCH_NAME)
+            def patchFile = new File(getProjectInfo().buildDirectory, GradleLintPatchAction.PATCH_NAME)
             if (patchFile.exists()) {
-                new ApplyCommand(new NotNecessarilyGitRepository(projectInfo.get().projectDir)).setPatch(patchFile.newInputStream()).call()
+                new ApplyCommand(new NotNecessarilyGitRepository(projectInfo.projectDir)).setPatch(patchFile.newInputStream()).call()
             }
 
             (userDefinedListeners.get() + infoBrokerAction + consoleOutputAction()).each {
@@ -116,7 +115,7 @@ abstract class FixGradleLintTask extends DefaultTask implements VerificationTask
                 violations.groupBy { it.file }.each { buildFile, projectViolations ->
 
                     projectViolations.each { v ->
-                        String buildFilePath = project.rootDir.toURI().relativize(v.file.toURI()).toString()
+                        String buildFilePath = projectTree.get().baseProject.rootDir.toURI().relativize(v.file.toURI()).toString()
                         def unfixed = v.fixes.findAll { it.reasonForNotFixing != null }
                         if (v.fixes.empty) {
                             textOutput.withStyle(Yellow).text('needs fixing'.padRight(15))

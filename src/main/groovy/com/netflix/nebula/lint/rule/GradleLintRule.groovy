@@ -42,9 +42,9 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import java.text.ParseException
+import java.util.function.Supplier
 
 abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
-    Project project
     BuildFiles buildFiles
     SourceCode sourceCode
     List<GradleViolation> gradleViolations = []
@@ -58,6 +58,12 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
     // a little convoluted, but will be set by LintRuleRegistry automatically so that name is derived from
     // the properties file resource that makes this rule available for use
     String ruleId
+
+    Supplier<Project> projectSupplier
+
+    Project getProject() {
+        return projectSupplier?.get()
+    }
 
     @Override
     final String getName() {
@@ -560,7 +566,7 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
             }
 
             private boolean hasConfiguration(String name) {
-                if (!project) {
+                if (!projectSupplier) {
                     return Collections.emptySet()
                 }
                 def configurations

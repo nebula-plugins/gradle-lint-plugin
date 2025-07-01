@@ -65,8 +65,8 @@ abstract class GradleLintReportTask extends DefaultTask implements VerificationT
 
     @Inject
     GradleLintReportTask(ObjectFactory objects) {
-        projectInfo.set(project.provider { ProjectInfo.from(project) })
-        projectTree.set(project.provider { ProjectTree.from(project) })
+        projectInfo.convention(projectTree.map {it.baseProject })
+        projectTree.set(project.provider { ProjectTree.from(this) })
         projectName = objects.property(String).convention(projectInfo.get().name)
         reportsDir = objects.directoryProperty()
         reports =

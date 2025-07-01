@@ -15,13 +15,12 @@
  */
 package com.netflix.nebula.lint.plugin
 
+import com.google.common.annotations.VisibleForTesting
 import com.netflix.nebula.lint.*
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.Task
-import org.gradle.api.file.DirectoryProperty
-import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
@@ -65,10 +64,10 @@ abstract class LintGradleTask extends DefaultTask {
     LintGradleTask() {
         failOnWarning.convention(false)
         onlyCriticalRules.convention(false)
-        projectTree.set(project.provider {ProjectTree.from(project) })
-        projectInfo.set(project.provider { ProjectInfo.from(project) })
+        projectTree.set(project.provider {ProjectTree.from(this) })
+        projectInfo.convention(projectTree.map(ProjectTree::getBaseProject))
         projectRootDir.set(project.rootDir)
-        infoBrokerAction = new GradleLintInfoBrokerAction(project)
+        infoBrokerAction = new GradleLintInfoBrokerAction(this)
         patchAction = new GradleLintPatchAction(getProjectInfo().get())
         group = 'lint'
         try {
@@ -173,7 +172,18 @@ class ProjectInfo implements Serializable{
     GradleLintExtension extension
     Map<String, Object> properties
     Supplier<Project> projectSupplier
-    static ProjectInfo from(Project project){
+
+    static ProjectInfo from(Task task, Project subproject) {
+        String subprojectPath = subproject.path
+        return build(subproject, { task.project.project(subprojectPath) })
+    }
+
+    static ProjectInfo from(Task task) {
+        return build(task.project, task::getProject)
+    }
+
+    @VisibleForTesting
+    private static ProjectInfo build(Project project, Supplier<Project> projectSupplier) {
         GradleLintExtension extension =
                 project.extensions.findByType(GradleLintExtension) ?:
                 project.rootProject.extensions.findByType(GradleLintExtension)
@@ -193,7 +203,7 @@ class ProjectInfo implements Serializable{
                 projectDir:project.projectDir,
                 extension: extension,
                 properties: properties,
-                projectSupplier: { project },
+                projectSupplier: projectSupplier,
                 buildDirectory : project.buildDir
         )
 
@@ -201,17 +211,29 @@ class ProjectInfo implements Serializable{
 
 
 }
+
 class ProjectTree{
     List<ProjectInfo> allProjects
 
-
     ProjectTree(List<ProjectInfo> allProjects){
         this.allProjects = allProjects
-
     }
 
-    static from(Project project) {
-        List<ProjectInfo> projectInfos = ([project] + project.getSubprojects().asList()).collect{Project p -> ProjectInfo.from(p)}
+    /**
+     * Returns the base project this tree was built from.
+     */
+    ProjectInfo getBaseProject() {
+        return allProjects.head()
+    }
+
+    /**
+     * Build a project tree based on the given task's project.
+     *
+     * @return a project tree reflecting information and the structure of the given task's project
+     */
+    static from(Task task) {
+        def baseProject = task.project
+        List<ProjectInfo> projectInfos = [ProjectInfo.from(task)] + baseProject.subprojects.collect { Project p -> ProjectInfo.from(task, p) }
         return new ProjectTree(projectInfos)
     }
 }

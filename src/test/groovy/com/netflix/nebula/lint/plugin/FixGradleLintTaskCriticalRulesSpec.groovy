@@ -1,8 +1,6 @@
 package com.netflix.nebula.lint.plugin
 
-import com.netflix.nebula.lint.rule.AbstractExampleGradleLintRule
 import com.netflix.nebula.lint.rule.AbstractModelAwareExampleGradleLintRule
-import com.netflix.nebula.lint.rule.GradleModelAware
 import nebula.test.IntegrationSpec
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 

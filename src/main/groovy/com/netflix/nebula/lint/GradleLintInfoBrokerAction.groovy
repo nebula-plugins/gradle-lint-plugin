@@ -3,7 +3,7 @@ package com.netflix.nebula.lint
 import com.netflix.nebula.lint.plugin.ProjectInfo
 import groovy.transform.Canonical
 import org.gradle.api.Plugin
-import org.gradle.api.Project
+import org.gradle.api.Task
 
 @Canonical
 class GradleLintInfoBrokerAction extends GradleLintViolationAction {
@@ -11,9 +11,9 @@ class GradleLintInfoBrokerAction extends GradleLintViolationAction {
     ProjectInfo projectInfo
 
 
-    GradleLintInfoBrokerAction(Project project){
-        this.projectInfo = ProjectInfo.from(project)
-        project.getPlugins().withId('nebula.info-broker') { plugin ->
+    GradleLintInfoBrokerAction(Task task){
+        this.projectInfo = ProjectInfo.from(task)
+        task.project.project.getPlugins().withId('nebula.info-broker') { plugin ->
             nebulaInfoBroker = plugin
         }
     }

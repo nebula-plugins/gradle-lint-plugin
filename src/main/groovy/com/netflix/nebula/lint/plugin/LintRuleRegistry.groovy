@@ -65,7 +65,7 @@ class LintRuleRegistry {
             try {
                 Rule r = (Rule) classLoader.loadClass(implClassName).newInstance()
                 if(r instanceof ModelAwareGradleLintRule) {
-                    (r as ModelAwareGradleLintRule).project = projectSupplier.get()
+                    (r as ModelAwareGradleLintRule).projectSupplier = projectSupplier
                 }
 
                 if(r instanceof GradleLintRule) {
