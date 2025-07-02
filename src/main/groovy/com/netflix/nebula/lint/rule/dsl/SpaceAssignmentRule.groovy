@@ -10,6 +10,12 @@ class SpaceAssignmentRule extends ModelAwareGradleLintRule {
 
     String description = "space-assignment syntax is deprecated"
 
+    static final Set<String> knownDeprecatedAssignments = [
+            'group',
+            'version',
+            'description'
+    ]
+
     @Override
     void visitMethodCallExpression(MethodCallExpression call) {
         if(dslStack().contains("plugins")) {
@@ -22,30 +28,10 @@ class SpaceAssignmentRule extends ModelAwareGradleLintRule {
             return
         }
 
-        def receiverClass = receiver(call)?.clazz
-        if (receiverClass == null) {
-            return // no enough data to analyze
-        }
+        def invokedMethodName = call.methodAsString
+        if (!knownDeprecatedAssignments.contains(invokedMethodName)) return
 
-        def invokedMethodName = call.method.value
-
-        // check if the method has a matching property
-        def setter = receiverClass.getMethods().find { it.name == "set${invokedMethodName.capitalize()}" }
-        if (setter == null) {
-            return // no matching property
-        }
-
-        // check if it's a generated method for space assignment
-        def exactMethod = receiverClass.getMethods().find { it.name == invokedMethodName }
-        if (exactMethod != null) {
-            def deprecatedAnnotation = exactMethod.getAnnotation(Deprecated)
-            if (deprecatedAnnotation != null) {
-                // may be false positive when the explicit method is deprecated
-                addViolation(call)
-            }
-        } else {
-            addViolation(call)
-        }
+        addViolation(call)
     }
 
     private boolean isGradleGroup(MethodCallExpression call) {
