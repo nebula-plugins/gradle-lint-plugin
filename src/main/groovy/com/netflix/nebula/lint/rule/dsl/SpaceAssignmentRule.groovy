@@ -13,7 +13,15 @@ class SpaceAssignmentRule extends ModelAwareGradleLintRule {
     static final Set<String> knownDeprecatedAssignments = [
             'group',
             'version',
-            'description'
+            'status',
+            'buildDir',
+            'sourceCompatibility',
+            'targetCompatibility',
+            'url',
+            'name',
+            'description',
+            'tempDir',
+            'distributionPath',
     ]
 
     @Override
