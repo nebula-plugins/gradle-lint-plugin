@@ -15,17 +15,20 @@
  */
 package com.netflix.nebula.lint.plugin
 
+import com.google.common.annotations.VisibleForTesting
 import com.netflix.nebula.lint.*
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
+import org.gradle.api.Project
 import org.gradle.api.Task
-import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
 import org.gradle.internal.deprecation.DeprecationLogger
+
+import java.util.function.Supplier
 
 import static com.netflix.nebula.lint.StyledTextService.Styling.*
 
@@ -45,9 +48,27 @@ abstract class LintGradleTask extends DefaultTask {
     @Input
     abstract Property<File> getProjectRootDir()
 
+    @Input
+    abstract Property<ProjectTree> getProjectTree()
+
+    @Input
+    abstract Property<ProjectInfo> getProjectInfo()
+
+    @Internal
+    GradleLintInfoBrokerAction infoBrokerAction
+
+    @Internal
+    GradleLintPatchAction patchAction
+
+
     LintGradleTask() {
         failOnWarning.convention(false)
         onlyCriticalRules.convention(false)
+        projectTree.set(project.provider {ProjectTree.from(this) })
+        projectInfo.convention(projectTree.map(ProjectTree::getBaseProject))
+        projectRootDir.set(project.rootDir)
+        infoBrokerAction = new GradleLintInfoBrokerAction(this)
+        patchAction = new GradleLintPatchAction(getProjectInfo().get())
         group = 'lint'
         try {
             def method = Task.getMethod("notCompatibleWithConfigurationCache")
@@ -58,12 +79,11 @@ abstract class LintGradleTask extends DefaultTask {
 
     @TaskAction
     void lint() {
-        //TODO: address Invocation of Task.project at execution time has been deprecated.
         DeprecationLogger.whileDisabled {
-            def violations = new LintService().lint(project, onlyCriticalRules.get()).violations
+            def violations = new LintService().lint(projectTree.get(), onlyCriticalRules.get()).violations
                     .unique { v1, v2 -> v1.is(v2) ? 0 : 1 }
 
-            (getListeners() + new GradleLintPatchAction(project) + new GradleLintInfoBrokerAction(project) + consoleOutputAction).each {
+            (getListeners() + patchAction + infoBrokerAction + consoleOutputAction).each {
                 it.lintFinished(violations)
             }
         }
@@ -137,5 +157,83 @@ abstract class LintGradleTask extends DefaultTask {
                 }
             }
         }
+    }
+}
+/**
+ * A CC-compatible projection of project data.
+ */
+class ProjectInfo implements Serializable{
+    String name
+    String path
+    File rootDir
+    File buildFile
+    File projectDir
+    File buildDirectory
+    GradleLintExtension extension
+    Map<String, Object> properties
+    Supplier<Project> projectSupplier
+
+    static ProjectInfo from(Task task, Project subproject) {
+        String subprojectPath = subproject.path
+        return build(subproject, { task.project.project(subprojectPath) })
+    }
+
+    static ProjectInfo from(Task task) {
+        return build(task.project, task::getProject)
+    }
+
+    @VisibleForTesting
+    private static ProjectInfo build(Project project, Supplier<Project> projectSupplier) {
+        GradleLintExtension extension =
+                project.extensions.findByType(GradleLintExtension) ?:
+                project.rootProject.extensions.findByType(GradleLintExtension)
+        Map<String, Object> properties = [:]
+        if (project.hasProperty('gradleLint.rules')) {
+            properties['gradleLint.rules'] = project.property('gradleLint.rules')
+        }
+        if (project.hasProperty('gradleLint.excludedRules')) {
+            properties['gradleLint.excludedRules'] = project.property('gradleLint.excludedRules')
+        }
+
+        return new ProjectInfo(
+                name:project.name,
+                path:project.path,
+                rootDir:project.rootDir,
+                buildFile: project.buildFile,
+                projectDir:project.projectDir,
+                extension: extension,
+                properties: properties,
+                projectSupplier: projectSupplier,
+                buildDirectory : project.buildDir
+        )
+
+    }
+
+
+}
+
+class ProjectTree{
+    List<ProjectInfo> allProjects
+
+    ProjectTree(List<ProjectInfo> allProjects){
+        this.allProjects = allProjects
+    }
+
+    /**
+     * Returns the base project this tree was built from.
+     */
+    ProjectInfo getBaseProject() {
+        return allProjects.head()
+    }
+
+    /**
+     * Build a project tree based on the given task's project.
+     *
+     * @return a project tree reflecting information and the structure of the given task's project
+     */
+    static from(Task task) {
+        def baseProject = task.project
+        List<ProjectInfo> projectInfos = [ProjectInfo.from(task)] + baseProject.subprojects.collect { Project p -> ProjectInfo.from(task, p) }
+        return new ProjectTree(projectInfos)
     }
 }

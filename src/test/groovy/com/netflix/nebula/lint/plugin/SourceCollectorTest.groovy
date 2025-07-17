@@ -4,6 +4,9 @@ import nebula.test.ProjectSpec
 
 class SourceCollectorTest extends ProjectSpec {
 
+    private ProjectInfo getProjectInfo() {
+        return ProjectInfo.build(project, { project })
+    }
 
     def 'all build files are collected'() {
         given:
@@ -24,7 +27,7 @@ class SourceCollectorTest extends ProjectSpec {
         level2.text = " "
 
         when:
-        def files = SourceCollector.getAllFiles(rootFile, project)
+        def files = SourceCollector.getAllFiles(rootFile, projectInfo)
 
         then:
         files.containsAll([rootFile, level1Sibling1, level1Sibling2, level2])
@@ -51,7 +54,7 @@ class SourceCollectorTest extends ProjectSpec {
         level2.text = " "
 
         when:
-        def files = SourceCollector.getAllFiles(rootFile, project)
+        def files = SourceCollector.getAllFiles(rootFile, projectInfo)
 
         then:
         files.containsAll([rootFile, level1Sibling1, level1Sibling2, level1Sibling3, level2])

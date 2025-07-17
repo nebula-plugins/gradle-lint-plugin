@@ -24,7 +24,9 @@ import com.netflix.nebula.lint.StyledTextService
 import org.eclipse.jgit.api.ApplyCommand
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
+import org.gradle.api.Task
 import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
@@ -46,28 +48,44 @@ abstract class FixGradleLintTask extends DefaultTask implements VerificationTask
     @Internal
     GradleLintInfoBrokerAction infoBrokerAction
 
+    @Internal
+    GradleLintPatchAction patchAction
+
+    @Internal
+    abstract Property<ProjectTree> getProjectTree()
+
+    @Internal
+    ProjectInfo getProjectInfo() {
+        return projectTree.get().baseProject
+    }
 
     FixGradleLintTask() {
-        infoBrokerAction = new GradleLintInfoBrokerAction(project)
+        projectTree.set(project.provider {ProjectTree.from(this) })
+        infoBrokerAction = new GradleLintInfoBrokerAction(this)
+        patchAction = new GradleLintPatchAction(getProjectInfo())
         userDefinedListeners.convention([])
         outputs.upToDateWhen { false }
         group = 'lint'
+        try {
+            def method = Task.getMethod("notCompatibleWithConfigurationCache")
+            method.invoke(this)
+        } catch (NoSuchMethodException ignore) {
+        }
     }
 
     @TaskAction
     void lintCorrections() {
-        //TODO: address Invocation of Task.project at execution time has been deprecated.
         DeprecationLogger.whileDisabled {
-            def violations = new LintService().lint(project, false).violations
+            def violations = new LintService().lint(projectTree.get(), false).violations
                     .unique { v1, v2 -> v1.is(v2) ? 0 : 1 }
 
-            (userDefinedListeners.get() + infoBrokerAction + new GradleLintPatchAction(project)).each {
+            (userDefinedListeners.get() + infoBrokerAction + patchAction).each {
                 it.lintFinished(violations)
             }
 
-            def patchFile = new File(project.layout.buildDirectory.asFile.get(), GradleLintPatchAction.PATCH_NAME)
+            def patchFile = new File(getProjectInfo().buildDirectory, GradleLintPatchAction.PATCH_NAME)
             if (patchFile.exists()) {
-                new ApplyCommand(new NotNecessarilyGitRepository(project.projectDir)).setPatch(patchFile.newInputStream()).call()
+                new ApplyCommand(new NotNecessarilyGitRepository(projectInfo.projectDir)).setPatch(patchFile.newInputStream()).call()
             }
 
             (userDefinedListeners.get() + infoBrokerAction + consoleOutputAction()).each {
@@ -97,7 +115,7 @@ abstract class FixGradleLintTask extends DefaultTask implements VerificationTask
                 violations.groupBy { it.file }.each { buildFile, projectViolations ->
 
                     projectViolations.each { v ->
-                        String buildFilePath = project.rootDir.toURI().relativize(v.file.toURI()).toString()
+                        String buildFilePath = projectTree.get().baseProject.rootDir.toURI().relativize(v.file.toURI()).toString()
                         def unfixed = v.fixes.findAll { it.reasonForNotFixing != null }
                         if (v.fixes.empty) {
                             textOutput.withStyle(Yellow).text('needs fixing'.padRight(15))

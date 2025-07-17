@@ -22,7 +22,7 @@ class UnusedExcludeByConfigurationRuleSpec extends AbstractRuleSpec {
     def rule
 
     def setup() {
-        rule = new UnusedExcludeByConfigurationRule(project: project)
+        rule = new UnusedExcludeByConfigurationRule(projectSupplier: { project })
     }
 
     def 'unused exclude violates (no closure)'() {

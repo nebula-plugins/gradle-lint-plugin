@@ -1,15 +1,26 @@
 package com.netflix.nebula.lint
 
+import com.netflix.nebula.lint.plugin.ProjectInfo
 import groovy.transform.Canonical
-import org.gradle.api.Project
+import org.gradle.api.Plugin
+import org.gradle.api.Task
 
 @Canonical
 class GradleLintInfoBrokerAction extends GradleLintViolationAction {
-    Project project
+    Plugin nebulaInfoBroker
+    ProjectInfo projectInfo
+
+
+    GradleLintInfoBrokerAction(Task task){
+        this.projectInfo = ProjectInfo.from(task)
+        task.project.getPlugins().withId('nebula.info-broker') { plugin ->
+            nebulaInfoBroker = plugin
+        }
+    }
 
     @Override
     void lintFinished(Collection<GradleViolation> violations) {
-        project.getPlugins().withId('nebula.info-broker') {
+        nebulaInfoBroker?.tap{
             def reportItems = violations.collect { buildReportItem(it) }
             it.addReport('gradleLintViolations', reportItems)
         }
@@ -17,7 +28,7 @@ class GradleLintInfoBrokerAction extends GradleLintViolationAction {
 
     @Override
     void lintFixesApplied(Collection<GradleViolation> violations) {
-        project.getPlugins().withId('nebula.info-broker') {
+        nebulaInfoBroker?.tap {
             def reportItems = violations.findAll { !it.fixes.any { it.reasonForNotFixing } }
                     .collect { buildReportItem(it) }
             it.addReport('fixedGradleLintViolations', reportItems)
@@ -25,7 +36,7 @@ class GradleLintInfoBrokerAction extends GradleLintViolationAction {
     }
 
     LintReportItem buildReportItem(GradleViolation v) {
-        def buildFilePath = project.rootDir.toURI().relativize(v.file.toURI()).toString()
+        def buildFilePath = projectInfo.rootDir.toURI().relativize(v.file.toURI()).toString()
         new LintReportItem(buildFilePath, v.rule.name, v.rule.getPriority() as String,
                 v.lineNumber ?: -1, v.sourceLine ?: 'unspecified', v.message ?: "")
     }

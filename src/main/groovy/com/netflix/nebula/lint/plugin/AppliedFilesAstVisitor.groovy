@@ -12,17 +12,18 @@ import org.gradle.api.Project
  */
 class AppliedFilesAstVisitor extends ClassCodeVisitorSupport {
 
-    Project project
+    ProjectInfo projectInfo
+
     List<File> appliedFiles = new ArrayList()
     Map<String, String> projectVariablesMapping
 
-    AppliedFilesAstVisitor(Project project) {
-        this.project = project
+    AppliedFilesAstVisitor(ProjectInfo projectInfo) {
+        this.projectInfo = projectInfo
         projectVariablesMapping = [
-                "\$projectDir" : project.projectDir.toString(),
-                "\$project.projectDir" : project.projectDir.toString(),
-                "\$rootDir" : project.rootDir.toString(),
-                "\$project.rootDir" : project.rootDir.toString(),
+                "\$projectDir" : projectInfo.projectDir.toString(),
+                "\$project.projectDir" : projectInfo.projectDir.toString(),
+                "\$rootDir" : projectInfo.rootDir.toString(),
+                "\$project.rootDir" : projectInfo.rootDir.toString(),
         ]
     }
 
@@ -32,9 +33,9 @@ class AppliedFilesAstVisitor extends ClassCodeVisitorSupport {
             def projectVariable = projectVariablesMapping.find {from.contains(it.key) }
             if (projectVariable) {
                 def absolutePath = from.replaceAll("\\$projectVariable.key", projectVariable.value)
-                appliedFiles.addAll(SourceCollector.getAllFiles(new File(absolutePath), project))
+                appliedFiles.addAll(SourceCollector.getAllFiles(new File(absolutePath), projectInfo))
             } else {
-                appliedFiles.addAll(SourceCollector.getAllFiles(new File(project.projectDir, from), project))
+                appliedFiles.addAll(SourceCollector.getAllFiles(new File(projectInfo.projectDir, from), projectInfo))
             }
         }
     }

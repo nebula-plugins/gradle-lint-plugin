@@ -23,7 +23,7 @@ class UnusedDependencyExcludeRuleSpec extends AbstractRuleSpec {
     def rule
 
     def setup() {
-        rule = new UnusedDependencyExcludeRule(project: project)
+        rule = new UnusedDependencyExcludeRule(projectSupplier: { project })
     }
 
     def 'unused exclude violates'() {

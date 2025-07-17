@@ -25,6 +25,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
+import java.util.function.Supplier
 import java.util.jar.JarEntry
 import java.util.jar.JarFile
 import java.util.zip.ZipException
@@ -45,11 +46,15 @@ class DependencyService {
         return extension.dependencyService
     }
 
-    static synchronized void removeForProject(Project project) {
+    static synchronized void removeForProject(Supplier<Project> projectSupplier) {
+        Project project = projectSupplier.get()
         def extension = project.extensions.findByType(DependencyServiceExtension)
         if (extension) {
             extension.dependencyService = null
         }
+    }
+    static synchronized void removeForProject(Project project) {
+        removeForProject({ project } as Supplier<Project>)
     }
 
     static class DependencyServiceExtension {

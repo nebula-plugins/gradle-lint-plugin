@@ -47,7 +47,7 @@ abstract class AbstractRuleSpec extends ProjectSpec {
         rules.each {
             ruleSet.addRule(it)
             if (it instanceof ModelAwareGradleLintRule) {
-                it.project = project
+                it.projectSupplier = { project }
             }
         }
         ruleSet

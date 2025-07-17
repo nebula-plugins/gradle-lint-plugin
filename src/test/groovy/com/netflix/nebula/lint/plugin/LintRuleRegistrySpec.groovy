@@ -17,7 +17,6 @@
 package com.netflix.nebula.lint.plugin
 
 import com.netflix.nebula.lint.rule.AbstractExampleGradleLintRule
-import com.netflix.nebula.lint.rule.GradleLintRule
 import org.gradle.api.Project
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder

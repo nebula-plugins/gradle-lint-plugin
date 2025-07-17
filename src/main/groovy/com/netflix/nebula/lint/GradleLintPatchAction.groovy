@@ -16,6 +16,7 @@
 
 package com.netflix.nebula.lint
 
+import com.netflix.nebula.lint.plugin.ProjectInfo
 import com.netflix.nebula.lint.plugin.UnexpectedLintRuleFailureException
 import groovy.transform.Canonical
 import org.apache.commons.lang.StringUtils
@@ -30,12 +31,22 @@ import static java.nio.file.Files.readSymbolicLink
 @Canonical
 class GradleLintPatchAction extends GradleLintViolationAction {
     Project project
+    ProjectInfo projectInfo
+
+    GradleLintPatchAction(Project project) {
+        this.project = project
+
+    }
+
+    GradleLintPatchAction(ProjectInfo projectInfo) {
+        this.projectInfo = projectInfo
+    }
 
     static final String PATCH_NAME = 'lint.patch'
 
     @Override
     void lintFinished(Collection<GradleViolation> violations) {
-        File buildDir = project.layout.buildDirectory.asFile.getOrElse(new File(project.projectDir, "build"))
+        File buildDir = projectInfo ? projectInfo.buildDirectory : project.layout.buildDirectory.asFile.getOrElse(new File(project.projectDir, "build"))
         buildDir.mkdirs()
         try {
             def patch = patch(violations*.fixes.flatten() as List<GradleLintFix>)
@@ -252,7 +263,7 @@ Exception: ${e.getMessage()}
             if (i > 0)
                 combinedPatch += '\n'
 
-            def relativePath = project.rootDir.toPath().relativize(file.toPath()).toString()
+            def relativePath = projectInfo? projectInfo.rootDir.toPath().relativize(file.toPath()).toString() : project.rootDir.toPath().relativize(file.toPath()).toString()
             def diffHeader = """\
                 ${diffHintsWithMargin(relativePath, patchType, fileMode)}
                 |--- ${patchType == Create ? '/dev/null' : 'a/' + relativePath}
