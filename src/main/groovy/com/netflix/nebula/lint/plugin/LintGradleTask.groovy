@@ -48,6 +48,7 @@ abstract class LintGradleTask extends DefaultTask {
     LintGradleTask() {
         failOnWarning.convention(false)
         onlyCriticalRules.convention(false)
+        description = 'Runs lint on the build files'
         group = 'lint'
         try {
             def method = Task.getMethod("notCompatibleWithConfigurationCache")
