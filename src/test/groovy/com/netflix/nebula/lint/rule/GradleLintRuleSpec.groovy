@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2019 Netflix, Inc.
+ * Copyright 2015-2025 Netflix, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.netflix.nebula.lint.plugin.GradleLintPlugin
 import com.netflix.nebula.lint.plugin.LintRuleRegistry
 import com.netflix.nebula.lint.rule.test.AbstractRuleSpec
 import org.codehaus.groovy.ast.ClassNode
+import org.codehaus.groovy.ast.expr.BinaryExpression
 import org.codehaus.groovy.ast.expr.Expression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.codehaus.groovy.ast.expr.VariableExpression
@@ -102,7 +103,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
 
             @Override
             void visitGradlePlugin(MethodCallExpression call, String conf, GradlePlugin gradlePluginGradleLintRuleSpec) {
-                if(call.methodAsString == 'apply') {
+                if (call.methodAsString == 'apply') {
                     pluginCount++
                 }
             }
@@ -113,6 +114,44 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
 
         where:
         plugin << ['java', 'org.gradle.java']
+    }
+
+    def 'dont visit constructor declaration'() {
+        when:
+        project.buildFile << """
+            b = 2
+            a = 1
+            class A {
+                int a
+                A() {
+                    a = 1
+                }
+            }
+        """
+
+        int assignA = 0
+        int assignARoot = 0
+
+        runRulesAgainst(
+                new AbstractExampleGradleLintRule() {
+                    String description = 'test'
+
+                    @Override
+                    void visitBinaryExpression(BinaryExpression binaryExpression) {
+                        if (binaryExpression.leftExpression.variable == 'a') {
+                            if (callStack.isEmpty()) {
+                                assignARoot++
+                            } else {
+                                assignA++
+                            }
+                        }
+                    }
+                }
+        )
+
+        then:
+        assignA == 0
+        assignARoot == 1
     }
 
     def 'skip nested `plugins`'() {
@@ -238,7 +277,6 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
         b
         b.syntax == GradleDependency.Syntax.StringNotation
     }
-
 
 
     def 'visit dependencies in subprojects block'() {
@@ -711,7 +749,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
             void visitMethodCallExpression(MethodCallExpression call) {
                 if (call.methodAsString == 'block')
                     addBuildLintViolation('inserting into block', call)
-                .insertIntoClosure(call, 'inserted true')
+                            .insertIntoClosure(call, 'inserted true')
             }
         })
 
@@ -738,7 +776,7 @@ class GradleLintRuleSpec extends AbstractRuleSpec {
             void visitMethodCallExpression(MethodCallExpression call) {
                 if (call.methodAsString == 'block')
                     addBuildLintViolation('inserting into block', call)
-                .insertIntoClosure(call, 'inserted true')
+                            .insertIntoClosure(call, 'inserted true')
             }
         })
 

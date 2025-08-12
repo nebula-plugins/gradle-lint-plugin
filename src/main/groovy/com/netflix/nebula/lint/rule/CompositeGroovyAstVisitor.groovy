@@ -85,19 +85,28 @@ class CompositeGroovyAstVisitor extends ClassCodeVisitorSupport implements AstVi
 
     @Override
     protected void visitConstructorOrMethod(MethodNode node, boolean isConstructor) {
-        super.visitConstructorOrMethod(node, isConstructor)
+        // within a method or constructor declaration, this code is not actually being invoked
+        if (node.declaringClass.name == "None") {
+            super.visitConstructorOrMethod(node, isConstructor)
+        }
     }
 
     @Override
     void visitConstructor(ConstructorNode node) {
-        visitors.each { it.visitConstructor(node) }
-        super.visitConstructor(node)
+        // within a method or constructor declaration, this code is not actually being invoked
+        if (node.declaringClass.name == "None") {
+            visitors.each { it.visitConstructor(node) }
+            super.visitConstructor(node)
+        }
     }
 
     @Override
     void visitMethod(MethodNode node) {
-        visitors.each { it.visitMethod(node) }
-        super.visitMethod(node)
+        // within a method or constructor declaration, this code is not actually being invoked
+        if (node.declaringClass.name == "None") {
+            visitors.each { it.visitMethod(node) }
+            super.visitMethod(node)
+        }
     }
 
     @Override

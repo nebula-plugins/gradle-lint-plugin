@@ -87,11 +87,17 @@ dependencies {
     }
     plugin 'org.eclipse.jdt:core:3.3.0-v_771'
 
+    // These are because the AbstractRuleSpec test harness is included in src/main
     compileOnly "com.netflix.nebula:nebula-test:11.+"
+    compileOnly("org.spockframework:spock-core:2.3-groovy-4.0")
+    compileOnly("junit:junit:4.13.2")
+    compileOnly(gradleTestKit())
 
     testImplementation 'org.ow2.asm:asm-util:9.8'
     testImplementation 'joda-time:joda-time:latest.release'
     testImplementation 'com.netflix.nebula:gradle-info-plugin:latest.release'
+    testImplementation("org.spockframework:spock-core:2.3-groovy-4.0")
+    testImplementation("org.spockframework:spock-junit4:2.3-groovy-4.0")
 }
 
 afterEvaluate {
@@ -203,4 +209,10 @@ validatePlugins {
 
 javaCrossCompile {
     disableKotlinSupport = true
+}
+
+tasks.wrapper {
+    distributionType = Wrapper.DistributionType.BIN
+    gradleVersion = "9.0.0"
+    distributionSha256Sum = "8fad3d78296ca518113f3d29016617c7f9367dc005f932bd9d93bf45ba46072b"
 }
