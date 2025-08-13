@@ -20,17 +20,9 @@ import com.netflix.nebula.lint.GradleViolation
 import com.netflix.nebula.lint.plugin.LintRuleRegistry
 import com.netflix.nebula.lint.plugin.UnexpectedLintRuleFailureException
 import org.codehaus.groovy.ast.ASTNode
+import org.codehaus.groovy.ast.AnnotatedNode
 import org.codehaus.groovy.ast.ClassNode
-import org.codehaus.groovy.ast.expr.ArgumentListExpression
-import org.codehaus.groovy.ast.expr.BinaryExpression
-import org.codehaus.groovy.ast.expr.ClosureExpression
-import org.codehaus.groovy.ast.expr.ConstantExpression
-import org.codehaus.groovy.ast.expr.Expression
-import org.codehaus.groovy.ast.expr.GStringExpression
-import org.codehaus.groovy.ast.expr.MapExpression
-import org.codehaus.groovy.ast.expr.MethodCallExpression
-import org.codehaus.groovy.ast.expr.PropertyExpression
-import org.codehaus.groovy.ast.expr.VariableExpression
+import org.codehaus.groovy.ast.expr.*
 import org.codehaus.groovy.ast.stmt.ExpressionStatement
 import org.codenarc.rule.AbstractAstVisitorRule
 import org.codenarc.rule.AstVisitor
@@ -465,12 +457,12 @@ abstract class GradleLintRule extends GroovyAstVisitor implements Rule {
                             return null
                         }
                         dependency = GradleDependency.fromConstant(expr)
-                    } else if (call.arguments.expressions.any { it instanceof MethodCallExpression && it.methodAsString == 'project'}) {
+                    } else if (call.arguments.expressions.any { it instanceof MethodCallExpression && it.methodAsString == 'project' }) {
                         MethodCallExpression projectMethodCall = call.arguments.expressions
-                                .find { it instanceof MethodCallExpression && it.methodAsString == 'project'} as MethodCallExpression
+                                .find { it instanceof MethodCallExpression && it.methodAsString == 'project' } as MethodCallExpression
                         ConstantExpression projectName =
                                 projectMethodCall.arguments.expressions.
-                                find { it instanceof ConstantExpression} as ConstantExpression
+                                        find { it instanceof ConstantExpression } as ConstantExpression
                         if (projectName != null)
                             visitAnySubmoduleDependency(call, methodName, projectName.value.toString())
                         else if (projectMethodCall.arguments.expressions.any { it instanceof MapExpression }) {
