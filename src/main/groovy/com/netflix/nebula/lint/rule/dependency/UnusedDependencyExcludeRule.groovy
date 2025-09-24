@@ -20,8 +20,6 @@ import com.netflix.nebula.lint.rule.GradleAstUtil
 import com.netflix.nebula.lint.rule.GradleDependency
 import com.netflix.nebula.lint.rule.ModelAwareGradleLintRule
 import org.codehaus.groovy.ast.expr.MethodCallExpression
-import org.gradle.api.artifacts.Configuration
-import org.gradle.api.specs.Specs
 
 class UnusedDependencyExcludeRule extends ModelAwareGradleLintRule {
     String description = 'excludes that have no effect on the classpath should be removed for clarity'
@@ -51,28 +49,29 @@ class UnusedDependencyExcludeRule extends ModelAwareGradleLintRule {
     }
 
     private boolean isExcludeUnnecessary(String group, String name) {
-        // Since Gradle does not expose any information about which excludes were effective, we will create a new configuration
-        // lintExcludeConf, add the dependency and resolve it.
-        Configuration lintExcludeConf = project.configurations.create("lintExcludes")
-        project.dependencies.add(lintExcludeConf.name, "$dependency.group:$dependency.name:$dependency.version")
+        // Use detached configurations instead of project configurations to avoid threading issues
+        // in Gradle 9.x which requires exclusive locks for configuration resolution
+        def detachedConf = project.configurations.detachedConfiguration(
+            project.dependencies.create("$dependency.group:$dependency.name:$dependency.version")
+        )
 
-        // If we find a dependency in the transitive closure of this special conf, then we can infer that the exclusion is
-        // doing something. Note that all*.exclude style exclusions are applied to all of the configurations at the time
-        // of project evaluation, but not lintExcludeConf.
+        // This is thread-safe and doesn't require exclusive locks
+        def resolutionResult = detachedConf.incoming.resolutionResult
+        
         def excludeIsInTransitiveClosure = false
-        def deps = lintExcludeConf.resolvedConfiguration.lenientConfiguration.getFirstLevelModuleDependencies()
-        while(!deps.isEmpty() && !excludeIsInTransitiveClosure) {
-            deps = deps.collect { d ->
-                if((!group || d.moduleGroup == group) && (!name || d.moduleName == name)) {
-                    excludeIsInTransitiveClosure = true
-                }
-                d.children
+        
+        def allComponents = resolutionResult.allComponents
+        
+        for (component in allComponents) {
+            def moduleVersion = component.moduleVersion
+            if (moduleVersion && 
+                (!group || moduleVersion.group == group) && 
+                (!name || moduleVersion.name == name)) {
+                excludeIsInTransitiveClosure = true
+                break
             }
-            .flatten()
         }
-
-        project.configurations.remove(lintExcludeConf)
-
-        !excludeIsInTransitiveClosure
+        
+        return !excludeIsInTransitiveClosure
     }
 }
