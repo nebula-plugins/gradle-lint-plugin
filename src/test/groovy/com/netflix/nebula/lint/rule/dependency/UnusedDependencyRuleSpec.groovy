@@ -674,6 +674,65 @@ class UnusedDependencyRuleSpec extends BaseIntegrationTestKitSpec {
         assert result.output.contains(it)
       }
     }
+    
+    @Issue('#380')
+    def 'ignore dependencies in closures when rule is ignored'() {
+        setup:
+        buildFile.text = """
+            plugins {
+                id 'java'
+                id 'nebula.lint'
+            }
+
+            gradleLint.rules = ['all-dependency']
+
+            repositories { mavenCentral() }
+
+            dependencies {
+                implementation 'com.google.guava:guava:18.0'
+                gradleLint.ignore('unused-dependency') {
+                    implementation 'org.apache.httpcomponents:httpclient:4.5.3'
+                }
+            }
+        """
+
+        when:
+        writeJavaSourceFile(main)
+        def result = runTasks('compileJava')
+
+        then:
+        !result.output.contains('warning   unused-dependency                  this dependency is unused and can be removed')
+    }
+    
+    @Issue('#380')
+    def 'dont ignore dependencies not in closures when rule is ignored'() {
+        setup:
+        buildFile.text = """
+            plugins {
+                id 'java'
+                id 'nebula.lint'
+            }
+
+            gradleLint.rules = ['all-dependency']
+
+            repositories { mavenCentral() }
+
+            dependencies {
+                implementation 'com.google.guava:guava:18.0'
+                implementation 'org.apache.poi:poi:5.2.5'
+                gradleLint.ignore('unused-dependency') {
+                    implementation 'org.apache.httpcomponents:httpclient:4.5.3'
+                }
+            }
+        """
+
+        when:
+        writeJavaSourceFile(main)
+        def result = runTasks('compileJava')
+
+        then:
+        result.output.contains('warning   unused-dependency                  this dependency is unused and can be removed')
+    }
 
     def dependencies(File _buildFile, String... confs = ['compile', 'testCompile', 'implementation', 'testImplementation', 'api']) {
         _buildFile.text.readLines()
