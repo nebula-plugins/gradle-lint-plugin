@@ -88,7 +88,9 @@ dependencies {
     plugin 'org.eclipse.jdt:core:3.3.0-v_771'
 
     // These are because the AbstractRuleSpec test harness is included in src/main
-    compileOnly "com.netflix.nebula:nebula-test:11.+"
+    compileOnly("com.netflix.nebula:nebula-test:10.6.2") {
+        because("last version compiled on java 8")
+    }
     compileOnly("org.spockframework:spock-core:2.3-groovy-4.0")
     compileOnly("junit:junit:4.13.2")
     compileOnly(gradleTestKit())
@@ -158,7 +160,7 @@ jar.dependsOn shadowJar
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
+        languageVersion.set(JavaLanguageVersion.of(8))
     }
 }
 
@@ -176,6 +178,9 @@ tasks.withType(Test).configureEach {
             }
         }
     }
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
 }
 
 // Kotlin compiles first, stubbing Java dependencies, however it can't stub Groovy and we need to call Groovy code from Kotlin. For details see:
@@ -188,7 +193,11 @@ tasks.named('compileKotlin') {
     // which automatically makes it depend of compileGroovy
     libraries.from(files(sourceSets.main.groovy.classesDirectory))
 }
-
+tasks.named("compileTestGroovy") {
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
 ['compileClasspath', 'runtimeClasspath', 'testCompileClasspath', 'testRuntimeClasspath'].each { confName ->
     tasks.register("dependencyReport${confName.capitalize()}", DependencyReportTask) {
         configurations = [project.configurations.getByName(confName)] as Set
