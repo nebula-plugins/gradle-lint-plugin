@@ -16,10 +16,12 @@
 package com.netflix.nebula.lint.plugin
 
 import com.netflix.nebula.lint.BaseIntegrationTestKitSpec
+import com.netflix.nebula.lint.GradleVersions
 import com.netflix.nebula.lint.rule.dependency.DependencyParenthesesRule
 import com.netflix.nebula.lint.rule.dependency.UnusedDependencyRule
 import spock.lang.Issue
 import spock.lang.Subject
+import spock.lang.Unroll
 
 @Subject([UnusedDependencyRule, DependencyParenthesesRule])
 class FixGradleLintTaskSpec extends BaseIntegrationTestKitSpec {
@@ -49,8 +51,9 @@ class FixGradleLintTaskSpec extends BaseIntegrationTestKitSpec {
         results.output.count('unfixed        dependency-parentheses') == 1
     }
 
+    @Unroll
     def 'lint fixes violation in all applied files'() {
-        when:
+        setup:
         buildFile << """
             plugins {
                 id 'nebula.lint'
@@ -78,11 +81,17 @@ class FixGradleLintTaskSpec extends BaseIntegrationTestKitSpec {
 
         writeHelloWorld()
 
-        then:
+        when:
+        gradleVersion = testGradleVersion
         def results = runTasks('fixGradleLint')
+
+        then:
         results.output.count('fixed          dependency-parentheses') == 2
         dependenciesFile.text.contains('implementation \'com.google.guava:guava:18.0\'')
         buildFile.text.contains('implementation \'commons-lang:commons-lang:2.6\'')
+
+        where:
+        testGradleVersion << GradleVersions.ALL
     }
 
     @Issue('#37')

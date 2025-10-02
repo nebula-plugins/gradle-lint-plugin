@@ -16,6 +16,7 @@
 package com.netflix.nebula.lint.plugin
 
 import com.netflix.nebula.lint.BaseIntegrationTestKitSpec
+import com.netflix.nebula.lint.GradleVersions
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 import spock.lang.Issue
@@ -23,8 +24,9 @@ import spock.lang.Unroll
 
 class GradleLintPluginSpec extends BaseIntegrationTestKitSpec {
 
+    @Unroll
     def 'run multiple rules on a single module project'() {
-        when:
+        setup:
         buildFile << """
             plugins {
                 id 'nebula.lint'
@@ -33,26 +35,27 @@ class GradleLintPluginSpec extends BaseIntegrationTestKitSpec {
             repositories {
                 mavenCentral()
             }
-            gradleLint.rules = ['dependency-parentheses', 'dependency-tuple']
+            gradleLint.rules = ['dependency-parentheses', 'dependency-tuple', 'unused-dependency']
 
             dependencies {
                 implementation('com.google.guava:guava:18.0')
-                testImplementation group: 'junit',
-                    name: 'junit',
-                    version: '4.11'
+                testImplementation "junit:junit:4.11"
             }
         """
 
-        then:
+        when:
+        gradleVersion = testGradleVersion
+        forwardOutput = true
         def results = runTasks('assemble')
 
-        when:
-        def console = results.output.readLines()
-
         then:
-        console.findAll { it.startsWith('warning') }.size() == 2
+        def console = results.output.readLines()
+        console.findAll { it.startsWith('warning') }.size() == 3
         console.any { it.contains('dependency-parentheses') }
-        console.any { it.contains('dependency-tuple') }
+        console.any { it.contains('unused-dependency') }
+
+        where:
+        testGradleVersion << GradleVersions.ALL
     }
 
     def 'run multiple rules on a single module project with applied file'() {
