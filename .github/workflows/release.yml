@@ -1,0 +1,50 @@
+name: Release
+on:
+  push:
+    tags:
+      - v*.*.*
+      - v*.*.*-rc.*
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    name: Gradle Build and Publish
+    environment:
+      name: Publish
+      url: "https://repo1.maven.org/maven2/com/netflix/nebula/gradle-lint-plugin/"
+    env:
+      NETFLIX_OSS_SONATYPE_USERNAME: ${{ secrets.ORG_SONATYPE_USERNAME }}
+      NETFLIX_OSS_SONATYPE_PASSWORD: ${{ secrets.ORG_SONATYPE_PASSWORD }}
+      NETFLIX_OSS_SIGNING_KEY: ${{ secrets.ORG_SIGNING_KEY }}
+      NETFLIX_OSS_SIGNING_PASSWORD: ${{ secrets.ORG_SIGNING_PASSWORD }}
+      NETFLIX_OSS_REPO_USERNAME: ${{ secrets.ORG_NETFLIXOSS_USERNAME }}
+      NETFLIX_OSS_REPO_PASSWORD: ${{ secrets.ORG_NETFLIXOSS_PASSWORD }}
+      GRADLE_PUBLISH_KEY: ${{ secrets.ORG_GRADLE_PUBLISH_KEY }}
+      GRADLE_PUBLISH_SECRET: ${{ secrets.ORG_GRADLE_PUBLISH_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup git user
+        run: |
+          git config --global user.name "Nebula Plugin Maintainers"
+          git config --global user.email "nebula-plugins-oss@netflix.com"
+      - name: Set up JDKs
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: |
+            17
+            21
+          java-package: jdk
+#      - name: Setup Gradle
+#        uses: gradle/actions/setup-gradle@v5
+#        with:
+#          cache-overwrite-existing: true
+      - name: Verify plugin publication
+        if: (!contains(github.ref, '-rc.'))
+        run: ./gradlew  --stacktrace -Prelease.useLastTag=true final publishPlugin --validate-only -x check
+      - name: Publish candidate
+        if: contains(github.ref, '-rc.')
+        run: ./gradlew --info --stacktrace -Prelease.useLastTag=true candidate
+      - name: Publish release
+        if: (!contains(github.ref, '-rc.'))
+        run: ./gradlew --stacktrace -Prelease.useLastTag=true final
