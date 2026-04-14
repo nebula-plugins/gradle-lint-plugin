@@ -33,5 +33,15 @@ class GradleLintPlugin implements Plugin<Project> {
             throw new BuildCancelledException("Gradle Lint Plugin requires Gradle 7.1 or newer.")
         }
         new GradleLintPluginTaskConfigurer().configure(project)
+
+        if (project == project.rootProject) {
+            project.subprojects { sub ->
+                if (sub.buildFile.name.toLowerCase().endsWith('.kts')) {
+                    project.logger.info("Gradle Lint Plugin skipping subproject '${sub.name}' because it uses a Kotlin build script")
+                } else {
+                    sub.pluginManager.apply(GradleLintPlugin)
+                }
+            }
+        }
     }
 }

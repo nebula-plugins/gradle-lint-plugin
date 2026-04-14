@@ -1009,4 +1009,40 @@ class GradleLintPluginSpec extends BaseIntegrationTestKitSpec {
         task << ['dependencyInsight', 'dI', 'depIn']
     }
 
+    @Unroll
+    def '#taskName on multi-project does not cause cross-project lock errors (#testGradleVersion)'() {
+        given:
+        buildFile << """
+            plugins {
+                id 'nebula.lint'
+            }
+
+            subprojects {
+                apply plugin: 'java'
+                apply plugin: 'nebula.lint'
+                repositories {
+                    mavenCentral()
+                }
+                gradleLint.criticalRules = ['duplicate-dependency-class']
+                gradleLint.reportFormat = 'text'
+            }
+        """
+
+        addSubproject('sub1', """
+            dependencies {
+                implementation 'com.google.guava:guava:18.0'
+            }
+        """)
+
+        when:
+        gradleVersion = testGradleVersion
+        def results = runTasks(taskName, '--parallel')
+
+        then:
+        !results.output.contains('IllegalResolutionException')
+        !results.output.contains('was attempted without an exclusive lock')
+
+        where:
+        [taskName, testGradleVersion] << [['lintGradle', 'criticalLintGradle', 'fixGradleLint', 'fixLintGradle', 'generateGradleLintReport'], GradleVersions.ALL].combinations()
+    }
 }
