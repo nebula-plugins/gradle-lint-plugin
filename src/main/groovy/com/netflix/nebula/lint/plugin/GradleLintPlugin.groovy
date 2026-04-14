@@ -33,5 +33,15 @@ class GradleLintPlugin implements Plugin<Project> {
             throw new BuildCancelledException("Gradle Lint Plugin requires Gradle 7.1 or newer.")
         }
         new GradleLintPluginTaskConfigurer().configure(project)
+
+        // Apply to subprojects so each gets its own fix tasks, avoiding
+        // Gradle 9 cross-project lock issues when resolving configurations.
+        if (project == project.rootProject) {
+            project.subprojects { sub ->
+                if (!sub.buildFile.name.toLowerCase().endsWith('.kts')) {
+                    sub.pluginManager.apply(GradleLintPlugin)
+                }
+            }
+        }
     }
 }

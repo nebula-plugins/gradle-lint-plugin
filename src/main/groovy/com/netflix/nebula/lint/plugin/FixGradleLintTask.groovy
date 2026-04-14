@@ -67,7 +67,7 @@ abstract class FixGradleLintTask extends DefaultTask implements VerificationTask
 
             def patchFile = new File(project.layout.buildDirectory.asFile.get(), GradleLintPatchAction.PATCH_NAME)
             if (patchFile.exists()) {
-                new ApplyCommand(new NotNecessarilyGitRepository(project.projectDir)).setPatch(patchFile.newInputStream()).call()
+                new ApplyCommand(new NotNecessarilyGitRepository(project.rootDir)).setPatch(patchFile.newInputStream()).call()
             }
 
             (userDefinedListeners.get() + infoBrokerAction + consoleOutputAction()).each {

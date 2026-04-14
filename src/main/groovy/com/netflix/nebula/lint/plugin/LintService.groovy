@@ -107,28 +107,30 @@ class LintService {
 
     RuleSet ruleSet(Project project) {
         def ruleSet = new CompositeRuleSet()
-        ([project] + project.subprojects).each { p -> ruleSet.addRuleSet(ruleSetForProject(p, false)) }
+        ruleSet.addRuleSet(ruleSetForProject(project, false))
         return ruleSet
     }
 
+    /**
+     * Lints a single project only. In multi-project builds, each project should have its own
+     * lint task that calls this method — avoiding cross-project configuration resolution which
+     * Gradle 9 rejects (exclusive project lock enforcement).
+     */
     Results lint(Project project, boolean onlyCriticalRules) {
         def analyzer = new ReportableAnalyzer(project)
 
-        ([project] + project.subprojects).each { p ->
-            def files = SourceCollector.getAllFiles(p.buildFile, p)
-            def buildFiles = new BuildFiles(files)
-            def ruleSet = ruleSetForProject(p, onlyCriticalRules)
-            if (!ruleSet.rules.isEmpty()) {
-                // establish which file we are linting for each rule
-                ruleSet.rules.each { rule ->
-                    if (rule instanceof GradleLintRule)
-                        rule.buildFiles = buildFiles
-                }
-
-                analyzer.analyze(p, buildFiles.text, ruleSet)
-
-                DependencyService.removeForProject(p)
+        def files = SourceCollector.getAllFiles(project.buildFile, project)
+        def buildFiles = new BuildFiles(files)
+        def ruleSet = ruleSetForProject(project, onlyCriticalRules)
+        if (!ruleSet.rules.isEmpty()) {
+            ruleSet.rules.each { rule ->
+                if (rule instanceof GradleLintRule)
+                    rule.buildFiles = buildFiles
             }
+
+            analyzer.analyze(project, buildFiles.text, ruleSet)
+
+            DependencyService.removeForProject(project)
         }
 
         return analyzer.resultsForRootProject

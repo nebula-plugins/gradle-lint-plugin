@@ -1009,4 +1009,49 @@ class GradleLintPluginSpec extends BaseIntegrationTestKitSpec {
         task << ['dependencyInsight', 'dI', 'depIn']
     }
 
+    @Unroll
+    def 'fixGradleLint on multi-project does not cause cross-project lock errors (#testGradleVersion)'() {
+        given:
+        buildFile << """
+            plugins {
+                id 'nebula.lint'
+            }
+
+            subprojects {
+                apply plugin: 'java'
+                apply plugin: 'nebula.lint'
+                repositories {
+                    mavenCentral()
+                }
+                gradleLint.rules = ['dependency-parentheses']
+            }
+        """
+
+        addSubproject('sub1', """
+            dependencies {
+                implementation('com.google.guava:guava:21.0')
+            }
+        """)
+
+        addSubproject('sub2', """
+            dependencies {
+                implementation('commons-lang:commons-lang:2.6')
+            }
+        """)
+
+        when:
+        gradleVersion = testGradleVersion
+        def results = runTasks('fixGradleLint')
+
+        then:
+        // Verify fix tasks ran on subprojects (not just root)
+        results.task(':sub1:fixGradleLint').outcome == TaskOutcome.SUCCESS
+        results.task(':sub2:fixGradleLint').outcome == TaskOutcome.SUCCESS
+        // Verify violations were actually corrected
+        results.output.contains('Corrected')
+
+        where:
+        testGradleVersion << GradleVersions.ALL
+    }
+
 }
