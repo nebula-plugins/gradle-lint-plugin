@@ -257,7 +257,7 @@ Exception: ${e.getMessage()}
                 ${diffHintsWithMargin(relativePath, patchType, fileMode)}
                 |--- ${patchType == Create ? '/dev/null' : 'a/' + relativePath}
                 |+++ ${patchType == Delete ? '/dev/null' : 'b/' + relativePath}
-                |@@ -${emptyFile ? 0 : firstLineOfContext},$beforeLineCount +${afterLineCount == 0 ? 0 : firstLineOfContext},$afterLineCount @@
+                |@@ -${emptyFile ? 0 : firstLineOfContext},$beforeLineCount +${afterLineCount == 0 && firstLineOfContext == 1 ? 0 : firstLineOfContext},$afterLineCount @@
                 |""".stripMargin()
 
             combinedPatch += diffHeader + patch.join('\n')
