@@ -392,6 +392,37 @@ class GradleLintPatchActionSpec extends Specification {
         generator.patch([new GradleLintDeleteLines(violation, f, 1..1)]) == expect
     }
 
+    def 'deleting last lines with no context does not clear the whole file'() {
+        setup:
+        def f = temp.newFile('my.txt')
+        f.text = '''\
+            a
+            b
+            c
+
+
+
+            d
+            e
+            f
+            '''.stripIndent()
+
+        when:
+        def fix = new GradleLintDeleteLines(violation, f, 7..9)
+        def patch = new GradleLintPatchAction(project).patch([fix])
+
+        then:
+        patch == '''
+            diff --git a/my.txt b/my.txt
+            --- a/my.txt
+            +++ b/my.txt
+            @@ -7,3 +7,0 @@
+            -d
+            -e
+            -f
+            '''.substring(1).stripIndent()
+    }
+
     def 'inserting a line'() {
         when:
         def f = temp.newFile('my.txt')
