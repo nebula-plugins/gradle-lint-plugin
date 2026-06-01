@@ -412,7 +412,9 @@ class DependencyService {
 
         def confPaths
         confPaths = { Configuration c, List<Configuration> path ->
-            def subconfs = project.configurations.findAll { it.extendsFrom.any { it == c } }
+            // Create a snapshot of the configurations to avoid ConcurrentModificationException and look at the configurations related to AbstractCompile tasks and Jar tasks
+            def configurationSnapshot = new ArrayList(project.configurations)
+            def subconfs = configurationSnapshot.findAll { it.extendsFrom.any { it == c } }
             for (Configuration subconf in subconfs) {
                 confPaths(subconf, path + [c])
             }
