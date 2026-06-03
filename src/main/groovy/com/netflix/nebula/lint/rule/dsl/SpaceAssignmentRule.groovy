@@ -1,5 +1,6 @@
 package com.netflix.nebula.lint.rule.dsl
 
+
 import com.netflix.nebula.lint.rule.BuildFiles
 import com.netflix.nebula.lint.rule.ModelAwareGradleLintRule
 import com.netflix.nebula.lint.utils.IndentUtils
@@ -33,6 +34,13 @@ class SpaceAssignmentRule extends ModelAwareGradleLintRule {
         def setter = receiverClass.getMethods().find { it.name == "set${invokedMethodName.capitalize()}" }
         if (setter == null) {
             return // no matching property
+        }
+
+        if (call.methodAsString == 'property' && call.objectExpression != null) {
+            if (call.objectExpression.text?.toLowerCase()?.contains("project") || call.objectExpression.toString().contains("PropertyExpression")) {
+                addViolationForGettingAProperty(call)
+                return
+            }
         }
 
         // check if it's a generated method for space assignment
@@ -71,4 +79,17 @@ class SpaceAssignmentRule extends ModelAwareGradleLintRule {
         def originalLine = getSourceCode().line(call.lineNumber-1)
         return originalLine.replaceFirst(call.methodAsString, call.methodAsString + " =")
     }
+
+    private void addViolationForGettingAProperty(MethodCallExpression call) {
+        BuildFiles.Original originalFile = buildFiles.original(call.lineNumber)
+
+        def violation = addBuildLintViolation(description + ". Getters for properties should use unambiguous DSL", call)
+        def violationLineText = violation.files.text.readLines().subList(call.lineNumber - 1, call.lastLineNumber)[0]
+        def replacement = violationLineText.replaceFirst(".property", ".findProperty")
+
+        violation.insertBefore(call, replacement)
+                .deleteLines(originalFile.file, originalFile.line..originalFile.line)
+    }
+
+
 }
