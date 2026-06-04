@@ -20,7 +20,6 @@ import com.netflix.nebula.lint.GradleViolation
 import com.netflix.nebula.lint.plugin.LintRuleRegistry
 import com.netflix.nebula.lint.plugin.UnexpectedLintRuleFailureException
 import org.codehaus.groovy.ast.ASTNode
-import org.codehaus.groovy.ast.AnnotatedNode
 import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.ast.expr.*
 import org.codehaus.groovy.ast.stmt.ExpressionStatement
