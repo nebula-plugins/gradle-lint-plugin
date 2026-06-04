@@ -51,6 +51,7 @@ class GradleLintPluginTaskConfigurer extends AbstractLintPluginTaskConfigurer {
             def autoLintTask = project.tasks.register(AUTO_LINT_GRADLE, LintGradleTask)
             autoLintTask.configure {
                 group = LINT_GROUP
+                description = 'Runs lint on the build files automatically'
                 listeners = lintExt.listeners
                 projectRootDir.set(project.rootDir)
                 notCompatibleWithConfigurationCache("Gradle Lint Plugin is not compatible with configuration cache because it requires project model")
@@ -68,6 +69,7 @@ class GradleLintPluginTaskConfigurer extends AbstractLintPluginTaskConfigurer {
             def criticalLintTask = project.tasks.register(CRITICAL_LINT_GRADLE, LintGradleTask)
             criticalLintTask.configure {
                 group = LINT_GROUP
+                description = 'Runs lint on the build files and fails the build if any critical issues are found'
                 onlyCriticalRules.set(true)
                 projectRootDir.set(project.rootDir)
                 notCompatibleWithConfigurationCache("Gradle Lint Plugin is not compatible with configuration cache because it requires project model")
@@ -76,12 +78,14 @@ class GradleLintPluginTaskConfigurer extends AbstractLintPluginTaskConfigurer {
 
             def fixTask = project.tasks.register(FIX_GRADLE_LINT, FixGradleLintTask)
             fixTask.configure {
+                description = 'Runs lint on the build files and attempts to fix any issues found'
                 userDefinedListeners.set(lintExt.listeners)
                 notCompatibleWithConfigurationCache("Gradle Lint Plugin is not compatible with configuration cache because it requires project model")
             }
 
             def fixTask2 = project.tasks.register(FIX_LINT_GRADLE, FixGradleLintTask)
             fixTask2.configure {
+                description = 'Runs lint on the build files and attempts to fix any issues found'
                 userDefinedListeners.set(lintExt.listeners)
                 notCompatibleWithConfigurationCache("Gradle Lint Plugin is not compatible with configuration cache because it requires project model")
             }
