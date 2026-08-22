@@ -129,6 +129,44 @@ class FixGradleLintTaskSpec extends BaseIntegrationTestKitSpec {
         new File(projectDir, 'build/lint.patch').text.count('diff --git') == 1
     }
 
+    def 'fails with the rule names when the patch cannot be applied'() {
+        setup: 'a listener makes build.gradle read-only before the patch is applied, so applying it fails'
+        buildFile.text = """
+            import com.netflix.nebula.lint.GradleLintViolationAction
+
+            plugins {
+                id 'nebula.lint'
+                id 'java'
+            }
+
+            // The patch itself is valid. To force the apply step to fail, this listener makes build.gradle
+            // read-only. The patch action only reads the file, so the patch is still generated, but jgit's
+            // ApplyCommand then gets "Permission denied" when writing it, which surfaces as a GitAPIException.
+            // Serializable because Gradle fingerprints task listeners as inputs.
+            class MakeBuildFileReadOnly extends GradleLintViolationAction implements Serializable {
+                String path
+
+                void lintFinished(Collection violations) {
+                    new File(path).setWritable(false)
+                }
+            }
+
+            gradleLint.rules = ['dependency-parentheses']
+            gradleLint.listeners.add(new MakeBuildFileReadOnly(path: '${projectDir.absolutePath.replace('\\', '/')}/build.gradle'))
+
+            dependencies {
+                implementation('com.google.guava:guava:18.0')
+            }
+        """
+
+        when:
+        def results = runTasksAndFail('fixGradleLint')
+
+        then:
+        results.output.contains('Lint tried to apply the following rules, but the git patch could not be applied: [dependency-parentheses]')
+        results.output.contains('See full error:')
+    }
+
     @Issue('#37')
     def 'patches involving carriage returns apply'() {
         when:
