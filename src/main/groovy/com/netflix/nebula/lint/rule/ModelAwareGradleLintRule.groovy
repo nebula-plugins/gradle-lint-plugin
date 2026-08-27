@@ -58,6 +58,8 @@ abstract class ModelAwareGradleLintRule extends GradleLintRule {
             } else {
                 return null
             }
+        } catch (LinkageError e) {
+            return null
         } catch (Exception e) {
             return null
         }
