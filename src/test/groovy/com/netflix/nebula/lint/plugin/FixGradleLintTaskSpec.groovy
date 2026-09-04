@@ -94,6 +94,41 @@ class FixGradleLintTaskSpec extends BaseIntegrationTestKitSpec {
         testGradleVersion << GradleVersions.ALL
     }
 
+    def 'deduplicates fixes for a shared script applied by multiple subprojects'() {
+        setup:
+        buildFile.text = """
+            plugins {
+                id 'nebula.lint'
+            }
+
+            gradleLint.rules = ['dependency-parentheses']
+        """
+
+        File dependenciesFile = new File(projectDir, 'dependencies.gradle')
+        dependenciesFile.text = """
+            dependencies {
+                implementation('com.google.guava:guava:18.0')
+            }
+        """
+
+        ['first', 'second'].each { name ->
+            addSubproject(name, """
+                plugins {
+                    id 'java'
+                }
+
+                apply from: '../dependencies.gradle'
+            """)
+        }
+
+        when:
+        runTasks('fixGradleLint')
+
+        then:
+        dependenciesFile.text.contains("implementation 'com.google.guava:guava:18.0'")
+        new File(projectDir, 'build/lint.patch').text.count('diff --git') == 1
+    }
+
     @Issue('#37')
     def 'patches involving carriage returns apply'() {
         when:

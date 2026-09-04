@@ -99,8 +99,8 @@ Exception: ${e.getMessage()}
         List<List<GradleLintFix>> patchSets = []
 
         fixes
-            .unique { f1, f2 -> f1.is(f2) ? 0 : 1 }
-            .groupBy { it.affectedFile }.each { file, fileFixes ->  // internal ordering of fixes per file is maintained (file order does not)
+            .unique { f1, f2 -> patchIdentity(f1) == patchIdentity(f2) ? 0 : 1 }
+            .groupBy { normalizedAffectedFile(it) }.each { file, fileFixes ->  // internal ordering of fixes per file is maintained (file order does not)
                 def (individualFixes, combinedFixes) = fileFixes.split { it instanceof RequiresOwnPatchset }
                 individualFixes.each {
                     patchSets.add([it] as List<GradleLintFix>)
@@ -266,6 +266,21 @@ Exception: ${e.getMessage()}
         }
 
         combinedPatch + '\n'
+    }
+
+    private static File normalizedAffectedFile(GradleLintFix fix) {
+        fix.affectedFile.toPath().toAbsolutePath().normalize().toFile()
+    }
+
+    private static List patchIdentity(GradleLintFix fix) {
+        def identity = [normalizedAffectedFile(fix), fix.class, fix.from(), fix.to(), fix.changes()]
+        if (fix instanceof GradleLintReplaceWith) {
+            identity.addAll([fix.fromColumn, fix.toColumn])
+        }
+        if (fix instanceof GradleLintCreateFile) {
+            identity.add(fix.fileMode)
+        }
+        identity
     }
 
     //we want to ensure that the all fixes from violation are applied if one of them is marked as overlapped we mark
