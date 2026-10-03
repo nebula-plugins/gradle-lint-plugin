@@ -8,14 +8,14 @@ import org.codehaus.groovy.ast.expr.MethodCallExpression
 
 class SpaceAssignmentRule extends ModelAwareGradleLintRule {
 
-    String description = "space-assignment syntax is deprecated"
+    String description = 'space-assignment syntax is deprecated'
 
     @Override
     void visitMethodCallExpression(MethodCallExpression call) {
-        if(dslStack().contains("plugins")) {
+        if (dslStack().contains('plugins')) {
             return
         }
-        if(call.methodAsString == 'group' && !isGradleGroup(call)) {
+        if (call.methodAsString == 'group' && !isGradleGroup(call)) {
             return
         }
         if (call.arguments.size() != 1 || call.arguments[-1] instanceof ClosureExpression) {
@@ -39,7 +39,7 @@ class SpaceAssignmentRule extends ModelAwareGradleLintRule {
         def exactMethod = receiverClass.getMethods().find { it.name == invokedMethodName }
         if (exactMethod != null) {
             def deprecatedAnnotation = exactMethod.getAnnotation(Deprecated)
-            if (deprecatedAnnotation != null) {
+            if (deprecatedAnnotation != null && !isDeprecatedVarargsMethod(exactMethod)) {
                 // may be false positive when the explicit method is deprecated
                 addViolation(call)
             }
@@ -48,8 +48,22 @@ class SpaceAssignmentRule extends ModelAwareGradleLintRule {
         }
     }
 
+    /**
+     * Gradle's generated space-assignment shims take a single argument, so a deprecated varargs method is a real
+     * API that was deprecated, not a shim. Rewriting it to an assignment produces a build that fails with
+     * "Could not set unknown property".
+     * <p>
+     * The one case known today is {@code MavenArtifactRepository.artifactUrls(Object...)}, deprecated in Gradle 9.6.
+     * It has no replacement property, so a space-assignment fix is never valid for it. Other rules may offer a
+     * different migration for it, and this skip keeps this rule from conflicting with their fixes.
+     * It is not a general opt-out for deprecated methods.
+     */
+    private static boolean isDeprecatedVarargsMethod(java.lang.reflect.Method method) {
+        return method.isVarArgs()
+    }
+
     private boolean isGradleGroup(MethodCallExpression call) {
-        if(call.methodAsString != 'group') {
+        if (call.methodAsString != 'group') {
             return false
         }
 
@@ -67,8 +81,9 @@ class SpaceAssignmentRule extends ModelAwareGradleLintRule {
                 .deleteLines(originalFile.file, originalFile.line..originalFile.line)
     }
 
-    private String getReplacement(MethodCallExpression call){
-        def originalLine = getSourceCode().line(call.lineNumber-1)
-        return originalLine.replaceFirst(call.methodAsString, call.methodAsString + " =")
+    private String getReplacement(MethodCallExpression call) {
+        def originalLine = getSourceCode().line(call.lineNumber - 1)
+        return originalLine.replaceFirst(call.methodAsString, call.methodAsString + ' =')
     }
+
 }

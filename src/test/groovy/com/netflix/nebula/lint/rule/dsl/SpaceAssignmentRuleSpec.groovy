@@ -5,9 +5,38 @@ import spock.lang.Ignore
 import spock.lang.Subject
 
 @Subject(SpaceAssignmentRule)
-@Ignore("This should happen before Gradle 9.x")
 class SpaceAssignmentRuleSpec extends BaseIntegrationTestKitSpec {
 
+    def 'does not rewrite deprecated varargs methods such as artifactUrls into an assignment'() {
+        gradleVersion = '9.6.1'
+        buildFile << """
+            plugins {
+                id 'java'
+                id 'nebula.lint'
+            }
+            gradleLint.rules = ['space-assignment']
+
+            repositories {
+                maven {
+                    url "https://example.com"
+                    artifactUrls 'https://example.com/jars'
+                }
+            }
+        """
+
+        when:
+        runTasks('fixLintGradle', '--warning-mode', 'none', '--no-configuration-cache')
+
+        then:
+        buildFile.text.contains('url = "https://example.com"')
+        buildFile.text.contains("artifactUrls 'https://example.com/jars'")
+        !buildFile.text.contains('artifactUrls =')
+
+        and:
+        runTasks('help', '--warning-mode', 'none')
+    }
+
+    @Ignore("This should happen before Gradle 9.x")
     def 'reports and fixes a violation if space assignment syntax is used - simple cases'() {
         buildFile << """
             import java.util.regex.Pattern;
@@ -94,6 +123,7 @@ class SpaceAssignmentRuleSpec extends BaseIntegrationTestKitSpec {
         runTasks('help')
     }
 
+    @Ignore("This should happen before Gradle 9.x")
     def 'reports and fixes a violation if space assignment syntax is used in some complex cases'() {
         buildFile << """
             plugins {
