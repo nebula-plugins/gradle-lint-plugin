@@ -29,8 +29,10 @@ import org.gradle.api.Task
 import org.gradle.api.internal.DefaultDomainObjectCollection
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.configuration.ImportsReader
+import org.gradle.process.ExecSpec
 
 import javax.annotation.Nullable
+import java.lang.reflect.Method
 
 abstract class ModelAwareGradleLintRule extends GradleLintRule {
     Map<String, List<String>> projectDefaultImports = null
@@ -83,7 +85,7 @@ abstract class ModelAwareGradleLintRule extends GradleLintRule {
             default:
                 return null
         }
-        def getter = current.clazz.getMethods().find { it.name == "get${methodName.capitalize()}" }
+        def getter = findGetter(current.clazz, methodName)
         if (getter != null) {
             if (current.object != null) {
                 try {
@@ -147,7 +149,42 @@ abstract class ModelAwareGradleLintRule extends GradleLintRule {
                 return new TypeInformation(extension)
             }
         }
+
+        if (current.object instanceof Project && currentExpression instanceof MethodCallExpression) {
+            def taskType = registeredTaskType(current.object, methodName)
+            if (taskType != null) {
+                return new TypeInformation(null, taskType)
+            }
+        }
+
+        if (methodName == 'exec' && currentExpression instanceof MethodCallExpression && hasClosureArgument(currentExpression)) {
+            // ExecOperations is usually injected, so its receiver can't be traced from the script
+            return new TypeInformation(null, ExecSpec.class)
+        }
         return null;
+    }
+
+    private static boolean hasClosureArgument(MethodCallExpression call) {
+        return call.arguments.any { it instanceof ClosureExpression }
+    }
+
+    /**
+     * Finds the getter of a property, including the {@code isX()} form used by boolean properties.
+     */
+    @Nullable
+    private static Method findGetter(Class clazz, String propertyName) {
+        def capitalized = propertyName.capitalize()
+        return clazz.getMethods().find { it.name == "get${capitalized}" } ?:
+                clazz.getMethods().find { it.name == "is${capitalized}" && it.parameterCount == 0 }
+    }
+
+    /**
+     * Resolves the type of a task that is configured by its name, such as {@code test { ... }}.
+     * The collection schema is used because it does not realize lazily registered tasks.
+     */
+    @Nullable
+    private static Class registeredTaskType(Project project, String taskName) {
+        return project.tasks.collectionSchema.elements.find { it.name == taskName }?.publicType?.concreteClass
     }
 
     private List<Class> findClassInScope(String name) {
