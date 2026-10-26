@@ -2,6 +2,7 @@ package com.netflix.nebula.lint.rule.dsl
 
 import com.netflix.nebula.lint.BaseIntegrationTestKitSpec
 import spock.lang.Ignore
+import spock.lang.PendingFeature
 import spock.lang.Subject
 
 @Subject(SpaceAssignmentRule)
@@ -34,6 +35,169 @@ class SpaceAssignmentRuleSpec extends BaseIntegrationTestKitSpec {
 
         and:
         runTasks('help', '--warning-mode', 'none')
+    }
+
+    def 'fixes space assignment of testLogging properties, including nested log level blocks'() {
+        gradleVersion = '9.6.1'
+        buildFile << """
+            plugins {
+                id 'java'
+                id 'nebula.lint'
+            }
+            gradleLint.rules = ['space-assignment']
+
+            test {
+                testLogging {
+                    showExceptions true
+                    exceptionFormat "full"
+                    showStandardStreams true
+                    events "passed", "failed"
+                    debug {
+                        exceptionFormat "short"
+                    }
+                }
+            }
+        """
+
+        when:
+        runTasks('fixLintGradle', '--warning-mode', 'none', '--no-configuration-cache')
+
+        then:
+        buildFile.text.contains('showExceptions = true')
+        buildFile.text.contains('exceptionFormat = "full"')
+        buildFile.text.contains('showStandardStreams = true')
+        buildFile.text.contains('exceptionFormat = "short"')
+        buildFile.text.contains('events "passed", "failed"')
+        !buildFile.text.contains('events =')
+
+        and:
+        runTasks('help', '--warning-mode', 'none')
+    }
+
+    def 'fixes space assignment of properties set in blocks configuring a task by its name'() {
+        gradleVersion = '9.6.1'
+        buildFile << """
+            plugins {
+                id 'java'
+                id 'nebula.lint'
+            }
+            gradleLint.rules = ['space-assignment']
+
+            test {
+                maxHeapSize '512m'
+            }
+
+            jar {
+                zip64 true
+            }
+        """
+
+        when:
+        runTasks('fixLintGradle', '--warning-mode', 'none', '--no-configuration-cache')
+
+        then:
+        buildFile.text.contains("maxHeapSize = '512m'")
+        buildFile.text.contains('zip64 = true')
+
+        and:
+        runTasks('help', '--warning-mode', 'none')
+    }
+
+    def 'fixes space assignment of properties set on a custom extension'() {
+        gradleVersion = '9.6.1'
+        buildFile << """
+            plugins {
+                id 'java'
+                id 'nebula.lint'
+            }
+            gradleLint.rules = ['space-assignment']
+
+            class QualityExtension {
+                boolean enforce = true
+            }
+            extensions.create('quality', QualityExtension)
+
+            quality {
+                enforce false
+            }
+        """
+
+        when:
+        runTasks('fixLintGradle', '--warning-mode', 'none', '--no-configuration-cache')
+
+        then:
+        buildFile.text.contains('enforce = false')
+
+        and:
+        runTasks('help', '--warning-mode', 'none')
+    }
+
+    def 'fixes space assignment inside an exec spec configured from doLast'() {
+        gradleVersion = '9.6.1'
+        buildFile << """
+            import javax.inject.Inject
+            import org.gradle.process.ExecOperations
+
+            plugins {
+                id 'java'
+                id 'nebula.lint'
+            }
+            gradleLint.rules = ['space-assignment']
+
+            interface Injected {
+                @Inject ExecOperations getExecOps()
+            }
+
+            def injected = objects.newInstance(Injected)
+            tasks.register('runCommand') {
+                doLast {
+                    injected.execOps.exec {
+                        workingDir projectDir
+                        ignoreExitValue true
+                        commandLine 'echo', 'hello'
+                    }
+                }
+            }
+        """
+
+        when:
+        runTasks('fixLintGradle', '--warning-mode', 'none', '--no-configuration-cache')
+
+        then:
+        buildFile.text.contains('ignoreExitValue = true')
+        buildFile.text.contains('workingDir projectDir')
+        buildFile.text.contains("commandLine 'echo', 'hello'")
+
+        and:
+        runTasks('runCommand', '--warning-mode', 'none', '--no-configuration-cache')
+    }
+
+    @PendingFeature(reason = 'settings scripts are not analyzed by the lint rules. This may be in scope some day.')
+    def 'fixes space assignment in a repository declared under pluginManagement in settings'() {
+        gradleVersion = '9.6.1'
+        settingsFile.text = """
+            pluginManagement {
+                repositories {
+                    maven {
+                        url 'https://example.com/plugins'
+                    }
+                }
+            }
+            rootProject.name = 'space-assignment-settings'
+        """
+        buildFile << """
+            plugins {
+                id 'java'
+                id 'nebula.lint'
+            }
+            gradleLint.rules = ['space-assignment']
+        """
+
+        when:
+        runTasks('fixLintGradle', '--warning-mode', 'none', '--no-configuration-cache')
+
+        then:
+        settingsFile.text.contains("url = 'https://example.com/plugins'")
     }
 
     @Ignore("This should happen before Gradle 9.x")
