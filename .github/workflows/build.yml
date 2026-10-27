@@ -27,6 +27,7 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: |
+            8
             17
             21
             ${{ matrix.java }}
