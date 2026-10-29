@@ -278,6 +278,27 @@ class SpaceAssignmentRuleSpec extends BaseIntegrationTestKitSpec {
         runTasks('help', '--warning-mode', 'none')
     }
 
+    def 'rewrites only the call when the same name appears earlier on the line'() {
+        gradleVersion = '9.6.1'
+        buildFile << """
+            plugins {
+                id 'nebula.lint'
+            }
+            gradleLint.rules = ['space-assignment']
+
+            tasks.register('description') { description 'Describes the task' }
+        """
+
+        when:
+        runTasks('fixLintGradle', '--warning-mode', 'none', '--no-configuration-cache')
+
+        then:
+        buildFile.text.contains("tasks.register('description') { description = 'Describes the task' }")
+
+        and:
+        runTasks('help', '--warning-mode', 'none')
+    }
+
     @Ignore("This should happen before Gradle 9.x")
     def 'reports and fixes a violation if space assignment syntax is used - simple cases'() {
         buildFile << """
