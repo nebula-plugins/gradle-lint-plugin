@@ -1,8 +1,6 @@
 package com.netflix.nebula.lint.rule.dsl
 
-import com.netflix.nebula.lint.rule.BuildFiles
 import com.netflix.nebula.lint.rule.ModelAwareGradleLintRule
-import com.netflix.nebula.lint.utils.IndentUtils
 import org.codehaus.groovy.ast.expr.ClosureExpression
 import org.codehaus.groovy.ast.expr.Expression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
@@ -87,16 +85,8 @@ class SpaceAssignmentRule extends ModelAwareGradleLintRule {
     }
 
     private void addViolation(MethodCallExpression call) {
-        BuildFiles.Original originalFile = buildFiles.original(call.lineNumber)
-        String replacement = IndentUtils.indentText(call, getReplacement(call))
         addBuildLintViolation(description, call)
-                .insertBefore(call, replacement)
-                .deleteLines(originalFile.file, originalFile.line..originalFile.line)
-    }
-
-    private String getReplacement(MethodCallExpression call) {
-        def originalLine = getSourceCode().line(call.lineNumber - 1)
-        return originalLine.replaceFirst(call.methodAsString, call.methodAsString + ' =')
+                .replaceWith(call.method, "${call.methodAsString} =")
     }
 
 }
