@@ -200,6 +200,84 @@ class SpaceAssignmentRuleSpec extends BaseIntegrationTestKitSpec {
         settingsFile.text.contains("url = 'https://example.com/plugins'")
     }
 
+    def 'does not rewrite a call that is interpolated into a string'() {
+        gradleVersion = '9.6.1'
+        buildFile << """
+            plugins {
+                id 'java'
+                id 'nebula.lint'
+            }
+            gradleLint.rules = ['space-assignment']
+
+            def version(String module) { '1.0' }
+
+            dependencies {
+                implementation "org.example:lib:\${version('org.example:lib')}"
+            }
+        """
+
+        when:
+        runTasks('fixLintGradle', '--warning-mode', 'none', '--no-configuration-cache')
+
+        then:
+        buildFile.text.contains("\${version('org.example:lib')}")
+        !buildFile.text.contains('version =')
+
+        and:
+        runTasks('help', '--warning-mode', 'none')
+    }
+
+    def 'does not rewrite a call that is an operand of another expression'() {
+        gradleVersion = '9.6.1'
+        buildFile << """
+            plugins {
+                id 'nebula.lint'
+            }
+            gradleLint.rules = ['space-assignment']
+
+            tasks.register('collect') {
+                def collected = []
+                collected << project.property('name')
+            }
+        """
+
+        when:
+        runTasks('fixLintGradle', '--warning-mode', 'none', '--no-configuration-cache')
+
+        then:
+        buildFile.text.contains("collected << project.property('name')")
+        !buildFile.text.contains('property =')
+
+        and:
+        runTasks('help', '--warning-mode', 'none')
+    }
+
+    def 'does not rewrite a static method call'() {
+        gradleVersion = '9.6.1'
+        buildFile << """
+            import org.gradle.util.GradleVersion
+
+            plugins {
+                id 'nebula.lint'
+            }
+            gradleLint.rules = ['space-assignment']
+
+            if (GradleVersion.current() >= GradleVersion.version('8.0')) {
+                println 'recent gradle'
+            }
+        """
+
+        when:
+        runTasks('fixLintGradle', '--warning-mode', 'none', '--no-configuration-cache')
+
+        then:
+        buildFile.text.contains("GradleVersion.version('8.0')")
+        !buildFile.text.contains('version =')
+
+        and:
+        runTasks('help', '--warning-mode', 'none')
+    }
+
     @Ignore("This should happen before Gradle 9.x")
     def 'reports and fixes a violation if space assignment syntax is used - simple cases'() {
         buildFile << """
