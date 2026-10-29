@@ -4,15 +4,28 @@ import com.netflix.nebula.lint.rule.BuildFiles
 import com.netflix.nebula.lint.rule.ModelAwareGradleLintRule
 import com.netflix.nebula.lint.utils.IndentUtils
 import org.codehaus.groovy.ast.expr.ClosureExpression
+import org.codehaus.groovy.ast.expr.Expression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
+import org.codehaus.groovy.ast.stmt.ExpressionStatement
 
 class SpaceAssignmentRule extends ModelAwareGradleLintRule {
 
     String description = 'space-assignment syntax is deprecated'
 
+    private final Set<Expression> statementExpressions = Collections.newSetFromMap(new IdentityHashMap<Expression, Boolean>())
+
+    /**
+     * Space assignment is a whole statement, such as {@code url "https://example.com"}.
+     * The same call used as a value, such as inside a string or as an operand, is an ordinary method call.
+     */
+    @Override
+    void visitExpressionStatement(ExpressionStatement statement) {
+        statementExpressions.add(statement.expression)
+    }
+
     @Override
     void visitMethodCallExpression(MethodCallExpression call) {
-        if (dslStack().contains('plugins')) {
+        if (!statementExpressions.contains(call) || dslStack().contains('plugins')) {
             return
         }
         if (call.methodAsString == 'group' && !isGradleGroup(call)) {
