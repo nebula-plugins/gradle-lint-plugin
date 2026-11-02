@@ -100,7 +100,7 @@ Exception: ${e.getMessage()}
 
         fixes
             .unique { f1, f2 -> patchIdentity(f1) == patchIdentity(f2) ? 0 : 1 }
-            .groupBy { normalizedAffectedFile(it) }.each { file, fileFixes ->  // internal ordering of fixes per file is maintained (file order does not)
+            .groupBy { patchAffectedFile(it) }.each { file, fileFixes ->  // internal ordering of fixes per file is maintained (file order does not)
                 def (individualFixes, combinedFixes) = fileFixes.split { it instanceof RequiresOwnPatchset }
                 individualFixes.each {
                     patchSets.add([it] as List<GradleLintFix>)
@@ -138,7 +138,7 @@ Exception: ${e.getMessage()}
         patchSets.eachWithIndex { patchFixes, i ->
             def patchType = determinePatchType(patchFixes)
 
-            def file = patchFixes[0].affectedFile
+            def file = patchAffectedFile(patchFixes[0])
             def fileMode = patchType == Create ? (patchFixes[0] as GradleLintCreateFile).fileMode : FileMode.fromFile(file)
             def emptyFile = file.exists() ? (lastPathDeleted == file.absolutePath || patchType == Create ||
                     readFileOrSymlink(file, fileMode).size() == 0) : true
@@ -252,7 +252,9 @@ Exception: ${e.getMessage()}
             if (i > 0)
                 combinedPatch += '\n'
 
-            def relativePath = project.rootDir.toPath().relativize(file.toPath()).toString()
+            def root = project.rootDir.toPath().toAbsolutePath().normalize()
+            if (!file.toPath().startsWith(root)) root = project.rootDir.canonicalFile.toPath()
+            def relativePath = root.relativize(file.toPath()).toString()
             def diffHeader = """\
                 ${diffHintsWithMargin(relativePath, patchType, fileMode)}
                 |--- ${patchType == Create ? '/dev/null' : 'a/' + relativePath}
@@ -272,8 +274,17 @@ Exception: ${e.getMessage()}
         fix.affectedFile.toPath().toAbsolutePath().normalize().toFile()
     }
 
-    private static List patchIdentity(GradleLintFix fix) {
-        def identity = [normalizedAffectedFile(fix), fix.class, fix.from(), fix.to(), fix.changes()]
+    private File patchAffectedFile(GradleLintFix fix) {
+        File file = normalizedAffectedFile(fix)
+        // Link replacements and targets outside the checkout keep their original patch paths.
+        if (fix instanceof RequiresOwnPatchset) return file
+        File target = file.canonicalFile
+        def root = project.rootDir.canonicalFile.toPath()
+        target.toPath().startsWith(root) ? target : file
+    }
+
+    private List patchIdentity(GradleLintFix fix) {
+        def identity = [patchAffectedFile(fix), fix.class, fix.from(), fix.to(), fix.changes()]
         if (fix instanceof GradleLintReplaceWith) {
             identity.addAll([fix.fromColumn, fix.toColumn])
         }

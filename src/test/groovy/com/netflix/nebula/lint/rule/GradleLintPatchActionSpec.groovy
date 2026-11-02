@@ -17,6 +17,8 @@
 package com.netflix.nebula.lint.rule
 
 import com.netflix.nebula.lint.*
+import com.netflix.nebula.lint.plugin.NotNecessarilyGitRepository
+import org.eclipse.jgit.api.ApplyCommand
 import org.gradle.api.Project
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
@@ -489,6 +491,114 @@ class GradleLintPatchActionSpec extends Specification {
             -i
             +*
             '''.substring(1).stripIndent()
+    }
+
+    def 'applies a shared cross-build script once through its physical path'() {
+        setup:
+        def source = temp.newFolder('shared')
+        def build = new File(source, 'build.gradle')
+        build.text = 'legacy()\n' + (1..36).collect { "line $it" }.join('\n') + '\nlast()'
+        def first = new File(project.rootDir, 'first_cross_build')
+        def second = new File(project.rootDir, 'second_cross_build')
+        Files.createSymbolicLink(first.toPath(), source.toPath())
+        Files.createSymbolicLink(second.toPath(), source.toPath())
+
+        when:
+        def fixes = [first, second].collectMany { alias ->
+            def script = new File(alias, 'build.gradle')
+            [new GradleLintReplaceWith(violation, script, 1..1, 1, 7, 'modern'),
+             new GradleLintReplaceWith(violation, script, 38..38, 1, 5, 'done')]
+        }
+        def patch = new GradleLintPatchAction(project).patch(fixes)
+        def patchFile = temp.newFile('lint.patch')
+        patchFile.text = patch
+        new ApplyCommand(new NotNecessarilyGitRepository(project.rootDir))
+                .setPatch(patchFile.newInputStream()).call()
+
+        then:
+        patch.count('diff --git') == 1
+        patch.contains('diff --git a/shared/build.gradle b/shared/build.gradle')
+        patch.contains('@@ -1,38 +1,38 @@')
+        build.text.startsWith('modern()\n')
+        build.text.endsWith('\ndone()')
+        new File(first, 'build.gradle').text == build.text
+        new File(second, 'build.gradle').text == build.text
+    }
+
+    def 'does not resolve symlinks for fixes that replace the symlink itself'() {
+        setup:
+        def target = temp.newFile('target.txt')
+        target.text = 'original'
+        def link = new File(project.rootDir, 'link.txt')
+        Files.createSymbolicLink(link.toPath(), target.toPath())
+
+        when:
+        def patch = new GradleLintPatchAction(project).patch([
+                new GradleLintDeleteFile(violation, link),
+                new GradleLintCreateFile(violation, link, 'replacement')])
+
+        then:
+        patch.count('diff --git a/link.txt b/link.txt') == 2
+        patch.contains('deleted file mode 120000')
+        !patch.contains("diff --git a/target.txt b/target.txt")
+    }
+
+    def 'does not resolve a new file through a symlinked parent'() {
+        setup:
+        def source = temp.newFolder('shared')
+        def alias = new File(project.rootDir, 'cross_build')
+        Files.createSymbolicLink(alias.toPath(), source.toPath())
+        def created = new File(alias, 'generated.txt')
+
+        when:
+        def patch = new GradleLintPatchAction(project).patch([
+                new GradleLintCreateFile(violation, created, 'new content')])
+
+        then:
+        patch.contains('diff --git a/cross_build/generated.txt b/cross_build/generated.txt')
+    }
+
+    def 'keeps a symlinked script outside the project addressed through its in-project link'() {
+        setup:
+        def source = temp.newFolder('outside')
+        def external = new File(source, 'build.gradle')
+        external.text = 'legacy()\n'
+        def root = temp.newFolder('project')
+        def alias = new File(root, 'build.gradle')
+        Files.createSymbolicLink(alias.toPath(), external.toPath())
+        def linkedProject = [getRootDir: { root }] as Project
+
+        when:
+        def patch = new GradleLintPatchAction(linkedProject).patch([
+                new GradleLintReplaceWith(violation, alias, 1..1, 1, 7, 'modern')])
+
+        then:
+        patch.contains('diff --git a/build.gradle b/build.gradle')
+        !patch.contains('../')
+        external.text == 'legacy()\n'
+    }
+
+    def 'resolves an aliased project root and script consistently'() {
+        setup:
+        def source = temp.newFolder('actual-project')
+        def script = new File(source, 'build.gradle')
+        script.text = 'legacy()\n'
+        def alias = new File(temp.root, 'linked-project')
+        Files.createSymbolicLink(alias.toPath(), source.toPath())
+        def linkedProject = [getRootDir: { alias }] as Project
+
+        when:
+        def patch = new GradleLintPatchAction(linkedProject).patch([
+                new GradleLintReplaceWith(violation, new File(alias, 'build.gradle'), 1..1, 1, 7, 'modern')])
+        def patchFile = temp.newFile('linked-root.patch')
+        patchFile.text = patch
+        new ApplyCommand(new NotNecessarilyGitRepository(alias))
+                .setPatch(patchFile.newInputStream()).call()
+
+        then:
+        patch.contains('diff --git a/build.gradle b/build.gradle')
+        !patch.contains('../')
+        script.text == 'modern()\n'
     }
 
     def 'patches whose starts overlap'() {
