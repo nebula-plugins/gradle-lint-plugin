@@ -23,12 +23,12 @@ repositories {
 }
 
 dependencies {
-    compile('org.codenarc:CodeNarc:latest.release')
-    compile('com.google.guava:guava:latest.release')
+    implementation('org.codenarc:CodeNarc:latest.release')
+    implementation('com.google.guava:guava:latest.release')
 
     gradleLint.ignore('dependency-parentheses') {
-        compile('com.google.guava:guava:latest.release')
+        implementation('com.google.guava:guava:latest.release')
     }
 
-    testCompile group: 'junit', name: 'junit', version: '4.11'
+    testImplementation group: 'junit', name: 'junit', version: '4.11'
 }
