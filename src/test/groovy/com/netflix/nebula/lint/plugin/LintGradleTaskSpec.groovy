@@ -180,6 +180,35 @@ class LintGradleTaskSpec extends BaseIntegrationTestKitSpec {
         !result.output.contains('This project contains lint violations.')
     }
 
+    def 'auto lint runs after a successful build when autoLintAfterFailure is false'() {
+        given:
+        buildFile.text = """
+            plugins {
+                id 'java'
+                id 'nebula.lint'
+            }
+
+            gradleLint {
+                rules = ['duplicate-dependency-class']
+                autoLintAfterFailure = false
+            }
+
+            repositories { mavenCentral() }
+
+            dependencies {
+                implementation 'com.google.guava:guava:18.0'
+                implementation 'com.google.collections:google-collections:1.0'
+            }
+        """
+
+        when:
+        writeJavaSourceFile('public class Main { }')
+        def result = runTasks('compileJava')
+
+        then:
+        result.output.contains('This project contains lint violations.')
+    }
+
     def 'lint finds all violations in all applied files with bookmark rule'() {
         given:
         buildFile << """

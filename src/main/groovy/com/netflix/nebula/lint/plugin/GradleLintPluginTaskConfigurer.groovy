@@ -164,8 +164,7 @@ class GradleLintPluginTaskConfigurer extends AbstractLintPluginTaskConfigurer {
         project.gradle.taskGraph.whenReady { taskGraph ->
             List<Task> allTasks = taskGraph.allTasks
             if (hasValidTaskConfiguration(project, lintExt)) {
-                LinkedList tasks = taskGraph.executionPlan.executionQueue
-                Task lastTask = tasks.last?.task
+                Task lastTask = allTasks ? allTasks.last() : null
                 taskGraph.addTaskExecutionListener(new TaskExecutionListener() {
                     @Override
                     void beforeExecute(Task task) {
@@ -177,7 +176,7 @@ class GradleLintPluginTaskConfigurer extends AbstractLintPluginTaskConfigurer {
                         if (hasExplicitLintTask(allTasks, lintTasks) || hasFailedCriticalLintTask(allTasks, criticalLintTask)) {
                             return
                         }
-                        if (task.path == lastTask.path && !taskState.failure) {
+                        if (task.path == lastTask?.path && !taskState.failure) {
                             autoLintTask.get().lint()
                         }
                     }
