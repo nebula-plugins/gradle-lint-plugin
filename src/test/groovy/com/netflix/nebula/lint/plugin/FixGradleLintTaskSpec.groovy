@@ -129,6 +129,39 @@ class FixGradleLintTaskSpec extends BaseIntegrationTestKitSpec {
         new File(projectDir, 'build/lint.patch').text.count('diff --git') == 1
     }
 
+    def 'fixes a script containing a literal NUL and is idempotent'() {
+        given:
+        buildFile.text = """
+            plugins {
+                id 'nebula.lint'
+                id 'java'
+            }
+
+            gradleLint.rules = ['dependency-parentheses']
+            dependencies {
+                implementation('commons-lang:commons-lang:2.6')
+            }
+
+            ${'// unchanged\n' * 10}
+            ext.separator = '${(char) 0}'
+        """.stripIndent().trim() + '\n'
+        assert buildFile.text.contains(String.valueOf((char) 0))
+        def expected = buildFile.text.replace("implementation('commons-lang:commons-lang:2.6')",
+                "implementation 'commons-lang:commons-lang:2.6'").getBytes('UTF-8')
+
+        when:
+        runTasks('fixGradleLint')
+
+        then:
+        buildFile.bytes == expected
+
+        when:
+        runTasks('fixGradleLint')
+
+        then:
+        buildFile.bytes == expected
+    }
+
     def 'fails with the rule names when the patch cannot be applied'() {
         setup: 'a listener makes build.gradle read-only before the patch is applied, so applying it fails'
         buildFile.text = """

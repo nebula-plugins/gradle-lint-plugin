@@ -906,6 +906,110 @@ class GradleLintPatchActionSpec extends Specification {
         patch == expect
     }
 
+    def 'applies deletion and insertion at EOF with final newline #newline'() {
+        given:
+        buildFile.text = 'keep()\nlegacy {\n    old()\n}' + newline
+        def fixes = [
+                new GradleLintReplaceWith(violation, buildFile, 1..1, 1, 5, 'kept'),
+                new GradleLintDeleteLines(violation, buildFile, 2..4),
+                new GradleLintInsertAfter(violation, buildFile, 4, 'modern {\n    replacement()\n}')
+        ]
+
+        when:
+        applyPatch(fixes)
+
+        then:
+        buildFile.text == 'kept()\nmodern {\n    replacement()\n}' + newline
+
+        where:
+        newline << ['', '\n']
+    }
+
+    def 'applies replacement and insertion at EOF with final newline #newline'() {
+        given:
+        buildFile.text = 'keep()\nlegacy()' + newline
+        def fixes = [
+                new GradleLintReplaceWith(violation, buildFile, 2..2, 1, 7, 'modern'),
+                new GradleLintInsertAfter(violation, buildFile, 2, 'appended()')
+        ]
+
+        when:
+        applyPatch(fixes)
+
+        then:
+        buildFile.text == 'keep()\nmodern()\nappended()' + newline
+
+        where:
+        newline << ['', '\n']
+    }
+
+    def 'applies multiple insertions after the same EOF line'() {
+        given:
+        buildFile.text = 'keep()'
+
+        when:
+        applyPatch([
+                new GradleLintInsertAfter(violation, buildFile, 1, 'first()'),
+                new GradleLintInsertAfter(violation, buildFile, 1, 'second()')
+        ])
+
+        then:
+        buildFile.text == 'keep()\nfirst()\nsecond()'
+    }
+
+    def 'applies deletion at EOF after an earlier edit without a final newline'() {
+        given:
+        buildFile.text = 'keep()\nlegacy()'
+
+        when:
+        applyPatch([
+                new GradleLintReplaceWith(violation, buildFile, 1..1, 1, 5, 'kept'),
+                new GradleLintDeleteLines(violation, buildFile, 2..2)
+        ])
+
+        then:
+        buildFile.text == 'kept()'
+    }
+
+    def 'preserves a literal NUL while applying fixes with line ending #lineEnding and trailing newline #trailingNewline'() {
+        given:
+        def separator = "def separator = '${(char) 0}'"
+        def obsolete = ['predictiveTestSelection {', '    enabled = false', '}'].join(lineEnding) + lineEnding
+        def suffix = ['testRetry { maxRetries = 2 }', separator].join(lineEnding)
+        buildFile.text = separator + lineEnding + obsolete + suffix + (trailingNewline ? lineEnding : '')
+
+        when:
+        applyPatch([new GradleLintDeleteLines(violation, buildFile, 2..4)])
+
+        then:
+        buildFile.bytes == (separator + lineEnding + suffix + (trailingNewline ? lineEnding : '')).getBytes('UTF-8')
+
+        where:
+        [lineEnding, trailingNewline] << [['\n', '\r\n'], [true, false]].combinations()
+    }
+
+    private void applyPatch(List<GradleLintFix> fixes) {
+        def patchFile = temp.newFile('lint.patch')
+        patchFile.text = new GradleLintPatchAction(project).patch(fixes)
+        new ApplyCommand(new NotNecessarilyGitRepository(project.rootDir))
+                .setPatch(patchFile.newInputStream()).call()
+    }
+
+    def 'applies patches without reading or creating Git metadata'() {
+        given:
+        buildFile.text = 'legacy()\n'
+        def index = temp.newFile('index')
+        index.text = 'unrelated file, not a Git index'
+
+        when:
+        applyPatch([new GradleLintReplaceWith(violation, buildFile, 1..1, 1, 7, 'modern')])
+
+        then:
+        buildFile.text == 'modern()\n'
+        index.text == 'unrelated file, not a Git index'
+        !new File(project.rootDir, '.git').exists()
+    }
+
     def 'overlapping patches (patches that occupy the same line)'() {
         setup:
         def f = temp.newFile('my.txt')

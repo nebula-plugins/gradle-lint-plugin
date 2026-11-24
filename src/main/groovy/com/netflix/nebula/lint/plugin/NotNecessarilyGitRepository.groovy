@@ -17,7 +17,10 @@
 package com.netflix.nebula.lint.plugin
 
 import org.eclipse.jgit.attributes.AttributesNodeProvider
+import org.eclipse.jgit.dircache.DirCache
 import org.eclipse.jgit.errors.NoWorkTreeException
+import org.eclipse.jgit.internal.storage.dfs.DfsRepositoryDescription
+import org.eclipse.jgit.internal.storage.dfs.InMemoryRepository
 import org.eclipse.jgit.lib.*
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 
@@ -30,6 +33,7 @@ import static org.eclipse.jgit.util.FS.DETECTED
  */
 class NotNecessarilyGitRepository extends Repository {
     File workTree
+    private final InMemoryRepository metadata = new InMemoryRepository(new DfsRepositoryDescription())
 
     NotNecessarilyGitRepository(File gitDir) {
         super(new FileRepositoryBuilder().setGitDir(gitDir).setFS(DETECTED));
@@ -43,28 +47,39 @@ class NotNecessarilyGitRepository extends Repository {
     }
 
     @Override
+    String getIdentifier() {
+        return workTree.absolutePath
+    }
+
+    @Override
+    DirCache readDirCache() throws IOException {
+        // Applying lint fixes must not depend on, or modify, a consumer's Git index.
+        return DirCache.newInCore()
+    }
+
+    @Override
     void create(boolean bare) throws IOException {
         throw new UnsupportedOperationException('This is not necessarily a git repo')
     }
 
     @Override
     ObjectDatabase getObjectDatabase() {
-        throw new UnsupportedOperationException('This is not necessarily a git repo')
+        return metadata.objectDatabase
     }
 
     @Override
     RefDatabase getRefDatabase() {
-        throw new UnsupportedOperationException('This is not necessarily a git repo')
+        return metadata.refDatabase
     }
 
     @Override
     StoredConfig getConfig() {
-        throw new UnsupportedOperationException('This is not necessarily a git repo')
+        return metadata.config
     }
 
     @Override
     AttributesNodeProvider createAttributesNodeProvider() {
-        throw new UnsupportedOperationException('This is not necessarily a git repo')
+        return metadata.createAttributesNodeProvider()
     }
 
     @Override
