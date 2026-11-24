@@ -81,4 +81,9 @@ class NotNecessarilyGitRepository extends Repository {
     ReflogReader getReflogReader(String refName) throws IOException {
         throw new UnsupportedOperationException('This is not necessarily a git repo')
     }
+
+    @Override
+    String getIdentifier() {
+        workTree.absolutePath
+    }
 }
