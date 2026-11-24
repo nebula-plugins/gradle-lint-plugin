@@ -193,10 +193,13 @@ Exception: ${e.getMessage()}
                     patch += changed
                     beforeLineCount += changed.size()
 
-                    if (j == 0 && fix.to() + 1 == lines.size() && !newlineAtEndOfOriginal && changed[-1] != '\n') {
+                    if (fix.to() + 1 == lines.size() && !newlineAtEndOfOriginal) {
                         patch += /\ No newline at end of file/
                     }
-                } else if (fix instanceof GradleLintInsertAfter && fix.afterLine == lines.size() - 1 && !newlineAtEndOfOriginal && !emptyFile) {
+                } else if (fix instanceof GradleLintInsertAfter && fix.afterLine == lines.size() - 1 && !newlineAtEndOfOriginal && !emptyFile &&
+                        patch && patch[-1] == ' ' + lines[-1]) {
+                    // Only convert an unchanged EOF context line. An earlier fix may already
+                    // have deleted/replaced it, or appended other content after it.
                     patch = patch.dropRight(1)
                     patch.addAll(['-' + lines[-1], /\ No newline at end of file/, '+' + lines[-1]])
                 }
