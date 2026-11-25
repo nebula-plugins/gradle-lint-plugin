@@ -21,6 +21,7 @@ import com.netflix.nebula.lint.GradleLintPatchAction
 import com.netflix.nebula.lint.plugin.NotNecessarilyGitRepository
 import com.netflix.nebula.lint.rule.BuildFiles
 import com.netflix.nebula.lint.rule.GradleLintRule
+import com.netflix.nebula.lint.rule.GradleModelAware
 import com.netflix.nebula.lint.rule.ModelAwareGradleLintRule
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
@@ -46,8 +47,8 @@ abstract class AbstractRuleSpec extends ProjectSpec {
         def ruleSet = new CompositeRuleSet()
         rules.each {
             ruleSet.addRule(it)
-            if (it instanceof ModelAwareGradleLintRule) {
-                it.project = project
+            if (it instanceof ModelAwareGradleLintRule || it instanceof GradleModelAware) {
+                ((GradleLintRule) it).project = project
             }
         }
         ruleSet

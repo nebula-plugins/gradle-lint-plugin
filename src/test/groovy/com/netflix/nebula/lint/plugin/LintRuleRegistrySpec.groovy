@@ -17,11 +17,13 @@
 package com.netflix.nebula.lint.plugin
 
 import com.netflix.nebula.lint.rule.AbstractExampleGradleLintRule
-import com.netflix.nebula.lint.rule.GradleLintRule
+import com.netflix.nebula.lint.rule.AbstractModelAwareExampleGradleLintRule
+import com.netflix.nebula.lint.rule.GradleModelAware
 import org.gradle.api.Project
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
+import spock.lang.Unroll
 
 class LintRuleRegistrySpec extends Specification {
     @Rule
@@ -45,6 +47,7 @@ class LintRuleRegistrySpec extends Specification {
         rules.size() == 1
         rules[0] instanceof MockRule1
         rules[0].ruleId == 'single-rule'
+        rules[0].project == null
     }
 
     def 'load a rule that includes other rules'() {
@@ -89,6 +92,49 @@ class LintRuleRegistrySpec extends Specification {
         rules[1] == 'rule2'
     }
 
+    @Unroll
+    def 'injects the project into #ruleType.simpleName with critical flag #critical'() {
+        given:
+        def project = Mock(Project)
+        ruleFile('model-aware-rule') << "implementation-class=${ruleType.name}"
+
+        when:
+        def rules = new LintRuleRegistry().buildRules('model-aware-rule', project, critical)
+
+        then:
+        rules.size() == 1
+        rules[0].project.is(project)
+        rules[0].ruleId == 'model-aware-rule'
+        rules[0].critical == critical
+
+        where:
+        ruleType             | critical
+        LegacyModelAwareRule | false
+        LegacyModelAwareRule | true
+        ModernModelAwareRule | false
+        ModernModelAwareRule | true
+    }
+
+    def 'included model-aware rules receive their own project on each registry build'() {
+        given:
+        def root = Mock(Project)
+        def child = Mock(Project)
+        ruleFile('legacy-rule') << "implementation-class=${LegacyModelAwareRule.name}"
+        ruleFile('modern-rule') << "implementation-class=${ModernModelAwareRule.name}"
+        ruleFile('model-aware-rules') << 'includes=legacy-rule,modern-rule'
+        def registry = new LintRuleRegistry()
+
+        when:
+        def rootRules = registry.buildRules('model-aware-rules', root, false)
+        def childRules = registry.buildRules('model-aware-rules', child, false)
+
+        then:
+        rootRules.size() == 2
+        childRules.size() == 2
+        rootRules.every { it.project.is(root) }
+        childRules.every { it.project.is(child) }
+    }
+
     private File ruleFile(String ruleId) {
         new File(temp.root, 'META-INF/lint-rules').mkdirs()
         temp.newFile("META-INF/lint-rules/${ruleId}.properties")
@@ -100,5 +146,13 @@ class LintRuleRegistrySpec extends Specification {
 
     static class MockRule2 extends AbstractExampleGradleLintRule {
         String description = 'mock2'
+    }
+
+    static class LegacyModelAwareRule extends AbstractExampleGradleLintRule implements GradleModelAware {
+        String description = 'legacy model-aware rule'
+    }
+
+    static class ModernModelAwareRule extends AbstractModelAwareExampleGradleLintRule {
+        String description = 'modern model-aware rule'
     }
 }

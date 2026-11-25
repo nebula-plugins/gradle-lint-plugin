@@ -17,6 +17,7 @@
 package com.netflix.nebula.lint.plugin
 
 import com.netflix.nebula.lint.rule.GradleLintRule
+import com.netflix.nebula.lint.rule.GradleModelAware
 import com.netflix.nebula.lint.rule.ModelAwareGradleLintRule
 import org.codenarc.rule.Rule
 import org.gradle.api.Project
@@ -62,8 +63,8 @@ class LintRuleRegistry {
         if(implClassName) {
             try {
                 Rule r = (Rule) classLoader.loadClass(implClassName).newInstance()
-                if(r instanceof ModelAwareGradleLintRule) {
-                    (r as ModelAwareGradleLintRule).project = project
+                if(r instanceof ModelAwareGradleLintRule || r instanceof GradleModelAware) {
+                    r.project = project
                 }
 
                 if(r instanceof GradleLintRule) {
